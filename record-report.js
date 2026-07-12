@@ -488,6 +488,76 @@ function populateStudentPicker() {
     .join("");
 }
 
+function buildRecordPreviewTable() {
+  const rows = state.rows
+    .filter((row) => state.actionMode.scope !== "student" || row.studentId === els.studentPicker.value)
+    .slice(0, state.actionMode.scope === "student" ? 1 : 6);
+
+  if (state.reportType === "transcript") {
+    return `
+      <table class="pdf-preview-table">
+        <thead>
+          <tr>
+            <th>ลำดับ</th>
+            <th>รหัส</th>
+            <th>ชื่อ-สกุล</th>
+            <th>GPA 1</th>
+            <th>GPA 2</th>
+            <th>สะสม</th>
+            <th>หน่วยกิต</th>
+            <th>สถานะ</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows.map((row) => `
+            <tr>
+              <td>${row.index}</td>
+              <td>${row.studentCode}</td>
+              <td class="pdf-name-cell">${row.name}</td>
+              <td>${row.term1Gpa}</td>
+              <td>${row.term2Gpa}</td>
+              <td>${row.cumulativeGpa}</td>
+              <td>${row.earnedCredits}</td>
+              <td>${row.status}</td>
+            </tr>
+          `).join("")}
+        </tbody>
+      </table>
+    `;
+  }
+
+  return `
+    <table class="pdf-preview-table">
+      <thead>
+        <tr>
+          <th>ลำดับ</th>
+          <th>รหัส</th>
+          <th>ชื่อ-สกุล</th>
+          <th>GPAX</th>
+          <th>GPA ล่าสุด</th>
+          <th>PR</th>
+          <th>หน่วยกิตรวม</th>
+          <th>สถานะ</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((row) => `
+          <tr>
+            <td>${row.index}</td>
+            <td>${row.studentCode}</td>
+            <td class="pdf-name-cell">${row.name}</td>
+            <td>${row.gpax}</td>
+            <td>${row.gpa}</td>
+            <td>${row.pr}</td>
+            <td>${row.totalCredits}</td>
+            <td>${row.status}</td>
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
 function updatePreviewText() {
   const { classroom, plan, grade, year } = getContext();
   const selectedStudent = state.rows.find((row) => row.studentId === els.studentPicker.value);
@@ -508,6 +578,7 @@ function updatePreviewText() {
     รายงาน: ${reportTypeLabels[state.reportType]} | ปีการศึกษา ${year.name} | ${grade.name} ${plan.name} ${classroom.name}<br />
     Template: ${els.template.options[els.template.selectedIndex].textContent} | ภาษา: ${languageLabel}
     ${selectedStudent && state.actionMode.scope === "student" ? `<br />นักเรียน: ${selectedStudent.studentCode} - ${selectedStudent.name}` : ""}
+    ${buildRecordPreviewTable()}
   `;
 }
 

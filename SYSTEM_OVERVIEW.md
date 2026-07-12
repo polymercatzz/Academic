@@ -33,6 +33,11 @@
   - รายงานผลพัฒนาผู้เรียนรายวิชา
   - เน้นตารางแนวนอน, sticky student info, subject chooser, export, print preview
 
+- `average-score-year`
+  - รายงานคะแนนเฉลี่ยรายปี
+  - ค้นหาตามปีการศึกษา ระดับชั้น ห้องเรียน และตัวกรองเสริม
+  - แสดง summary dashboard, ตารางคะแนนเฉลี่ยรายวิชาแนวนอน และ export/print preview
+
 - `record-report`
   - รายงานผลการเรียนระเบียนสะสม / GPAX
   - ใช้ filter ชุดเดียวกัน แต่เปลี่ยนผลลัพธ์ตามประเภทรายงาน

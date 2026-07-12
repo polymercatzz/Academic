@@ -11,6 +11,7 @@ const attendanceOptions = [
 const moduleLabels = {
   attendance: "รายงานการเข้าเรียน",
   "score-subject": "รายงานผลพัฒนาผู้เรียนรายวิชา",
+  "average-score-year": "รายงานคะแนนเฉลี่ยรายปี",
   "record-report": "รายงานผลการเรียนระเบียนสะสม / GPAX",
   "unable-exam": "รายงานผู้ไม่มีสิทธิ์สอบ",
   grade: "ผลการเรียน",
@@ -69,6 +70,11 @@ const els = {
   saveBtn: document.getElementById("saveBtn"),
   exportExcelBtn: document.getElementById("exportExcelBtn"),
   exportPdfBtn: document.getElementById("exportPdfBtn"),
+  attendancePdfModal: document.getElementById("attendancePdfModal"),
+  attendancePdfScope: document.getElementById("attendancePdfScope"),
+  attendancePdfSheet: document.getElementById("attendancePdfSheet"),
+  attendancePdfCloseBtn: document.getElementById("attendancePdfCloseBtn"),
+  attendancePdfDownloadBtn: document.getElementById("attendancePdfDownloadBtn"),
   currentAcademicLabel: document.getElementById("currentAcademicLabel"),
   toast: document.getElementById("toast"),
   activeModuleLabel: document.getElementById("activeModuleLabel"),
@@ -85,6 +91,7 @@ const state = {
   maps: null,
   viewMode: "quick",
   editMode: false,
+  bulkEditMode: false,
   activeModule: "attendance",
   currentScopeText: "-",
   visibleSessions: [],
@@ -504,6 +511,11 @@ function getStatusAbbr(status) {
   return map[status] || status;
 }
 
+function getThaiWeekday(dateString) {
+  const date = new Date(`${dateString}T00:00:00`);
+  return date.toLocaleDateString("th-TH", { weekday: "short" });
+}
+
 function formatThaiShortDate(dateString) {
   const date = new Date(`${dateString}T00:00:00`);
   return date.toLocaleDateString("th-TH", {
@@ -680,25 +692,36 @@ function renderQuickHeader() {
 
 function renderReportHeader() {
   const sessionHeaders = state.visibleSessions.map((session, index) => `
-    <th class="sticky-top matrix-date-head" data-col-key="session-${index}">
+    <th class="sticky-top matrix-date-head report-session-date" data-col-key="session-${index}">
       <div class="session-head">
         <strong>${formatThaiShortDate(session.date)}</strong>
-        <span>คาบ ${session.period}</span>
+        <span>${getThaiWeekday(session.date)}</span>
+      </div>
+    </th>
+  `).join("");
+  const sessionDetailHeaders = state.visibleSessions.map((session, index) => `
+    <th class="sticky-top sticky-top-second matrix-date-head report-session-detail" data-col-key="session-${index}" title="${session.subjectCode} ${session.subjectName} / ${session.teacherName}">
+      <div class="session-head session-head-compact">
+        <strong>คาบ ${session.period}</strong>
+        <span>${session.subjectCode}</span>
       </div>
     </th>
   `).join("");
 
   els.attendanceThead.innerHTML = `
     <tr>
-      <th class="sticky-col sticky-col-id sticky-top">รหัสนักเรียน</th>
-      <th class="sticky-col sticky-col-name sticky-top">ชื่อ-สกุล</th>
-      <th class="sticky-top">ชั้น/ห้อง</th>
+      <th class="sticky-col sticky-col-id sticky-top report-rowspan-head" rowspan="2">รหัสนักเรียน</th>
+      <th class="sticky-col sticky-col-name sticky-top report-rowspan-head" rowspan="2">ชื่อ-สกุล</th>
+      <th class="sticky-top report-rowspan-head report-room-head" rowspan="2">ชั้น/ห้อง</th>
       ${sessionHeaders}
-      <th class="sticky-top">มาเรียน</th>
-      <th class="sticky-top">สาย</th>
-      <th class="sticky-top">ขาด</th>
-      <th class="sticky-top">ลา/อื่นๆ</th>
-      <th class="sticky-top">% เข้าเรียน</th>
+      <th class="sticky-top sticky-summary sticky-summary-present report-rowspan-head" rowspan="2">มา</th>
+      <th class="sticky-top sticky-summary sticky-summary-late report-rowspan-head" rowspan="2">สาย</th>
+      <th class="sticky-top sticky-summary sticky-summary-absent report-rowspan-head" rowspan="2">ขาด</th>
+      <th class="sticky-top sticky-summary sticky-summary-leave report-rowspan-head" rowspan="2">ลา</th>
+      <th class="sticky-top sticky-summary sticky-summary-rate report-rowspan-head" rowspan="2">% เข้าเรียน</th>
+    </tr>
+    <tr>
+      ${sessionDetailHeaders}
     </tr>
   `;
 }
@@ -763,10 +786,27 @@ function renderReportRows() {
   els.attendanceTbody.innerHTML = state.visibleStudents.map((student) => {
     const sessionCells = state.visibleSessions.map((session, index) => {
       const record = student.sessionStatusMap.get(session.key);
+      const isApplicable = session.classroomId === student.classroomId;
       const status = record ? record.status : "-";
+      const displayTitle = record
+        ? `${formatThaiShortDate(record.date)} คาบ ${record.period}: ${record.status}`
+        : isApplicable
+          ? `${formatThaiShortDate(session.date)} คาบ ${session.period}: ยังไม่มีข้อมูล`
+          : "ไม่มีคาบเรียนของห้องนี้";
+
+      if (state.bulkEditMode && record) {
+        return `
+          <td class="matrix-cell matrix-cell-edit" data-col-key="session-${index}">
+            <select class="status-select matrix-status-select" data-record-id="${record.id}" aria-label="เปลี่ยนสถานะ ${student.name} ${formatThaiShortDate(session.date)} คาบ ${session.period}">
+              ${attendanceOptions.map((option) => `<option value="${option}" ${option === status ? "selected" : ""}>${option}</option>`).join("")}
+            </select>
+          </td>
+        `;
+      }
+
       return `
-        <td class="matrix-cell" data-col-key="session-${index}">
-          <span class="status-dot status-dot-${getStatusTone(status)}" title="${status}">${getStatusAbbr(status)}</span>
+        <td class="matrix-cell ${isApplicable ? "" : "matrix-cell-muted"}" data-col-key="session-${index}">
+          <span class="status-dot status-dot-${getStatusTone(status)}" title="${displayTitle}" aria-label="${displayTitle}">${getStatusAbbr(status)}</span>
         </td>
       `;
     }).join("");
@@ -782,17 +822,20 @@ function renderReportRows() {
         </td>
         <td>${student.gradeName} / ${student.classroomName}</td>
         ${sessionCells}
-        <td>${student.counts.present}</td>
-        <td>${student.counts.late}</td>
-        <td>${student.counts.absent}</td>
-        <td>${student.counts.leave}</td>
-        <td><span class="rate-chip">${student.attendanceRate}%</span></td>
+        <td class="report-summary-cell sticky-summary-present">${student.counts.present}</td>
+        <td class="report-summary-cell sticky-summary-late">${student.counts.late}</td>
+        <td class="report-summary-cell sticky-summary-absent">${student.counts.absent}</td>
+        <td class="report-summary-cell sticky-summary-leave">${student.counts.leave}</td>
+        <td class="report-summary-cell sticky-summary-rate"><span class="rate-chip">${student.attendanceRate}%</span></td>
       </tr>
     `;
   }).join("");
 }
 
 function renderTable() {
+  els.tableWrap.dataset.view = state.viewMode;
+  els.tableWrap.dataset.bulkEdit = String(state.bulkEditMode);
+
   if (!state.visibleSessions.length) {
     els.attendanceThead.innerHTML = `
       <tr>
@@ -815,16 +858,18 @@ function renderTable() {
 
 function syncModeControls() {
   const modeMeta = viewModeDetails[state.viewMode];
-  els.modeLabel.textContent = state.editMode ? "แก้ไขรายบุคคล" : modeMeta.label;
+  els.modeLabel.textContent = state.editMode ? "แก้ไขรายบุคคล" : state.bulkEditMode ? "แก้ไขแบบกลุ่ม" : modeMeta.label;
   els.viewModeNote.textContent = modeMeta.note;
   els.quickViewBtn.classList.toggle("is-active", state.viewMode === "quick");
   els.reportViewBtn.classList.toggle("is-active", state.viewMode === "report");
   els.quickViewBtn.setAttribute("aria-pressed", String(state.viewMode === "quick"));
   els.reportViewBtn.setAttribute("aria-pressed", String(state.viewMode === "report"));
-  els.editBtn.hidden = state.editMode;
-  els.saveBtn.hidden = !state.editMode;
-  els.editBtn.disabled = state.viewMode !== "quick";
+  els.editBtn.hidden = state.editMode || state.bulkEditMode;
+  els.saveBtn.hidden = !(state.editMode || state.bulkEditMode);
+  els.editBtn.disabled = state.viewMode !== "quick" || state.bulkEditMode;
   els.bulkEditBtn.disabled = state.viewMode !== "report";
+  els.bulkEditBtn.textContent = state.bulkEditMode ? "ยกเลิกแก้ไขกลุ่ม" : "แก้ไขแบบกลุ่ม";
+  els.bulkEditBtn.classList.toggle("is-active", state.bulkEditMode);
 }
 
 function searchData() {
@@ -833,6 +878,7 @@ function searchData() {
   state.visibleStudents = result.students;
   state.currentScopeText = buildScopeText();
   state.editMode = false;
+  state.bulkEditMode = false;
   syncResultsMeta();
   summarizeData(state.visibleStudents);
   renderTable();
@@ -854,6 +900,7 @@ function toggleEditMode(force) {
   }
 
   state.editMode = typeof force === "boolean" ? force : !state.editMode;
+  state.bulkEditMode = false;
   renderTable();
   syncModeControls();
   if (state.editMode) {
@@ -862,6 +909,23 @@ function toggleEditMode(force) {
 }
 
 function saveChanges() {
+  if (state.bulkEditMode) {
+    const selects = els.attendanceTbody.querySelectorAll("select.matrix-status-select");
+    let updatedCount = 0;
+    selects.forEach((select) => {
+      const sourceRecord = state.maps.attendance.get(select.dataset.recordId);
+      if (!sourceRecord || sourceRecord.status === select.value) return;
+      sourceRecord.status = select.value;
+      sourceRecord.remark = `แก้ไขแบบกลุ่มเป็น ${select.value}`;
+      updatedCount += 1;
+    });
+
+    state.bulkEditMode = false;
+    searchData();
+    setToast(updatedCount ? `บันทึกการแก้ไขแบบกลุ่ม ${updatedCount} รายการเรียบร้อย` : "ไม่มีรายการที่เปลี่ยนแปลง", updatedCount ? "success" : "info");
+    return;
+  }
+
   const selects = els.attendanceTbody.querySelectorAll("select.status-select");
   selects.forEach((select) => {
     const index = Number(select.dataset.index);
@@ -886,12 +950,167 @@ function openBulkEdit() {
     setToast("แก้ไขแบบกลุ่มเหมาะกับ Report View เพื่อดูหลายวันพร้อมกัน", "info");
     return;
   }
-  setToast("ต้นแบบนี้เตรียม workflow แก้ไขแบบกลุ่มไว้ต่อยอดกับ API ในขั้นถัดไป", "info");
+  if (!state.visibleStudents.length) {
+    setToast("กรุณากดค้นหาก่อนเพื่อโหลดข้อมูลสำหรับแก้ไขแบบกลุ่ม", "info");
+    return;
+  }
+
+  state.bulkEditMode = !state.bulkEditMode;
+  state.editMode = false;
+  renderTable();
+  syncModeControls();
+  setToast(state.bulkEditMode ? "เลือกสถานะในตาราง Report View แล้วกดบันทึก" : "ยกเลิกโหมดแก้ไขแบบกลุ่มแล้ว", "info");
 }
 
 function mockExport(type) {
   setToast(`เตรียมส่งออกรายงาน ${type === "excel" ? "Excel" : "PDF"} จากผลการค้นหาจริง`, "info");
 }
+
+function buildPdfPreviewRows() {
+  const previewStudents = state.visibleStudents.slice(0, 8);
+
+  if (state.viewMode === "report") {
+    const previewSessions = state.visibleSessions.slice(0, 8);
+    const sessionHeads = previewSessions
+      .map((session) => `<th>${formatThaiShortDate(session.date)}<br><span>คาบ ${session.period}</span></th>`)
+      .join("");
+    const rows = previewStudents.map((student, index) => {
+      const cells = previewSessions.map((session) => {
+        const record = student.sessionStatusMap.get(session.key);
+        const status = record ? record.status : "-";
+        return `<td><span class="pdf-status pdf-status-${getStatusTone(status)}">${getStatusAbbr(status)}</span></td>`;
+      }).join("");
+
+      return `
+        <tr>
+          <td>${index + 1}</td>
+          <td>${student.studentCode}</td>
+          <td class="pdf-name-cell">${student.name}</td>
+          <td>${student.classroomName}</td>
+          ${cells}
+          <td>${student.attendanceRate}%</td>
+        </tr>
+      `;
+    }).join("");
+
+    return `
+      <table class="pdf-preview-table pdf-preview-table-report">
+        <thead>
+          <tr>
+            <th>ลำดับ</th>
+            <th>รหัส</th>
+            <th>ชื่อ-สกุล</th>
+            <th>ห้อง</th>
+            ${sessionHeads}
+            <th>%</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    `;
+  }
+
+  const rows = previewStudents.map((student, index) => {
+    const latestStatus = student.latestRecord ? student.latestRecord.status : "-";
+    const latestLabel = student.latestRecord ? `${formatThaiShortDate(student.latestRecord.date)} / คาบ ${student.latestRecord.period}` : "-";
+    return `
+      <tr>
+        <td>${index + 1}</td>
+        <td>${student.studentCode}</td>
+        <td class="pdf-name-cell">${student.name}</td>
+        <td>${student.classroomName}</td>
+        <td>${latestLabel}</td>
+        <td><span class="pdf-status pdf-status-${getStatusTone(latestStatus)}">${latestStatus}</span></td>
+        <td>${student.attendanceRate}%</td>
+      </tr>
+    `;
+  }).join("");
+
+  return `
+    <table class="pdf-preview-table">
+      <thead>
+        <tr>
+          <th>ลำดับ</th>
+          <th>รหัส</th>
+          <th>ชื่อ-สกุล</th>
+          <th>ห้อง</th>
+          <th>วันที่/คาบล่าสุด</th>
+          <th>สถานะ</th>
+          <th>% เข้าเรียน</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+}
+
+function openAttendancePdfPreview() {
+  if (!state.visibleStudents.length) {
+    setToast("กรุณาค้นหาข้อมูลก่อนดูตัวอย่าง PDF", "info");
+    return;
+  }
+
+  const modeLabel = state.viewMode === "report" ? "Report View" : "Quick View";
+  openReportPreviewModal({
+    title: "รายงานการเข้าเรียน PDF",
+    scope: `${state.currentScopeText} | ${state.visibleStudents.length} คน | ${modeLabel}`,
+    confirmText: "ดาวน์โหลด PDF",
+    mockMessage: "Mockup: ขั้นตอนดาวน์โหลด PDF จะถูกเชื่อมต่อภายหลัง",
+    sheetHtml: `
+    <div class="pdf-document-head">
+      <div>
+        <p>ระบบรายงานการเข้าเรียน</p>
+        <h3>รายงานการเข้าเรียนของนักเรียน</h3>
+      </div>
+      <span>${modeLabel}</span>
+    </div>
+    <div class="pdf-document-meta">
+      <span>ช่วงข้อมูล: ${state.currentScopeText}</span>
+      <span>คาบเรียนจริง: ${state.visibleSessions.length} คาบ</span>
+      <span>นักเรียน: ${state.visibleStudents.length} คน</span>
+    </div>
+    <div class="pdf-summary-strip">
+      <span>มาเรียน <strong>${els.presentCount.textContent}</strong></span>
+      <span>สาย <strong>${els.lateCount.textContent}</strong></span>
+      <span>ขาด <strong>${els.absentCount.textContent}</strong></span>
+      <span>ลา/อื่นๆ <strong>${els.leaveCount.textContent}</strong></span>
+    </div>
+    ${buildPdfPreviewRows()}
+    <p class="pdf-preview-note">ตัวอย่างนี้แสดงบางรายการเพื่อดูรูปแบบตารางก่อนดาวน์โหลดจริง</p>
+    `
+  });
+}
+
+function openReportPreviewModal(options) {
+  const {
+    title,
+    scope,
+    sheetHtml,
+    confirmText = "ดำเนินการ",
+    mockMessage = "Mockup: ยังไม่เชื่อมต่อการทำงานจริง"
+  } = options;
+  document.getElementById("attendancePdfTitle").textContent = title;
+  els.attendancePdfScope.textContent = scope;
+  els.attendancePdfSheet.innerHTML = sheetHtml;
+  els.attendancePdfDownloadBtn.textContent = confirmText;
+  els.attendancePdfDownloadBtn.dataset.mockMessage = mockMessage;
+  els.attendancePdfModal.hidden = false;
+  document.body.classList.add("modal-open");
+  els.attendancePdfCloseBtn.focus();
+}
+
+function closeAttendancePdfPreview() {
+  els.attendancePdfModal.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+function mockPdfDownload() {
+  const message = els.attendancePdfDownloadBtn.dataset.mockMessage || "Mockup: ขั้นตอนดาวน์โหลด PDF จะถูกเชื่อมต่อภายหลัง";
+  closeAttendancePdfPreview();
+  setToast(message, "info");
+}
+
+window.openReportPreviewModal = openReportPreviewModal;
 
 function resetFilters() {
   const currentYear = getCurrentAcademicYear();
@@ -917,7 +1136,7 @@ function setActiveModule(system) {
     item.classList.toggle("is-active", item.dataset.system === system);
   });
   els.activeModuleLabel.textContent = moduleLabels[system] || system;
-  const targetPage = ["attendance", "score-subject", "record-report", "unable-exam"].includes(system) ? system : "placeholder";
+  const targetPage = ["attendance", "score-subject", "average-score-year", "record-report", "unable-exam"].includes(system) ? system : "placeholder";
   els.appPages.forEach((page) => {
     page.classList.toggle("is-active", page.dataset.page === targetPage);
   });
@@ -926,13 +1145,14 @@ function setActiveModule(system) {
     els.placeholderPageTitle.textContent = moduleLabels[system] || "โมดูลอื่น";
     els.placeholderPageSubtitle.textContent = `หน้าสำหรับ ${moduleLabels[system] || system} ยังไม่ได้ถูกออกแบบใน prototype นี้`;
     els.placeholderModuleTitle.textContent = `${moduleLabels[system] || system} ยังไม่พร้อมใช้งาน`;
-    els.placeholderModuleText.textContent = "ตอนนี้มีหน้ารายงานการเข้าเรียน รายงานผลพัฒนาผู้เรียนรายวิชา รายงานผลการเรียนระเบียนสะสม / GPAX และรายงานผู้ไม่มีสิทธิ์สอบที่ใช้งานได้ภายใน sidebar เดียวกัน";
+    els.placeholderModuleText.textContent = "ตอนนี้มีหน้ารายงานการเข้าเรียน รายงานผลพัฒนาผู้เรียนรายวิชา รายงานคะแนนเฉลี่ยรายปี รายงานผลการเรียนระเบียนสะสม / GPAX และรายงานผู้ไม่มีสิทธิ์สอบที่ใช้งานได้ภายใน sidebar เดียวกัน";
   }
 }
 
 function setViewMode(viewMode) {
   state.viewMode = viewMode;
   state.editMode = false;
+  state.bulkEditMode = false;
   if (state.visibleSessions.length) {
     syncResultsMeta();
     summarizeData(state.visibleStudents);
@@ -985,12 +1205,21 @@ function attachEvents() {
   els.bulkEditBtn.addEventListener("click", openBulkEdit);
   els.saveBtn.addEventListener("click", saveChanges);
   els.exportExcelBtn.addEventListener("click", () => mockExport("excel"));
-  els.exportPdfBtn.addEventListener("click", () => mockExport("pdf"));
+  els.exportPdfBtn.addEventListener("click", openAttendancePdfPreview);
+  els.attendancePdfDownloadBtn.addEventListener("click", mockPdfDownload);
+  els.attendancePdfModal.querySelectorAll("[data-pdf-close]").forEach((node) => {
+    node.addEventListener("click", closeAttendancePdfPreview);
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !els.attendancePdfModal.hidden) {
+      closeAttendancePdfPreview();
+    }
+  });
 
   els.navItems.forEach((item) => {
     item.addEventListener("click", () => {
       setActiveModule(item.dataset.system);
-      if (!["attendance", "score-subject", "record-report", "unable-exam"].includes(item.dataset.system)) {
+      if (!["attendance", "score-subject", "average-score-year", "record-report", "unable-exam"].includes(item.dataset.system)) {
         setToast(`กำลังเตรียมโมดูล ${moduleLabels[item.dataset.system]}`, "info");
       }
     });

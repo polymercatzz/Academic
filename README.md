@@ -13,6 +13,7 @@
 
 - รายงานการเข้าเรียน
 - Score per Subject
+- รายงานคะแนนเฉลี่ยรายปี
 - รายงานผลการเรียนระเบียนสะสม / GPAX
 - รายงานผู้ไม่มีสิทธิ์สอบ
 
@@ -22,6 +23,7 @@
 - [styles.css](C:/Users/Panavat/Documents/GitHub/Academic_Report-/styles.css)
 - [script.js](C:/Users/Panavat/Documents/GitHub/Academic_Report-/script.js)
 - [score-per-subject.js](C:/Users/Panavat/Documents/GitHub/Academic_Report-/score-per-subject.js)
+- [average-score-year.js](C:/Users/Panavat/Documents/GitHub/Academic_Report-/average-score-year.js)
 - [record-report.js](C:/Users/Panavat/Documents/GitHub/Academic_Report-/record-report.js)
 - [unable-exam-report.js](C:/Users/Panavat/Documents/GitHub/Academic_Report-/unable-exam-report.js)
 

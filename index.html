@@ -31,6 +31,10 @@
             <span>Score per Subject</span>
             <small>รายงานผลพัฒนาผู้เรียนรายวิชา</small>
           </button>
+          <button class="nav-item" type="button" data-system="average-score-year">
+            <span>รายงานคะแนนเฉลี่ยรายปี</span>
+            <small>สรุปคะแนนเฉลี่ยของนักเรียนตามปีการศึกษา</small>
+          </button>
           <button class="nav-item" type="button" data-system="record-report">
             <span>รายงานระเบียนสะสม / GPAX</span>
             <small>ตรวจสอบผลการเรียนสะสมและสรุป GPAX ของนักเรียน</small>
@@ -39,27 +43,7 @@
             <span>รายงานผู้ไม่มีสิทธิ์สอบ</span>
             <small>คัดกรองนักเรียนที่เสี่ยงเสียสิทธิ์สอบจากการเข้าเรียน</small>
           </button>
-        </section>
-
-        <section class="nav-group" aria-labelledby="otherSystemLabel">
-          <h3 class="nav-group-title" id="otherSystemLabel">ระบบอื่น</h3>
-          <button class="nav-item" type="button" data-system="grade">
-            <span>ผลการเรียน</span>
-            <small>รายงานคะแนนและผลประเมิน</small>
-          </button>
-          <button class="nav-item" type="button" data-system="behavior">
-            <span>บันทึกพฤติกรรม</span>
-            <small>ติดตามพฤติกรรมนักเรียน</small>
-          </button>
-          <button class="nav-item" type="button" data-system="schedule">
-            <span>ตารางเรียน</span>
-            <small>จัดการตารางสอนและห้องเรียน</small>
-          </button>
-          <button class="nav-item" type="button" data-system="settings">
-            <span>ตั้งค่าระบบ</span>
-            <small>ข้อมูลพื้นฐานและสิทธิ์การใช้งาน</small>
-          </button>
-        </section>
+        </section>
       </nav>
 
       <footer class="sidebar-footer">
@@ -273,6 +257,13 @@
                 <button class="btn btn-secondary" id="exportExcelBtn" type="button">ส่งออก Excel</button>
                 <button class="btn btn-secondary" id="exportPdfBtn" type="button">ส่งออก PDF</button>
               </div>
+            </div>
+            <div class="attendance-legend" aria-label="คำอธิบายสัญลักษณ์สถานะการเข้าเรียน">
+              <span><i class="status-dot status-dot-present">ม</i>ตรงเวลา/กิจกรรม</span>
+              <span><i class="status-dot status-dot-late">ส</i>สาย</span>
+              <span><i class="status-dot status-dot-absent">ข</i>ขาด</span>
+              <span><i class="status-dot status-dot-leave">ล</i>ลา/วันหยุด</span>
+              <span><i class="status-dot status-dot-empty">-</i>ไม่มีคาบของห้องนี้</span>
             </div>
             <div class="table-wrap">
               <table>
@@ -685,6 +676,211 @@
         </section>
       </section>
 
+      <section class="app-page" data-page="average-score-year">
+        <header class="page-header" aria-labelledby="averageYearPageTitle">
+          <div class="page-heading">
+            <p class="eyebrow">ระบบรายงานสำหรับงานวิชาการ</p>
+            <h1 id="averageYearPageTitle">รายงานคะแนนเฉลี่ยรายปี</h1>
+            <p class="subtitle">
+              ค้นหาและจัดทำรายงานคะแนนเฉลี่ยของนักเรียนตามปีการศึกษา ระดับชั้น และห้องเรียน พร้อมสรุปภาพรวมก่อนส่งออกเป็น Excel
+            </p>
+          </div>
+
+          <aside class="academic-card" aria-label="ข้อมูลปีการศึกษาปัจจุบัน">
+            <span class="meta-label">ค่าตั้งต้นที่ใช้งาน</span>
+            <strong class="meta-value" id="averageYearCurrentAcademicLabel">กำลังโหลด...</strong>
+          </aside>
+        </header>
+
+        <section class="attendance-report average-year-report" aria-labelledby="averageYearFilterTitle">
+          <section class="search-panel" aria-labelledby="averageYearFilterTitle">
+            <div class="panel-heading">
+              <p class="section-kicker">ค้นหารายงาน</p>
+              <h2 class="section-title" id="averageYearFilterTitle">เงื่อนไขการค้นหา</h2>
+              <p class="section-note">เลือกตัวกรองหลักก่อน แล้วใช้ตัวกรองเสริมเพื่อจำกัดข้อมูลให้ตรงกับงานรายงาน</p>
+            </div>
+
+            <form class="filters-form" id="averageYearFiltersForm" aria-label="เงื่อนไขการค้นหารายงานคะแนนเฉลี่ยรายปี">
+              <section class="search-block" aria-labelledby="averageYearMainFilterTitle">
+                <div class="search-block-header">
+                  <div>
+                    <p class="search-block-kicker">ตัวกรองหลัก</p>
+                    <h3 class="search-block-title" id="averageYearMainFilterTitle">ปีการศึกษา ระดับชั้น และห้องเรียน</h3>
+                  </div>
+                  <p class="search-block-note">ลำดับการค้นหาหลักตาม flow ของระบบเดิม</p>
+                </div>
+
+                <div class="base-filters-grid average-year-filters-grid">
+                  <div class="field-group">
+                    <label class="field-label" for="averageYearAcademicYear">ปีการศึกษา <span class="field-required">*</span></label>
+                    <select id="averageYearAcademicYear" name="academicYear"></select>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="averageYearGrade">ระดับชั้น <span class="field-required">*</span></label>
+                    <select id="averageYearGrade" name="grade">
+                      <option value="">เลือกระดับชั้น</option>
+                    </select>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="averageYearClassroom">ชั้นเรียน <span class="field-required">*</span></label>
+                    <select id="averageYearClassroom" name="classroom" disabled>
+                      <option value="">เลือกชั้นเรียน</option>
+                    </select>
+                  </div>
+                </div>
+              </section>
+
+              <section class="search-block search-block-accent" aria-labelledby="averageYearAdvancedFilterTitle">
+                <div class="search-block-header">
+                  <div>
+                    <p class="search-block-kicker">ตัวกรองเสริม</p>
+                    <h3 class="search-block-title" id="averageYearAdvancedFilterTitle">ข้อมูลเพิ่มเติมสำหรับรายงาน</h3>
+                  </div>
+                </div>
+
+                <div class="base-filters-grid average-year-filters-grid">
+                  <div class="field-group">
+                    <label class="field-label" for="averageYearSemester">ภาคเรียน</label>
+                    <select id="averageYearSemester" name="semester">
+                      <option value="all">ทุกภาคเรียน</option>
+                    </select>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="averageYearPlan">แผนการเรียน</label>
+                    <select id="averageYearPlan" name="plan">
+                      <option value="all">ทุกแผนการเรียน</option>
+                    </select>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="averageYearStatus">สถานะนักเรียน</label>
+                    <select id="averageYearStatus" name="status">
+                      <option value="active">กำลังศึกษา</option>
+                      <option value="all">ทุกสถานะ</option>
+                      <option value="watch">ต้องติดตาม</option>
+                      <option value="excellent">ผลการเรียนดีเด่น</option>
+                    </select>
+                  </div>
+                  <div class="field-group field-group-wide">
+                    <label class="field-label" for="averageYearKeyword">คำค้นหา</label>
+                    <input id="averageYearKeyword" name="keyword" type="text" placeholder="ค้นหาด้วยรหัสนักเรียนหรือชื่อ-สกุล" />
+                  </div>
+                </div>
+              </section>
+            </form>
+
+            <div class="filter-actions" aria-label="คำสั่งค้นหาและส่งออกรายงานคะแนนเฉลี่ยรายปี">
+              <button class="btn btn-secondary" id="averageYearResetFiltersBtn" type="button">ล้างเงื่อนไข</button>
+              <div class="export-dropdown" id="averageYearExportDropdown">
+                <button class="btn btn-secondary export-trigger" id="averageYearExportBtn" type="button" aria-haspopup="true" aria-expanded="false" disabled>ส่งออก</button>
+                <div class="export-menu hidden" id="averageYearExportMenu" role="menu" aria-label="รูปแบบการส่งออก">
+                  <button type="button" role="menuitem" data-export="excel">Excel</button>
+                  <button type="button" role="menuitem" data-export="csv">CSV</button>
+                  <button type="button" role="menuitem" data-export="pdf">PDF</button>
+                </div>
+              </div>
+              <button class="btn btn-primary" id="averageYearSearchBtn" type="submit" disabled>ค้นหาข้อมูล</button>
+            </div>
+          </section>
+
+          <section class="results-panel average-year-results-panel" aria-labelledby="averageYearSummaryTitle">
+            <div class="results-header">
+              <div>
+                <p class="section-kicker">ผลลัพธ์รายงาน</p>
+                <h2 class="section-title" id="averageYearSummaryTitle">สรุปคะแนนเฉลี่ยรายปี</h2>
+                <p class="section-note" id="averageYearSummaryScope">ยังไม่มีผลการค้นหา</p>
+              </div>
+              <div class="results-meta">
+                <span>รูปแบบ: <strong id="averageYearViewMeta">ตารางแนวนอน</strong></span>
+                <span>ขอบเขต: <strong id="averageYearScopeMeta">ทุกภาคเรียน</strong></span>
+              </div>
+            </div>
+
+            <div class="summary-grid average-year-summary-grid" aria-label="ตัวเลขสรุปคะแนนเฉลี่ยรายปี">
+              <article class="metric metric-total">
+                <p class="metric-label">จำนวนนักเรียน</p>
+                <p class="metric-value" id="averageYearStudentCount">0</p>
+              </article>
+              <article class="metric">
+                <p class="metric-label">คะแนนเฉลี่ยรวม</p>
+                <p class="metric-value" id="averageYearAverageScore">0.00</p>
+              </article>
+              <article class="metric">
+                <p class="metric-label">คะแนนสูงสุด</p>
+                <p class="metric-value" id="averageYearHighestScore">0.00</p>
+              </article>
+              <article class="metric">
+                <p class="metric-label">คะแนนต่ำสุด</p>
+                <p class="metric-value" id="averageYearLowestScore">0.00</p>
+              </article>
+              <article class="metric">
+                <p class="metric-label">GPAX เฉลี่ย</p>
+                <p class="metric-value" id="averageYearGpaxAverage">0.00</p>
+              </article>
+            </div>
+
+            <div class="table-toolbar score-toolbar">
+              <div class="table-toolbar-copy">
+                <strong class="table-toolbar-title">ตารางคะแนนเฉลี่ยรายปี</strong>
+                <span class="table-toolbar-subtitle">ตรึงข้อมูลนักเรียนทางซ้าย และแสดงค่าเฉลี่ยรายวิชาตามปีการศึกษาในตารางเดียว</span>
+              </div>
+
+              <div class="score-toolbar-actions" aria-label="คำสั่งจัดการตารางคะแนนเฉลี่ยรายปี">
+                <button class="btn btn-secondary" id="averageYearPreviewBtn" type="button" disabled>ดู Preview</button>
+                <button class="btn btn-secondary" id="averageYearPrintBtn" type="button" disabled>พิมพ์รายงาน</button>
+              </div>
+            </div>
+
+            <div class="score-print-panel hidden" id="averageYearPreviewPanel">
+              <div class="score-print-grid">
+                <div class="field-group">
+                  <label class="field-label" for="averageYearTemplate">รูปแบบรายงาน</label>
+                  <select id="averageYearTemplate">
+                    <option value="standard">รายงานมาตรฐาน</option>
+                    <option value="compact">แบบย่อสำหรับตรวจสอบ</option>
+                    <option value="formal">แบบส่งงานวิชาการ</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="averageYearLanguage">ภาษา</label>
+                  <select id="averageYearLanguage">
+                    <option value="th">ไทย</option>
+                    <option value="th-en">ไทย / English</option>
+                  </select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="averageYearExportScope">ขอบเขตข้อมูล</label>
+                  <select id="averageYearExportScope">
+                    <option value="current">ผลลัพธ์ที่แสดงอยู่</option>
+                    <option value="all">ข้อมูลทั้งหมดของห้องเรียน</option>
+                  </select>
+                </div>
+              </div>
+              <div class="score-print-preview" id="averageYearPreviewSummary">เลือกข้อมูลเพื่อสร้างตัวอย่างก่อนส่งออกหรือพิมพ์</div>
+            </div>
+
+            <div class="table-wrap average-year-table-wrap">
+              <table class="score-table average-year-table">
+                <thead id="averageYearThead">
+                  <tr>
+                    <th class="sticky-top">ลำดับ</th>
+                    <th class="sticky-top">รหัสนักเรียน</th>
+                    <th class="sticky-top">ชื่อ-สกุล</th>
+                    <th class="sticky-top">คะแนนเฉลี่ย</th>
+                  </tr>
+                </thead>
+                <tbody id="averageYearTbody">
+                  <tr>
+                    <td colspan="4">
+                      <div class="empty-state">กดค้นหาข้อมูลเพื่อเริ่มแสดงรายงาน</div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      </section>
+
       <section class="app-page" data-page="record-report">
         <header class="page-header" aria-labelledby="recordReportPageTitle">
           <div class="page-heading">
@@ -910,7 +1106,7 @@
           <div class="table-placeholder">
             <div>
               <p class="table-placeholder-title" id="placeholderModuleTitle">โมดูลนี้ยังไม่ถูกเชื่อมข้อมูล</p>
-              <p class="table-placeholder-text" id="placeholderModuleText">ตอนนี้มีหน้ารายงานการเข้าเรียน รายงานผลพัฒนาผู้เรียนรายวิชา รายงานผลการเรียนระเบียนสะสม / GPAX และรายงานผู้ไม่มีสิทธิ์สอบที่ใช้งานได้ใน prototype นี้</p>
+              <p class="table-placeholder-text" id="placeholderModuleText">ตอนนี้มีหน้ารายงานการเข้าเรียน รายงานผลพัฒนาผู้เรียนรายวิชา รายงานคะแนนเฉลี่ยรายปี รายงานผลการเรียนระเบียนสะสม / GPAX และรายงานผู้ไม่มีสิทธิ์สอบที่ใช้งานได้ใน prototype นี้</p>
             </div>
             <span class="table-placeholder-chip">Coming Soon</span>
           </div>
@@ -919,9 +1115,33 @@
     </main>
   </div>
 
+  <div class="pdf-preview-modal" id="attendancePdfModal" hidden>
+    <div class="pdf-preview-backdrop" data-pdf-close></div>
+    <section class="pdf-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="attendancePdfTitle">
+      <header class="pdf-preview-header">
+        <div>
+          <p class="section-kicker">ตัวอย่างก่อนส่งออก</p>
+          <h2 class="pdf-preview-title" id="attendancePdfTitle">รายงานการเข้าเรียน PDF</h2>
+          <p class="pdf-preview-subtitle" id="attendancePdfScope">ตรวจสอบรูปแบบตารางก่อนดาวน์โหลด</p>
+        </div>
+        <button class="pdf-preview-close" type="button" id="attendancePdfCloseBtn" aria-label="ปิดตัวอย่าง PDF">×</button>
+      </header>
+
+      <div class="pdf-preview-body">
+        <div class="pdf-sheet" id="attendancePdfSheet"></div>
+      </div>
+
+      <footer class="pdf-preview-footer">
+        <button class="btn btn-secondary" type="button" data-pdf-close>ยกเลิก</button>
+        <button class="btn btn-primary" type="button" id="attendancePdfDownloadBtn">ดาวน์โหลด PDF</button>
+      </footer>
+    </section>
+  </div>
+
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
   <script src="script.js"></script>
   <script src="score-per-subject.js"></script>
+  <script src="average-score-year.js"></script>
   <script src="record-report.js"></script>
   <script src="unable-exam-report.js"></script>
 </body>

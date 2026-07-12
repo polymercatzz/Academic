@@ -390,11 +390,77 @@ function toggleColumnPanel(force) {
   els.columnToggleBtn.setAttribute("aria-expanded", String(shouldShow));
 }
 
+function buildPreviewTableHtml(limitRows = 6, limitSubjects = 5) {
+  const subjects = getFilteredSubjects().slice(0, limitSubjects);
+  const rows = state.rows
+    .filter((row) => state.printMode !== "student" || row.studentId === els.studentPicker.value)
+    .slice(0, limitRows);
+
+  return `
+    <table class="pdf-preview-table pdf-preview-table-report">
+      <thead>
+        <tr>
+          <th>ลำดับ</th>
+          <th>รหัส</th>
+          <th>ชื่อ-สกุล</th>
+          ${subjects.map((subject) => `<th>${subject.name}<br><span>${subject.fullScore} คะแนน</span></th>`).join("")}
+        </tr>
+      </thead>
+      <tbody>
+        ${rows.map((row) => `
+          <tr>
+            <td>${row.no}</td>
+            <td>${row.studentId}</td>
+            <td class="pdf-name-cell">${row.studentName}</td>
+            ${subjects.map((subject) => {
+              const scoreItem = row.values[subject.id];
+              return `<td>${scoreItem ? `${scoreItem.score}/${scoreItem.fullScore}` : "-"}</td>`;
+            }).join("")}
+          </tr>
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+}
+
 function updatePrintPreview() {
   const templateText = els.printTemplate.options[els.printTemplate.selectedIndex].text;
   const languageText = els.printLanguage.options[els.printLanguage.selectedIndex].text;
   const studentText = state.printMode === "student" ? els.studentPicker.options[els.studentPicker.selectedIndex]?.text || "-" : "นักเรียนทั้งหมด";
-  els.printPreview.textContent = `ตัวอย่างพิมพ์: ${templateText} | ภาษา ${languageText} | ${studentText}`;
+  els.printPreview.innerHTML = `
+    <strong>ตัวอย่างพิมพ์รายงานผลพัฒนาผู้เรียนรายวิชา</strong>
+    <span>Template: ${templateText} | ภาษา ${languageText} | ${studentText}</span>
+    ${buildPreviewTableHtml(state.printMode === "student" ? 1 : 5, 4)}
+  `;
+}
+
+function openScoreExportPreview(format) {
+  if (format !== "pdf" || typeof window.openReportPreviewModal !== "function") {
+    setToast(`เตรียมส่งออกรายงาน ${exportLabels[format]} จากตารางรายวิชาปัจจุบัน`, "info");
+    return;
+  }
+
+  window.openReportPreviewModal({
+    title: "รายงานผลพัฒนาผู้เรียนรายวิชา",
+    scope: `${els.summaryScope.textContent} | แสดงตัวอย่าง ${Math.min(state.rows.length, 6)} คน`,
+    confirmText: "ดาวน์โหลด PDF",
+    mockMessage: "Mockup: ดาวน์โหลด PDF รายงานผลพัฒนาผู้เรียนรายวิชายังไม่ถูกเชื่อมต่อ",
+    sheetHtml: `
+      <div class="pdf-document-head">
+        <div>
+          <p>ระบบรายงานผลพัฒนาผู้เรียน</p>
+          <h3>รายงานผลพัฒนาผู้เรียนรายวิชา</h3>
+        </div>
+        <span>PDF</span>
+      </div>
+      <div class="pdf-document-meta">
+        <span>${els.summaryScope.textContent}</span>
+        <span>วิชาที่แสดง: ${getFilteredSubjects().length} วิชา</span>
+      </div>
+      ${buildPreviewTableHtml(7, 6)}
+      <p class="pdf-preview-note">ตัวอย่างนี้แสดงบางรายการเพื่อดูรูปแบบตารางก่อนดาวน์โหลดจริง</p>
+    `
+  });
 }
 
 function openPrintPanel(mode) {
@@ -443,7 +509,7 @@ function attachEvents() {
     const button = event.target.closest("[data-export]");
     if (!button) return;
     els.exportMenu.classList.add("hidden");
-    setToast(`เตรียมส่งออกรายงาน ${exportLabels[button.dataset.export]} จากตารางรายวิชาปัจจุบัน`, "info");
+    openScoreExportPreview(button.dataset.export);
   });
   els.printAllBtn.addEventListener("click", () => openPrintPanel("all"));
   els.printStudentBtn.addEventListener("click", () => openPrintPanel("student"));

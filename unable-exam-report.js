@@ -676,6 +676,67 @@ function escapeCsvValue(value) {
 }
 
 function handleExport(type) {
+  if ((type === "pdf" || type === "print") && typeof window.openReportPreviewModal === "function") {
+    const rows = sortRows(state.filteredRows).slice(0, 8);
+    window.openReportPreviewModal({
+      title: type === "print" ? "พิมพ์รายงานผู้ไม่มีสิทธิ์สอบ" : "รายงานผู้ไม่มีสิทธิ์สอบ PDF",
+      scope: `${els.summaryScope.textContent} | พบ ${state.filteredRows.length} รายการ`,
+      confirmText: type === "print" ? "พิมพ์รายงาน" : "ดาวน์โหลด PDF",
+      mockMessage: type === "print"
+        ? "Mockup: พิมพ์รายงานผู้ไม่มีสิทธิ์สอบยังไม่ถูกเชื่อมต่อ"
+        : "Mockup: ดาวน์โหลด PDF รายงานผู้ไม่มีสิทธิ์สอบยังไม่ถูกเชื่อมต่อ",
+      sheetHtml: `
+        <div class="pdf-document-head">
+          <div>
+            <p>ระบบติดตามสิทธิ์สอบ</p>
+            <h3>รายงานผู้ไม่มีสิทธิ์สอบ</h3>
+          </div>
+          <span>${type === "print" ? "Print" : "PDF"}</span>
+        </div>
+        <div class="pdf-document-meta">
+          <span>${els.summaryScope.textContent}</span>
+          <span>เกณฑ์เข้าเรียน: ${normalizeThreshold(els.threshold.value)}%</span>
+          <span>สถานะ: ${els.statusMeta.textContent}</span>
+        </div>
+        <div class="pdf-summary-strip">
+          <span>พบทั้งหมด <strong>${state.filteredRows.length}</strong></span>
+          <span>คิดเป็น <strong>${els.unablePercentage.textContent}</strong></span>
+          <span>รายวิชา <strong>${els.selectedSubject.textContent}</strong></span>
+        </div>
+        <table class="pdf-preview-table">
+          <thead>
+            <tr>
+              <th>No.</th>
+              <th>รหัส</th>
+              <th>ชื่อ-สกุล</th>
+              <th>ชั้น/ห้อง</th>
+              <th>เข้าเรียน</th>
+              <th>ขาด</th>
+              <th>สาย</th>
+              <th>สถานะ</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((row, index) => `
+              <tr>
+                <td>${index + 1}</td>
+                <td>${row.studentId}</td>
+                <td class="pdf-name-cell">${row.studentName}</td>
+                <td>${row.gradeClass}</td>
+                <td>${row.attendancePercent}%</td>
+                <td>${row.absentCount}</td>
+                <td>${row.lateCount}</td>
+                <td>${row.statusLabel}</td>
+              </tr>
+            `).join("")}
+          </tbody>
+        </table>
+        <p class="pdf-preview-note">ตัวอย่างนี้แสดงบางรายการเพื่อดูรูปแบบตารางก่อนดำเนินการจริง</p>
+      `
+    });
+    return;
+  }
+
   setToast(`เตรียมส่งออกรายงาน ${exportLabels[type] || type} จากผลการค้นหาปัจจุบัน`, "info");
 }
 
