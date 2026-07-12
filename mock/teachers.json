@@ -1,0 +1,54 @@
+[
+    {
+        "id":  "teacher-anong",
+        "name":  "อ.อนงค์นาถ ศรีสวัสดิ์",
+        "shortName":  "อ.อนงค์นาถ",
+        "subjectIds":  [
+                           "subject-math",
+                           "subject-thai"
+                       ]
+    },
+    {
+        "id":  "teacher-krit",
+        "name":  "อ.กฤตภาส วัฒนชัย",
+        "shortName":  "อ.กฤตภาส",
+        "subjectIds":  [
+                           "subject-math",
+                           "subject-science"
+                       ]
+    },
+    {
+        "id":  "teacher-sunee",
+        "name":  "อ.สุนีย์ พิพัฒน์ผล",
+        "shortName":  "อ.สุนีย์",
+        "subjectIds":  [
+                           "subject-thai",
+                           "subject-social"
+                       ]
+    },
+    {
+        "id":  "teacher-preecha",
+        "name":  "อ.ปรีชา ธรรมวงศ์",
+        "shortName":  "อ.ปรีชา",
+        "subjectIds":  [
+                           "subject-english",
+                           "subject-social"
+                       ]
+    },
+    {
+        "id":  "teacher-mali",
+        "name":  "อ.มะลิ กาญจนกิจ",
+        "shortName":  "อ.มะลิ",
+        "subjectIds":  [
+                           "subject-english"
+                       ]
+    },
+    {
+        "id":  "teacher-niran",
+        "name":  "อ.นิรันดร์ บุญมาก",
+        "shortName":  "อ.นิรันดร์",
+        "subjectIds":  [
+                           "subject-science"
+                       ]
+    }
+]

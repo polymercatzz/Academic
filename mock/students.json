@@ -1,0 +1,130 @@
+[
+    {
+        "id":  "student-66001",
+        "studentCode":  "66001",
+        "name":  "กานต์ธิดา สุขผล",
+        "classroomId":  "room-m1-1",
+        "number":  1,
+        "profile":  "steady"
+    },
+    {
+        "id":  "student-66002",
+        "studentCode":  "66002",
+        "name":  "ธนกฤต แซ่ตั้ง",
+        "classroomId":  "room-m1-1",
+        "number":  2,
+        "profile":  "late"
+    },
+    {
+        "id":  "student-66003",
+        "studentCode":  "66003",
+        "name":  "ปวีณ์นุช อินทรา",
+        "classroomId":  "room-m1-1",
+        "number":  3,
+        "profile":  "leave"
+    },
+    {
+        "id":  "student-66004",
+        "studentCode":  "66004",
+        "name":  "ภูริณัฐ ขยันดี",
+        "classroomId":  "room-m1-1",
+        "number":  4,
+        "profile":  "activity"
+    },
+    {
+        "id":  "student-66005",
+        "studentCode":  "66005",
+        "name":  "ศุภวิชญ์ เจริญผล",
+        "classroomId":  "room-m1-2",
+        "number":  1,
+        "profile":  "steady"
+    },
+    {
+        "id":  "student-66006",
+        "studentCode":  "66006",
+        "name":  "ณิชกานต์ พูลทรัพย์",
+        "classroomId":  "room-m1-2",
+        "number":  2,
+        "profile":  "late"
+    },
+    {
+        "id":  "student-66007",
+        "studentCode":  "66007",
+        "name":  "พชรพล สุขใจ",
+        "classroomId":  "room-m1-2",
+        "number":  3,
+        "profile":  "absence"
+    },
+    {
+        "id":  "student-66008",
+        "studentCode":  "66008",
+        "name":  "อริศรา วงศ์อรุณ",
+        "classroomId":  "room-m1-2",
+        "number":  4,
+        "profile":  "steady"
+    },
+    {
+        "id":  "student-65001",
+        "studentCode":  "65001",
+        "name":  "กมลชนก พรหมมา",
+        "classroomId":  "room-m2-1",
+        "number":  1,
+        "profile":  "steady"
+    },
+    {
+        "id":  "student-65002",
+        "studentCode":  "65002",
+        "name":  "พีรพัฒน์ วงศ์ดี",
+        "classroomId":  "room-m2-1",
+        "number":  2,
+        "profile":  "late"
+    },
+    {
+        "id":  "student-65003",
+        "studentCode":  "65003",
+        "name":  "ณัฐวรา แซ่ลี้",
+        "classroomId":  "room-m2-1",
+        "number":  3,
+        "profile":  "absence"
+    },
+    {
+        "id":  "student-65004",
+        "studentCode":  "65004",
+        "name":  "ธนโชติ อินทร์รักษ์",
+        "classroomId":  "room-m2-1",
+        "number":  4,
+        "profile":  "leave"
+    },
+    {
+        "id":  "student-64001",
+        "studentCode":  "64001",
+        "name":  "ปวริศา ศรีสวัสดิ์",
+        "classroomId":  "room-m3-1",
+        "number":  1,
+        "profile":  "activity"
+    },
+    {
+        "id":  "student-64002",
+        "studentCode":  "64002",
+        "name":  "ชยพล แสงทอง",
+        "classroomId":  "room-m3-1",
+        "number":  2,
+        "profile":  "steady"
+    },
+    {
+        "id":  "student-64003",
+        "studentCode":  "64003",
+        "name":  "รวิภา ตั้งเจริญ",
+        "classroomId":  "room-m3-1",
+        "number":  3,
+        "profile":  "leave"
+    },
+    {
+        "id":  "student-64004",
+        "studentCode":  "64004",
+        "name":  "กิตติพงษ์ สุขสำราญ",
+        "classroomId":  "room-m3-1",
+        "number":  4,
+        "profile":  "late"
+    }
+]
