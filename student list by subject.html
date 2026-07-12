@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student List by Subject</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#f7f8fc',
+            surface: '#ffffff',
+            surfaceSoft: '#f2f5fb',
+            line: '#d9e2ef',
+            ink: '#1e293b',
+            muted: '#64748b',
+            brand: '#2563eb',
+            brandSoft: '#eaf2ff',
+            success: '#1f9d68',
+            warning: '#d97706',
+            accent: '#0f766e'
+          },
+          boxShadow: {
+            panel: '0 18px 50px rgba(15, 23, 42, 0.08)'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="bg-canvas font-body text-ink">
+  <div class="min-h-screen lg:flex">
+    <aside class="border-b border-line bg-surface lg:min-h-screen lg:w-72 lg:border-b-0 lg:border-r">
+      <div class="border-b border-line px-6 py-6">
+        <div class="flex items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand text-xl font-bold text-white">AR</div>
+          <div>
+            <p class="text-sm font-medium uppercase tracking-[0.24em] text-brand">Academic Report</p>
+            <h1 class="mt-1 text-xl font-semibold text-ink">Student List by Subject</h1>
+          </div>
+        </div>
+        <p class="mt-4 text-sm leading-6 text-muted">
+          หน้ารายชื่อนักเรียนสอบซ่อมแยกตามรายวิชา สำหรับค้นหา ตรวจสอบ และส่งออกรายงาน PDF ภาษาไทยหรือภาษาอังกฤษ
+        </p>
+      </div>
+
+      <div class="px-4 py-5">
+        <div class="rounded-3xl border border-line bg-surfaceSoft p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Flow</p>
+          <div class="mt-4 space-y-3 text-sm text-muted">
+            <div class="rounded-2xl bg-white px-4 py-3">1. ระบุปีการศึกษา เทอม แผนการเรียน และวิชา</div>
+            <div class="rounded-2xl bg-white px-4 py-3">2. ตรวจสอบรายชื่อนักเรียนสอบซ่อมตามเงื่อนไข</div>
+            <div class="rounded-2xl bg-white px-4 py-3">3. เลือก Export PDF ภาษาไทยหรืออังกฤษ</div>
+          </div>
+        </div>
+
+        <div class="mt-5 rounded-3xl border border-line bg-white p-4">
+          <p class="text-xs font-semibold uppercase tracking-[0.22em] text-muted">Current Context</p>
+          <p id="contextSubject" class="mt-3 text-lg font-semibold text-ink">ทุกวิชาในแผนที่เลือก</p>
+          <p id="contextHint" class="mt-2 text-sm leading-6 text-muted">
+            ถ้าไม่ได้เลือกวิชา ระบบจะแสดงคอลัมน์วิชาเพิ่มในตารางเพื่อให้รู้ว่ารายชื่อนักเรียนมาจากวิชาใด
+          </p>
+        </div>
+      </div>
+    </aside>
+
+    <main class="min-w-0 flex-1 px-4 py-6 lg:px-8 lg:py-8">
+      <section class="px-1 py-2 lg:px-2">
+        <div class="max-w-4xl">
+          <p class="text-sm font-semibold uppercase tracking-[0.26em] text-brand">Academic Report</p>
+          <h2 class="mt-3 text-3xl font-semibold tracking-tight text-ink lg:text-4xl">รายชื่อนักเรียนสอบซ่อมแยกตามรายวิชา</h2>
+          <p class="mt-3 max-w-3xl text-sm leading-6 text-muted">
+            Prototype นี้ต่อยอดจาก flow เดิมให้กลายเป็นหน้า data-driven สำหรับดูรายชื่อนักเรียนสอบซ่อมตามวิชา พร้อม preview รายงานก่อนดาวน์โหลด
+          </p>
+        </div>
+        <div id="overviewCards" class="mt-6 grid gap-4 sm:grid-cols-2 xl:max-w-6xl xl:grid-cols-4"></div>
+      </section>
+
+      <section class="mt-6 rounded-[2rem] border border-line bg-surface p-6 shadow-panel lg:p-8">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand">Search Panel</p>
+            <h3 class="mt-2 text-2xl font-semibold text-ink">กำหนดเงื่อนไขการค้นหา</h3>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            <button id="resetButton" class="rounded-full border border-line bg-white px-5 py-3 text-sm font-semibold text-ink transition hover:bg-surfaceSoft">ล้างค่า</button>
+            <button id="searchButton" class="rounded-full bg-brand px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">ค้นหาข้อมูล</button>
+          </div>
+        </div>
+
+        <form class="mt-6 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+          <label class="block">
+            <span class="mb-2 block text-sm text-ink">ปีการศึกษา</span>
+            <select id="year" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand">
+              <option value="2568">2568</option>
+              <option value="2567">2567</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm text-ink">เทอม</span>
+            <select id="term" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand">
+              <option value="1">1</option>
+              <option value="2">2</option>
+              <option value="ทั้งหมด">ทั้งหมด</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm text-ink">แผนการเรียน</span>
+            <select id="program" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand"></select>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm text-ink">ระดับชั้น</span>
+            <select id="gradeLevel" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand"></select>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm text-ink">ห้องเรียน</span>
+            <select id="classRoom" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand"></select>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm text-ink">ครูผู้สอน</span>
+            <select id="teacher" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand"></select>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm text-ink">วิชา</span>
+            <select id="subject" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand"></select>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm text-ink">สถานะการสอบซ่อม</span>
+            <select id="retakeStatus" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand">
+              <option value="ทั้งหมด">ทั้งหมด</option>
+              <option value="รอสอบซ่อม">รอสอบซ่อม</option>
+              <option value="สอบซ่อมแล้ว">สอบซ่อมแล้ว</option>
+              <option value="ติดตามงาน">ติดตามงาน</option>
+            </select>
+          </label>
+        </form>
+      </section>
+
+      <section class="mt-6 rounded-[2rem] border border-line bg-surface p-6 shadow-panel lg:p-8">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand">Results Panel</p>
+            <h3 class="mt-2 text-2xl font-semibold text-ink">รายชื่อนักเรียนตามวิชาที่ค้นหา</h3>
+          </div>
+          <div class="relative">
+            <button id="exportToggle" class="inline-flex items-center gap-2 rounded-full bg-success px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700">
+              Export PDF
+              <span class="text-xs">▼</span>
+            </button>
+            <div id="exportMenu" class="absolute right-0 top-14 z-20 hidden min-w-52 overflow-hidden rounded-2xl border border-line bg-white shadow-panel">
+              <button data-export="th" class="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-ink transition hover:bg-surfaceSoft">
+                <span>Export PDF - TH</span>
+                <span class="text-muted">ไทย</span>
+              </button>
+              <button data-export="en" class="flex w-full items-center justify-between border-t border-line px-4 py-3 text-left text-sm text-ink transition hover:bg-surfaceSoft">
+                <span>Export PDF - EN</span>
+                <span class="text-muted">English</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-5 grid gap-4 lg:grid-cols-[1.1fr_0.9fr_0.9fr]">
+          <label class="block">
+            <span class="mb-2 block text-sm text-ink">ค้นหาในตาราง</span>
+            <input id="tableSearch" type="text" placeholder="พิมพ์ชื่อ รหัสนักเรียน ชั้น ห้อง หรือวิชา" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand">
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm text-ink">กรองผลลัพธ์</span>
+            <select id="tableFilter" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand">
+              <option value="ทั้งหมด">ทั้งหมด</option>
+              <option value="gradeZero">เกรด 0</option>
+              <option value="gradeR">เกรด ร</option>
+              <option value="remark">มีหมายเหตุพิเศษ</option>
+              <option value="multipleSubjects">หลายวิชา</option>
+            </select>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm text-ink">เรียงข้อมูล</span>
+            <select id="tableSort" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm text-ink outline-none focus:border-brand">
+              <option value="default">ค่าเริ่มต้น</option>
+              <option value="classAsc">ชั้น/ห้อง</option>
+              <option value="nameAsc">ชื่อ-นามสกุล</option>
+              <option value="subjectAsc">วิชา</option>
+              <option value="gradeAsc">เกรด</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="mt-5 overflow-hidden rounded-3xl border border-line">
+          <div class="overflow-auto">
+            <table class="min-w-[1380px] w-full text-sm">
+              <thead class="sticky top-0 z-10 bg-surfaceSoft">
+                <tr class="border-b border-line text-muted">
+                  <th class="px-4 py-4 text-center font-semibold">ชั้น/ห้อง</th>
+                  <th class="px-4 py-4 text-center font-semibold">ลำดับ</th>
+                  <th class="px-4 py-4 text-left font-semibold">เลขประจำตัว</th>
+                  <th class="px-4 py-4 text-left font-semibold">ชื่อ-นามสกุล</th>
+                  <th id="subjectHeader" class="hidden px-4 py-4 text-left font-semibold">วิชา</th>
+                  <th class="px-4 py-4 text-center font-semibold">เกรด</th>
+                  <th class="px-4 py-4 text-center font-semibold">ภาค/ปีการศึกษา</th>
+                  <th class="px-4 py-4 text-center font-semibold">สถานะ</th>
+                  <th class="px-4 py-4 text-left font-semibold">หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody id="resultTable" class="divide-y divide-line bg-white"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="previewModal" class="fixed inset-0 z-50 hidden bg-slate-950/65 p-4">
+    <div class="mx-auto flex min-h-full max-w-6xl items-center justify-center">
+      <div class="w-full overflow-hidden rounded-[2rem] bg-canvas shadow-2xl">
+        <div class="flex flex-col gap-3 border-b border-line px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p class="text-sm text-muted">ตัวอย่างรายงานก่อนดาวน์โหลด</p>
+            <h3 id="previewTitle" class="text-lg font-semibold text-ink">Student List by Subject</h3>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            <button id="downloadButton" class="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">Download File</button>
+            <button id="closeModal" class="rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surfaceSoft">ปิด</button>
+          </div>
+        </div>
+
+        <div class="max-h-[85vh] overflow-auto bg-canvas p-6 lg:p-10">
+          <div class="mx-auto max-w-4xl rounded-[2rem] border border-slate-300 bg-white p-8 text-slate-700 shadow-sm lg:p-10">
+            <div class="flex items-start justify-between gap-6">
+              <div class="flex items-center gap-4">
+                <div class="flex h-16 w-16 items-center justify-center rounded-full border border-slate-300 bg-slate-50 text-xl font-bold text-brand">AR</div>
+                <div>
+                  <p id="reportSchool" class="text-sm font-medium text-slate-500">โรงเรียนเทศบาลนครปากพูน</p>
+                  <h4 id="reportHeading" class="mt-1 text-xl font-semibold text-slate-900">รายชื่อนักเรียนสอบซ่อม-รายวิชา</h4>
+                  <p id="reportSubHeading" class="mt-2 text-sm text-slate-600">ภาคเรียนที่ 1 ปีการศึกษา 2568</p>
+                </div>
+              </div>
+              <div class="text-right text-xs text-slate-500">
+                <div>REF#: RG02</div>
+                <div class="mt-1">Page 1</div>
+              </div>
+            </div>
+
+            <div class="mt-6 grid gap-4 text-sm lg:grid-cols-[auto_1fr_auto_1fr]">
+              <div class="font-semibold text-slate-800">แผนการเรียน</div>
+              <div id="reportProgram">ทุกแผน</div>
+              <div class="font-semibold text-slate-800">วิชา</div>
+              <div id="reportSubject">ทุกวิชา</div>
+            </div>
+
+            <div class="mt-6 overflow-hidden rounded-2xl border border-slate-300">
+              <table class="w-full text-sm">
+                <thead class="bg-slate-50 text-slate-600">
+                  <tr class="border-b border-slate-300">
+                    <th class="px-3 py-3 text-center font-semibold">Class/Room</th>
+                    <th class="px-3 py-3 text-center font-semibold">No</th>
+                    <th class="px-3 py-3 text-left font-semibold">Student ID</th>
+                    <th class="px-3 py-3 text-left font-semibold">Name</th>
+                    <th id="previewSubjectHeader" class="hidden px-3 py-3 text-left font-semibold">Subject</th>
+                    <th class="px-3 py-3 text-center font-semibold">Grade</th>
+                    <th class="px-3 py-3 text-center font-semibold">Semester/Academic Year</th>
+                    <th class="px-3 py-3 text-left font-semibold">Remark</th>
+                  </tr>
+                </thead>
+                <tbody id="previewTable" class="divide-y divide-slate-200 bg-white"></tbody>
+              </table>
+            </div>
+
+            <div class="mt-6 flex items-center justify-between text-sm text-slate-600">
+              <p>Total <span id="previewTotal" class="font-semibold text-slate-900">0</span> Person</p>
+              <p id="previewFooter" class="font-semibold text-slate-700">End Of Report</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const records = [
+      { id: 1, year: '2568', term: '1', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/3', no: 1, studentId: '5333', nameTh: 'เด็กชายก้องนภัทร ทองนิล', nameEn: 'Master Kongnaphat Thongnin', teacher: 'อ.กมลชนก ชูเชิด', subjectCode: 'ท21101', subjectName: 'ภาษาไทย', grade: 'ร', retakeStatus: 'รอสอบซ่อม', remarkTh: '', remarkEn: '', classRoomEn: 'G.7/3' },
+      { id: 2, year: '2568', term: '1', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/3', no: 2, studentId: '5348', nameTh: 'เด็กชายสุธินันท์ แสนสมนา', nameEn: 'Master Suthinon Saensomna', teacher: 'อ.ชลธิชา ศรีสวัสดิ์', subjectCode: 'ค21101', subjectName: 'คณิตศาสตร์', grade: 'ร', retakeStatus: 'รอสอบซ่อม', remarkTh: '', remarkEn: '', classRoomEn: 'G.7/3' },
+      { id: 3, year: '2568', term: '1', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/3', no: 3, studentId: '5368', nameTh: 'เด็กหญิงศิศิณิล ประชุมญาติ', nameEn: 'Miss Sisirin Prachumyat', teacher: 'อ.ชลธิชา ศรีสวัสดิ์', subjectCode: 'ค21101', subjectName: 'คณิตศาสตร์', grade: 'ร', retakeStatus: 'สอบซ่อมแล้ว', remarkTh: 'รอประกาศผล', remarkEn: 'Awaiting result', classRoomEn: 'G.7/3' },
+      { id: 4, year: '2568', term: '1', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/3', no: 4, studentId: '5377', nameTh: 'เด็กชายธีรธริน ประราษฎร์', nameEn: 'Master Teeramet Samransuk', teacher: 'อ.ปวีณา สุดตา', subjectCode: 'ว21101', subjectName: 'วิทยาศาสตร์', grade: 'ร', retakeStatus: 'รอสอบซ่อม', remarkTh: '', remarkEn: '', classRoomEn: 'G.7/3' },
+      { id: 5, year: '2568', term: '1', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/3', no: 5, studentId: '5409', nameTh: 'เด็กชายกัณฑพัทธ์ เกื้อกลาง', nameEn: 'Master Kantawit Kaoklang', teacher: 'อ.จิราพร สุขใจ', subjectCode: 'อ21101', subjectName: 'ภาษาอังกฤษพื้นฐาน', grade: '0', retakeStatus: 'ติดตามงาน', remarkTh: 'ขาดสอบพูด', remarkEn: 'Missed speaking exam', classRoomEn: 'G.7/3' },
+      { id: 6, year: '2568', term: '1', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/3', no: 6, studentId: '5423', nameTh: 'เด็กชายปกรณ์ จันทร์หอม', nameEn: 'Master Pakorn Chanhom', teacher: 'อ.จิราพร สุขใจ', subjectCode: 'อ21101', subjectName: 'ภาษาอังกฤษพื้นฐาน', grade: '0', retakeStatus: 'ติดตามงาน', remarkTh: 'ไม่ส่ง portfolio', remarkEn: 'Portfolio missing', classRoomEn: 'G.7/3' },
+      { id: 7, year: '2568', term: '1', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/3', no: 7, studentId: '7196', nameTh: 'เด็กชายสุรศักดิ์ สุวินทะ', nameEn: 'Master Surasak Suwinta', teacher: 'อ.กมลชนก ชูเชิด', subjectCode: 'ท21101', subjectName: 'ภาษาไทย', grade: 'ร', retakeStatus: 'สอบซ่อมแล้ว', remarkTh: '', remarkEn: '', classRoomEn: 'G.7/3' },
+      { id: 8, year: '2568', term: '1', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/2', no: 1, studentId: '5281', nameTh: 'เด็กหญิงนันทิชา มีแก้ว', nameEn: 'Miss Nunticha Meekaew', teacher: 'อ.ชลธิชา ศรีสวัสดิ์', subjectCode: 'ค21101', subjectName: 'คณิตศาสตร์', grade: '0', retakeStatus: 'รอสอบซ่อม', remarkTh: 'ไม่ผ่านแบบฝึกหัดเก็บคะแนน', remarkEn: 'Incomplete coursework', classRoomEn: 'G.7/2' },
+      { id: 9, year: '2568', term: '1', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/2', no: 2, studentId: '5284', nameTh: 'เด็กชายภูวดล ศรีคำ', nameEn: 'Master Phuwadon Srikham', teacher: 'อ.ปวีณา สุดตา', subjectCode: 'ว21101', subjectName: 'วิทยาศาสตร์', grade: 'ร', retakeStatus: 'รอสอบซ่อม', remarkTh: '', remarkEn: '', classRoomEn: 'G.7/2' },
+      { id: 10, year: '2568', term: '1', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/2', no: 3, studentId: '5288', nameTh: 'เด็กหญิงพัชรีภรณ์ บุญรอด', nameEn: 'Miss Patchareeporn Boonrod', teacher: 'อ.กมลชนก ชูเชิด', subjectCode: 'ท21101', subjectName: 'ภาษาไทย', grade: '1', retakeStatus: 'สอบซ่อมแล้ว', remarkTh: 'ผ่านหลังสอบซ่อม', remarkEn: 'Passed after retake', classRoomEn: 'G.7/2' },
+      { id: 11, year: '2568', term: '1', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/4', no: 1, studentId: '5510', nameTh: 'เด็กหญิงชลธิชา ภูผา', nameEn: 'Miss Chonticha Phupha', teacher: 'อ.ชลธิชา ศรีสวัสดิ์', subjectCode: 'ค21101', subjectName: 'คณิตศาสตร์', grade: '0', retakeStatus: 'ติดตามงาน', remarkTh: 'ไม่ผ่าน quiz ต่อเนื่อง', remarkEn: 'Repeated quiz failures', classRoomEn: 'G.7/4' },
+      { id: 12, year: '2568', term: '1', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/4', no: 2, studentId: '5514', nameTh: 'เด็กชายณัฐชนน เทพสุข', nameEn: 'Master Natchanon Thepsuk', teacher: 'อ.ปวีณา สุดตา', subjectCode: 'ว21101', subjectName: 'วิทยาศาสตร์', grade: 'ร', retakeStatus: 'สอบซ่อมแล้ว', remarkTh: '', remarkEn: '', classRoomEn: 'G.7/4' },
+      { id: 13, year: '2568', term: '1', program: 'ศิลป์-ภาษา', gradeLevel: 'ม.2', classRoom: 'ม.2/1', no: 1, studentId: '6211', nameTh: 'เด็กหญิงพรนภา แก้วบุญมา', nameEn: 'Miss Pornnapa Kaewboonma', teacher: 'อ.จิราพร สุขใจ', subjectCode: 'อ22101', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', grade: '0', retakeStatus: 'รอสอบซ่อม', remarkTh: 'ไม่เข้าสอบปลายภาค', remarkEn: 'Absent from final exam', classRoomEn: 'G.8/1' },
+      { id: 14, year: '2568', term: '1', program: 'ศิลป์-ภาษา', gradeLevel: 'ม.2', classRoom: 'ม.2/1', no: 2, studentId: '6215', nameTh: 'เด็กชายธนดล พรมเมือง', nameEn: 'Master Thanadon Prommuang', teacher: 'อ.ปาริฉัตร สุดตา', subjectCode: 'ส22102', subjectName: 'ประวัติศาสตร์', grade: 'ร', retakeStatus: 'รอสอบซ่อม', remarkTh: '', remarkEn: '', classRoomEn: 'G.8/1' },
+      { id: 15, year: '2568', term: '1', program: 'ศิลป์-ภาษา', gradeLevel: 'ม.2', classRoom: 'ม.2/1', no: 3, studentId: '6220', nameTh: 'เด็กหญิงอาทิตยา คงสุข', nameEn: 'Miss Arthitaya Kongsuk', teacher: 'อ.จิราพร สุขใจ', subjectCode: 'อ22101', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', grade: '1', retakeStatus: 'สอบซ่อมแล้ว', remarkTh: 'ผ่านเกณฑ์แล้ว', remarkEn: 'Retake completed', classRoomEn: 'G.8/1' },
+      { id: 16, year: '2568', term: '1', program: 'ศิลป์-ภาษา', gradeLevel: 'ม.2', classRoom: 'ม.2/2', no: 1, studentId: '6231', nameTh: 'เด็กชายรัฐศาสตร์ พรชัย', nameEn: 'Master Rattasat Pornchai', teacher: 'อ.ปาริฉัตร สุดตา', subjectCode: 'ส22102', subjectName: 'ประวัติศาสตร์', grade: '0', retakeStatus: 'ติดตามงาน', remarkTh: 'ขาดส่งรายงานสรุปบทเรียน', remarkEn: 'Missing summary report', classRoomEn: 'G.8/2' },
+      { id: 17, year: '2568', term: '1', program: 'ศิลป์-ภาษา', gradeLevel: 'ม.2', classRoom: 'ม.2/2', no: 2, studentId: '6234', nameTh: 'เด็กหญิงสิริลักษณ์ แก้วแดง', nameEn: 'Miss Sirilak Kaewdaeng', teacher: 'อ.กมลชนก ชูเชิด', subjectCode: 'ท22101', subjectName: 'ภาษาไทยวิเคราะห์', grade: 'ร', retakeStatus: 'รอสอบซ่อม', remarkTh: '', remarkEn: '', classRoomEn: 'G.8/2' },
+      { id: 18, year: '2568', term: '2', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/4', no: 3, studentId: '5522', nameTh: 'เด็กหญิงปุณยนุช ใจดี', nameEn: 'Miss Punyanut Jaidee', teacher: 'อ.ชลธิชา ศรีสวัสดิ์', subjectCode: 'ค21102', subjectName: 'คณิตศาสตร์', grade: 'ร', retakeStatus: 'รอสอบซ่อม', remarkTh: '', remarkEn: '', classRoomEn: 'G.7/4' },
+      { id: 19, year: '2568', term: '2', program: 'วิทย์-คณิต', gradeLevel: 'ม.1', classRoom: 'ม.1/4', no: 4, studentId: '5525', nameTh: 'เด็กชายวีรภัทร ทองอินทร์', nameEn: 'Master Weerapat Thongin', teacher: 'อ.ปวีณา สุดตา', subjectCode: 'ว21102', subjectName: 'วิทยาศาสตร์', grade: '0', retakeStatus: 'ติดตามงาน', remarkTh: 'ไม่ส่งชิ้นงานทดลอง', remarkEn: 'Lab assignment missing', classRoomEn: 'G.7/4' },
+      { id: 20, year: '2568', term: '2', program: 'วิทย์-คณิต', gradeLevel: 'ม.2', classRoom: 'ม.2/3', no: 1, studentId: '6611', nameTh: 'เด็กหญิงณิชกานต์ ทองสุก', nameEn: 'Miss Nichakarn Thongsuk', teacher: 'อ.พิมพ์ชนก สายชล', subjectCode: 'ว22102', subjectName: 'วิทยาศาสตร์และเทคโนโลยี', grade: 'ร', retakeStatus: 'รอสอบซ่อม', remarkTh: '', remarkEn: '', classRoomEn: 'G.8/3' },
+      { id: 21, year: '2568', term: '2', program: 'วิทย์-คณิต', gradeLevel: 'ม.2', classRoom: 'ม.2/3', no: 2, studentId: '6615', nameTh: 'เด็กชายธนภัทร ภูรี', nameEn: 'Master Thanapat Phuree', teacher: 'อ.พิมพ์ชนก สายชล', subjectCode: 'ว22102', subjectName: 'วิทยาศาสตร์และเทคโนโลยี', grade: '1', retakeStatus: 'สอบซ่อมแล้ว', remarkTh: 'ผ่านแล้ว', remarkEn: 'Passed retake', classRoomEn: 'G.8/3' },
+      { id: 22, year: '2568', term: '2', program: 'English Program', gradeLevel: 'ม.2', classRoom: 'ม.2/2', no: 1, studentId: '4805', nameTh: 'เด็กหญิงพิมพ์ลดา ธรรมวงศ์', nameEn: 'Miss Pimlada Thammawong', teacher: 'Mr. Daniel Clark', subjectCode: 'อ22102', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', grade: '1', retakeStatus: 'สอบซ่อมแล้ว', remarkTh: 'ควรเรียนซ่อมเสริม', remarkEn: 'Recommended remedial support', classRoomEn: 'G.8/2' },
+      { id: 23, year: '2568', term: '2', program: 'English Program', gradeLevel: 'ม.2', classRoom: 'ม.2/2', no: 2, studentId: '4812', nameTh: 'เด็กชายเจษฎา สายชู', nameEn: 'Master Jetsada Saichu', teacher: 'Mr. Daniel Clark', subjectCode: 'อ22102', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', grade: '0', retakeStatus: 'รอสอบซ่อม', remarkTh: 'คะแนน speaking ต่ำ', remarkEn: 'Low speaking score', classRoomEn: 'G.8/2' },
+      { id: 24, year: '2567', term: '2', program: 'English Program', gradeLevel: 'ม.2', classRoom: 'ม.2/2', no: 3, studentId: '4821', nameTh: 'เด็กหญิงชญาภา วงศ์ทอง', nameEn: 'Miss Chayapa Wongthong', teacher: 'Ms. Sarah Lee', subjectCode: 'อ22102', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', grade: 'ร', retakeStatus: 'สอบซ่อมแล้ว', remarkTh: '', remarkEn: '', classRoomEn: 'G.8/2' }
+    ].map((item) => ({
+      ...item,
+      semesterAcademic: `${item.term}/${item.year}`,
+      subjectLabel: `${item.subjectCode} - ${item.subjectName}`
+    }));
+
+    const defaultFilters = {
+      year: '2568',
+      term: '1',
+      program: 'วิทย์-คณิต',
+      gradeLevel: 'ม.1',
+      classRoom: 'ทั้งหมด',
+      teacher: 'ทั้งหมด',
+      subject: 'ทั้งหมด'
+    };
+
+    const state = {
+      rows: [],
+      tableSearch: '',
+      tableFilter: 'ทั้งหมด',
+      tableSort: 'default',
+      previewLang: 'th'
+    };
+
+    const statusOptions = ['รอสอบซ่อม', 'สอบซ่อมแล้ว', 'ติดตามงาน'];
+
+    const els = {
+      year: document.getElementById('year'),
+      term: document.getElementById('term'),
+      program: document.getElementById('program'),
+      gradeLevel: document.getElementById('gradeLevel'),
+      classRoom: document.getElementById('classRoom'),
+      teacher: document.getElementById('teacher'),
+      subject: document.getElementById('subject'),
+      retakeStatus: document.getElementById('retakeStatus'),
+      contextSubject: document.getElementById('contextSubject'),
+      contextHint: document.getElementById('contextHint'),
+      overviewCards: document.getElementById('overviewCards'),
+      resultTable: document.getElementById('resultTable'),
+      subjectHeader: document.getElementById('subjectHeader'),
+      tableSearch: document.getElementById('tableSearch'),
+      tableFilter: document.getElementById('tableFilter'),
+      tableSort: document.getElementById('tableSort'),
+      exportToggle: document.getElementById('exportToggle'),
+      exportMenu: document.getElementById('exportMenu'),
+      previewModal: document.getElementById('previewModal'),
+      previewTitle: document.getElementById('previewTitle'),
+      previewTable: document.getElementById('previewTable'),
+      previewSubjectHeader: document.getElementById('previewSubjectHeader'),
+      previewTotal: document.getElementById('previewTotal'),
+      reportHeading: document.getElementById('reportHeading'),
+      reportSubHeading: document.getElementById('reportSubHeading'),
+      reportProgram: document.getElementById('reportProgram'),
+      reportSubject: document.getElementById('reportSubject'),
+      reportSchool: document.getElementById('reportSchool'),
+      previewFooter: document.getElementById('previewFooter')
+    };
+
+    function uniqueValues(key, filters = {}) {
+      return [...new Set(records
+        .filter((item) => Object.entries(filters).every(([filterKey, value]) => value === 'ทั้งหมด' || item[filterKey] === value))
+        .map((item) => item[key]))];
+    }
+
+    function fillSelect(selectEl, values, includeAll = true) {
+      const options = [];
+      if (includeAll) {
+        options.push('<option value="ทั้งหมด">ทั้งหมด</option>');
+      }
+      values.sort((a, b) => a.localeCompare(b, 'th')).forEach((value) => {
+        options.push(`<option value="${value}">${value}</option>`);
+      });
+      selectEl.innerHTML = options.join('');
+    }
+
+    function initializeFilters() {
+      fillSelect(els.program, uniqueValues('program', { year: defaultFilters.year, term: defaultFilters.term }), false);
+      fillSelect(els.gradeLevel, uniqueValues('gradeLevel', { year: defaultFilters.year, term: defaultFilters.term, program: defaultFilters.program }), false);
+      fillSelect(els.classRoom, uniqueValues('classRoom', { year: defaultFilters.year, term: defaultFilters.term, program: defaultFilters.program, gradeLevel: defaultFilters.gradeLevel }), true);
+      fillSelect(els.teacher, uniqueValues('teacher', { year: defaultFilters.year, term: defaultFilters.term, program: defaultFilters.program, gradeLevel: defaultFilters.gradeLevel, classRoom: defaultFilters.classRoom }), true);
+      fillSelect(els.subject, uniqueValues('subjectName', { year: defaultFilters.year, term: defaultFilters.term, program: defaultFilters.program, gradeLevel: defaultFilters.gradeLevel, classRoom: defaultFilters.classRoom, teacher: defaultFilters.teacher }), true);
+
+      els.year.value = defaultFilters.year;
+      els.term.value = defaultFilters.term;
+      els.program.value = defaultFilters.program;
+      els.gradeLevel.value = defaultFilters.gradeLevel;
+      els.classRoom.value = defaultFilters.classRoom;
+      els.teacher.value = defaultFilters.teacher;
+      els.subject.value = defaultFilters.subject;
+      els.retakeStatus.value = 'ทั้งหมด';
+    }
+
+    function syncDependentOptions() {
+      const year = els.year.value;
+      const term = els.term.value;
+      const currentProgram = els.program.value;
+      const currentGradeLevel = els.gradeLevel.value;
+      const currentClassRoom = els.classRoom.value;
+      const currentTeacher = els.teacher.value;
+      const currentSubject = els.subject.value;
+
+      const programs = uniqueValues('program', { year, term });
+      fillSelect(els.program, programs, false);
+      els.program.value = programs.includes(currentProgram) ? currentProgram : programs[0];
+
+      const gradeLevels = uniqueValues('gradeLevel', { year, term, program: els.program.value });
+      fillSelect(els.gradeLevel, gradeLevels, false);
+      els.gradeLevel.value = gradeLevels.includes(currentGradeLevel) ? currentGradeLevel : gradeLevels[0];
+
+      const classRooms = uniqueValues('classRoom', { year, term, program: els.program.value, gradeLevel: els.gradeLevel.value });
+      fillSelect(els.classRoom, classRooms, true);
+      els.classRoom.value = currentClassRoom === 'ทั้งหมด' || classRooms.includes(currentClassRoom) ? currentClassRoom : 'ทั้งหมด';
+
+      const teachers = uniqueValues('teacher', {
+        year,
+        term,
+        program: els.program.value,
+        gradeLevel: els.gradeLevel.value,
+        classRoom: els.classRoom.value
+      });
+      fillSelect(els.teacher, teachers, true);
+      els.teacher.value = currentTeacher === 'ทั้งหมด' || teachers.includes(currentTeacher) ? currentTeacher : 'ทั้งหมด';
+
+      const subjects = uniqueValues('subjectName', {
+        year,
+        term,
+        program: els.program.value,
+        gradeLevel: els.gradeLevel.value,
+        classRoom: els.classRoom.value,
+        teacher: els.teacher.value
+      });
+      fillSelect(els.subject, subjects, true);
+      els.subject.value = currentSubject === 'ทั้งหมด' || subjects.includes(currentSubject) ? currentSubject : 'ทั้งหมด';
+    }
+
+    function getFilters() {
+      return {
+        year: els.year.value,
+        term: els.term.value,
+        program: els.program.value,
+        gradeLevel: els.gradeLevel.value,
+        classRoom: els.classRoom.value,
+        teacher: els.teacher.value,
+        subject: els.subject.value,
+        retakeStatus: els.retakeStatus.value
+      };
+    }
+
+    function applyFilters() {
+      const filters = getFilters();
+      state.rows = records.filter((item) => {
+        const matchTerm = filters.term === 'ทั้งหมด' || item.term === filters.term;
+        const matchClassRoom = filters.classRoom === 'ทั้งหมด' || item.classRoom === filters.classRoom;
+        const matchTeacher = filters.teacher === 'ทั้งหมด' || item.teacher === filters.teacher;
+        const matchSubject = filters.subject === 'ทั้งหมด' || item.subjectName === filters.subject;
+        const matchStatus = filters.retakeStatus === 'ทั้งหมด' || item.retakeStatus === filters.retakeStatus;
+        return item.year === filters.year &&
+          matchTerm &&
+          item.program === filters.program &&
+          item.gradeLevel === filters.gradeLevel &&
+          matchClassRoom &&
+          matchTeacher &&
+          matchSubject &&
+          matchStatus;
+      });
+    }
+
+    function getProcessedRows() {
+      let rows = [...state.rows];
+
+      if (state.tableSearch) {
+        const keyword = state.tableSearch.toLowerCase();
+        rows = rows.filter((item) => {
+          const text = [
+            item.classRoom,
+            item.studentId,
+            item.nameTh,
+            item.teacher,
+            item.subjectCode,
+            item.subjectName,
+            item.grade,
+            item.retakeStatus,
+            item.remarkTh
+          ].join(' ').toLowerCase();
+          return text.includes(keyword);
+        });
+      }
+
+      if (state.tableFilter === 'gradeZero') {
+        rows = rows.filter((item) => item.grade === '0');
+      } else if (state.tableFilter === 'gradeR') {
+        rows = rows.filter((item) => item.grade === 'ร');
+      } else if (state.tableFilter === 'remark') {
+        rows = rows.filter((item) => item.remarkTh);
+      } else if (state.tableFilter === 'multipleSubjects') {
+        const counts = rows.reduce((acc, item) => {
+          acc[item.studentId] = (acc[item.studentId] || 0) + 1;
+          return acc;
+        }, {});
+        rows = rows.filter((item) => counts[item.studentId] > 1);
+      }
+
+      if (state.tableSort === 'classAsc') {
+        rows.sort((a, b) => `${a.classRoom}-${a.no}`.localeCompare(`${b.classRoom}-${b.no}`, 'th'));
+      } else if (state.tableSort === 'nameAsc') {
+        rows.sort((a, b) => a.nameTh.localeCompare(b.nameTh, 'th'));
+      } else if (state.tableSort === 'subjectAsc') {
+        rows.sort((a, b) => a.subjectLabel.localeCompare(b.subjectLabel, 'th'));
+      } else if (state.tableSort === 'gradeAsc') {
+        rows.sort((a, b) => a.grade.localeCompare(b.grade, 'th'));
+      }
+
+      return rows;
+    }
+
+    function renderCards(target, cards) {
+      target.innerHTML = cards.map((card) => `
+        <article class="rounded-3xl border border-line bg-white p-5">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted">${card.label}</p>
+          <p class="mt-3 text-3xl font-semibold text-ink">${card.value}</p>
+          <p class="mt-2 text-sm leading-6 text-muted">${card.hint}</p>
+        </article>
+      `).join('');
+    }
+
+    function updateSummaryCards(rows) {
+      const uniqueStudents = new Set(rows.map((item) => item.studentId)).size;
+      const uniqueSubjects = new Set(rows.map((item) => item.subjectLabel)).size;
+      const zeroGrade = rows.filter((item) => item.grade === '0').length;
+
+      renderCards(els.overviewCards, [
+        { label: 'Records', value: rows.length, hint: 'จำนวนนักเรียนสอบซ่อมตามเงื่อนไขที่กำลังแสดง' },
+        { label: 'Students', value: uniqueStudents, hint: 'นับแบบไม่ซ้ำตามเลขประจำตัวนักเรียน' },
+        { label: 'Subjects', value: uniqueSubjects, hint: 'จำนวนวิชาที่ปรากฏในผลลัพธ์' },
+        { label: 'Grade 0', value: zeroGrade, hint: 'นักเรียนที่ได้เกรด 0 และต้องติดตามเป็นพิเศษ' }
+      ]);
+    }
+
+    function getStatusBadgeClass(status) {
+      if (status === 'สอบซ่อมแล้ว') {
+        return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+      }
+      if (status === 'ติดตามงาน') {
+        return 'border-amber-200 bg-amber-50 text-amber-700';
+      }
+      return 'border-sky-200 bg-sky-50 text-sky-700';
+    }
+
+    function renderStatusCell(row) {
+      return `
+        <select data-status-id="${row.id}" class="w-full rounded-full border px-3 py-2 text-xs font-semibold outline-none focus:border-brand ${getStatusBadgeClass(row.retakeStatus)}">
+          ${statusOptions.map((status) => `<option value="${status}" ${row.retakeStatus === status ? 'selected' : ''}>${status}</option>`).join('')}
+        </select>
+      `;
+    }
+
+    function renderTable() {
+      const rows = getProcessedRows();
+      const showSubject = els.subject.value === 'ทั้งหมด';
+
+      els.subjectHeader.classList.toggle('hidden', !showSubject);
+
+      if (!rows.length) {
+        els.resultTable.innerHTML = `
+          <tr>
+            <td colspan="${showSubject ? 9 : 8}" class="px-6 py-10 text-center text-sm text-muted">
+              ไม่พบข้อมูลตามเงื่อนไขที่เลือก
+            </td>
+          </tr>
+        `;
+        updateContext(rows.length, showSubject);
+        return;
+      }
+
+      els.resultTable.innerHTML = rows.map((row) => `
+        <tr class="transition hover:bg-surfaceSoft/70">
+          <td class="px-4 py-4 text-center font-medium text-ink">${row.classRoom}</td>
+          <td class="px-4 py-4 text-center text-muted">${row.no}</td>
+          <td class="px-4 py-4 font-medium text-ink">${row.studentId}</td>
+          <td class="px-4 py-4">
+            <div class="font-medium text-ink">${row.nameTh}</div>
+            <div class="mt-1 text-xs text-muted">${row.nameEn}</div>
+          </td>
+          ${showSubject ? `<td class="px-4 py-4 text-ink"><div class="font-medium">${row.subjectCode}</div><div class="mt-1 text-xs text-muted">${row.subjectName}</div></td>` : ''}
+          <td class="px-4 py-4 text-center">
+            <span class="inline-flex min-w-10 items-center justify-center rounded-full ${row.grade === '0' ? 'bg-rose-50 text-rose-600' : 'bg-amber-50 text-amber-700'} px-3 py-1 text-xs font-semibold">${row.grade}</span>
+          </td>
+          <td class="px-4 py-4 text-center text-muted">${row.semesterAcademic}</td>
+          <td class="px-4 py-4 text-center">${renderStatusCell(row)}</td>
+          <td class="px-4 py-4 text-muted">${row.remarkTh || '-'}</td>
+        </tr>
+      `).join('');
+
+      updateContext(rows.length, showSubject);
+      bindStatusEditors();
+    }
+
+    function updateContext(totalRows, showSubject) {
+      const subjectLabel = els.subject.value === 'ทั้งหมด' ? 'ทุกวิชาในแผนที่เลือก' : els.subject.value;
+      els.contextSubject.textContent = subjectLabel;
+      els.contextHint.textContent = showSubject
+        ? `กำลังแสดง ${totalRows} รายการจากหลายวิชาใน ${els.gradeLevel.value} ${els.classRoom.value === 'ทั้งหมด' ? 'ทุกห้อง' : els.classRoom.value} จึงเปิดคอลัมน์วิชาเพื่อช่วยระบุบริบทของนักเรียนแต่ละคน`
+        : `กำลังแสดง ${totalRows} รายการสำหรับวิชาเดียวของ ${els.gradeLevel.value} สามารถ export PDF ได้ตรงตามรายวิชาที่เลือก`;
+    }
+
+    function buildPreviewRow(row, showSubject) {
+      const studentName = state.previewLang === 'th' ? row.nameTh : row.nameEn;
+      const remark = state.previewLang === 'th' ? (row.remarkTh || '-') : (row.remarkEn || '-');
+      const classRoom = state.previewLang === 'th' ? row.classRoom : row.classRoomEn;
+
+      return `
+        <tr>
+          <td class="px-3 py-3 text-center">${classRoom}</td>
+          <td class="px-3 py-3 text-center">${row.no}</td>
+          <td class="px-3 py-3">${row.studentId}</td>
+          <td class="px-3 py-3">${studentName}</td>
+          ${showSubject ? `<td class="px-3 py-3">${row.subjectLabel}</td>` : ''}
+          <td class="px-3 py-3 text-center">${row.grade}</td>
+          <td class="px-3 py-3 text-center">${row.semesterAcademic}</td>
+          <td class="px-3 py-3">${remark}</td>
+        </tr>
+      `;
+    }
+
+    function openPreview(lang) {
+      state.previewLang = lang;
+      const rows = getProcessedRows();
+      const showSubject = els.subject.value === 'ทั้งหมด';
+      const isThai = lang === 'th';
+
+      els.previewTitle.textContent = isThai ? 'ตัวอย่าง PDF ภาษาไทย' : 'English PDF Preview';
+      els.reportSchool.textContent = isThai ? 'โรงเรียนเทศบาลนครปากพูน' : 'Pakpoon Municipality School';
+      els.reportHeading.textContent = isThai ? 'รายชื่อนักเรียนสอบซ่อม-รายวิชา' : 'Student Retake-Course Report';
+      els.reportSubHeading.textContent = isThai
+        ? `ภาคเรียนที่ ${els.term.value === 'ทั้งหมด' ? 'ทุกเทอม' : els.term.value} ปีการศึกษา ${els.year.value}`
+        : `Semester ${els.term.value === 'ทั้งหมด' ? 'All' : els.term.value}   Academic Year ${Number(els.year.value) - 543}`;
+      els.reportProgram.textContent = `${els.program.value} / ${els.gradeLevel.value}${els.classRoom.value === 'ทั้งหมด' ? '' : ` / ${els.classRoom.value}`}`;
+      els.reportSubject.textContent = els.subject.value === 'ทั้งหมด' ? (isThai ? 'ทุกวิชา' : 'All Subjects') : els.subject.value;
+      els.previewFooter.textContent = isThai ? 'จบรายงาน' : 'End Of Report';
+      els.previewSubjectHeader.classList.toggle('hidden', !showSubject);
+      els.previewTotal.textContent = rows.length;
+
+      els.previewTable.innerHTML = rows.map((row) => buildPreviewRow(row, showSubject)).join('') || `
+        <tr>
+          <td colspan="${showSubject ? 8 : 7}" class="px-4 py-8 text-center text-slate-500">
+            ${isThai ? 'ไม่พบข้อมูลสำหรับส่งออก' : 'No data available for export'}
+          </td>
+        </tr>
+      `;
+
+      els.previewModal.classList.remove('hidden');
+      els.exportMenu.classList.add('hidden');
+    }
+
+    function closePreview() {
+      els.previewModal.classList.add('hidden');
+    }
+
+    function bindStatusEditors() {
+      document.querySelectorAll('[data-status-id]').forEach((select) => {
+        select.addEventListener('change', () => {
+          const row = records.find((item) => item.id === Number(select.dataset.statusId));
+          if (!row) {
+            return;
+          }
+          row.retakeStatus = select.value;
+          refreshView();
+        });
+      });
+    }
+
+    function refreshView() {
+      applyFilters();
+      updateSummaryCards(state.rows);
+      renderTable();
+    }
+
+    initializeFilters();
+    applyFilters();
+    updateSummaryCards(state.rows);
+    renderTable();
+
+    ['year', 'term'].forEach((key) => {
+      els[key].addEventListener('change', () => {
+        syncDependentOptions();
+        refreshView();
+      });
+    });
+
+    ['program', 'gradeLevel', 'classRoom', 'teacher'].forEach((key) => {
+      els[key].addEventListener('change', () => {
+        syncDependentOptions();
+        refreshView();
+      });
+    });
+
+    els.subject.addEventListener('change', refreshView);
+    els.retakeStatus.addEventListener('change', refreshView);
+
+    document.getElementById('searchButton').addEventListener('click', refreshView);
+
+    document.getElementById('resetButton').addEventListener('click', () => {
+      els.year.value = defaultFilters.year;
+      els.term.value = defaultFilters.term;
+      syncDependentOptions();
+      els.program.value = defaultFilters.program;
+      syncDependentOptions();
+      els.gradeLevel.value = defaultFilters.gradeLevel;
+      syncDependentOptions();
+      els.classRoom.value = defaultFilters.classRoom;
+      els.teacher.value = defaultFilters.teacher;
+      els.subject.value = defaultFilters.subject;
+      els.retakeStatus.value = 'ทั้งหมด';
+      els.tableSearch.value = '';
+      els.tableFilter.value = 'ทั้งหมด';
+      els.tableSort.value = 'default';
+      state.tableSearch = '';
+      state.tableFilter = 'ทั้งหมด';
+      state.tableSort = 'default';
+      refreshView();
+    });
+
+    els.tableSearch.addEventListener('input', (event) => {
+      state.tableSearch = event.target.value.trim();
+      renderTable();
+    });
+
+    els.tableFilter.addEventListener('change', (event) => {
+      state.tableFilter = event.target.value;
+      renderTable();
+    });
+
+    els.tableSort.addEventListener('change', (event) => {
+      state.tableSort = event.target.value;
+      renderTable();
+    });
+
+    els.exportToggle.addEventListener('click', () => {
+      els.exportMenu.classList.toggle('hidden');
+    });
+
+    els.exportMenu.querySelectorAll('[data-export]').forEach((button) => {
+      button.addEventListener('click', () => openPreview(button.dataset.export));
+    });
+
+    document.getElementById('closeModal').addEventListener('click', closePreview);
+
+    document.getElementById('downloadButton').addEventListener('click', () => {
+      const fileName = state.previewLang === 'th' ? 'student-list-by-subject-th.pdf' : 'student-list-by-subject-en.pdf';
+      window.alert(`Mock download: ${fileName}`);
+    });
+
+    els.previewModal.addEventListener('click', (event) => {
+      if (event.target === els.previewModal) {
+        closePreview();
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!els.exportToggle.contains(event.target) && !els.exportMenu.contains(event.target)) {
+        els.exportMenu.classList.add('hidden');
+      }
+    });
+  </script>
+</body>
+</html>
