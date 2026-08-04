@@ -21,29 +21,28 @@
       </header>
 
       <nav class="sidebar-nav" aria-label="รายการระบบ">
-        <section class="nav-group" aria-labelledby="activeSystemLabel">
-          <h3 class="nav-group-title" id="activeSystemLabel">ระบบที่ใช้งาน</h3>
+        <section class="nav-group" aria-labelledby="attendanceSystemLabel">
+          <h3 class="nav-group-title" id="attendanceSystemLabel">การเข้าเรียน</h3>
           <button class="nav-item is-active" type="button" data-system="attendance">
             <span>รายงานการเข้าเรียน</span>
-            <small>ตรวจสอบและปรับสถานะรายวัน/รายช่วงเวลา</small>
-          </button>
-          <button class="nav-item" type="button" data-system="score-subject">
-            <span>Score per Subject</span>
-            <small>รายงานผลพัฒนาผู้เรียนรายวิชา</small>
-          </button>
-          <button class="nav-item" type="button" data-system="average-score-year">
-            <span>รายงานคะแนนเฉลี่ยรายปี</span>
-            <small>สรุปคะแนนเฉลี่ยของนักเรียนตามปีการศึกษา</small>
-          </button>
-          <button class="nav-item" type="button" data-system="record-report">
-            <span>รายงานระเบียนสะสม / GPAX</span>
-            <small>ตรวจสอบผลการเรียนสะสมและสรุป GPAX ของนักเรียน</small>
           </button>
           <button class="nav-item" type="button" data-system="unable-exam">
             <span>รายงานผู้ไม่มีสิทธิ์สอบ</span>
-            <small>คัดกรองนักเรียนที่เสี่ยงเสียสิทธิ์สอบจากการเข้าเรียน</small>
           </button>
-        </section>
+        </section>
+
+        <section class="nav-group" aria-labelledby="scoreSystemLabel">
+          <h3 class="nav-group-title" id="scoreSystemLabel">คะแนน</h3>
+          <button class="nav-item" type="button" data-system="score-subject">
+            <span>Score per Subject</span>
+          </button>
+          <button class="nav-item" type="button" data-system="average-score-year">
+            <span>รายงานคะแนนเฉลี่ยรายปี</span>
+          </button>
+          <button class="nav-item" type="button" data-system="record-report">
+            <span>รายงานระเบียนสะสม / GPAX</span>
+          </button>
+        </section>
       </nav>
 
       <footer class="sidebar-footer">
