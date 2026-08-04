@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css?v=attendance-summary-first" />
 </head>
 <body>
   <div class="layout-shell">
@@ -58,9 +58,6 @@
           <div class="page-heading">
             <p class="eyebrow">ระบบรายงานสำหรับครูผู้สอน</p>
             <h1 id="pageTitle">รายงานการเข้าเรียน</h1>
-            <p class="subtitle">
-              ค้นหา ตรวจสอบ และปรับสถานะการเข้าเรียนของนักเรียนอย่างเป็นระบบ เหมาะสำหรับการใช้งานประจำวันของครูและเจ้าหน้าที่วิชาการ
-            </p>
           </div>
 
           <aside class="academic-card" aria-label="ข้อมูลภาคการเรียนปัจจุบัน">
@@ -69,20 +66,95 @@
           </aside>
         </header>
 
-        <section class="attendance-report" aria-labelledby="filterTitle">
+        <section class="attendance-report" aria-labelledby="summaryTitle">
+          <section class="results-panel" aria-labelledby="summaryTitle" id="resultsSection">
+            <div class="results-header">
+              <div>
+                <h2 class="section-title" id="summaryTitle">สรุปผลการเข้าเรียน</h2>
+                <p class="section-note" id="summaryScope">คณิตศาสตร์พื้นฐาน · ม.1/1 · กรกฎาคม 2569 · 18 คาบเรียน</p>
+                <span hidden>โหมด: <strong id="modeLabel">ดูข้อมูล</strong></span>
+                <span hidden>ช่วงข้อมูล: <strong id="periodLabel">กรกฎาคม 2569</strong></span>
+              </div>
+            </div>
+
+            <div class="summary-grid" id="summaryGrid" aria-label="ตัวเลขสรุปผล">
+              <article class="metric metric-total">
+                <p class="metric-label">นักเรียนทั้งหมด</p>
+                <p class="metric-value" id="totalStudents">32 คน</p>
+              </article>
+              <article class="metric">
+                <p class="metric-label">อัตราการเข้าเรียน</p>
+                <p class="metric-value" id="presentCount">94.6%</p>
+                <p class="metric-description" id="attendanceRateDesc">18 คาบเรียน</p>
+              </article>
+              <article class="metric">
+                <p class="metric-label">ขาดเรียน</p>
+                <p class="metric-value" id="absentCount">3 คน</p>
+                <p class="metric-description" id="absentDesc">31 คาบ</p>
+              </article>
+              <article class="metric">
+                <p class="metric-label">มาสาย</p>
+                <p class="metric-value" id="lateCount">2 คน</p>
+                <p class="metric-description" id="lateDesc">5 ครั้ง</p>
+              </article>
+              <article class="metric">
+                <p class="metric-label">การลา</p>
+                <p class="metric-value" id="leaveCount">1 คน</p>
+                <p class="metric-description" id="leaveDesc">ลากิจ 1 · ลาป่วย 0</p>
+              </article>
+              <article class="metric metric-warning">
+                <p class="metric-label">ต้องติดตาม</p>
+                <p class="metric-value" id="priorityCount">3 คน</p>
+                <p class="metric-description" id="priorityDesc">ต่ำกว่าเกณฑ์ 3 คน</p>
+              </article>
+            </div>
+
+            <section class="attendance-trend" aria-labelledby="attendanceTrendTitle">
+              <div class="insight-panel-heading">
+                <div>
+                  <h3 class="insight-title" id="attendanceTrendTitle">แนวโน้มการเข้าเรียน</h3>
+                </div>
+                <div class="trend-summary" aria-label="สรุปแนวโน้ม">
+                  <span>ค่าเฉลี่ย <strong id="trendAverage">-</strong></span>
+                  <span>สูงสุด <strong id="trendMax">-</strong></span>
+                  <span>ต่ำสุด <strong id="trendMin">-</strong></span>
+                </div>
+              </div>
+              <div class="trend-chart-wrap">
+                <svg class="trend-chart" id="attendanceTrendChart" viewBox="0 0 720 300" role="img" aria-label="กราฟแนวโน้มอัตราการเข้าเรียน"></svg>
+                <div class="trend-tooltip" id="trendTooltip" hidden></div>
+              </div>
+            </section>
+
+            <div class="attendance-insights" aria-label="นักเรียนที่ต้องติดตาม">
+              <article class="insight-panel priority-panel">
+                <div class="insight-panel-heading">
+                  <div>
+                    <h3 class="insight-title">นักเรียนที่ต้องติดตาม</h3>
+                    <p class="priority-threshold-note" id="priorityThresholdNote">อัตราการเข้าเรียนต่ำกว่า 80%</p>
+                  </div>
+                  <div class="insight-heading-actions">
+                    <strong class="insight-emphasis priority-count" id="priorityInsightCount">0 คน</strong>
+                    <button class="btn btn-secondary threshold-trigger" id="priorityThresholdBtn" type="button">ตั้งค่าเกณฑ์แจ้งเตือน</button>
+                  </div>
+                </div>
+                <div class="priority-list" id="priorityList" aria-live="polite">
+                  <div class="priority-empty">ไม่พบนักเรียนที่ต้องติดตาม<br>นักเรียนทุกคนมีเวลาเรียนผ่านเกณฑ์</div>
+                </div>
+              </article>
+            </div>
+          </section>
+
           <section class="search-panel" aria-labelledby="filterTitle">
             <div class="panel-heading">
-              <p class="section-kicker">ค้นหารายงาน</p>
-              <h2 class="section-title" id="filterTitle">เงื่อนไขการค้นหา</h2>
-              <p class="section-note">เลือกช่วงเวลาและกลุ่มนักเรียน ระบบจะสรุปผลพร้อมแสดงรายชื่อ</p>
+              <h2 class="section-title" id="filterTitle">เงื่อนไขรายงาน</h2>
             </div>
 
             <form class="filters-form" aria-label="เงื่อนไขการค้นหา">
               <section class="search-block" aria-labelledby="generalFilterTitle">
                 <div class="search-block-header">
                   <div>
-                    <p class="search-block-kicker">ตัวกรองทั่วไป</p>
-                    <h3 class="search-block-title" id="generalFilterTitle">กลุ่มนักเรียนและรายวิชา</h3>
+                    <h3 class="search-block-title" id="generalFilterTitle">กลุ่มนักเรียน</h3>
                   </div>
                 </div>
 
@@ -123,147 +195,107 @@
                     </select>
                   </div>
 
-                  <div class="field-group">
-                    <label class="field-label" for="statusFilter">กรองตามสถานะ</label>
-                    <select id="statusFilter">
-                      <option value="all">ทุกสถานะ</option>
-                      <option value="present">มาเรียน / กิจกรรม</option>
-                      <option value="late">สาย</option>
-                      <option value="absent">ขาด</option>
-                      <option value="leave">ลา / วันหยุด</option>
-                    </select>
-                  </div>
                 </div>
+
               </section>
 
-              <section class="search-block search-block-accent" aria-labelledby="timeFilterTitle">
-                <div class="search-block-header">
-                  <div>
-                    <p class="search-block-kicker">สิ่งที่ต้องค้นหา</p>
-                    <h3 class="search-block-title" id="timeFilterTitle">รูปแบบช่วงเวลา</h3>
-                  </div>
-                </div>
-
-                <div class="time-filter-layout">
-                  <div class="field-group search-type-field">
-                    <label class="field-label" for="searchType">เลือกรูปแบบช่วงเวลา</label>
-                    <select id="searchType">
-                      <option value="monthly">รายเดือน</option>
-                      <option value="semester">รายภาคเรียน</option>
-                      <option value="custom">ระบุช่วงเวลา</option>
-                    </select>
-                  </div>
-
-                  <div class="time-variant-panel" aria-live="polite">
-                    <div class="field-group period-group hidden" id="semesterGroup">
-                      <div>
-                        <label class="field-label" for="semesterYear">ปีการศึกษา</label>
-                        <select id="semesterYear"></select>
-                      </div>
-                      <div>
-                        <label class="field-label" for="semesterTerm">ภาคเรียน</label>
-                        <select id="semesterTerm">
-                          <option value="1">ภาคเรียนที่ 1</option>
-                          <option value="2">ภาคเรียนที่ 2</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <div class="field-group period-group hidden" id="customGroup">
-                      <div>
-                        <label class="field-label" for="startDate">วันที่เริ่มต้น</label>
-                        <input type="date" id="startDate" />
-                      </div>
-                      <div>
-                        <label class="field-label" for="endDate">วันที่สิ้นสุด</label>
-                        <input type="date" id="endDate" />
-                      </div>
-                    </div>
-
-                    <div class="field-group period-group" id="monthlyGroup">
-                      <div>
-                        <label class="field-label" for="monthlyYear">ปีการศึกษา</label>
-                        <select id="monthlyYear"></select>
-                      </div>
-                      <div>
-                        <label class="field-label" for="monthlyMonth">เดือน</label>
-                        <select id="monthlyMonth"></select>
-                      </div>
+              <details class="time-adjustment">
+                <summary>
+                  <span>ปรับช่วงเวลา</span>
+                  <strong id="timeFilterSummary">รายเดือน</strong>
+                </summary>
+                <section class="search-block search-block-accent time-adjustment-content" aria-labelledby="timeFilterTitle">
+                  <div class="search-block-header">
+                    <div>
+                      <h3 class="search-block-title" id="timeFilterTitle">กำหนดช่วงเวลารายงาน</h3>
                     </div>
                   </div>
-                </div>
-              </section>
+
+                  <div class="time-filter-layout">
+                    <div class="field-group search-type-field">
+                      <label class="field-label" for="searchType">รูปแบบช่วงเวลา</label>
+                      <select id="searchType">
+                        <option value="monthly">รายเดือน</option>
+                        <option value="semester" selected>รายภาคเรียน</option>
+                        <option value="custom">ระบุช่วงเวลา</option>
+                      </select>
+                    </div>
+
+                    <div class="time-variant-panel" aria-live="polite">
+                      <div class="field-group period-group hidden" id="semesterGroup">
+                        <div>
+                          <label class="field-label" for="semesterYear">ปีการศึกษา</label>
+                          <select id="semesterYear"></select>
+                        </div>
+                        <div>
+                          <label class="field-label" for="semesterTerm">ภาคเรียน</label>
+                          <select id="semesterTerm">
+                            <option value="1">ภาคเรียนที่ 1</option>
+                            <option value="2">ภาคเรียนที่ 2</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div class="field-group period-group hidden" id="customGroup">
+                        <div>
+                          <label class="field-label" for="startDate">วันที่เริ่มต้น</label>
+                          <input type="date" id="startDate" />
+                        </div>
+                        <div>
+                          <label class="field-label" for="endDate">วันที่สิ้นสุด</label>
+                          <input type="date" id="endDate" />
+                        </div>
+                      </div>
+
+                      <div class="field-group period-group" id="monthlyGroup">
+                        <div>
+                          <label class="field-label" for="monthlyYear">ปีการศึกษา</label>
+                          <select id="monthlyYear"></select>
+                        </div>
+                        <div>
+                          <label class="field-label" for="monthlyMonth">เดือน</label>
+                          <select id="monthlyMonth"></select>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </details>
             </form>
 
-            <div class="filter-actions" aria-label="คำสั่งค้นหา">
-              <button class="btn btn-secondary" id="resetFiltersBtn" type="button">ล้างเงื่อนไข</button>
-              <button class="btn btn-primary" id="searchBtn" type="button">ค้นหาข้อมูล</button>
-            </div>
           </section>
 
-          <section class="results-panel" aria-labelledby="summaryTitle" id="resultsSection">
-            <div class="results-header">
-              <div>
-                <p class="section-kicker">ผลลัพธ์รายงาน</p>
-                <h2 class="section-title" id="summaryTitle">Attendance Analysis Tool</h2>
-                <p class="section-note" id="summaryScope">สรุปภาพรวมผลการค้นหา</p>
-              </div>
-              <div class="results-meta">
-                <span>โหมด: <strong id="modeLabel">ดูข้อมูล</strong></span>
-                <span>ช่วงค้นหา: <strong id="periodLabel">-</strong></span>
-              </div>
-            </div>
-
-            <div class="view-mode-bar" aria-label="รูปแบบการแสดงผลรายงาน">
-              <div class="view-mode-group" role="tablist" aria-label="เลือกมุมมองรายงาน">
-                <button class="mode-chip is-active" id="quickViewBtn" type="button" data-view="quick" aria-pressed="true">Quick View</button>
-                <button class="mode-chip" id="reportViewBtn" type="button" data-view="report" aria-pressed="false">Report View</button>
-              </div>
-              <p class="view-mode-note" id="viewModeNote">ดูสถานะล่าสุดของนักเรียนแต่ละคนอย่างรวดเร็ว</p>
-            </div>
-
-            <div class="summary-grid" id="summaryGrid" aria-label="ตัวเลขสรุปผล">
-              <article class="metric metric-total">
-                <p class="metric-label">นักเรียนทั้งหมด</p>
-                <p class="metric-value" id="totalStudents">0</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">มาเรียน</p>
-                <p class="metric-value" id="presentCount">0</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">มาสาย</p>
-                <p class="metric-value" id="lateCount">0</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">ขาดเรียน</p>
-                <p class="metric-value" id="absentCount">0</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">ลา/อื่นๆ</p>
-                <p class="metric-value" id="leaveCount">0</p>
-              </article>
-            </div>
-
+          <section class="table-panel" aria-labelledby="tableTitle">
             <div class="table-toolbar" id="tableSection">
               <div class="table-toolbar-copy">
-                <strong class="table-toolbar-title" id="tableTitle">วิเคราะห์การเข้าเรียนรายบุคคล</strong>
-                <span class="table-toolbar-subtitle">สลับดูสถานะล่าสุดหรือดู matrix รายวัน พร้อมสรุปการมาเรียนของนักเรียนแต่ละคน</span>
+                <strong class="table-toolbar-title" id="tableTitle">รายละเอียดการเข้าเรียนรายคาบ</strong>
               </div>
               <div class="table-toolbar-actions" aria-label="คำสั่งจัดการตาราง">
-                <button class="btn btn-outline-primary" id="editBtn" type="button">แก้ไขรายบุคคล</button>
                 <button class="btn btn-secondary" id="bulkEditBtn" type="button">แก้ไขแบบกลุ่ม</button>
                 <button class="btn btn-secondary" id="saveBtn" type="button" hidden>บันทึก</button>
                 <button class="btn btn-secondary" id="exportExcelBtn" type="button">ส่งออก Excel</button>
                 <button class="btn btn-secondary" id="exportPdfBtn" type="button">ส่งออก PDF</button>
               </div>
             </div>
+            <div class="table-filter-bar" aria-label="ตัวกรองข้อมูลในตาราง">
+              <div class="table-filter-control">
+                <label for="statusFilter">สถานะการเข้าเรียน</label>
+                <select id="statusFilter">
+                  <option value="all">ทุกสถานะ</option>
+                  <option value="present">มา</option>
+                  <option value="late">สาย</option>
+                  <option value="absent">ขาด</option>
+                  <option value="leave">ลา</option>
+                </select>
+              </div>
+              <button class="btn btn-secondary table-alert-settings" id="tableThresholdBtn" type="button">ตั้งค่าเกณฑ์แจ้งเตือน · 80%</button>
+            </div>
             <div class="attendance-legend" aria-label="คำอธิบายสัญลักษณ์สถานะการเข้าเรียน">
-              <span><i class="status-dot status-dot-present">ม</i>ตรงเวลา/กิจกรรม</span>
+              <span><i class="status-dot status-dot-present">ม</i>มา</span>
               <span><i class="status-dot status-dot-late">ส</i>สาย</span>
               <span><i class="status-dot status-dot-absent">ข</i>ขาด</span>
-              <span><i class="status-dot status-dot-leave">ล</i>ลา/วันหยุด</span>
-              <span><i class="status-dot status-dot-empty">-</i>ไม่มีคาบของห้องนี้</span>
+              <span><i class="status-dot status-dot-leave">ล</i>ลา</span>
+              <span><i class="status-dot status-dot-empty">-</i>ไม่มีคาบ</span>
             </div>
             <div class="table-wrap">
               <table>
@@ -1115,6 +1147,32 @@
     </main>
   </div>
 
+  <div class="pdf-preview-modal" id="attendanceThresholdModal" hidden>
+    <div class="pdf-preview-backdrop" data-threshold-close></div>
+    <section class="pdf-preview-dialog threshold-dialog" role="dialog" aria-modal="true" aria-labelledby="attendanceThresholdTitle">
+      <header class="pdf-preview-header">
+        <div>
+          <h2 class="pdf-preview-title" id="attendanceThresholdTitle">ตั้งค่าเกณฑ์แจ้งเตือน</h2>
+          <p class="pdf-preview-subtitle">ใช้กำหนดรายการนักเรียนที่ต้องติดตามและการเน้นข้อมูลในตาราง</p>
+        </div>
+        <button class="pdf-preview-close" type="button" id="attendanceThresholdCloseBtn" aria-label="ปิดการตั้งค่าเกณฑ์">×</button>
+      </header>
+
+      <div class="threshold-dialog-body">
+        <div class="field-group">
+          <label class="field-label" for="attendanceThresholdInput">อัตราการเข้าเรียนขั้นต่ำ (%)</label>
+          <input id="attendanceThresholdInput" type="number" min="1" max="100" step="1" value="80" />
+          <p class="field-help">ค่าเริ่มต้น 80% การลาและมาสายไม่ถูกนับเป็นการขาดเรียน</p>
+        </div>
+      </div>
+
+      <footer class="pdf-preview-footer">
+        <button class="btn btn-secondary" type="button" data-threshold-close>ยกเลิก</button>
+        <button class="btn btn-primary" type="button" id="attendanceThresholdApplyBtn">บันทึกเกณฑ์</button>
+      </footer>
+    </section>
+  </div>
+
   <div class="pdf-preview-modal" id="attendancePdfModal" hidden>
     <div class="pdf-preview-backdrop" data-pdf-close></div>
     <section class="pdf-preview-dialog" role="dialog" aria-modal="true" aria-labelledby="attendancePdfTitle">
@@ -1139,7 +1197,7 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="script.js"></script>
+  <script src="script.js?v=attendance-auto-filter"></script>
   <script src="score-per-subject.js"></script>
   <script src="average-score-year.js"></script>
   <script src="record-report.js"></script>

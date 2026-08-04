@@ -21,13 +21,10 @@ const moduleLabels = {
 };
 
 const viewModeDetails = {
-  quick: {
-    label: "Quick View",
-    note: "ดูสถานะล่าสุดของนักเรียนตามผลการค้นหาจริงจากตารางเรียนและการเช็กชื่อ"
-  },
   report: {
-    label: "Report View",
-    note: "ดู attendance matrix ตามวันที่มีคาบเรียนจริง พร้อมสรุปและแนวโน้มรายคน"
+    label: "รายละเอียดรายคาบ",
+    summaryTitle: "สรุปผลการเข้าเรียน",
+    tableTitle: "รายละเอียดการเข้าเรียนรายคาบ"
   }
 };
 
@@ -46,17 +43,15 @@ const els = {
   semesterTerm: document.getElementById("semesterTerm"),
   startDate: document.getElementById("startDate"),
   endDate: document.getElementById("endDate"),
-  searchBtn: document.getElementById("searchBtn"),
-  resetFiltersBtn: document.getElementById("resetFiltersBtn"),
+  timeFilterSummary: document.getElementById("timeFilterSummary"),
   resultsSection: document.getElementById("resultsSection"),
   tableSection: document.getElementById("tableSection"),
+  summaryTitle: document.getElementById("summaryTitle"),
   summaryScope: document.getElementById("summaryScope"),
   periodLabel: document.getElementById("periodLabel"),
   modeLabel: document.getElementById("modeLabel"),
-  viewModeNote: document.getElementById("viewModeNote"),
-  quickViewBtn: document.getElementById("quickViewBtn"),
-  reportViewBtn: document.getElementById("reportViewBtn"),
   tablePlaceholder: document.getElementById("tablePlaceholder"),
+  tableTitle: document.getElementById("tableTitle"),
   attendanceThead: document.getElementById("attendanceThead"),
   attendanceTbody: document.getElementById("attendanceTbody"),
   tableWrap: document.querySelector(".table-wrap"),
@@ -65,7 +60,26 @@ const els = {
   lateCount: document.getElementById("lateCount"),
   absentCount: document.getElementById("absentCount"),
   leaveCount: document.getElementById("leaveCount"),
-  editBtn: document.getElementById("editBtn"),
+  priorityCount: document.getElementById("priorityCount"),
+  priorityInsightCount: document.getElementById("priorityInsightCount"),
+  priorityList: document.getElementById("priorityList"),
+  priorityThresholdNote: document.getElementById("priorityThresholdNote"),
+  priorityThresholdBtn: document.getElementById("priorityThresholdBtn"),
+  tableThresholdBtn: document.getElementById("tableThresholdBtn"),
+  attendanceThresholdModal: document.getElementById("attendanceThresholdModal"),
+  attendanceThresholdInput: document.getElementById("attendanceThresholdInput"),
+  attendanceThresholdCloseBtn: document.getElementById("attendanceThresholdCloseBtn"),
+  attendanceThresholdApplyBtn: document.getElementById("attendanceThresholdApplyBtn"),
+  attendanceRateDesc: document.getElementById("attendanceRateDesc"),
+  absentDesc: document.getElementById("absentDesc"),
+  lateDesc: document.getElementById("lateDesc"),
+  leaveDesc: document.getElementById("leaveDesc"),
+  priorityDesc: document.getElementById("priorityDesc"),
+  trendAverage: document.getElementById("trendAverage"),
+  trendMax: document.getElementById("trendMax"),
+  trendMin: document.getElementById("trendMin"),
+  attendanceTrendChart: document.getElementById("attendanceTrendChart"),
+  trendTooltip: document.getElementById("trendTooltip"),
   bulkEditBtn: document.getElementById("bulkEditBtn"),
   saveBtn: document.getElementById("saveBtn"),
   exportExcelBtn: document.getElementById("exportExcelBtn"),
@@ -89,14 +103,15 @@ const els = {
 const state = {
   db: null,
   maps: null,
-  viewMode: "quick",
+  viewMode: "report",
   editMode: false,
   bulkEditMode: false,
   activeModule: "attendance",
   currentScopeText: "-",
   visibleSessions: [],
   visibleStudents: [],
-  hoveredColumnKey: null
+  hoveredColumnKey: null,
+  attendanceThreshold: 80
 };
 
 function buildInlineMockDatabase() {
@@ -155,10 +170,18 @@ function buildInlineMockDatabase() {
   ];
 
   const students = [
-    { id: "student-66001", studentCode: "66001", name: "กานต์ธิดา สุขผล", classroomId: "room-m1-1", number: 1, profile: "steady" },
+    { id: "student-66001", studentCode: "66001", name: "กานต์ธิดา สุขผล", classroomId: "room-m1-1", number: 1, profile: "perfect" },
     { id: "student-66002", studentCode: "66002", name: "ธนกฤต แซ่ตั้ง", classroomId: "room-m1-1", number: 2, profile: "late" },
     { id: "student-66003", studentCode: "66003", name: "ปวีณ์นุช อินทรา", classroomId: "room-m1-1", number: 3, profile: "leave" },
-    { id: "student-66004", studentCode: "66004", name: "ภูริณัฐ ขยันดี", classroomId: "room-m1-1", number: 4, profile: "activity" },
+    { id: "student-66004", studentCode: "66004", name: "ภูริณัฐ ขยันดี", classroomId: "room-m1-1", number: 4, profile: "highAbsence" },
+    { id: "student-66009", studentCode: "66009", name: "วรัญญา พรประเสริฐ", classroomId: "room-m1-1", number: 5, profile: "occasionalAbsence" },
+    { id: "student-66010", studentCode: "66010", name: "ชนนท์ มีสุข", classroomId: "room-m1-1", number: 6, profile: "severeAbsence" },
+    { id: "student-66011", studentCode: "66011", name: "พิมพ์ชนก แสงแก้ว", classroomId: "room-m1-1", number: 7, profile: "mixedRisk" },
+    { id: "student-66012", studentCode: "66012", name: "ศิรวิชญ์ คำดี", classroomId: "room-m1-1", number: 8, profile: "sickLeave" },
+    { id: "student-66013", studentCode: "66013", name: "ณัฐณิชา วัฒนะ", classroomId: "room-m1-1", number: 9, profile: "activity" },
+    { id: "student-66014", studentCode: "66014", name: "ธีรภัทร บุญช่วย", classroomId: "room-m1-1", number: 10, profile: "steady" },
+    { id: "student-66015", studentCode: "66015", name: "อชิรญา รุ่งเรือง", classroomId: "room-m1-1", number: 11, profile: "personalLeave" },
+    { id: "student-66016", studentCode: "66016", name: "ปุณณภพ เกียรติไพบูลย์", classroomId: "room-m1-1", number: 12, profile: "borderlineAbsence" },
     { id: "student-66005", studentCode: "66005", name: "ศุภวิชญ์ เจริญผล", classroomId: "room-m1-2", number: 1, profile: "steady" },
     { id: "student-66006", studentCode: "66006", name: "ณิชกานต์ พูลทรัพย์", classroomId: "room-m1-2", number: 2, profile: "late" },
     { id: "student-66007", studentCode: "66007", name: "พชรพล สุขใจ", classroomId: "room-m1-2", number: 3, profile: "absence" },
@@ -174,11 +197,19 @@ function buildInlineMockDatabase() {
   ];
 
   const statusProfiles = {
+    perfect: ["ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
     steady: ["ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "สาย", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
     late: ["สาย", "ตรงเวลา", "สาย", "ตรงเวลา", "ตรงเวลา", "สาย", "ตรงเวลา", "ตรงเวลา"],
     absence: ["ขาด", "ตรงเวลา", "ตรงเวลา", "ขาด", "ตรงเวลา", "สาย", "ขาด", "ตรงเวลา"],
     leave: ["ลากิจ", "ตรงเวลา", "ลาป่วย", "ตรงเวลา", "ตรงเวลา", "ลากิจ", "ตรงเวลา", "ตรงเวลา"],
-    activity: ["กิจกรรม", "ตรงเวลา", "กิจกรรม", "ตรงเวลา", "ตรงเวลา", "กิจกรรม", "ตรงเวลา", "ตรงเวลา"]
+    activity: ["กิจกรรม", "ตรงเวลา", "กิจกรรม", "ตรงเวลา", "ตรงเวลา", "กิจกรรม", "ตรงเวลา", "ตรงเวลา"],
+    occasionalAbsence: ["ตรงเวลา", "ตรงเวลา", "ขาด", "ตรงเวลา", "ตรงเวลา", "สาย", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
+    borderlineAbsence: ["ขาด", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "สาย", "ขาด", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
+    highAbsence: ["ขาด", "ตรงเวลา", "ขาด", "ตรงเวลา", "สาย", "ขาด", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
+    severeAbsence: ["ขาด", "ขาด", "ตรงเวลา", "ขาด", "สาย", "ขาด", "ตรงเวลา", "ขาด", "ตรงเวลา", "ตรงเวลา"],
+    mixedRisk: ["ขาด", "สาย", "ลากิจ", "ขาด", "ตรงเวลา", "ลาป่วย", "ขาด", "สาย", "ตรงเวลา", "ตรงเวลา"],
+    sickLeave: ["ลาป่วย", "ตรงเวลา", "ตรงเวลา", "ลาป่วย", "สาย", "ตรงเวลา", "ลาป่วย", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
+    personalLeave: ["ลากิจ", "ตรงเวลา", "ลากิจ", "ตรงเวลา", "ตรงเวลา", "สาย", "ตรงเวลา", "ลากิจ", "ตรงเวลา", "ตรงเวลา"]
   };
 
   const statusRemarks = {
@@ -303,7 +334,7 @@ function getCurrentAcademicYear() {
 
 function getCurrentSemester() {
   const today = new Date();
-  const todayText = today.toISOString().slice(0, 10);
+  const todayText = formatDateInput(today);
   return state.db.semesters.find((semester) => semester.startDate <= todayText && semester.endDate >= todayText)
     || state.db.semesters[0];
 }
@@ -326,7 +357,13 @@ function populateMonths() {
   els.monthlyMonth.innerHTML = months
     .map((month, index) => `<option value="${index + 1}">${month}</option>`)
     .join("");
-  els.monthlyMonth.value = String(new Date().getMonth() + 1);
+  const latestAttendance = state.db.attendance
+    .slice()
+    .sort((a, b) => b.date.localeCompare(a.date))[0];
+  const defaultMonth = latestAttendance
+    ? String(Number(latestAttendance.date.slice(5, 7)))
+    : String(new Date().getMonth() + 1);
+  els.monthlyMonth.value = defaultMonth;
 }
 
 function populateSemesterTerms() {
@@ -341,11 +378,14 @@ function populateSemesterTerms() {
 }
 
 function populateGradeOptions() {
-  const options = state.db.grades
-    .sort((a, b) => a.order - b.order)
+  const grades = state.db.grades
+    .slice()
+    .sort((a, b) => a.order - b.order);
+  const options = grades
     .map((grade) => `<option value="${grade.id}">${grade.name}</option>`)
     .join("");
   els.classLevel.innerHTML = `<option value="all">ทุกระดับชั้น</option>${options}`;
+  els.classLevel.value = grades[0]?.id || "all";
 }
 
 function getFilteredClassroomsForControls() {
@@ -362,7 +402,8 @@ function syncRoomOptions() {
     .map((classroom) => `<option value="${classroom.id}">${classroom.name}</option>`)
     .join("")}`;
 
-  const nextValue = classrooms.some((classroom) => classroom.id === previous) ? previous : "all";
+  const fallback = els.classLevel.value === "all" ? "all" : classrooms[0]?.id || "all";
+  const nextValue = classrooms.some((classroom) => classroom.id === previous) ? previous : fallback;
   els.room.value = nextValue;
 }
 
@@ -415,7 +456,10 @@ function syncCurrentAcademicLabel() {
 }
 
 function populateFilters() {
+  const currentSemester = getCurrentSemester();
+  els.searchType.value = "semester";
   populateAcademicYears();
+  els.semesterYear.value = currentSemester.academicYearId;
   populateMonths();
   populateGradeOptions();
   syncRoomOptions();
@@ -500,12 +544,12 @@ function getStatusTone(status) {
 function getStatusAbbr(status) {
   const map = {
     "ตรงเวลา": "ม",
-    "กิจกรรม": "ก",
+    "กิจกรรม": "ม",
     "สาย": "ส",
     "ขาด": "ข",
     "ลากิจ": "ล",
-    "ลาป่วย": "ป",
-    "วันหยุด": "ห",
+    "ลาป่วย": "ล",
+    "วันหยุด": "ล",
     "-": "-"
   };
   return map[status] || status;
@@ -530,7 +574,6 @@ function buildSearchResult() {
   const selectedGradeId = els.classLevel.value;
   const selectedRoomId = els.room.value;
   const selectedSubjectId = els.subject.value;
-  const statusFilter = els.statusFilter.value;
 
   const classroomIds = new Set(
     state.db.classrooms
@@ -597,13 +640,17 @@ function buildSearchResult() {
       });
       const latestRecord = [...studentRecords].reverse()[0] || null;
       const counts = { present: 0, late: 0, absent: 0, leave: 0 };
+      const statusCounts = { personalLeave: 0, sickLeave: 0 };
       studentRecords.forEach((record) => {
         counts[normalizeStatusCategory(record.status)] += 1;
+        if (record.status === "ลากิจ") statusCounts.personalLeave += 1;
+        if (record.status === "ลาป่วย") statusCounts.sickLeave += 1;
       });
 
       const applicableSessions = sessions.filter((session) => session.classroomId === student.classroomId);
       const attendanceRateBase = Math.max(studentRecords.length, 1);
-      const attendanceRate = Math.round(((counts.present + counts.late) / attendanceRateBase) * 100);
+      const attendanceRate = Math.round(((attendanceRateBase - counts.absent) / attendanceRateBase) * 100);
+      const needsAttention = attendanceRate < state.attendanceThreshold;
       const sessionStatusMap = new Map(studentRecords.map((record) => [`${record.scheduleId}|${record.date}|${record.period}`, record]));
       const scheduleLabels = [...new Set(studentRecords.map((record) => {
         const schedule = state.maps.schedules.get(record.scheduleId);
@@ -615,21 +662,28 @@ function buildSearchResult() {
         id: student.id,
         studentCode: student.studentCode,
         name: student.name,
+        number: student.number,
         classroomId: classroom.id,
         classroomName: classroom.name,
         gradeName: grade.name,
         latestRecord,
         counts,
+        statusCounts,
         attendanceRate,
+        needsAttention,
         sessionStatusMap,
         studentRecords,
         applicableSessions,
         scheduleLabels
       };
     })
-    .filter((student) => {
-      if (statusFilter === "all") return student.studentRecords.length > 0;
-      return student.counts[statusFilter] > 0;
+    .filter((student) => student.studentRecords.length > 0)
+    .sort((a, b) => {
+      if (a.needsAttention !== b.needsAttention) return a.needsAttention ? -1 : 1;
+      if (a.attendanceRate !== b.attendanceRate) return a.attendanceRate - b.attendanceRate;
+      if (a.counts.absent !== b.counts.absent) return b.counts.absent - a.counts.absent;
+      if (a.counts.late !== b.counts.late) return b.counts.late - a.counts.late;
+      return a.studentCode.localeCompare(b.studentCode, "en");
     });
 
   return {
@@ -641,26 +695,341 @@ function buildSearchResult() {
 }
 
 function summarizeData(students) {
-  const totals = { present: 0, late: 0, absent: 0, leave: 0 };
+  const dashboard = buildAttendanceDashboardData(students);
+  const summary = dashboard.summary;
 
-  students.forEach((student) => {
-    if (state.viewMode === "quick") {
-      if (student.latestRecord) {
-        totals[normalizeStatusCategory(student.latestRecord.status)] += 1;
-      }
-      return;
-    }
-    totals.present += student.counts.present;
-    totals.late += student.counts.late;
-    totals.absent += student.counts.absent;
-    totals.leave += student.counts.leave;
+  els.totalStudents.textContent = `${summary.totalStudents} คน`;
+  els.presentCount.textContent = `${formatRate(summary.attendanceRate)}%`;
+  els.absentCount.textContent = `${summary.absentStudents} คน`;
+  els.lateCount.textContent = `${summary.lateStudents} คน`;
+  els.leaveCount.textContent = `${summary.leaveStudents} คน`;
+  els.priorityCount.textContent = `${dashboard.riskStudents.length} คน`;
+  els.attendanceRateDesc.textContent = `${summary.totalSessions} คาบเรียน`;
+  els.absentDesc.textContent = `${summary.absentPeriods} คาบ`;
+  els.lateDesc.textContent = `${summary.lateTimes} ครั้ง`;
+  els.leaveDesc.textContent = `ลากิจ ${summary.personalLeave} · ลาป่วย ${summary.sickLeave}`;
+  els.priorityDesc.textContent = `ต่ำกว่า ${state.attendanceThreshold}% · ${dashboard.riskStudents.length} คน`;
+  els.summaryScope.textContent = buildSummaryHeaderText(summary.totalSessions);
+  syncAttendanceThresholdControls();
+
+  renderAttendanceTrend(dashboard.chartPoints);
+  renderAttendanceInsights(dashboard.riskStudents);
+}
+
+function formatRate(value) {
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
+}
+
+function isRiskStudent(student) {
+  return student.attendanceRate < state.attendanceThreshold;
+}
+
+function buildAttendanceDashboardData(students) {
+  const chartPoints = buildTrendDataset(students);
+  const totalStudents = students.length;
+  const totalSessions = state.visibleSessions.length;
+  const allRecords = students.flatMap((student) => student.studentRecords);
+  const totals = countAttendanceRecords(allRecords);
+  const sourceStudents = students.map(buildStudentRiskProfile);
+  const riskStudents = sourceStudents.filter(isRiskStudent);
+
+  return {
+    summary: {
+      totalStudents,
+      totalSessions,
+      attendanceRate: totals.totalPeriods ? (totals.attendedPeriods / totals.totalPeriods) * 100 : 0,
+      absentStudents: sourceStudents.filter((student) => student.absentPeriods > 0).length,
+      absentPeriods: totals.absentPeriods,
+      lateStudents: sourceStudents.filter((student) => student.lateCount > 0).length,
+      lateTimes: totals.lateTimes,
+      leaveStudents: sourceStudents.filter((student) => student.personalLeave + student.sickLeave > 0).length,
+      personalLeave: totals.personalLeave,
+      sickLeave: totals.sickLeave
+    },
+    chartPoints,
+    riskStudents
+  };
+}
+
+function countAttendanceRecords(records) {
+  return records.reduce((totals, record) => {
+    const category = normalizeStatusCategory(record.status);
+    totals.totalPeriods += 1;
+    if (category === "present") totals.presentPeriods += 1;
+    if (category === "late") totals.lateTimes += 1;
+    if (category === "absent") totals.absentPeriods += 1;
+    if (record.status === "ลากิจ") totals.personalLeave += 1;
+    if (record.status === "ลาป่วย") totals.sickLeave += 1;
+    if (category !== "absent") totals.attendedPeriods += 1;
+    return totals;
+  }, {
+    totalPeriods: 0,
+    presentPeriods: 0,
+    attendedPeriods: 0,
+    absentPeriods: 0,
+    lateTimes: 0,
+    personalLeave: 0,
+    sickLeave: 0
   });
+}
 
-  els.totalStudents.textContent = String(students.length);
-  els.presentCount.textContent = String(totals.present);
-  els.lateCount.textContent = String(totals.late);
-  els.absentCount.textContent = String(totals.absent);
-  els.leaveCount.textContent = String(totals.leave);
+function buildStudentRiskProfile(student) {
+  return {
+    id: student.id,
+    name: student.name,
+    classroomName: student.classroomName,
+    number: student.number,
+    attendanceRate: student.attendanceRate,
+    absentPeriods: student.counts.absent,
+    lateCount: student.counts.late,
+    personalLeave: student.statusCounts.personalLeave,
+    sickLeave: student.statusCounts.sickLeave
+  };
+}
+
+function buildTrendDataset(students) {
+  if (els.searchType.value === "semester") return buildSemesterTrendDataset(students);
+  if (els.searchType.value === "monthly") return buildMonthlyTrendDataset(students);
+  return buildDateRangeTrendDataset(students);
+}
+
+function buildDateRangeTrendDataset(students) {
+  const dates = [...new Set(state.visibleSessions.map((session) => session.date))]
+    .sort((a, b) => a.localeCompare(b));
+
+  return dates.map((date) => {
+    const sessionCount = Math.max(state.visibleSessions.filter((session) => session.date === date).length, 1);
+    const records = students.flatMap((student) => student.studentRecords.filter((record) => record.date === date));
+    return buildTrendPoint(formatThaiShortDate(date), sessionCount, records);
+  });
+}
+
+function buildMonthlyTrendDataset(students) {
+  const points = [1, 2, 3, 4, 5].map((weekNumber) => {
+    const sessions = state.visibleSessions.filter((session) => getWeekOfMonth(session.date) === weekNumber);
+    const sessionKeys = new Set(sessions.map((session) => session.key));
+    const records = students.flatMap((student) => student.studentRecords.filter((record) => {
+      const key = `${record.scheduleId}|${record.date}|${record.period}`;
+      return sessionKeys.has(key);
+    }));
+    return buildTrendPoint(`สัปดาห์ที่ ${weekNumber}`, sessions.length, records);
+  });
+  return points.filter((point) => point.sessionCount > 0);
+}
+
+function buildSemesterTrendDataset(students) {
+  const semester = state.maps.semesters.get(els.semesterTerm.value) || getCurrentSemester();
+  const academicYear = state.maps.academicYears.get(semester.academicYearId);
+  const gregorianYear = Number(academicYear.name) - 543;
+  const startMonth = Number(semester.startDate.slice(5, 7));
+  const endMonth = Number(semester.endDate.slice(5, 7));
+  const months = [];
+  for (let month = startMonth; month <= endMonth; month += 1) {
+    months.push(month);
+  }
+
+  const points = months.map((month) => {
+    const monthText = new Date(gregorianYear, month - 1, 1).toLocaleDateString("th-TH", { month: "long" });
+    const monthKey = String(month).padStart(2, "0");
+    const sessions = state.visibleSessions.filter((session) => session.date.slice(5, 7) === monthKey);
+    const sessionKeys = new Set(sessions.map((session) => session.key));
+    const records = students.flatMap((student) => student.studentRecords.filter((record) => {
+      const key = `${record.scheduleId}|${record.date}|${record.period}`;
+      return sessionKeys.has(key);
+    }));
+    return buildTrendPoint(monthText, sessions.length, records);
+  });
+  return points.filter((point) => point.sessionCount > 0);
+}
+
+function getWeekOfMonth(dateString) {
+  const day = Number(dateString.slice(8, 10));
+  return Math.min(Math.ceil(day / 7), 5);
+}
+
+function buildTrendPoint(label, sessionCount, records) {
+  const totals = countAttendanceRecords(records);
+  return {
+    label,
+    sessionCount,
+    totalPeriods: totals.totalPeriods,
+    presentPeriods: totals.presentPeriods,
+    attendedPeriods: totals.attendedPeriods,
+    absentPeriods: totals.absentPeriods,
+    lateTimes: totals.lateTimes,
+    rate: totals.totalPeriods ? (totals.attendedPeriods / totals.totalPeriods) * 100 : 0
+  };
+}
+
+function getSelectedOptionText(element, fallback) {
+  return element.options[element.selectedIndex]?.text || fallback;
+}
+
+function getSummarySubjectLabel() {
+  if (els.subject.value === "subject-math") return "คณิตศาสตร์พื้นฐาน";
+  const subjectText = getSelectedOptionText(els.subject, "ทุกวิชา");
+  return subjectText.includes(" - ") ? subjectText.split(" - ").slice(1).join(" - ") : subjectText;
+}
+
+function getSummaryRoomLabel() {
+  return getSelectedOptionText(els.room, "ทุกห้อง");
+}
+
+function buildSummaryPeriodLabel() {
+  if (els.searchType.value === "monthly") {
+    const academicYear = state.maps.academicYears.get(els.monthlyYear.value);
+    const monthText = els.monthlyMonth.options[els.monthlyMonth.selectedIndex]?.text || "กรกฎาคม";
+    return `${monthText} ${academicYear.name}`;
+  }
+
+  if (els.searchType.value === "semester") {
+    const semester = state.maps.semesters.get(els.semesterTerm.value);
+    const academicYear = state.maps.academicYears.get(semester.academicYearId);
+    return `ภาคเรียนที่ ${semester.term}/${academicYear.name}`;
+  }
+
+  const start = formatThaiShortDate(els.startDate.value);
+  const end = formatThaiShortDate(els.endDate.value);
+  return `${start} - ${end}`;
+}
+
+function buildSummaryHeaderText(totalSessions) {
+  return `${getSummarySubjectLabel()} · ${getSummaryRoomLabel()} · ${buildSummaryPeriodLabel()} · ${totalSessions} คาบเรียน`;
+}
+
+function renderAttendanceTrend(points) {
+  hideTrendTooltip();
+
+  if (!points.length) {
+    els.attendanceTrendChart.innerHTML = `<text class="trend-axis-label" x="360" y="152" text-anchor="middle">ไม่มีข้อมูลคาบเรียนในเงื่อนไขที่เลือก</text>`;
+    els.trendAverage.textContent = "-";
+    els.trendMax.textContent = "-";
+    els.trendMin.textContent = "-";
+    return;
+  }
+
+  const totalPeriods = points.reduce((sum, point) => sum + point.totalPeriods, 0);
+  const totalAttended = points.reduce((sum, point) => sum + point.attendedPeriods, 0);
+  const average = totalPeriods ? (totalAttended / totalPeriods) * 100 : 0;
+  const max = Math.max(...points.map((point) => point.rate));
+  const min = Math.min(...points.map((point) => point.rate));
+
+  els.trendAverage.textContent = `${formatRate(average)}%`;
+  els.trendMax.textContent = `${formatRate(max)}%`;
+  els.trendMin.textContent = `${formatRate(min)}%`;
+
+  const width = Math.max(720, Math.round(els.attendanceTrendChart.clientWidth || 720));
+  const height = 300;
+  const padding = { top: 24, right: 28, bottom: 58, left: 46 };
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  const xStep = points.length > 1 ? chartWidth / (points.length - 1) : chartWidth;
+  const yForRate = (rate) => padding.top + chartHeight - ((rate / 100) * chartHeight);
+  const pointCoords = points.map((point, index) => ({
+    ...point,
+    x: padding.left + (points.length > 1 ? index * xStep : chartWidth / 2),
+    y: yForRate(point.rate)
+  }));
+  const path = pointCoords.map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.y.toFixed(2)}`).join(" ");
+  const yTicks = [0, 25, 50, 75, 100];
+
+  els.attendanceTrendChart.setAttribute("viewBox", `0 0 ${width} ${height}`);
+  els.attendanceTrendChart.innerHTML = `
+    ${yTicks.map((tick) => {
+      const y = yForRate(tick);
+      return `
+        <line class="trend-grid-line" x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}"></line>
+        <text class="trend-axis-label" x="${padding.left - 10}" y="${y + 4}" text-anchor="end">${tick}%</text>
+      `;
+    }).join("")}
+    <path class="trend-line" d="${path}"></path>
+    ${pointCoords.map((point, index) => `
+      <g class="trend-point-group" data-index="${index}">
+        <circle class="trend-hit-area" cx="${point.x}" cy="${point.y}" r="14"></circle>
+        <circle class="trend-point" cx="${point.x}" cy="${point.y}" r="5.5"></circle>
+        <text class="trend-axis-label trend-x-label" x="${point.x}" y="${height - 16}" text-anchor="middle">${point.label}</text>
+      </g>
+    `).join("")}
+  `;
+
+  els.attendanceTrendChart.querySelectorAll(".trend-point-group").forEach((node) => {
+    const point = { ...pointCoords[Number(node.dataset.index)], chartWidth: width };
+    node.addEventListener("pointerenter", () => showTrendTooltip(point));
+    node.addEventListener("pointermove", () => showTrendTooltip(point));
+    node.addEventListener("pointerleave", hideTrendTooltip);
+    node.addEventListener("pointercancel", hideTrendTooltip);
+    node.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      showTrendTooltip(point);
+      window.clearTimeout(showTrendTooltip.timer);
+      showTrendTooltip.timer = window.setTimeout(hideTrendTooltip, 1400);
+    });
+  });
+}
+
+function hideTrendTooltip() {
+  window.clearTimeout(showTrendTooltip.timer);
+  els.trendTooltip.hidden = true;
+}
+
+function showTrendTooltip(point) {
+  window.clearTimeout(showTrendTooltip.timer);
+  els.trendTooltip.innerHTML = `
+    <strong>${point.label}</strong>
+    <span>อัตราการเข้าเรียน ${formatRate(point.rate)}%</span>
+    <span>มาเรียน ${point.presentPeriods} คาบ</span>
+    <span>ขาด ${point.absentPeriods} คาบ</span>
+    <span>มาสาย ${point.lateTimes} ครั้ง</span>
+  `;
+  els.trendTooltip.style.left = `${Math.min(Math.max((point.x / point.chartWidth) * 100, 12), 88)}%`;
+  els.trendTooltip.style.top = `${Math.max(point.y - 12, 24)}px`;
+  els.trendTooltip.hidden = false;
+}
+
+function renderAttendanceInsights(priorityStudents) {
+  els.priorityInsightCount.textContent = `${priorityStudents.length} คน`;
+
+  if (!priorityStudents.length) {
+    els.priorityList.innerHTML = `<div class="priority-empty">ไม่พบนักเรียนที่ต้องติดตาม<br>นักเรียนทุกคนมีเวลาเรียนผ่านเกณฑ์</div>`;
+    return;
+  }
+
+  els.priorityList.innerHTML = priorityStudents.map((student) => {
+    return `
+      <a class="priority-item priority-item-link" href="#attendance-student-${student.id}" data-student-id="${student.id}">
+        <div class="priority-student">
+          <strong>${student.name}</strong>
+          <span>${student.classroomName} · เลขที่ ${student.number}</span>
+        </div>
+        <div class="priority-metrics" aria-label="ข้อมูลการเข้าเรียนของ ${student.name}">
+          <span class="priority-metric priority-metric-rate"><small>เข้าเรียน</small><strong>${student.attendanceRate}%</strong></span>
+          <span class="priority-metric"><small>ขาด</small><strong>${student.absentPeriods} คาบ</strong></span>
+          <span class="priority-metric"><small>มาสาย</small><strong>${student.lateCount} ครั้ง</strong></span>
+        </div>
+        <span class="priority-link-label">ดูในตาราง <span aria-hidden="true">→</span></span>
+      </a>
+    `;
+  }).join("");
+}
+
+function jumpToAttendanceStudent(event) {
+  const link = event.target.closest(".priority-item-link");
+  if (!link) return;
+  event.preventDefault();
+
+  if (els.statusFilter.value !== "all") {
+    els.statusFilter.value = "all";
+    renderTable();
+  }
+
+  const row = document.getElementById(`attendance-student-${link.dataset.studentId}`);
+  if (!row) return;
+  row.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+  row.classList.add("is-jump-target");
+  window.clearTimeout(jumpToAttendanceStudent.timer);
+  jumpToAttendanceStudent.timer = window.setTimeout(() => {
+    row.classList.remove("is-jump-target");
+  }, 1800);
 }
 
 function getViewScopeLabel() {
@@ -669,7 +1038,7 @@ function getViewScopeLabel() {
 
 function syncResultsMeta() {
   els.periodLabel.textContent = state.currentScopeText;
-  els.summaryScope.textContent = `${state.currentScopeText} | ${state.visibleSessions.length} คาบเรียนจริง | ${getViewScopeLabel()}`;
+  els.timeFilterSummary.textContent = state.currentScopeText;
 }
 
 function renderQuickHeader() {
@@ -736,13 +1105,32 @@ function renderEmptyState(message, colSpan) {
   `;
 }
 
+function getTableStudents() {
+  const status = els.statusFilter.value;
+  if (status === "all") return state.visibleStudents;
+  return state.visibleStudents.filter((student) => student.counts[status] > 0);
+}
+
+function getStudentAttendanceHighlights(student) {
+  const totalPeriods = student.studentRecords.length;
+  const absentRate = totalPeriods ? (student.counts.absent / totalPeriods) * 100 : 0;
+  return {
+    absent: absentRate > (100 - state.attendanceThreshold),
+    late: student.counts.late > 0,
+    leave: student.counts.leave > 0
+  };
+}
+
 function renderQuickRows() {
-  if (!state.visibleStudents.length) {
-    renderEmptyState("ไม่พบข้อมูลที่ตรงกับเงื่อนไขและตารางเรียนจริง", 11);
+  const tableStudents = getTableStudents();
+  if (!tableStudents.length) {
+    renderEmptyState("ไม่พบรายการที่ตรงกับสถานะที่เลือก", 11);
     return;
   }
 
-  els.attendanceTbody.innerHTML = state.visibleStudents.map((student, index) => {
+  els.attendanceTbody.innerHTML = tableStudents.map((student) => {
+    const index = state.visibleStudents.indexOf(student);
+    const highlights = getStudentAttendanceHighlights(student);
     const latestStatus = student.latestRecord ? student.latestRecord.status : "-";
     const latestLabel = student.latestRecord
       ? `${formatThaiShortDate(student.latestRecord.date)} / คาบ ${student.latestRecord.period}`
@@ -755,7 +1143,7 @@ function renderQuickRows() {
       : `<span class="status-chip" data-status="${latestStatus}">${latestStatus}</span>`;
 
     return `
-      <tr>
+      <tr id="attendance-student-${student.id}" class="attendance-student-row">
         <td class="sticky-col sticky-col-id">${student.studentCode}</td>
         <td class="sticky-col sticky-col-name">
           <div class="student-cell">
@@ -768,22 +1156,24 @@ function renderQuickRows() {
         <td>${latestLabel}</td>
         <td>${statusCell}</td>
         <td>${student.counts.present}</td>
-        <td>${student.counts.late}</td>
-        <td>${student.counts.absent}</td>
-        <td>${student.counts.leave}</td>
-        <td><span class="rate-chip">${student.attendanceRate}%</span></td>
+        <td class="${highlights.late ? "attendance-cell-highlight-late" : ""}">${student.counts.late}</td>
+        <td class="${highlights.absent ? "attendance-cell-highlight-absent" : ""}">${student.counts.absent}</td>
+        <td class="${highlights.leave ? "attendance-cell-highlight-leave" : ""}">${student.counts.leave}</td>
+        <td><span class="rate-chip ${student.needsAttention ? "rate-chip-alert" : ""}">${student.attendanceRate}%</span></td>
       </tr>
     `;
   }).join("");
 }
 
 function renderReportRows() {
-  if (!state.visibleStudents.length) {
+  const tableStudents = getTableStudents();
+  if (!tableStudents.length) {
     renderEmptyState("ไม่พบข้อมูลที่ตรงกับเงื่อนไขและตารางเรียนจริง", 8 + state.visibleSessions.length);
     return;
   }
 
-  els.attendanceTbody.innerHTML = state.visibleStudents.map((student) => {
+  els.attendanceTbody.innerHTML = tableStudents.map((student) => {
+    const highlights = getStudentAttendanceHighlights(student);
     const sessionCells = state.visibleSessions.map((session, index) => {
       const record = student.sessionStatusMap.get(session.key);
       const isApplicable = session.classroomId === student.classroomId;
@@ -804,15 +1194,22 @@ function renderReportRows() {
         `;
       }
 
+      const tone = getStatusTone(status);
+      const highlightClass = tone === "late"
+        ? "attendance-cell-highlight-late"
+        : tone === "leave"
+          ? "attendance-cell-highlight-leave"
+          : tone === "absent" && highlights.absent ? "attendance-cell-highlight-absent" : "";
+
       return `
-        <td class="matrix-cell ${isApplicable ? "" : "matrix-cell-muted"}" data-col-key="session-${index}">
+        <td class="matrix-cell ${isApplicable ? "" : "matrix-cell-muted"} ${highlightClass}" data-col-key="session-${index}">
           <span class="status-dot status-dot-${getStatusTone(status)}" title="${displayTitle}" aria-label="${displayTitle}">${getStatusAbbr(status)}</span>
         </td>
       `;
     }).join("");
 
     return `
-      <tr>
+      <tr id="attendance-student-${student.id}" class="attendance-student-row">
         <td class="sticky-col sticky-col-id">${student.studentCode}</td>
         <td class="sticky-col sticky-col-name">
           <div class="student-cell">
@@ -823,10 +1220,10 @@ function renderReportRows() {
         <td>${student.gradeName} / ${student.classroomName}</td>
         ${sessionCells}
         <td class="report-summary-cell sticky-summary-present">${student.counts.present}</td>
-        <td class="report-summary-cell sticky-summary-late">${student.counts.late}</td>
-        <td class="report-summary-cell sticky-summary-absent">${student.counts.absent}</td>
-        <td class="report-summary-cell sticky-summary-leave">${student.counts.leave}</td>
-        <td class="report-summary-cell sticky-summary-rate"><span class="rate-chip">${student.attendanceRate}%</span></td>
+        <td class="report-summary-cell sticky-summary-late ${highlights.late ? "attendance-cell-highlight-late" : ""}">${student.counts.late}</td>
+        <td class="report-summary-cell sticky-summary-absent ${highlights.absent ? "attendance-cell-highlight-absent" : ""}">${student.counts.absent}</td>
+        <td class="report-summary-cell sticky-summary-leave ${highlights.leave ? "attendance-cell-highlight-leave" : ""}">${student.counts.leave}</td>
+        <td class="report-summary-cell sticky-summary-rate"><span class="rate-chip ${student.needsAttention ? "rate-chip-alert" : ""}">${student.attendanceRate}%</span></td>
       </tr>
     `;
   }).join("");
@@ -846,27 +1243,16 @@ function renderTable() {
     return;
   }
 
-  if (state.viewMode === "quick") {
-    renderQuickHeader();
-    renderQuickRows();
-    return;
-  }
-
   renderReportHeader();
   renderReportRows();
 }
 
 function syncModeControls() {
   const modeMeta = viewModeDetails[state.viewMode];
-  els.modeLabel.textContent = state.editMode ? "แก้ไขรายบุคคล" : state.bulkEditMode ? "แก้ไขแบบกลุ่ม" : modeMeta.label;
-  els.viewModeNote.textContent = modeMeta.note;
-  els.quickViewBtn.classList.toggle("is-active", state.viewMode === "quick");
-  els.reportViewBtn.classList.toggle("is-active", state.viewMode === "report");
-  els.quickViewBtn.setAttribute("aria-pressed", String(state.viewMode === "quick"));
-  els.reportViewBtn.setAttribute("aria-pressed", String(state.viewMode === "report"));
-  els.editBtn.hidden = state.editMode || state.bulkEditMode;
-  els.saveBtn.hidden = !(state.editMode || state.bulkEditMode);
-  els.editBtn.disabled = state.viewMode !== "quick" || state.bulkEditMode;
+  els.modeLabel.textContent = state.bulkEditMode ? "แก้ไขแบบกลุ่ม" : modeMeta.label;
+  els.summaryTitle.textContent = modeMeta.summaryTitle;
+  els.tableTitle.textContent = modeMeta.tableTitle;
+  els.saveBtn.hidden = !state.bulkEditMode;
   els.bulkEditBtn.disabled = state.viewMode !== "report";
   els.bulkEditBtn.textContent = state.bulkEditMode ? "ยกเลิกแก้ไขกลุ่ม" : "แก้ไขแบบกลุ่ม";
   els.bulkEditBtn.classList.toggle("is-active", state.bulkEditMode);
@@ -885,7 +1271,15 @@ function searchData() {
   syncModeControls();
   els.resultsSection.hidden = false;
   els.tableSection.hidden = false;
-  els.tablePlaceholder.hidden = true;
+  if (els.tablePlaceholder) {
+    els.tablePlaceholder.hidden = true;
+  }
+}
+
+function refreshAttendanceResults() {
+  if (state.activeModule === "attendance" && state.db) {
+    searchData();
+  }
 }
 
 function toggleEditMode(force) {
@@ -1099,6 +1493,40 @@ function openReportPreviewModal(options) {
   els.attendancePdfCloseBtn.focus();
 }
 
+function syncAttendanceThresholdControls() {
+  const label = `${state.attendanceThreshold}%`;
+  els.priorityThresholdNote.textContent = `อัตราการเข้าเรียนต่ำกว่า ${label}`;
+  els.priorityThresholdBtn.textContent = "ตั้งค่าเกณฑ์แจ้งเตือน";
+  els.tableThresholdBtn.textContent = `ตั้งค่าเกณฑ์แจ้งเตือน · ${label}`;
+}
+
+function openAttendanceThresholdSettings() {
+  els.attendanceThresholdInput.value = String(state.attendanceThreshold);
+  els.attendanceThresholdModal.hidden = false;
+  document.body.classList.add("modal-open");
+  els.attendanceThresholdInput.focus();
+  els.attendanceThresholdInput.select();
+}
+
+function closeAttendanceThresholdSettings() {
+  els.attendanceThresholdModal.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+function applyAttendanceThreshold() {
+  const threshold = Number(els.attendanceThresholdInput.value);
+  if (!Number.isFinite(threshold) || threshold < 1 || threshold > 100) {
+    setToast("กรุณาระบุเกณฑ์ตั้งแต่ 1 ถึง 100%", "info");
+    els.attendanceThresholdInput.focus();
+    return;
+  }
+
+  state.attendanceThreshold = Math.round(threshold);
+  closeAttendanceThresholdSettings();
+  searchData();
+  setToast(`ปรับเกณฑ์การเข้าเรียนเป็น ${state.attendanceThreshold}% แล้ว`, "info");
+}
+
 function closeAttendancePdfPreview() {
   els.attendancePdfModal.hidden = true;
   document.body.classList.remove("modal-open");
@@ -1111,24 +1539,6 @@ function mockPdfDownload() {
 }
 
 window.openReportPreviewModal = openReportPreviewModal;
-
-function resetFilters() {
-  const currentYear = getCurrentAcademicYear();
-  els.classLevel.value = "all";
-  syncRoomOptions();
-  syncSubjectOptions();
-  els.room.value = "all";
-  els.subject.value = "all";
-  els.statusFilter.value = "all";
-  els.searchType.value = "monthly";
-  els.monthlyYear.value = currentYear.id;
-  els.semesterYear.value = currentYear.id;
-  populateSemesterTerms();
-  els.monthlyMonth.value = String(new Date().getMonth() + 1);
-  populateDateDefaults();
-  updateFieldVisibility();
-  setToast("รีเซ็ตตัวกรองเรียบร้อย", "info");
-}
 
 function setActiveModule(system) {
   state.activeModule = system;
@@ -1189,19 +1599,40 @@ function attachEvents() {
   els.classLevel.addEventListener("change", () => {
     syncRoomOptions();
     syncSubjectOptions();
+    refreshAttendanceResults();
   });
 
   els.room.addEventListener("change", () => {
     syncSubjectOptions();
+    refreshAttendanceResults();
   });
 
-  els.semesterYear.addEventListener("change", populateSemesterTerms);
-  els.searchType.addEventListener("change", updateFieldVisibility);
-  els.searchBtn.addEventListener("click", searchData);
-  els.resetFiltersBtn.addEventListener("click", resetFilters);
-  els.quickViewBtn.addEventListener("click", () => setViewMode("quick"));
-  els.reportViewBtn.addEventListener("click", () => setViewMode("report"));
-  els.editBtn.addEventListener("click", () => toggleEditMode(true));
+  els.subject.addEventListener("change", refreshAttendanceResults);
+  els.statusFilter.addEventListener("change", renderTable);
+  els.priorityList.addEventListener("click", jumpToAttendanceStudent);
+  els.monthlyYear.addEventListener("change", refreshAttendanceResults);
+  els.monthlyMonth.addEventListener("change", refreshAttendanceResults);
+  els.semesterTerm.addEventListener("change", refreshAttendanceResults);
+  els.startDate.addEventListener("change", refreshAttendanceResults);
+  els.endDate.addEventListener("change", refreshAttendanceResults);
+  els.semesterYear.addEventListener("change", () => {
+    populateSemesterTerms();
+    refreshAttendanceResults();
+  });
+  els.searchType.addEventListener("change", () => {
+    updateFieldVisibility();
+    refreshAttendanceResults();
+  });
+  els.priorityThresholdBtn.addEventListener("click", openAttendanceThresholdSettings);
+  els.tableThresholdBtn.addEventListener("click", openAttendanceThresholdSettings);
+  els.attendanceThresholdApplyBtn.addEventListener("click", applyAttendanceThreshold);
+  els.attendanceThresholdInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") applyAttendanceThreshold();
+  });
+  els.attendanceThresholdModal.querySelectorAll("[data-threshold-close]").forEach((node) => {
+    node.addEventListener("click", closeAttendanceThresholdSettings);
+  });
+  els.attendanceThresholdCloseBtn.addEventListener("click", closeAttendanceThresholdSettings);
   els.bulkEditBtn.addEventListener("click", openBulkEdit);
   els.saveBtn.addEventListener("click", saveChanges);
   els.exportExcelBtn.addEventListener("click", () => mockExport("excel"));
@@ -1211,7 +1642,10 @@ function attachEvents() {
     node.addEventListener("click", closeAttendancePdfPreview);
   });
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && !els.attendancePdfModal.hidden) {
+    if (event.key !== "Escape") return;
+    if (!els.attendanceThresholdModal.hidden) {
+      closeAttendanceThresholdSettings();
+    } else if (!els.attendancePdfModal.hidden) {
       closeAttendancePdfPreview();
     }
   });
@@ -1233,6 +1667,7 @@ async function init() {
     updateFieldVisibility();
     syncModeControls();
     setActiveModule("attendance");
+    searchData();
     bindMatrixHover();
     attachEvents();
   } catch (error) {
