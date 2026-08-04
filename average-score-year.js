@@ -1,592 +1,457 @@
 (() => {
-const STORAGE_KEY = "averageScoreYear:lastSearch";
-
-const exportLabels = {
-  excel: "Excel",
-  csv: "CSV",
-  pdf: "PDF"
-};
-
-const statusLabels = {
-  active: "กำลังศึกษา",
-  watch: "ต้องติดตาม",
-  excellent: "ดีเด่น"
-};
-
-const scoreToneLabels = {
-  excellent: "ดีเด่น",
-  active: "ผ่านเกณฑ์",
-  watch: "ต้องติดตาม"
-};
-
-const els = {
-  form: document.getElementById("averageYearFiltersForm"),
-  academicYear: document.getElementById("averageYearAcademicYear"),
-  semester: document.getElementById("averageYearSemester"),
-  grade: document.getElementById("averageYearGrade"),
-  classroom: document.getElementById("averageYearClassroom"),
-  plan: document.getElementById("averageYearPlan"),
-  status: document.getElementById("averageYearStatus"),
-  keyword: document.getElementById("averageYearKeyword"),
-  searchBtn: document.getElementById("averageYearSearchBtn"),
-  resetBtn: document.getElementById("averageYearResetFiltersBtn"),
-  exportBtn: document.getElementById("averageYearExportBtn"),
-  exportDropdown: document.getElementById("averageYearExportDropdown"),
-  exportMenu: document.getElementById("averageYearExportMenu"),
-  previewBtn: document.getElementById("averageYearPreviewBtn"),
-  printBtn: document.getElementById("averageYearPrintBtn"),
-  previewPanel: document.getElementById("averageYearPreviewPanel"),
-  template: document.getElementById("averageYearTemplate"),
-  language: document.getElementById("averageYearLanguage"),
-  exportScope: document.getElementById("averageYearExportScope"),
-  previewSummary: document.getElementById("averageYearPreviewSummary"),
-  currentAcademicLabel: document.getElementById("averageYearCurrentAcademicLabel"),
-  summaryScope: document.getElementById("averageYearSummaryScope"),
-  scopeMeta: document.getElementById("averageYearScopeMeta"),
-  studentCount: document.getElementById("averageYearStudentCount"),
-  averageScore: document.getElementById("averageYearAverageScore"),
-  highestScore: document.getElementById("averageYearHighestScore"),
-  lowestScore: document.getElementById("averageYearLowestScore"),
-  gpaxAverage: document.getElementById("averageYearGpaxAverage"),
-  thead: document.getElementById("averageYearThead"),
-  tbody: document.getElementById("averageYearTbody"),
-  toast: document.getElementById("toast")
-};
-
-if (!els.form) return;
-
-const state = {
-  db: null,
-  maps: null,
-  rows: [],
-  subjects: []
-};
-
-function buildInlineMockDatabase() {
-  const academicYears = [
-    { id: "ay-2568", name: "2568", isCurrent: true },
-    { id: "ay-2567", name: "2567", isCurrent: false }
+  const STORAGE_KEY = "averageScoreYear:lastSearch";
+  const PASS_SCORE = 60;
+  const SCORE_RANGES = [
+    { min: 0, max: 49.99, label: "ต่ำกว่า 50" },
+    { min: 50, max: 59.99, label: "50–59" },
+    { min: 60, max: 69.99, label: "60–69" },
+    { min: 70, max: 79.99, label: "70–79" },
+    { min: 80, max: 89.99, label: "80–89" },
+    { min: 90, max: 100, label: "90–100" }
   ];
-
-  const semesters = [
-    { id: "sem-2568-1", academicYearId: "ay-2568", term: 1, name: "ภาคเรียนที่ 1/2568" },
-    { id: "sem-2568-2", academicYearId: "ay-2568", term: 2, name: "ภาคเรียนที่ 2/2568" },
-    { id: "sem-2567-1", academicYearId: "ay-2567", term: 1, name: "ภาคเรียนที่ 1/2567" },
-    { id: "sem-2567-2", academicYearId: "ay-2567", term: 2, name: "ภาคเรียนที่ 2/2567" }
+  const GRADE_SCALE = [
+    { min: 80, gradePoint: 4, label: "ดีเยี่ยม" }, { min: 75, gradePoint: 3.5, label: "ดีมาก" },
+    { min: 70, gradePoint: 3, label: "ดี" }, { min: 65, gradePoint: 2.5, label: "ค่อนข้างดี" },
+    { min: 60, gradePoint: 2, label: "พอใช้" }, { min: 55, gradePoint: 1.5, label: "อ่อน" },
+    { min: 50, gradePoint: 1, label: "ผ่านขั้นต่ำ" }, { min: 0, gradePoint: 0, label: "ไม่ผ่าน" }
   ];
-
-  const grades = [
-    { id: "grade-m1", name: "ม.1", order: 1 },
-    { id: "grade-m2", name: "ม.2", order: 2 },
-    { id: "grade-m3", name: "ม.3", order: 3 }
-  ];
-
-  const plans = [
-    { id: "general", name: "แผนทั่วไป" },
-    { id: "science", name: "วิทย์-คณิต" },
-    { id: "language", name: "ภาษา" }
-  ];
-
-  const classrooms = [
-    { id: "room-m1-1", gradeId: "grade-m1", name: "ม.1/1", planId: "general" },
-    { id: "room-m1-2", gradeId: "grade-m1", name: "ม.1/2", planId: "language" },
-    { id: "room-m2-1", gradeId: "grade-m2", name: "ม.2/1", planId: "science" },
-    { id: "room-m3-1", gradeId: "grade-m3", name: "ม.3/1", planId: "science" }
-  ];
-
-  const students = [
-    { id: "student-5104", code: "5104", name: "ณัฐกานต์ ศรีสุข", classroomId: "room-m1-1", status: "active" },
-    { id: "student-5334", code: "5334", name: "พิมพ์ชนก วงศ์ดี", classroomId: "room-m1-1", status: "excellent" },
-    { id: "student-5342", code: "5342", name: "ภาคิน แสงทอง", classroomId: "room-m1-1", status: "active" },
-    { id: "student-5348", code: "5348", name: "มนัสนันท์ ใจมั่น", classroomId: "room-m1-1", status: "watch" },
-    { id: "student-5420", code: "5420", name: "ศุภวิชญ์ เจริญผล", classroomId: "room-m1-2", status: "active" },
-    { id: "student-5425", code: "5425", name: "อริสรา พูลทรัพย์", classroomId: "room-m1-2", status: "excellent" },
-    { id: "student-6501", code: "6501", name: "กมลชนก พรหมมา", classroomId: "room-m2-1", status: "active" },
-    { id: "student-6502", code: "6502", name: "พีรพัฒน์ วงศ์ดี", classroomId: "room-m2-1", status: "watch" },
-    { id: "student-6401", code: "6401", name: "ปวริศา ศรีสวัสดิ์", classroomId: "room-m3-1", status: "excellent" },
-    { id: "student-6402", code: "6402", name: "ชยพล แสงทอง", classroomId: "room-m3-1", status: "active" }
-  ];
-
-  const subjectTemplates = [
-    ["th", "ภาษาไทย", 1.5],
-    ["ma", "คณิตศาสตร์", 1.5],
-    ["sc", "วิทยาศาสตร์", 1.5],
-    ["en", "ภาษาอังกฤษ", 1.0],
-    ["so", "สังคมศึกษา", 0.5],
-    ["hi", "ประวัติศาสตร์", 0.5],
-    ["he", "สุขศึกษา", 0.5],
-    ["ar", "ศิลปะ", 0.5],
-    ["co", "คอมพิวเตอร์", 0.5],
-    ["ca", "การงานอาชีพ", 0.5],
-    ["fo", "ภาษาอังกฤษพื้นฐาน", 1.5],
-    ["club", "ชุมนุม 1", 0.5]
-  ];
-
-  const subjects = subjectTemplates.map(([id, name, credit], index) => ({
-    id: `subject-${id}`,
-    code: `${id.toUpperCase()}${21101 + index}`,
-    name,
-    credit
-  }));
-
-  const scoreRecords = [];
-  students.forEach((student, studentIndex) => {
-    academicYears.forEach((year, yearIndex) => {
-      semesters
-        .filter((semester) => semester.academicYearId === year.id)
-        .forEach((semester) => {
-          subjects.forEach((subject, subjectIndex) => {
-            const drift = yearIndex === 0 ? 2 : -2;
-            const rawScore = 56 + ((studentIndex * 8) + (subjectIndex * 5) + (semester.term * 4) + drift) % 39;
-            const statusPenalty = student.status === "watch" ? 7 : 0;
-            const score = Math.max(45, Math.min(99, rawScore - statusPenalty));
-            scoreRecords.push({
-              studentId: student.id,
-              academicYearId: year.id,
-              semesterId: semester.id,
-              subjectId: subject.id,
-              score,
-              gradePoint: scoreToGradePoint(score)
-            });
-          });
-        });
-    });
-  });
-
-  return { academicYears, semesters, grades, plans, classrooms, students, subjects, scoreRecords };
-}
-
-function buildMap(items) {
-  return new Map(items.map((item) => [item.id, item]));
-}
-
-function scoreToGradePoint(score) {
-  if (score >= 80) return 4;
-  if (score >= 75) return 3.5;
-  if (score >= 70) return 3;
-  if (score >= 65) return 2.5;
-  if (score >= 60) return 2;
-  if (score >= 55) return 1.5;
-  if (score >= 50) return 1;
-  return 0;
-}
-
-function formatNumber(value) {
-  return Number.isFinite(value) ? value.toFixed(2) : "0.00";
-}
-
-function setToast(message, variant = "info") {
-  els.toast.className = `toast ${variant}`;
-  els.toast.innerHTML = `<strong>${variant === "success" ? "สำเร็จ" : "แจ้งเตือน"}</strong><span>${message}</span>`;
-  els.toast.classList.add("is-visible");
-  window.clearTimeout(setToast.timer);
-  setToast.timer = window.setTimeout(() => {
-    els.toast.classList.remove("is-visible");
-  }, 2200);
-}
-
-function getCurrentAcademicYear() {
-  return state.db.academicYears.find((item) => item.isCurrent) || state.db.academicYears[0];
-}
-
-function populateAcademicYears() {
-  els.academicYear.innerHTML = state.db.academicYears
-    .map((year) => `<option value="${year.id}">${year.name}</option>`)
-    .join("");
-  els.academicYear.value = getCurrentAcademicYear().id;
-}
-
-function populateSemesters() {
-  const semesters = state.db.semesters.filter((semester) => semester.academicYearId === els.academicYear.value);
-  els.semester.innerHTML = `<option value="all">ทุกภาคเรียน</option>${semesters
-    .map((semester) => `<option value="${semester.id}">ภาคเรียนที่ ${semester.term}</option>`)
-    .join("")}`;
-}
-
-function populateGrades() {
-  els.grade.innerHTML = `<option value="">เลือกระดับชั้น</option>${state.db.grades
-    .sort((a, b) => a.order - b.order)
-    .map((grade) => `<option value="${grade.id}">${grade.name}</option>`)
-    .join("")}`;
-}
-
-function populatePlans() {
-  els.plan.innerHTML = `<option value="all">ทุกแผนการเรียน</option>${state.db.plans
-    .map((plan) => `<option value="${plan.id}">${plan.name}</option>`)
-    .join("")}`;
-}
-
-function syncClassrooms() {
-  const selectedPlan = els.plan.value;
-  const classrooms = state.db.classrooms.filter((classroom) => {
-    const matchesGrade = classroom.gradeId === els.grade.value;
-    const matchesPlan = selectedPlan === "all" || classroom.planId === selectedPlan;
-    return matchesGrade && matchesPlan;
-  });
-  els.classroom.innerHTML = `<option value="">เลือกชั้นเรียน</option>${classrooms
-    .map((classroom) => `<option value="${classroom.id}">${classroom.name}</option>`)
-    .join("")}`;
-  els.classroom.disabled = !els.grade.value;
-}
-
-function syncSearchButton() {
-  els.searchBtn.disabled = !(els.academicYear.value && els.grade.value && els.classroom.value);
-}
-
-function getFormValues() {
-  return {
-    academicYearId: els.academicYear.value,
-    semesterId: els.semester.value,
-    gradeId: els.grade.value,
-    classroomId: els.classroom.value,
-    planId: els.plan.value,
-    status: els.status.value,
-    keyword: els.keyword.value.trim()
+  const statusLabels = { active: "กำลังศึกษา", watch: "ต้องติดตาม", excellent: "ผลการเรียนดีเด่น" };
+  const $ = (id) => document.getElementById(id);
+  const els = {
+    form: $("averageYearFiltersForm"), academicYear: $("averageYearAcademicYear"), semester: $("averageYearSemester"),
+    grade: $("averageYearGrade"), plan: $("averageYearPlan"), classroom: $("averageYearClassroom"), status: $("averageYearStatus"), keyword: $("averageYearKeyword"),
+    search: $("averageYearSearchBtn"), reset: $("averageYearResetFiltersBtn"), current: $("averageYearCurrentAcademicLabel"), scope: $("averageYearSummaryScope"),
+    summary: $("averageYearSummaryGrid"), tableTitle: $("averageYearTableTitle"), thead: $("averageYearThead"), tbody: $("averageYearTbody"), subjectBtn: $("averageYearSubjectBtn"), subjectPanel: $("averageYearSubjectPanel"), export: $("averageYearExportBtn"), print: $("averageYearPrintBtn"),
+    dialog: $("averageYearPrintDialog"), buildPreview: $("averageYearBuildPreviewBtn"), printPreview: $("averageYearPrintPreview"),
+    visualizationPanel: document.querySelector(".average-year-visualization-panel"), comparisonTitle: $("averageYearComparisonTitle"),
+    comparisonCanvas: $("averageYearComparisonChart"), comparisonEmpty: $("averageYearComparisonEmpty"),
+    distributionCanvas: $("averageYearDistributionChart"), distributionEmpty: $("averageYearDistributionEmpty"),
+    rangeFilter: $("averageYearRangeFilter"), rangeFilterLabel: $("averageYearRangeFilterLabel"), clearRangeFilter: $("averageYearClearRangeFilterBtn")
   };
-}
+  if (!els.form) return;
 
-function saveLastSearch() {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(getFormValues()));
-}
+  const state = {
+    db: null, maps: null, filters: null, baseRows: [], rows: [], eligibleStudents: [], overviewBaseRows: [], overviewRows: [],
+    subjects: [], visibleSubjectIds: new Set(), scoreRangeFilter: null, averageComparisonChart: null,
+    scoreDistributionChart: null, subjectHighlightTimer: null, mode: "overview", initialized: false
+  };
+  const escapeHtml = (value) => String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;" }[char]));
+  const format = (value) => Number.isFinite(value) ? value.toFixed(2) : "-";
+  const sum = (values) => values.filter(Number.isFinite).reduce((total, value) => total + value, 0);
+  const average = (values) => { const valid = values.filter(Number.isFinite); return valid.length ? sum(valid) / valid.length : null; };
+  function convertScoreToGradePoint(score) { if (!Number.isFinite(score)) return null; return GRADE_SCALE.find((item) => score >= item.min).gradePoint; }
+  function getGradeLabel(score) { if (!Number.isFinite(score)) return "ไม่มีข้อมูล"; return GRADE_SCALE.find((item) => score >= item.min).label; }
+  function scoreTone(score) { return score >= 80 ? "excellent" : score >= 60 ? "active" : "watch"; }
 
-function restoreLastSearch() {
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return;
-  try {
-    const saved = JSON.parse(raw);
-    if (saved.academicYearId) els.academicYear.value = saved.academicYearId;
-    populateSemesters();
-    if (saved.semesterId) els.semester.value = saved.semesterId;
-    if (saved.planId) els.plan.value = saved.planId;
-    if (saved.gradeId) els.grade.value = saved.gradeId;
-    syncClassrooms();
-    if (saved.classroomId) els.classroom.value = saved.classroomId;
-    if (saved.status) els.status.value = saved.status;
-    if (saved.keyword) els.keyword.value = saved.keyword;
-  } catch (error) {
-    console.error(error);
+  function buildInlineMockDatabase() {
+    const academicYears = [{ id: "ay-2568", name: "2568", isCurrent: true }, { id: "ay-2567", name: "2567", isCurrent: false }];
+    const semesters = academicYears.flatMap((year) => [1, 2].map((term) => ({ id: `${year.id}-${term}`, academicYearId: year.id, term, name: `ภาคเรียนที่ ${term}/${year.name}` })));
+    const grades = [{ id: "grade-m1", name: "ม.1", order: 1 }, { id: "grade-m2", name: "ม.2", order: 2 }, { id: "grade-m3", name: "ม.3", order: 3 }];
+    const plans = [{ id: "general", name: "แผนทั่วไป" }, { id: "science", name: "วิทย์-คณิต" }, { id: "language", name: "ภาษา" }];
+    const classrooms = [
+      { id: "room-m1-1", gradeId: "grade-m1", name: "ม.1/1", planId: "general" }, { id: "room-m1-2", gradeId: "grade-m1", name: "ม.1/2", planId: "language" },
+      { id: "room-m2-1", gradeId: "grade-m2", name: "ม.2/1", planId: "science" }, { id: "room-m3-1", gradeId: "grade-m3", name: "ม.3/1", planId: "science" }
+    ];
+    const names = ["ณัฐกานต์ ศรีสุข", "พิมพ์ชนก วงศ์ดี", "ภาคิน แสงทอง", "มนัสนันท์ ใจมั่น", "ศุภวิชญ์ เจริญผล", "อริสรา พูลทรัพย์", "กมลชนก พรหมมา", "พีรพัฒน์ วงศ์ดี", "ปวริศา ศรีสวัสดิ์", "ชยพล แสงทอง"];
+    const roomStudentCounts = [4, 2, 2, 2];
+    const students = []; let nameIndex = 0;
+    classrooms.forEach((room, roomIndex) => { for (let i = 0; i < roomStudentCounts[roomIndex]; i += 1) { students.push({ id: `student-${5104 + nameIndex}`, code: `${5104 + nameIndex}`, name: names[nameIndex], classroomId: room.id, status: nameIndex === 3 || nameIndex === 7 ? "watch" : nameIndex === 1 || nameIndex === 5 || nameIndex === 8 ? "excellent" : "active" }); nameIndex += 1; } });
+    const subjectNames = [["th", "ภาษาไทย", 1.5], ["ma", "คณิตศาสตร์", 1.5], ["sc", "วิทยาศาสตร์", 1.5], ["en", "ภาษาอังกฤษ", 1], ["so", "สังคมศึกษา", .5], ["hi", "ประวัติศาสตร์", .5], ["he", "สุขศึกษา", .5], ["ar", "ศิลปะ", .5], ["co", "คอมพิวเตอร์", .5], ["ca", "การงานอาชีพ", .5], ["fo", "ภาษาอังกฤษพื้นฐาน", 1.5], ["club", "ชุมนุม 1", .5]];
+    const subjects = subjectNames.map(([id, name, credit], index) => ({ id: `subject-${id}`, code: `${id.toUpperCase()}${21101 + index}`, name, credit, semester1MaxScore: 100, semester2MaxScore: 100 }));
+    const scoreRecords = [];
+    students.forEach((student, studentIndex) => academicYears.forEach((year, yearIndex) => semesters.filter((semester) => semester.academicYearId === year.id).forEach((semester) => subjects.forEach((subject, subjectIndex) => {
+      const missing = (studentIndex + subjectIndex + semester.term + yearIndex) % 19 === 0;
+      const raw = 57 + ((studentIndex * 8) + (subjectIndex * 5) + (semester.term * 4) + (yearIndex ? -2 : 2)) % 39;
+      const score = Math.max(45, Math.min(99, raw - (student.status === "watch" ? 7 : 0)));
+      scoreRecords.push({ academicYearId: year.id, semesterId: semester.id, studentId: student.id, subjectId: subject.id, score: missing ? null : score, maxScore: 100, status: missing ? "missing" : "complete" });
+    }))));
+    return { academicYears, semesters, grades, plans, classrooms, students, subjects, scoreRecords };
   }
-}
+  const mapById = (items) => new Map(items.map((item) => [item.id, item]));
+  function getCurrentYear() { return state.db.academicYears.find((year) => year.isCurrent) || state.db.academicYears[0]; }
+  function getFilters() { return { academicYear: els.academicYear.value, semester: els.semester.value, grade: els.grade.value, plan: els.plan.value, classroom: els.classroom.value, status: els.status.value, keyword: els.keyword.value.trim().toLowerCase() }; }
+  function saveLastSearch() { localStorage.setItem(STORAGE_KEY, JSON.stringify(getFilters())); }
+  function loadSavedFilters() { try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || "null") || {}; } catch { return {}; } }
 
-function getSubjectAverage(records) {
-  if (!records.length) return null;
-  return records.reduce((sum, record) => sum + record.score, 0) / records.length;
-}
+  function populateAcademicYears(saved) { els.academicYear.innerHTML = state.db.academicYears.map((year) => `<option value="${year.id}">${year.name}</option>`).join(""); els.academicYear.value = saved.academicYear || getCurrentYear().id; if (!state.db.academicYears.some((item) => item.id === els.academicYear.value)) els.academicYear.value = getCurrentYear().id; }
+  function populateSemesters(savedValue = "all") { const semesters = state.db.semesters.filter((item) => item.academicYearId === els.academicYear.value); els.semester.innerHTML = `<option value="all">ทั้งปีการศึกษา</option>${semesters.map((item) => `<option value="${item.id}">ภาคเรียน ${item.term}</option>`).join("")}`; els.semester.value = semesters.some((item) => item.id === savedValue) ? savedValue : "all"; }
+  function populateGrades(savedValue = "all") { els.grade.innerHTML = `<option value="all">ทุกระดับชั้น</option>${state.db.grades.slice().sort((a, b) => a.order - b.order).map((item) => `<option value="${item.id}">${item.name}</option>`).join("")}`; els.grade.value = state.db.grades.some((item) => item.id === savedValue) ? savedValue : "all"; }
+  function populatePlans(savedValue = "all") { const gradeId = els.grade.value; const allowed = state.db.classrooms.filter((room) => gradeId === "all" || room.gradeId === gradeId).map((room) => room.planId); const plans = state.db.plans.filter((plan) => allowed.includes(plan.id)); els.plan.innerHTML = `<option value="all">ทุกแผนการเรียน</option>${plans.map((item) => `<option value="${item.id}">${item.name}</option>`).join("")}`; els.plan.value = plans.some((item) => item.id === savedValue) ? savedValue : "all"; }
+  function syncClassrooms(savedValue = "all") { const gradeId = els.grade.value; const planId = els.plan.value; const rooms = state.db.classrooms.filter((room) => (gradeId === "all" || room.gradeId === gradeId) && (planId === "all" || room.planId === planId)); els.classroom.innerHTML = `<option value="all">ทุกห้องเรียน</option>${rooms.map((item) => `<option value="${item.id}">${item.name}</option>`).join("")}`; els.classroom.value = rooms.some((item) => item.id === savedValue) ? savedValue : "all"; els.classroom.disabled = false; }
+  function syncFilterDependencies(saved = {}) { populateSemesters(saved.semester || "all"); populateGrades(saved.grade || "all"); populatePlans(saved.plan || "all"); syncClassrooms(saved.classroom || "all"); els.status.value = ["active", "all", "watch", "excellent"].includes(saved.status) ? saved.status : "active"; els.keyword.value = saved.keyword || ""; }
+  function syncSearchButton() { els.search.disabled = !els.academicYear.value; }
 
-function buildResultRows() {
-  const values = getFormValues();
-  const keyword = values.keyword.toLowerCase();
-  const scoreRecords = state.db.scoreRecords.filter((record) => {
-    const matchesYear = record.academicYearId === values.academicYearId;
-    const matchesSemester = values.semesterId === "all" || record.semesterId === values.semesterId;
-    return matchesYear && matchesSemester;
-  });
+  function selectedSemesters() { return state.db.semesters.filter((item) => item.academicYearId === state.filters.academicYear && (state.filters.semester === "all" || item.id === state.filters.semester)); }
+  function getEligibleStudents() { const f = state.filters; return state.db.students.filter((student) => { const room = state.maps.classrooms.get(student.classroomId); return (f.grade === "all" || room.gradeId === f.grade) && (f.plan === "all" || room.planId === f.plan) && (f.classroom === "all" || room.id === f.classroom) && (f.status === "all" || student.status === f.status); }); }
+  function buildSubjectAnnualResult(studentId, subject) { const semesters = selectedSemesters(); const records = state.db.scoreRecords.filter((record) => record.academicYearId === state.filters.academicYear && record.studentId === studentId && record.subjectId === subject.id && semesters.some((semester) => semester.id === record.semesterId)); const first = records.find((record) => state.maps.semesters.get(record.semesterId).term === 1); const second = records.find((record) => state.maps.semesters.get(record.semesterId).term === 2); const useFirst = state.filters.semester === "all" || state.maps.semesters.get(state.filters.semester)?.term === 1; const useSecond = state.filters.semester === "all" || state.maps.semesters.get(state.filters.semester)?.term === 2; const semester1Score = useFirst ? first?.score ?? null : null; const semester2Score = useSecond ? second?.score ?? null : null; const semester1MaxScore = useFirst ? (first?.maxScore ?? subject.semester1MaxScore) : 0; const semester2MaxScore = useSecond ? (second?.maxScore ?? subject.semester2MaxScore) : 0; const totalMaxScore = semester1MaxScore + semester2MaxScore; const totalScore = sum([semester1Score, semester2Score]); const isComplete = (!useFirst || Number.isFinite(semester1Score)) && (!useSecond || Number.isFinite(semester2Score)); const averageScore = totalMaxScore > 0 ? (totalScore / totalMaxScore) * 100 : null; return { subjectId: subject.id, subjectCode: subject.code, subjectName: subject.name, credit: subject.credit, semester1Score, semester1MaxScore, semester2Score, semester2MaxScore, totalScore, totalMaxScore, averageScore, gradePoint: convertScoreToGradePoint(averageScore), isComplete }; }
+  function calculateStudentAnnualSummary(student, subjectResults) { const totalScore = sum(subjectResults.map((item) => item.totalScore)); const totalMaxScore = sum(subjectResults.map((item) => item.totalMaxScore)); const valid = subjectResults.filter((item) => Number.isFinite(item.gradePoint)); const creditTotal = sum(valid.map((item) => item.credit)); const averageGradePoint = creditTotal ? sum(valid.map((item) => item.gradePoint * item.credit)) / creditTotal : average(valid.map((item) => item.gradePoint)) || 0; return { totalScore, totalMaxScore, averageScore: totalMaxScore ? totalScore / totalMaxScore * 100 : null, averageGradePoint, rank: 0, incompleteCount: subjectResults.filter((item) => !item.isComplete).length, expectedCount: subjectResults.length * selectedSemesters().length, recordedCount: subjectResults.reduce((count, item) => count + [item.semester1Score, item.semester2Score].filter(Number.isFinite).length, 0) }; }
+  function assignCompetitionRanks(rows) { let previous = null; let rank = 0; rows.forEach((row, index) => { if (row.summary.averageScore !== previous) rank = index + 1; row.summary.rank = rank; previous = row.summary.averageScore; }); return rows; }
+  function buildStudentAnnualRows(students) { const subjects = state.db.subjects; const rows = students.map((student) => { const subjectResults = subjects.map((subject) => buildSubjectAnnualResult(student.id, subject)); return { student, subjectResults, summary: calculateStudentAnnualSummary(student, subjectResults) }; }).sort((a, b) => (b.summary.averageScore || 0) - (a.summary.averageScore || 0) || a.student.code.localeCompare(b.student.code)); return assignCompetitionRanks(rows); }
+  function applyKeyword(rows) {
+    const keyword = state.filters.keyword;
+    if (!keyword) return rows;
+    return rows.filter((row) => `${row.student.code} ${row.student.name}`.toLowerCase().includes(keyword));
+  }
 
-  const students = state.db.students
-    .filter((student) => student.classroomId === values.classroomId)
-    .filter((student) => values.status === "all" || student.status === values.status)
-    .filter((student) => !keyword || `${student.code} ${student.name}`.toLowerCase().includes(keyword))
-    .sort((a, b) => a.code.localeCompare(b.code, "en"));
+  function averageGradePoint(subjectResults) {
+    const valid = subjectResults.filter((item) => Number.isFinite(item.averageScore));
+    const credits = sum(valid.map((item) => item.credit));
+    return credits ? sum(valid.map((item) => convertScoreToGradePoint(item.averageScore) * item.credit)) / credits : 0;
+  }
 
-  state.subjects = [...state.db.subjects];
-  state.rows = students.map((student) => {
-    const valuesBySubject = Object.fromEntries(state.subjects.map((subject) => {
-      const records = scoreRecords.filter((record) => record.studentId === student.id && record.subjectId === subject.id);
-      return [subject.id, getSubjectAverage(records)];
+  function summarizeOverviewRoom(room, rows) {
+    const scores = rows.map((row) => row.summary.averageScore).filter(Number.isFinite);
+    const subjectResults = state.db.subjects.map((subject) => ({
+      averageScore: average(rows.map((row) => row.subjectResults.find((item) => item.subjectId === subject.id)?.averageScore).filter(Number.isFinite)),
+      credit: subject.credit
     }));
-    const subjectScores = Object.values(valuesBySubject).filter((value) => value !== null);
-    const average = subjectScores.length
-      ? subjectScores.reduce((sum, value) => sum + value, 0) / subjectScores.length
-      : 0;
-    const gradePointRecords = scoreRecords.filter((record) => record.studentId === student.id);
-    const gpax = gradePointRecords.length
-      ? gradePointRecords.reduce((sum, record) => sum + record.gradePoint, 0) / gradePointRecords.length
-      : 0;
     return {
-      student,
-      subjectScores: valuesBySubject,
-      average,
-      gpax,
-      rank: 0
+      room,
+      rows,
+      count: rows.length,
+      totalMaxScore: sum(rows.map((row) => row.summary.totalMaxScore)),
+      averageScore: average(scores),
+      gradePoint: averageGradePoint(subjectResults),
+      highestScore: scores.length ? Math.max(...scores) : null,
+      lowestScore: scores.length ? Math.min(...scores) : null,
+      belowCount: rows.filter((row) => Number.isFinite(row.summary.averageScore) && row.summary.averageScore < PASS_SCORE).length,
+      incompleteCount: rows.reduce((count, row) => count + row.summary.incompleteCount, 0)
     };
-  }).sort((a, b) => b.average - a.average);
-
-  state.rows.forEach((row, index) => {
-    row.rank = index + 1;
-  });
-}
-
-function renderSummary() {
-  const values = getFormValues();
-  const classroom = state.maps.classrooms.get(values.classroomId);
-  const grade = state.maps.grades.get(values.gradeId);
-  const year = state.maps.academicYears.get(values.academicYearId);
-  const semesterLabel = values.semesterId === "all" ? "ทุกภาคเรียน" : state.maps.semesters.get(values.semesterId)?.name || "ทุกภาคเรียน";
-  const averages = state.rows.map((row) => row.average);
-  const gpaxValues = state.rows.map((row) => row.gpax);
-  const average = averages.length ? averages.reduce((sum, value) => sum + value, 0) / averages.length : 0;
-  const gpax = gpaxValues.length ? gpaxValues.reduce((sum, value) => sum + value, 0) / gpaxValues.length : 0;
-
-  els.studentCount.textContent = String(state.rows.length);
-  els.averageScore.textContent = formatNumber(average);
-  els.highestScore.textContent = formatNumber(averages.length ? Math.max(...averages) : 0);
-  els.lowestScore.textContent = formatNumber(averages.length ? Math.min(...averages) : 0);
-  els.gpaxAverage.textContent = formatNumber(gpax);
-  els.summaryScope.textContent = state.rows.length
-    ? `${year.name} | ${semesterLabel} | ${grade.name} ${classroom.name} | ${state.rows.length} คน`
-    : "ไม่พบข้อมูลสำหรับเงื่อนไขที่เลือก";
-  els.scopeMeta.textContent = semesterLabel;
-}
-
-function getScoreTone(score) {
-  if (score >= 80) return "excellent";
-  if (score >= 70) return "active";
-  return "watch";
-}
-
-function renderTable() {
-  if (!state.rows.length) {
-    els.thead.innerHTML = `
-      <tr>
-        <th class="sticky-top">ลำดับ</th>
-        <th class="sticky-top">รหัสนักเรียน</th>
-        <th class="sticky-top">ชื่อ-สกุล</th>
-        <th class="sticky-top">คะแนนเฉลี่ย</th>
-      </tr>
-    `;
-    els.tbody.innerHTML = `
-      <tr>
-        <td colspan="4"><div class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div></td>
-      </tr>
-    `;
-    return;
   }
 
-  els.thead.innerHTML = `
-    <tr>
-      <th class="sticky-col sticky-col-score-no sticky-top">ลำดับ</th>
-      <th class="sticky-col sticky-col-score-id sticky-top">รหัสนักเรียน</th>
-      <th class="sticky-col sticky-col-score-name sticky-top">ชื่อ-สกุล</th>
-      <th class="sticky-top">รวมคะแนน</th>
-      <th class="sticky-top">คะแนนเฉลี่ย</th>
-      <th class="sticky-top">GPAX</th>
-      <th class="sticky-top">อันดับ</th>
-      <th class="sticky-top">สถานะ</th>
-      ${state.subjects.map((subject) => `
-        <th class="sticky-top average-year-subject-head" title="${subject.code} - ${subject.name}">
-          <div class="score-subject-title">
-            <strong>${subject.name}</strong>
-            <span>${subject.credit} หน่วยกิต</span>
-          </div>
-        </th>
-      `).join("")}
-    </tr>
-  `;
+  function buildOverviewRows(students) {
+    const groups = new Map();
+    students.forEach((student) => {
+      if (!groups.has(student.classroomId)) groups.set(student.classroomId, []);
+      groups.get(student.classroomId).push(student);
+    });
+    return [...groups.entries()].map(([roomId, roomStudents]) => {
+      const rows = applyKeyword(buildStudentAnnualRows(roomStudents));
+      return summarizeOverviewRoom(state.maps.classrooms.get(roomId), rows);
+    }).filter((item) => item.count > 0);
+  }
 
-  els.tbody.innerHTML = state.rows.map((row, index) => {
-    const subjectValues = Object.values(row.subjectScores).filter((value) => value !== null);
-    const totalScore = subjectValues.reduce((sum, value) => sum + value, 0);
-    const tone = getScoreTone(row.average);
-    return `
-      <tr>
-        <td class="sticky-col sticky-col-score-no">${index + 1}</td>
-        <td class="sticky-col sticky-col-score-id">${row.student.code}</td>
-        <td class="sticky-col sticky-col-score-name average-year-student-name">${row.student.name}</td>
-        <td>${formatNumber(totalScore)}</td>
-        <td><strong>${formatNumber(row.average)}</strong></td>
-        <td>${formatNumber(row.gpax)}</td>
-        <td><span class="average-year-rank-chip">อันดับ ${row.rank}</span></td>
-        <td><span class="average-year-status-chip" data-tone="${row.student.status}">${statusLabels[row.student.status]}</span></td>
-        ${state.subjects.map((subject) => {
-          const score = row.subjectScores[subject.id];
-          return `
-            <td>
-              <div class="average-year-score-cell">
-                <span class="average-year-score-main">${score === null ? "-" : formatNumber(score)}</span>
-                <span class="average-year-score-sub">${score === null ? "ไม่มีข้อมูล" : scoreToneLabels[getScoreTone(score)]}</span>
-              </div>
-            </td>
-          `;
-        }).join("")}
-      </tr>
-    `;
-  }).join("");
-}
+  function scoreInRange(score, range) {
+    if (!Number.isFinite(score)) return false;
+    const rounded = Number(score.toFixed(2));
+    return rounded >= range.min && rounded <= range.max;
+  }
 
-function buildAveragePreviewTable(limitRows = 6, limitSubjects = 4) {
-  const subjects = state.subjects.slice(0, limitSubjects);
-  return `
-    <table class="pdf-preview-table pdf-preview-table-report">
-      <thead>
-        <tr>
-          <th>อันดับ</th>
-          <th>รหัส</th>
-          <th>ชื่อ-สกุล</th>
-          <th>เฉลี่ย</th>
-          <th>GPAX</th>
-          ${subjects.map((subject) => `<th>${subject.name}<br><span>${subject.credit} นก.</span></th>`).join("")}
-        </tr>
-      </thead>
-      <tbody>
-        ${state.rows.slice(0, limitRows).map((row) => `
-          <tr>
-            <td>${row.rank}</td>
-            <td>${row.student.code}</td>
-            <td class="pdf-name-cell">${row.student.name}</td>
-            <td>${formatNumber(row.average)}</td>
-            <td>${formatNumber(row.gpax)}</td>
-            ${subjects.map((subject) => {
-              const score = row.subjectScores[subject.id];
-              return `<td>${score === null ? "-" : formatNumber(score)}</td>`;
-            }).join("")}
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>
-  `;
-}
+  function sourceStudentRows() {
+    return state.mode === "detail" ? applyKeyword(state.baseRows) : state.overviewBaseRows.flatMap((item) => item.rows);
+  }
 
-function updatePreviewSummary() {
-  const templateText = els.template.options[els.template.selectedIndex].text;
-  const languageText = els.language.options[els.language.selectedIndex].text;
-  const scopeText = els.exportScope.options[els.exportScope.selectedIndex].text;
-  els.previewSummary.innerHTML = `
-    <strong>ตัวอย่างรายงานคะแนนเฉลี่ยรายปี</strong>
-    <span>Template: ${templateText} | ภาษา ${languageText} | ${scopeText} | จำนวน ${state.rows.length} คน</span>
-    ${buildAveragePreviewTable(6, 4)}
-  `;
-}
+  function updateVisualizationFilterChip() {
+    const range = state.scoreRangeFilter;
+    els.rangeFilter.classList.toggle("hidden", !range);
+    els.rangeFilterLabel.textContent = range ? `คะแนนเฉลี่ย ${range.label}` : "";
+  }
 
-function setActionState(enabled) {
-  els.exportBtn.disabled = !enabled;
-  els.previewBtn.disabled = !enabled;
-  els.printBtn.disabled = !enabled;
-}
-
-function runSearch() {
-  buildResultRows();
-  renderSummary();
-  renderTable();
-  saveLastSearch();
-  setActionState(state.rows.length > 0);
-  els.previewPanel.classList.add("hidden");
-  setToast("แสดงรายงานคะแนนเฉลี่ยรายปีแล้ว", "success");
-}
-
-function resetFilters() {
-  populateAcademicYears();
-  populateSemesters();
-  populateGrades();
-  populatePlans();
-  els.grade.value = "";
-  els.classroom.innerHTML = `<option value="">เลือกชั้นเรียน</option>`;
-  els.classroom.disabled = true;
-  els.plan.value = "all";
-  els.status.value = "active";
-  els.keyword.value = "";
-  state.rows = [];
-  state.subjects = [];
-  els.summaryScope.textContent = "ยังไม่มีผลการค้นหา";
-  els.scopeMeta.textContent = "ทุกภาคเรียน";
-  els.studentCount.textContent = "0";
-  els.averageScore.textContent = "0.00";
-  els.highestScore.textContent = "0.00";
-  els.lowestScore.textContent = "0.00";
-  els.gpaxAverage.textContent = "0.00";
-  setActionState(false);
-  els.previewPanel.classList.add("hidden");
-  els.thead.innerHTML = `
-    <tr>
-      <th class="sticky-top">ลำดับ</th>
-      <th class="sticky-top">รหัสนักเรียน</th>
-      <th class="sticky-top">ชื่อ-สกุล</th>
-      <th class="sticky-top">คะแนนเฉลี่ย</th>
-    </tr>
-  `;
-  els.tbody.innerHTML = `
-    <tr>
-      <td colspan="4"><div class="empty-state">กดค้นหาข้อมูลเพื่อเริ่มแสดงรายงาน</div></td>
-    </tr>
-  `;
-  syncSearchButton();
-  setToast("รีเซ็ตตัวกรองรายงานคะแนนเฉลี่ยรายปีแล้ว", "info");
-}
-
-function attachEvents() {
-  els.form.addEventListener("submit", (event) => {
-    event.preventDefault();
-    runSearch();
-  });
-  els.searchBtn.addEventListener("click", runSearch);
-  els.academicYear.addEventListener("change", () => {
-    populateSemesters();
-    syncSearchButton();
-  });
-  els.grade.addEventListener("change", () => {
-    syncClassrooms();
-    syncSearchButton();
-  });
-  els.plan.addEventListener("change", () => {
-    syncClassrooms();
-    syncSearchButton();
-  });
-  els.classroom.addEventListener("change", syncSearchButton);
-  els.resetBtn.addEventListener("click", resetFilters);
-  els.exportBtn.addEventListener("click", () => {
-    els.exportMenu.classList.toggle("hidden");
-    els.exportBtn.setAttribute("aria-expanded", String(!els.exportMenu.classList.contains("hidden")));
-  });
-  els.exportMenu.addEventListener("click", (event) => {
-    const button = event.target.closest("[data-export]");
-    if (!button) return;
-    els.exportMenu.classList.add("hidden");
-    els.exportBtn.setAttribute("aria-expanded", "false");
-    updatePreviewSummary();
-    els.previewPanel.classList.remove("hidden");
-    setToast(`เตรียมส่งออกรายงานคะแนนเฉลี่ยรายปีเป็น ${exportLabels[button.dataset.export]}`, "info");
-  });
-  els.previewBtn.addEventListener("click", () => {
-    updatePreviewSummary();
-    els.previewPanel.classList.toggle("hidden");
-    setToast("สร้าง Preview รายงานคะแนนเฉลี่ยรายปีเรียบร้อย", "info");
-  });
-  els.printBtn.addEventListener("click", () => {
-    updatePreviewSummary();
-    els.previewPanel.classList.remove("hidden");
-    setToast("เตรียมพิมพ์รายงานคะแนนเฉลี่ยรายปีจากผลลัพธ์ปัจจุบัน", "info");
-  });
-  [els.template, els.language, els.exportScope].forEach((select) => {
-    select.addEventListener("change", updatePreviewSummary);
-  });
-  document.addEventListener("click", (event) => {
-    if (!els.exportDropdown.contains(event.target)) {
-      els.exportMenu.classList.add("hidden");
-      els.exportBtn.setAttribute("aria-expanded", "false");
+  function applyCurrentScoreRange() {
+    const range = state.scoreRangeFilter;
+    if (state.mode === "detail") {
+      const rows = applyKeyword(state.baseRows);
+      state.rows = range ? rows.filter((row) => scoreInRange(row.summary.averageScore, range)) : rows;
+    } else {
+      state.overviewRows = state.overviewBaseRows.map((item) => {
+        const rows = range ? item.rows.filter((row) => scoreInRange(row.summary.averageScore, range)) : item.rows;
+        return summarizeOverviewRoom(item.room, rows);
+      }).filter((item) => item.count > 0);
     }
-  });
-}
+    updateVisualizationFilterChip();
+  }
 
-function init() {
-  state.db = buildInlineMockDatabase();
-  state.maps = {
-    academicYears: buildMap(state.db.academicYears),
-    semesters: buildMap(state.db.semesters),
-    grades: buildMap(state.db.grades),
-    classrooms: buildMap(state.db.classrooms)
-  };
+  function applyScoreRangeFilter(range) {
+    state.scoreRangeFilter = range;
+    applyCurrentScoreRange();
+    renderSummary();
+    renderVisualization();
+    renderTable();
+  }
 
-  populateAcademicYears();
-  populateSemesters();
-  populateGrades();
-  populatePlans();
-  restoreLastSearch();
-  syncClassrooms();
-  syncSearchButton();
-  attachEvents();
+  function clearVisualizationFilter(shouldRender = true) {
+    state.scoreRangeFilter = null;
+    applyCurrentScoreRange();
+    if (shouldRender) {
+      renderSummary();
+      renderVisualization();
+      renderTable();
+    }
+  }
 
-  const currentYear = getCurrentAcademicYear();
-  els.currentAcademicLabel.textContent = `${currentYear.name} / ทุกภาคเรียน`;
-}
+  function renderMetric(label, value, tone = "") {
+    return `<article class="metric${tone ? ` ${tone}` : ""}"><p class="metric-label">${label}</p><p class="metric-value">${value}</p></article>`;
+  }
 
-init();
+  function renderSummary() {
+    const students = state.mode === "detail" ? state.rows : state.overviewRows.flatMap((item) => item.rows);
+    const scores = students.map((row) => row.summary.averageScore).filter(Number.isFinite);
+    const expected = students.reduce((count, row) => count + row.summary.expectedCount, 0);
+    const recorded = students.reduce((count, row) => count + row.summary.recordedCount, 0);
+    const missing = Math.max(0, expected - recorded);
+    const lowCount = students.filter((row) => Number.isFinite(row.summary.averageScore) && row.summary.averageScore < PASS_SCORE).length;
+    const averageScore = average(scores);
+    const averagePoint = average(students.map((row) => row.summary.averageGradePoint));
+    const averageLabel = state.mode === "detail" ? "คะแนนเฉลี่ยห้อง" : "คะแนนเฉลี่ยกลุ่ม";
+    els.summary.classList.toggle("is-overview", state.mode === "overview");
+    els.summary.classList.toggle("is-detail", state.mode === "detail");
+    els.summary.innerHTML = [
+      renderMetric("นักเรียนทั้งหมด", students.length, "metric-total"),
+      renderMetric(averageLabel, format(averageScore), "metric-total"),
+      renderMetric("ระดับผลการเรียนเฉลี่ย", format(averagePoint)),
+      renderMetric("คะแนนสูงสุด", format(scores.length ? Math.max(...scores) : null)),
+      renderMetric("คะแนนต่ำสุด", format(scores.length ? Math.min(...scores) : null)),
+      renderMetric("นักเรียนต่ำกว่าเกณฑ์", lowCount, lowCount > 0 ? "metric-warning" : ""),
+      renderMetric("ความครบถ้วนคะแนน", expected ? `${format(recorded / expected * 100)}%` : "-"),
+      renderMetric("คะแนนที่ยังไม่บันทึก", missing)
+    ].join("");
+
+    const year = state.maps.academicYears.get(state.filters.academicYear)?.name || "-";
+    const semester = state.filters.semester === "all" ? "ทั้งปีการศึกษา" : `ภาคเรียน ${state.maps.semesters.get(state.filters.semester)?.term}`;
+    const grade = state.filters.grade === "all" ? "ทุกระดับชั้น" : state.maps.grades.get(state.filters.grade)?.name;
+    const classroom = state.filters.classroom === "all" ? "ทุกห้องเรียน" : state.maps.classrooms.get(state.filters.classroom)?.name;
+    els.scope.textContent = `ปีการศึกษา ${year} · ${semester} · ${grade} · ${classroom}`;
+  }
+
+  function buildClassAverageChartData() {
+    return state.overviewBaseRows.map((item) => ({
+      roomId: item.room.id,
+      gradeId: item.room.gradeId,
+      planId: item.room.planId,
+      label: item.room.name,
+      averageScore: item.averageScore,
+      studentCount: item.count,
+      belowCount: item.belowCount
+    })).filter((item) => Number.isFinite(item.averageScore)).sort((a, b) => a.averageScore - b.averageScore);
+  }
+
+  function buildSubjectAverageChartData() {
+    const rows = applyKeyword(state.baseRows);
+    return state.db.subjects.map((subject) => {
+      const results = rows.map((row) => row.subjectResults.find((item) => item.subjectId === subject.id)).filter(Boolean);
+      const scores = results.map((item) => item.averageScore).filter(Number.isFinite);
+      return {
+        subjectId: subject.id,
+        code: subject.code,
+        name: subject.name,
+        label: `${subject.code} · ${subject.name}`,
+        averageScore: average(scores),
+        highestScore: scores.length ? Math.max(...scores) : null,
+        lowestScore: scores.length ? Math.min(...scores) : null,
+        completeCount: results.filter((item) => item.isComplete).length,
+        missingCount: results.filter((item) => !item.isComplete).length,
+        totalCount: results.length
+      };
+    }).filter((item) => Number.isFinite(item.averageScore)).sort((a, b) => a.averageScore - b.averageScore);
+  }
+
+  function buildScoreDistributionData() {
+    const rows = sourceStudentRows();
+    const total = rows.filter((row) => Number.isFinite(row.summary.averageScore)).length;
+    return SCORE_RANGES.map((range) => {
+      const count = rows.filter((row) => scoreInRange(row.summary.averageScore, range)).length;
+      return { range, label: range.label, count, percentage: total ? count / total * 100 : 0 };
+    });
+  }
+
+  function destroyAverageScoreYearCharts() {
+    state.averageComparisonChart?.destroy();
+    state.scoreDistributionChart?.destroy();
+    state.averageComparisonChart = null;
+    state.scoreDistributionChart = null;
+  }
+
+  function chartColors() {
+    const styles = getComputedStyle(document.documentElement);
+    return {
+      primary: styles.getPropertyValue("--primary").trim() || "#315d7d",
+      warning: styles.getPropertyValue("--warning").trim() || "#a56625",
+      muted: styles.getPropertyValue("--muted").trim() || "#64748b",
+      border: styles.getPropertyValue("--border-soft").trim() || "#dce3ea",
+      selected: "#244c68"
+    };
+  }
+
+  function registerChartPlugins() {
+    if (!window.Chart || Chart.registry.plugins.get("averageYearPassLine")) return;
+    Chart.register({
+      id: "averageYearPassLine",
+      afterDraw(chart, args, options) {
+        if (!options?.enabled || !chart.scales.x) return;
+        const x = chart.scales.x.getPixelForValue(PASS_SCORE);
+        const { top, bottom } = chart.chartArea;
+        chart.ctx.save();
+        chart.ctx.strokeStyle = options.color;
+        chart.ctx.setLineDash([5, 4]);
+        chart.ctx.lineWidth = 1;
+        chart.ctx.beginPath();
+        chart.ctx.moveTo(x, top);
+        chart.ctx.lineTo(x, bottom);
+        chart.ctx.stroke();
+        chart.ctx.restore();
+      }
+    }, {
+      id: "averageYearDistributionLabels",
+      afterDatasetsDraw(chart, args, options) {
+        if (!options?.enabled) return;
+        const values = options.values || [];
+        chart.ctx.save();
+        chart.ctx.fillStyle = options.color;
+        chart.ctx.font = "600 11px system-ui, sans-serif";
+        chart.ctx.textAlign = "center";
+        chart.getDatasetMeta(0).data.forEach((bar, index) => {
+          const item = values[index];
+          if (!item) return;
+          chart.ctx.fillText(`${item.count} (${item.percentage.toFixed(1)}%)`, bar.x, Math.max(chart.chartArea.top + 12, bar.y - 8));
+        });
+        chart.ctx.restore();
+      }
+    });
+  }
+
+  function baseChartOptions() {
+    const colors = chartColors();
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: false,
+      interaction: { mode: "nearest", intersect: true },
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, max: 100, grid: { color: colors.border }, ticks: { color: colors.muted } },
+        y: { grid: { display: false }, ticks: { color: colors.muted, autoSkip: false } }
+      }
+    };
+  }
+
+  function renderClassAverageChart(data) {
+    const colors = chartColors();
+    const options = baseChartOptions();
+    options.indexAxis = "y";
+    options.plugins.averageYearPassLine = { enabled: true, color: colors.warning };
+    options.plugins.tooltip = {
+      callbacks: {
+        title: (items) => data[items[0].dataIndex].label,
+        label: (context) => {
+          const item = data[context.dataIndex];
+          return [`คะแนนเฉลี่ย ${format(item.averageScore)}`, `นักเรียน ${item.studentCount} คน`, `ต่ำกว่าเกณฑ์ ${item.belowCount} คน`];
+        }
+      }
+    };
+    options.onClick = (event, elements) => {
+      if (!elements.length) return;
+      const item = data[elements[0].index];
+      els.grade.value = item.gradeId;
+      populatePlans(item.planId);
+      syncClassrooms(item.roomId);
+      runSearch();
+    };
+    state.averageComparisonChart = new Chart(els.comparisonCanvas, {
+      type: "bar",
+      data: { labels: data.map((item) => item.label), datasets: [{ data: data.map((item) => item.averageScore), backgroundColor: data.map((item) => item.averageScore < PASS_SCORE ? colors.warning : colors.primary), borderRadius: 3, barThickness: 22 }] },
+      options
+    });
+  }
+
+  function focusSubjectColumns(subjectId) {
+    if (!state.visibleSubjectIds.has(subjectId)) {
+      state.visibleSubjectIds.add(subjectId);
+      renderTable();
+      renderSubjectPanel();
+    }
+    requestAnimationFrame(() => {
+      const cells = [...els.thead.closest("table").querySelectorAll(`[data-subject-id="${subjectId}"]`)];
+      const header = cells[0];
+      if (!header) return;
+      const wrapper = header.closest(".average-year-table-wrap");
+      wrapper?.scrollTo({ left: Math.max(0, header.offsetLeft - 820), behavior: "smooth" });
+      els.thead.closest("table").querySelectorAll(".is-subject-highlighted").forEach((cell) => cell.classList.remove("is-subject-highlighted"));
+      cells.forEach((cell) => cell.classList.add("is-subject-highlighted"));
+      clearTimeout(state.subjectHighlightTimer);
+      state.subjectHighlightTimer = setTimeout(() => cells.forEach((cell) => cell.classList.remove("is-subject-highlighted")), 2200);
+    });
+  }
+
+  function renderSubjectAverageChart(data) {
+    const colors = chartColors();
+    const options = baseChartOptions();
+    options.indexAxis = "y";
+    options.plugins.averageYearPassLine = { enabled: true, color: colors.warning };
+    options.plugins.tooltip = {
+      callbacks: {
+        title: (items) => `${data[items[0].dataIndex].code} · ${data[items[0].dataIndex].name}`,
+        label: (context) => {
+          const item = data[context.dataIndex];
+          return [`คะแนนเฉลี่ย ${format(item.averageScore)}`, `สูงสุด ${format(item.highestScore)} · ต่ำสุด ${format(item.lowestScore)}`, `คะแนนครบ ${item.completeCount}/${item.totalCount} คน`, `คะแนนไม่ครบ ${item.missingCount} คน`];
+        }
+      }
+    };
+    options.onClick = (event, elements) => {
+      if (elements.length) focusSubjectColumns(data[elements[0].index].subjectId);
+    };
+    state.averageComparisonChart = new Chart(els.comparisonCanvas, {
+      type: "bar",
+      data: { labels: data.map((item) => item.label), datasets: [{ data: data.map((item) => item.averageScore), backgroundColor: data.map((item) => item.averageScore < PASS_SCORE ? colors.warning : colors.primary), borderRadius: 3, barThickness: 18 }] },
+      options
+    });
+  }
+
+  function renderScoreDistributionChart(data) {
+    const colors = chartColors();
+    const options = baseChartOptions();
+    options.layout = { padding: { top: 24 } };
+    options.plugins.averageYearDistributionLabels = { enabled: true, values: data, color: colors.muted };
+    options.plugins.tooltip = { callbacks: { label: (context) => { const item = data[context.dataIndex]; return `${item.count} คน (${item.percentage.toFixed(1)}%)`; } } };
+    options.scales.y.ticks.precision = 0;
+    options.scales.y.title = { display: true, text: "จำนวนนักเรียน", color: colors.muted };
+    options.scales.x = { grid: { display: false }, ticks: { color: colors.muted, autoSkip: false, maxRotation: 0 } };
+    options.onClick = (event, elements) => {
+      if (elements.length) applyScoreRangeFilter(data[elements[0].index].range);
+    };
+    state.scoreDistributionChart = new Chart(els.distributionCanvas, {
+      type: "bar",
+      data: {
+        labels: data.map((item) => item.label),
+        datasets: [{ data: data.map((item) => item.count), backgroundColor: data.map((item) => state.scoreRangeFilter?.label === item.label ? colors.selected : colors.primary), borderRadius: 3, maxBarThickness: 44 }]
+      },
+      options
+    });
+  }
+
+  function toggleChartEmpty(canvas, empty, hasData) {
+    canvas.classList.toggle("hidden", !hasData);
+    empty.classList.toggle("hidden", hasData);
+  }
+
+  function renderVisualization() {
+    destroyAverageScoreYearCharts();
+    updateVisualizationFilterChip();
+    els.visualizationPanel.classList.toggle("is-detail", state.mode === "detail");
+    els.comparisonTitle.textContent = state.mode === "detail" ? "คะแนนเฉลี่ยแยกตามรายวิชา" : "คะแนนเฉลี่ยแยกตามห้องเรียน";
+    const comparisonData = state.mode === "detail" ? buildSubjectAverageChartData() : buildClassAverageChartData();
+    const distributionData = buildScoreDistributionData();
+    const hasComparison = comparisonData.length > 0;
+    const hasDistribution = distributionData.some((item) => item.count > 0);
+    toggleChartEmpty(els.comparisonCanvas, els.comparisonEmpty, hasComparison);
+    toggleChartEmpty(els.distributionCanvas, els.distributionEmpty, hasDistribution);
+    if (!window.Chart) return;
+    registerChartPlugins();
+    if (hasComparison) state.mode === "detail" ? renderSubjectAverageChart(comparisonData) : renderClassAverageChart(comparisonData);
+    if (hasDistribution) renderScoreDistributionChart(distributionData);
+  }
+  function studentCell(row) { return `<td class="sticky-col-score-no">${row.index}</td><td class="sticky-col-score-id">${escapeHtml(row.student.code)}</td><td class="sticky-col-score-name average-year-student-name">${escapeHtml(row.student.name)}</td>`; }
+  function renderOverviewTable() { els.tableTitle.textContent = "ภาพรวมรายห้อง"; els.thead.innerHTML = `<tr><th>ระดับชั้น</th><th>ห้องเรียน</th><th>แผนการเรียน</th><th>จำนวนนักเรียน</th><th>คะแนนเต็มรวม</th><th>คะแนนเฉลี่ยของห้อง</th><th>ระดับผลการเรียนเฉลี่ย</th><th>คะแนนสูงสุด</th><th>คะแนนต่ำสุด</th><th>ต่ำกว่าเกณฑ์</th><th>คะแนนไม่ครบ</th><th>การดำเนินการ</th></tr>`; els.tbody.innerHTML = state.overviewRows?.length ? state.overviewRows.map((row) => { const grade = state.maps.grades.get(row.room.gradeId); const plan = state.maps.plans.get(row.room.planId); return `<tr><td>${grade.name}</td><td>${row.room.name}</td><td>${plan.name}</td><td>${row.count}</td><td>${format(row.totalMaxScore)}</td><td>${format(row.averageScore)}</td><td>${getGradeLabel(row.averageScore)} (${format(row.gradePoint)})</td><td>${format(row.highestScore)}</td><td>${format(row.lowestScore)}</td><td>${row.belowCount}</td><td>${row.incompleteCount}</td><td><button class="btn btn-secondary btn-small" type="button" data-view-room="${row.room.id}">ดูรายละเอียด</button></td></tr>`; }).join("") : `<tr><td colspan="12"><div class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div></td></tr>`; }
+  function subjectHeader(subject) { return `<th colspan="5" class="average-year-subject-head" data-subject-id="${subject.id}"><span>${escapeHtml(subject.name)}</span><small>${escapeHtml(subject.code)} | ${subject.credit} หน่วยกิต</small></th>`; }
+  function cell(value, max, missingTitle = "ยังไม่ได้บันทึกคะแนน") { return Number.isFinite(value) ? `<span>${format(value)}</span><small>[${format(max)}]</small>` : `<span title="${missingTitle}">-</span><small>ไม่มีข้อมูล</small>`; }
+  function renderDetailTable() { els.tableTitle.textContent = "รายละเอียดคะแนนรายนักเรียน"; const subjects = state.db.subjects.filter((subject) => state.visibleSubjectIds.has(subject.id)); const subjectGroups = subjects.map(subjectHeader).join(""); els.thead.innerHTML = `<tr><th rowspan="3" class="sticky-col-score-no">ลำดับ</th><th rowspan="3" class="sticky-col-score-id">รหัสนักเรียน</th><th rowspan="3" class="sticky-col-score-name">ชื่อ-สกุล</th><th rowspan="3" class="sticky-score-total">คะแนนรวม</th><th rowspan="3" class="sticky-score-average">คะแนนเฉลี่ย</th><th rowspan="3" class="sticky-score-grade">ระดับเฉลี่ย</th><th rowspan="3" class="sticky-score-rank">อันดับ</th>${subjectGroups}</tr><tr>${subjects.map((subject) => `<th data-subject-id="${subject.id}">ภาค 1</th><th data-subject-id="${subject.id}">ภาค 2</th><th data-subject-id="${subject.id}">รวมปี</th><th data-subject-id="${subject.id}">เฉลี่ย</th><th data-subject-id="${subject.id}">ระดับ</th>`).join("")}</tr><tr>${subjects.map((subject) => `<th class="average-year-max-score" data-subject-id="${subject.id}">เต็ม ${subject.semester1MaxScore}</th><th class="average-year-max-score" data-subject-id="${subject.id}">เต็ม ${subject.semester2MaxScore}</th><th class="average-year-max-score" data-subject-id="${subject.id}">เต็ม ${subject.semester1MaxScore + subject.semester2MaxScore}</th><th class="average-year-max-score" data-subject-id="${subject.id}">เต็ม 100</th><th class="average-year-max-score" data-subject-id="${subject.id}">เต็ม 4.0</th>`).join("")}</tr>`; els.tbody.innerHTML = state.rows.length ? state.rows.map((row, index) => { row.index = index + 1; const subjectCells = subjects.map((subject) => { const result = row.subjectResults.find((item) => item.subjectId === subject.id); const attr = `data-subject-id="${subject.id}"`; return `<td class="average-year-number-cell" ${attr}><div class="average-year-score-cell">${cell(result.semester1Score, result.semester1MaxScore)}</div></td><td class="average-year-number-cell" ${attr}><div class="average-year-score-cell">${cell(result.semester2Score, result.semester2MaxScore)}</div></td><td class="average-year-number-cell" ${attr}>${cell(result.totalScore, result.totalMaxScore)}</td><td class="average-year-number-cell" ${attr}>${format(result.averageScore)}</td><td class="average-year-grade-cell" ${attr}><span class="score-grade-chip score-grade-chip-${scoreTone(result.averageScore)}">${getGradeLabel(result.averageScore)}<small>${format(result.gradePoint)}</small></span></td>`; }).join(""); return `<tr>${studentCell(row)}<td class="sticky-score-total">${format(row.summary.totalScore)}<small>[${format(row.summary.totalMaxScore)}]</small></td><td class="sticky-score-average">${format(row.summary.averageScore)}</td><td class="sticky-score-grade"><span class="score-grade-chip score-grade-chip-${scoreTone(row.summary.averageScore)}">${getGradeLabel(row.summary.averageScore)}<small>${format(row.summary.averageGradePoint)}</small></span></td><td class="sticky-score-rank"><span class="average-year-rank-chip">${row.summary.rank}</span></td>${subjectCells}</tr>`; }).join("") : `<tr><td colspan="${7 + subjects.length * 5}"><div class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div></td></tr>`; }
+  function renderTable() { const table = els.thead.closest("table"); table.classList.toggle("is-detail", state.mode === "detail"); table.classList.toggle("is-overview", state.mode === "overview"); state.mode === "detail" ? renderDetailTable() : renderOverviewTable(); }
+  function renderSubjectPanel() { els.subjectPanel.innerHTML = `<div class="subject-panel-header"><strong>เลือกวิชา</strong><div><button class="btn btn-small btn-secondary" type="button" data-subject-action="all">เลือกทั้งหมด</button><button class="btn btn-small btn-secondary" type="button" data-subject-action="none">ล้างการเลือก</button><button class="btn btn-small btn-primary" type="button" data-subject-action="apply">ใช้งาน</button></div></div><input class="subject-search" type="search" placeholder="ค้นหารหัสวิชาหรือชื่อวิชา" aria-label="ค้นหารายวิชา" /><div class="subject-check-list">${state.db.subjects.map((subject) => `<label><input type="checkbox" value="${subject.id}" ${state.visibleSubjectIds.has(subject.id) ? "checked" : ""} /> ${escapeHtml(subject.code)} ${escapeHtml(subject.name)}</label>`).join("")}</div>`; }
+  function updateKeywordResults() { if (!state.initialized) return; state.filters.keyword = els.keyword.value.trim().toLowerCase(); state.scoreRangeFilter = null; if (state.mode === "overview") state.overviewBaseRows = buildOverviewRows(state.eligibleStudents); applyCurrentScoreRange(); renderSummary(); renderVisualization(); renderTable(); }
+  function runSearch() { els.tbody.innerHTML = `<tr><td><div class="empty-state">กำลังประมวลผลคะแนนเฉลี่ยรายปี...</div></td></tr>`; state.filters = getFilters(); state.eligibleStudents = getEligibleStudents(); state.mode = state.filters.classroom === "all" ? "overview" : "detail"; state.scoreRangeFilter = null; if (state.mode === "detail") { state.baseRows = buildStudentAnnualRows(state.eligibleStudents); } else { state.overviewBaseRows = buildOverviewRows(state.eligibleStudents); } applyCurrentScoreRange(); state.initialized = true; renderSummary(); renderVisualization(); renderTable(); renderSubjectPanel(); saveLastSearch(); [els.subjectBtn, els.export, els.print].forEach((button) => { button.disabled = !state.eligibleStudents.length; }); }
+  function resetFilters() { const saved = {}; els.academicYear.value = getCurrentYear().id; syncFilterDependencies(saved); els.status.value = "active"; els.keyword.value = ""; runSearch(); }
+  function showPrintDialog() { if (typeof els.dialog.showModal === "function") els.dialog.showModal(); else els.dialog.removeAttribute("open"); els.printPreview.innerHTML = ""; }
+  function buildPrintPreview() { const individual = $("averageYearPrintType").value === "individual"; const source = state.mode === "detail" ? state.rows : (state.overviewRows || []).flatMap((item) => item.rows); const rows = individual ? source.slice(0, 1) : source.slice(0, 5); els.printPreview.innerHTML = `<div class="score-print-preview"><strong>${individual ? "ตัวอย่างรายงานรายบุคคล" : "ตัวอย่างรายงานทั้งห้อง"}</strong><span>${escapeHtml(els.scope.textContent)}</span><div class="print-preview-table">${rows.map((row, index) => `<div>${index + 1}. ${escapeHtml(row.student.code)} ${escapeHtml(row.student.name)} | ${format(row.summary.averageScore)} | ${getGradeLabel(row.summary.averageScore)}</div>`).join("") || "ไม่พบข้อมูลตามเงื่อนไขที่เลือก"}</div></div>`; }
+  function attachEvents() { els.form.addEventListener("submit", (event) => { event.preventDefault(); runSearch(); }); els.reset.addEventListener("click", resetFilters); els.clearRangeFilter.addEventListener("click", () => clearVisualizationFilter()); document.querySelector('[data-system="average-score-year"]')?.addEventListener("click", () => setTimeout(renderVisualization, 0)); els.academicYear.addEventListener("change", () => { populateSemesters("all"); syncSearchButton(); }); els.grade.addEventListener("change", () => { populatePlans("all"); syncClassrooms("all"); }); els.plan.addEventListener("change", () => syncClassrooms("all")); let keywordTimer; els.keyword.addEventListener("input", () => { clearTimeout(keywordTimer); keywordTimer = setTimeout(updateKeywordResults, 250); }); els.subjectBtn.addEventListener("click", () => els.subjectPanel.classList.toggle("hidden")); els.subjectPanel.addEventListener("input", (event) => { if (!event.target.matches(".subject-search")) return; const keyword = event.target.value.trim().toLowerCase(); els.subjectPanel.querySelectorAll(".subject-check-list label").forEach((label) => { label.hidden = !label.textContent.toLowerCase().includes(keyword); }); }); els.subjectPanel.addEventListener("click", (event) => { const action = event.target.closest("[data-subject-action]")?.dataset.subjectAction; if (!action) return; if (action === "all") els.subjectPanel.querySelectorAll("input[type=checkbox]").forEach((input) => { input.checked = true; }); if (action === "none") els.subjectPanel.querySelectorAll("input[type=checkbox]").forEach((input) => { input.checked = false; }); if (action === "apply") { state.visibleSubjectIds = new Set([...els.subjectPanel.querySelectorAll("input:checked")].map((input) => input.value)); els.subjectPanel.classList.add("hidden"); renderTable(); } }); els.tbody.addEventListener("click", (event) => { const button = event.target.closest("[data-view-room]"); if (!button) return; els.grade.value = state.maps.classrooms.get(button.dataset.viewRoom).gradeId; populatePlans(state.maps.classrooms.get(button.dataset.viewRoom).planId); syncClassrooms(button.dataset.viewRoom); runSearch(); }); els.print.addEventListener("click", showPrintDialog); els.export.addEventListener("click", () => { showPrintDialog(); setTimeout(buildPrintPreview, 0); }); els.buildPreview.addEventListener("click", buildPrintPreview); }
+  function initializeAverageScoreYearPage() { state.db = buildInlineMockDatabase(); state.maps = { academicYears: mapById(state.db.academicYears), semesters: mapById(state.db.semesters), grades: mapById(state.db.grades), plans: mapById(state.db.plans), classrooms: mapById(state.db.classrooms), subjects: mapById(state.db.subjects) }; const saved = loadSavedFilters(); populateAcademicYears(saved); syncFilterDependencies(saved); state.subjects = state.db.subjects; state.visibleSubjectIds = new Set(state.db.subjects.map((subject) => subject.id)); els.current.textContent = `${state.maps.academicYears.get(els.academicYear.value).name} / ทั้งปีการศึกษา`; attachEvents(); syncSearchButton(); runSearch(); }
+  initializeAverageScoreYearPage();
 })();

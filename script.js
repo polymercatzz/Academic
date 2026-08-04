@@ -10,7 +10,7 @@ const attendanceOptions = [
 
 const moduleLabels = {
   attendance: "รายงานการเข้าเรียน",
-  "score-subject": "รายงานผลพัฒนาผู้เรียนรายวิชา",
+  "score-subject": "รายงานคะแนนรายวิชา",
   "average-score-year": "รายงานคะแนนเฉลี่ยรายปี",
   "record-report": "รายงานผลการเรียนระเบียนสะสม / GPAX",
   "unable-exam": "รายงานผู้ไม่มีสิทธิ์สอบ",
@@ -1555,7 +1555,7 @@ function setActiveModule(system) {
     els.placeholderPageTitle.textContent = moduleLabels[system] || "โมดูลอื่น";
     els.placeholderPageSubtitle.textContent = `หน้าสำหรับ ${moduleLabels[system] || system} ยังไม่ได้ถูกออกแบบใน prototype นี้`;
     els.placeholderModuleTitle.textContent = `${moduleLabels[system] || system} ยังไม่พร้อมใช้งาน`;
-    els.placeholderModuleText.textContent = "ตอนนี้มีหน้ารายงานการเข้าเรียน รายงานผลพัฒนาผู้เรียนรายวิชา รายงานคะแนนเฉลี่ยรายปี รายงานผลการเรียนระเบียนสะสม / GPAX และรายงานผู้ไม่มีสิทธิ์สอบที่ใช้งานได้ภายใน sidebar เดียวกัน";
+    els.placeholderModuleText.textContent = "ตอนนี้มีหน้ารายงานการเข้าเรียน รายงานคะแนนรายวิชา รายงานคะแนนเฉลี่ยรายปี รายงานผลการเรียนระเบียนสะสม / GPAX และรายงานผู้ไม่มีสิทธิ์สอบที่ใช้งานได้ภายใน sidebar เดียวกัน";
   }
 }
 

@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=attendance-summary-first" />
+  <link rel="stylesheet" href="styles.css?v=unable-dashboard-tabs-2" />
 </head>
 <body>
   <div class="layout-shell">
@@ -34,7 +34,7 @@
         <section class="nav-group" aria-labelledby="scoreSystemLabel">
           <h3 class="nav-group-title" id="scoreSystemLabel">คะแนน</h3>
           <button class="nav-item" type="button" data-system="score-subject">
-            <span>Score per Subject</span>
+            <span>รายงานคะแนนรายวิชา</span>
           </button>
           <button class="nav-item" type="button" data-system="average-score-year">
             <span>รายงานคะแนนเฉลี่ยรายปี</span>
@@ -323,11 +323,7 @@
       <section class="app-page" data-page="unable-exam">
         <header class="page-header" aria-labelledby="unablePageTitle">
           <div class="page-heading">
-            <p class="eyebrow">ระบบรายงานสำหรับครูผู้สอน</p>
             <h1 id="unablePageTitle">รายงานผู้ไม่มีสิทธิ์สอบ</h1>
-            <p class="subtitle">
-              ค้นหานักเรียนที่มีเปอร์เซ็นต์การเข้าเรียนต่ำกว่าเกณฑ์ของรายวิชาได้เร็วขึ้น ด้วยตัวกรองแบบลำดับขั้น สรุปภาพรวมก่อนตาราง และการส่งออกจากผลลัพธ์ชุดเดียวกัน
-            </p>
           </div>
 
           <aside class="academic-card" aria-label="ข้อมูลภาคการเรียนปัจจุบัน">
@@ -336,49 +332,97 @@
           </aside>
         </header>
 
-        <section class="attendance-report unable-exam-report" aria-labelledby="unableFilterTitle">
+        <section class="attendance-report unable-exam-report" aria-labelledby="unableSummaryTitle">
+          <section class="results-panel unable-overview-panel" aria-labelledby="unableSummaryTitle">
+            <div class="results-header">
+              <div>
+                <h2 class="section-title" id="unableSummaryTitle">ภาพรวมสิทธิ์สอบ</h2>
+                <p class="section-note" id="unableSummaryScope">ทั้งโรงเรียน</p>
+              </div>
+              <div class="results-meta">
+                <span>เกณฑ์การเข้าเรียน: <strong id="unableThresholdValue">80%</strong></span>
+              </div>
+            </div>
+
+            <div class="summary-grid unable-overview-metrics" aria-label="ตัวเลขสรุปผล">
+              <article class="metric metric-total">
+                <p class="metric-label">ไม่มีสิทธิ์สอบ</p>
+                <p class="metric-value" id="unableStudentsFound">0</p>
+              </article>
+              <article class="metric metric-warning">
+                <p class="metric-label">กลุ่มเสี่ยง</p>
+                <p class="metric-value" id="unableRiskCount">0</p>
+              </article>
+              <article class="metric">
+                <p class="metric-label">ค่าเฉลี่ยการเข้าเรียน</p>
+                <p class="metric-value" id="unableAttendanceAverage">0%</p>
+              </article>
+            </div>
+
+            <div class="unable-overview-grid">
+              <section class="unable-chart-panel" aria-labelledby="unableStatusChartTitle">
+                <div class="unable-chart-header">
+                  <h3 id="unableStatusChartTitle">สถานะสิทธิ์สอบ</h3>
+                  <span id="unableCaseTotal">0 รายการ</span>
+                </div>
+                <div class="unable-status-chart" id="unableStatusChart"></div>
+              </section>
+              <section class="unable-breakdown-panel" aria-labelledby="unableBreakdownTitle">
+                <div class="unable-chart-header">
+                  <h3 id="unableBreakdownTitle">สรุปแยกตาม</h3>
+                </div>
+                <div class="unable-breakdown-tabs" role="tablist" aria-label="มุมมองสรุป">
+                  <button class="unable-breakdown-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="unableGradeBreakdown" data-breakdown-tab="grade">ระดับชั้น</button>
+                  <button class="unable-breakdown-tab" type="button" role="tab" aria-selected="false" aria-controls="unableRoomBreakdown" data-breakdown-tab="room">ห้อง</button>
+                  <button class="unable-breakdown-tab" type="button" role="tab" aria-selected="false" aria-controls="unableSubjectBreakdown" data-breakdown-tab="subject">รายวิชา</button>
+                </div>
+                <div class="unable-breakdown-viewport">
+                  <div class="unable-breakdown-list" id="unableGradeBreakdown" role="tabpanel" data-breakdown-panel="grade"></div>
+                  <div class="unable-breakdown-list hidden" id="unableRoomBreakdown" role="tabpanel" data-breakdown-panel="room"></div>
+                  <div class="unable-breakdown-list hidden" id="unableSubjectBreakdown" role="tabpanel" data-breakdown-panel="subject"></div>
+                </div>
+              </section>
+            </div>
+          </section>
+
           <section class="search-panel unable-search-panel" aria-labelledby="unableFilterTitle">
             <div class="panel-heading">
-              <p class="section-kicker">ค้นหารายงาน</p>
               <h2 class="section-title" id="unableFilterTitle">เงื่อนไขการค้นหา</h2>
-              <p class="section-note">แสดงตัวกรองที่ต้องใช้ก่อน และเก็บตัวเลือกเสริมไว้ในส่วนขั้นสูงเพื่อให้ค้นหาได้ไวขึ้น</p>
             </div>
 
             <form class="filters-form" id="unableFiltersForm" aria-label="เงื่อนไขการค้นหา unable to exam">
               <section class="search-block" aria-labelledby="unablePrimaryFilterTitle">
                 <div class="search-block-header">
                   <div>
-                    <p class="search-block-kicker">ตัวกรองหลัก</p>
-                    <h3 class="search-block-title" id="unablePrimaryFilterTitle">ลำดับตัวกรองการค้นหา</h3>
+                    <h3 class="search-block-title" id="unablePrimaryFilterTitle">ตัวกรองหลัก</h3>
                   </div>
-                  <p class="search-block-note">เลือกข้อมูลตามลำดับ ปีการศึกษา ภาคเรียน ระดับชั้น ห้องเรียน และรายวิชา</p>
                 </div>
 
                 <div class="base-filters-grid unable-filters-grid">
                   <div class="field-group">
-                    <label class="field-label" for="unableAcademicYear">ปีการศึกษา <span class="field-required">*</span></label>
+                    <label class="field-label" for="unableAcademicYear">ปีการศึกษา</label>
                     <select id="unableAcademicYear" name="academicYear"></select>
                   </div>
                   <div class="field-group">
-                    <label class="field-label" for="unableSemester">ภาคเรียน <span class="field-required">*</span></label>
+                    <label class="field-label" for="unableSemester">ภาคเรียน</label>
                     <select id="unableSemester" name="semester"></select>
                   </div>
                   <div class="field-group">
-                    <label class="field-label" for="unableGrade">ระดับชั้น <span class="field-required">*</span></label>
+                    <label class="field-label" for="unableGrade">ระดับชั้น</label>
                     <select id="unableGrade" name="grade">
-                      <option value="">เลือกระดับชั้น</option>
+                      <option value="">ทุกระดับชั้น</option>
                     </select>
                   </div>
                   <div class="field-group">
-                    <label class="field-label" for="unableClassroom">ห้องเรียน <span class="field-required">*</span></label>
-                    <select id="unableClassroom" name="classroom" disabled>
-                      <option value="">เลือกห้องเรียน</option>
+                    <label class="field-label" for="unableClassroom">ห้องเรียน</label>
+                    <select id="unableClassroom" name="classroom">
+                      <option value="">ทุกห้อง</option>
                     </select>
                   </div>
                   <div class="field-group field-group-wide">
-                    <label class="field-label" for="unableSubject">รายวิชา <span class="field-required">*</span></label>
-                    <select id="unableSubject" name="subject" disabled>
-                      <option value="">เลือกรายวิชา</option>
+                    <label class="field-label" for="unableSubject">รายวิชา</label>
+                    <select id="unableSubject" name="subject">
+                      <option value="">ทุกวิชา</option>
                     </select>
                   </div>
                 </div>
@@ -387,7 +431,6 @@
               <section class="search-block search-block-accent" aria-labelledby="unableAdvancedFilterTitle">
                 <div class="search-block-header">
                   <div>
-                    <p class="search-block-kicker">ตัวกรองเสริม</p>
                     <h3 class="search-block-title" id="unableAdvancedFilterTitle">ตัวกรองเพิ่มเติม</h3>
                   </div>
                   <button class="btn btn-secondary unable-toggle-btn" id="unableAdvancedToggleBtn" type="button" aria-expanded="false" aria-controls="unableAdvancedFilters">
@@ -403,7 +446,6 @@
                         <option value="current">เฉพาะภาคเรียนปัจจุบัน</option>
                         <option value="all">ทุกตารางเรียนในปีการศึกษา</option>
                       </select>
-                      <p class="field-help">เฉพาะภาคเรียนปัจจุบันจะใช้ตารางของภาคเรียนที่เลือก ส่วนทุกตารางเรียนจะรวมทั้งปีการศึกษา</p>
                     </div>
                     <div class="field-group">
                       <label class="field-label" for="unableStatus">สถานะ</label>
@@ -426,66 +468,15 @@
                 </div>
               </section>
 
-              <div class="unable-filter-footer">
-                <div class="validation-banner hidden" id="unableValidationBanner" role="status" aria-live="polite"></div>
-                <div class="filter-actions unable-filter-actions" aria-label="คำสั่งค้นหาและส่งออก">
-                  <button class="btn btn-secondary" id="unableResetFiltersBtn" type="button">ล้างเงื่อนไข</button>
-                  <div class="export-dropdown" id="unableExportDropdown">
-                    <button class="btn btn-secondary export-trigger" id="unableExportBtn" type="button" aria-haspopup="true" aria-expanded="false" disabled>
-                      ส่งออก
-                    </button>
-                    <div class="export-menu hidden" id="unableExportMenu" role="menu" aria-label="รูปแบบการส่งออก">
-                      <button type="button" role="menuitem" data-export="excel">Excel</button>
-                      <button type="button" role="menuitem" data-export="pdf">PDF</button>
-                      <button type="button" role="menuitem" data-export="print">พิมพ์</button>
-                    </div>
-                  </div>
-                  <button class="btn btn-primary" id="unableSearchBtn" type="submit" disabled>ค้นหาข้อมูล</button>
-                </div>
-              </div>
+              <div class="validation-banner hidden" id="unableValidationBanner" role="status" aria-live="polite"></div>
             </form>
           </section>
 
-          <section class="results-panel unable-results-panel" aria-labelledby="unableSummaryTitle">
-            <div class="results-header">
-              <div>
-                <p class="section-kicker">ผลลัพธ์รายงาน</p>
-                <h2 class="section-title" id="unableSummaryTitle">สรุปรายงานผู้ไม่มีสิทธิ์สอบ</h2>
-                <p class="section-note" id="unableSummaryScope">ยังไม่มีผลการค้นหา</p>
-              </div>
-              <div class="results-meta">
-                <span>สถานะ: <strong id="unableStatusMeta">ไม่มีสิทธิ์สอบ</strong></span>
-                <span>ตารางเรียน: <strong id="unableScheduleMeta">เฉพาะภาคเรียนปัจจุบัน</strong></span>
-              </div>
-            </div>
-
-            <div class="summary-grid unable-summary-grid" aria-label="ตัวเลขสรุปผล">
-              <article class="metric metric-total">
-                <p class="metric-label">จำนวนนักเรียนที่พบ</p>
-                <p class="metric-value" id="unableStudentsFound">0</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">สัดส่วนไม่มีสิทธิ์สอบ</p>
-                <p class="metric-value" id="unableUnablePercentage">0%</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">เกณฑ์การเข้าเรียน</p>
-                <p class="metric-value" id="unableThresholdValue">80%</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">รายวิชาที่เลือก</p>
-                <p class="metric-value metric-value-compact" id="unableSelectedSubject">-</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">ห้องเรียนที่เลือก</p>
-                <p class="metric-value metric-value-compact" id="unableSelectedClassroom">-</p>
-              </article>
-            </div>
-
+          <section class="results-panel unable-results-panel hidden" id="unableDetailPanel" aria-labelledby="unableDetailTitle">
             <div class="table-toolbar unable-table-toolbar">
               <div class="table-toolbar-copy">
-                <strong class="table-toolbar-title">รายชื่อนักเรียนที่ต้องติดตามสิทธิ์สอบ</strong>
-                <span class="table-toolbar-subtitle">เรียงลำดับ คัดกรอง และส่งออกจากผลค้นหาชุดเดียวกัน</span>
+                <strong class="table-toolbar-title" id="unableDetailTitle">รายชื่อนักเรียนที่ต้องติดตามสิทธิ์สอบ</strong>
+                <span class="table-toolbar-meta" id="unableDetailScope"></span>
               </div>
               <div class="unable-table-controls" aria-label="การจัดการผลลัพธ์">
                 <label class="inline-field" for="unablePageSize">
@@ -497,11 +488,19 @@
                   </select>
                 </label>
                 <span class="table-toolbar-meta">ทั้งหมด <strong id="unableTotalRecords">0</strong> รายการ</span>
+                <button class="btn btn-secondary" id="unablePdfPreviewBtn" type="button" disabled>PDF Preview</button>
+                <div class="export-dropdown" id="unableExportDropdown">
+                  <button class="btn btn-secondary export-trigger" id="unableExportBtn" type="button" aria-haspopup="true" aria-expanded="false" disabled>ส่งออก</button>
+                  <div class="export-menu hidden" id="unableExportMenu" role="menu" aria-label="รูปแบบการส่งออก">
+                    <button type="button" role="menuitem" data-export="excel">Excel</button>
+                    <button type="button" role="menuitem" data-export="print">พิมพ์</button>
+                  </div>
+                </div>
               </div>
             </div>
             <div class="validation-banner hidden" id="unableEmptyNotice" role="status" aria-live="polite"></div>
 
-            <div class="table-wrap unable-table-wrap">
+            <div class="table-wrap unable-table-wrap" id="unableTablePlaceholder">
               <table>
                 <thead id="unableThead">
                   <tr>
@@ -539,10 +538,7 @@
         <header class="page-header" aria-labelledby="scoreSubjectPageTitle">
           <div class="page-heading">
             <p class="eyebrow">ระบบรายงานสำหรับครูผู้สอน</p>
-            <h1 id="scoreSubjectPageTitle">Score per Subject</h1>
-            <p class="subtitle">
-              รายงานผลพัฒนาผู้เรียนรายวิชาในมุมมองตารางเดียว เหมาะสำหรับตรวจสอบข้อมูลนักเรียนจำนวนมากและรายวิชาหลายรายการภายในห้องเรียนเดียวกัน
-            </p>
+            <h1 id="scoreSubjectPageTitle">รายงานคะแนนรายวิชา</h1>
           </div>
 
           <aside class="academic-card" aria-label="ข้อมูลภาคการเรียนปัจจุบัน">
@@ -556,10 +552,9 @@
             <div class="panel-heading">
               <p class="section-kicker">ค้นหารายงาน</p>
               <h2 class="section-title" id="scoreFilterTitle">เงื่อนไขการค้นหา</h2>
-              <p class="section-note">เลือกปีการศึกษา เทอม ระดับชั้น และห้องเรียนก่อนแสดงผลรายวิชาทั้งหมดของห้องที่เลือก</p>
             </div>
 
-            <form class="filters-form" id="scoreFiltersForm" aria-label="เงื่อนไขการค้นหารายงานผลพัฒนาผู้เรียนรายวิชา">
+            <form class="filters-form" id="scoreFiltersForm" aria-label="เงื่อนไขการค้นหารายงานคะแนนรายวิชา">
               <section class="search-block" aria-labelledby="scoreMainFilterTitle">
                 <div class="search-block-header">
                   <div>
@@ -568,7 +563,7 @@
                   </div>
                 </div>
 
-                <div class="base-filters-grid">
+                <div class="base-filters-grid score-filters-grid">
                   <div class="field-group">
                     <label class="field-label" for="scoreAcademicYear">ปีการศึกษา</label>
                     <select id="scoreAcademicYear" name="academicYear"></select>
@@ -585,8 +580,14 @@
                   </div>
                   <div class="field-group">
                     <label class="field-label" for="scoreClassroom">ชั้นเรียน</label>
-                    <select id="scoreClassroom" name="classroom" disabled>
-                      <option value="">เลือกชั้นเรียน</option>
+                    <select id="scoreClassroom" name="classroom">
+                      <option value="all">ทุกห้องเรียน</option>
+                    </select>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="scoreSubject">รายวิชา</label>
+                    <select id="scoreSubject" name="subject">
+                      <option value="all">ทุกวิชา</option>
                     </select>
                   </div>
                 </div>
@@ -599,12 +600,13 @@
             </div>
           </section>
 
-          <section class="results-panel" aria-labelledby="scoreSummaryTitle">
+          <section class="results-panel score-summary-panel" aria-labelledby="scoreSummaryTitle">
             <div class="results-header">
               <div>
                 <p class="section-kicker">ผลลัพธ์รายงาน</p>
-                <h2 class="section-title" id="scoreSummaryTitle">รายงานผลพัฒนาผู้เรียนรายวิชา</h2>
-                <p class="section-note" id="scoreSummaryScope">ยังไม่มีผลการค้นหา</p>
+                <h2 class="section-title" id="scoreSummaryTitle">รายงานคะแนนรายวิชา</h2>
+                <p class="section-note score-summary-period" id="scoreSummaryPeriod">กำลังโหลดข้อมูล</p>
+                <p class="section-note" id="scoreSummaryScope"></p>
               </div>
               <div class="results-meta">
                 <span>ตาราง: <strong id="scoreMatrixMeta">รายวิชาทั้งหมด</strong></span>
@@ -612,25 +614,114 @@
               </div>
             </div>
 
-            <div class="summary-grid score-summary-grid" aria-label="ตัวเลขสรุปผล">
+            <div class="summary-grid score-summary-grid" id="scoreDetailSummaryGrid" aria-label="สรุปคะแนนรายวิชา">
               <article class="metric metric-total">
-                <p class="metric-label">ทั้งหมด</p>
-                <p class="metric-value" id="scoreTotalRecords">0</p>
+                <p class="metric-label">คะแนนเฉลี่ยของห้อง</p>
+                <p class="metric-value" id="scoreClassAverage">-</p>
+              </article>
+              <article class="metric metric-warning">
+                <p class="metric-label">นักเรียนที่ต้องติดตาม</p>
+                <p class="metric-value" id="scoreFollowUpCount">0 คน</p>
+              </article>
+              <article class="metric metric-warning">
+                <p class="metric-label">รายวิชาต่ำกว่าเกณฑ์</p>
+                <p class="metric-value" id="scoreLowSubjectCount">0 วิชา</p>
               </article>
               <article class="metric">
-                <p class="metric-label">จำนวนวิชา</p>
-                <p class="metric-value" id="scoreSubjectCount">0</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">จำนวนผู้เรียน</p>
-                <p class="metric-value" id="scoreStudentCount">0</p>
+                <p class="metric-label">ความครบถ้วนของคะแนน</p>
+                <p class="metric-value" id="scoreCompletionRate">0%</p>
               </article>
             </div>
 
+            <div class="summary-grid score-overview-summary-grid hidden" id="scoreOverviewSummaryGrid" aria-label="สรุปภาพรวมคะแนนรายวิชา">
+              <article class="metric metric-total">
+                <p class="metric-label">นักเรียนทั้งหมด</p>
+                <p class="metric-value" id="scoreOverviewStudentCount">0 คน</p>
+              </article>
+              <article class="metric">
+                <p class="metric-label">ห้องเรียน</p>
+                <p class="metric-value" id="scoreOverviewRoomCount">0 ห้อง</p>
+              </article>
+              <article class="metric">
+                <p class="metric-label">รายวิชา</p>
+                <p class="metric-value" id="scoreOverviewSubjectCount">0 วิชา</p>
+              </article>
+              <article class="metric">
+                <p class="metric-label">คะแนนเฉลี่ยรวม</p>
+                <p class="metric-value" id="scoreOverviewAverage">-</p>
+              </article>
+              <article class="metric metric-warning">
+                <p class="metric-label">นักเรียนที่ต้องติดตาม</p>
+                <p class="metric-value" id="scoreOverviewFollowUpCount">0 คน</p>
+              </article>
+              <article class="metric metric-warning">
+                <p class="metric-label">คะแนนยังไม่บันทึก</p>
+                <p class="metric-value" id="scoreOverviewMissingCount">0 รายการ</p>
+              </article>
+            </div>
+
+            <section class="score-overview-panel hidden" id="scoreOverviewPanel" aria-labelledby="scoreOverviewTitle">
+              <div class="score-section-heading">
+                <h3 class="insight-title" id="scoreOverviewTitle">สรุปรายห้อง</h3>
+              </div>
+              <div class="table-wrap score-overview-wrap">
+                <table class="score-overview-table">
+                  <thead>
+                    <tr>
+                      <th>ระดับชั้น</th>
+                      <th>ห้องเรียน</th>
+                      <th>นักเรียน</th>
+                      <th>คะแนนเฉลี่ย</th>
+                      <th>ต้องติดตาม</th>
+                      <th>คะแนนไม่ครบ</th>
+                      <th aria-label="คำสั่ง"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="scoreOverviewTbody"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <section class="score-analysis-panel score-detail-only" aria-labelledby="scoreSubjectAverageTitle">
+              <div class="score-section-heading">
+                <h3 class="insight-title" id="scoreSubjectAverageTitle">คะแนนเฉลี่ยแต่ละวิชา</h3>
+                <span class="score-threshold-label">เกณฑ์ 60%</span>
+              </div>
+              <div class="score-bar-chart" id="scoreSubjectAverageChart">
+                <div class="empty-state">ค้นหาข้อมูลเพื่อแสดงกราฟ</div>
+              </div>
+            </section>
+
+            <section class="score-follow-up-panel score-detail-only" aria-labelledby="scoreFollowUpTitle">
+              <div class="score-section-heading">
+                <h3 class="insight-title" id="scoreFollowUpTitle">นักเรียนที่ต้องติดตาม</h3>
+                <span class="score-threshold-label">คะแนนต่ำกว่า 60%</span>
+              </div>
+              <div class="table-wrap score-follow-up-wrap">
+                <table class="score-follow-up-table">
+                  <thead>
+                    <tr>
+                      <th>ชื่อ</th>
+                      <th>วิชาที่ต่ำกว่าเกณฑ์</th>
+                      <th>คะแนนต่ำสุด</th>
+                      <th aria-label="คำสั่ง"></th>
+                    </tr>
+                  </thead>
+                  <tbody id="scoreFollowUpTbody">
+                    <tr>
+                      <td colspan="4"><div class="empty-state">ค้นหาข้อมูลเพื่อแสดงรายการ</div></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+          </section>
+
+          <section class="results-panel score-table-panel score-detail-only" aria-labelledby="scoreTableTitle">
             <div class="table-toolbar score-toolbar">
               <div class="table-toolbar-copy">
-                <strong class="table-toolbar-title">ตารางผลพัฒนาผู้เรียนรายวิชา</strong>
-                <span class="table-toolbar-subtitle">ตรึงข้อมูลนักเรียนทางซ้าย พร้อมเลื่อนดูผลรายวิชาแนวนอนในตารางเดียว</span>
+                <strong class="table-toolbar-title" id="scoreTableTitle">ตารางคะแนนรายวิชา</strong>
               </div>
 
               <div class="score-toolbar-actions" aria-label="คำสั่งจัดการรายงาน">
@@ -650,38 +741,7 @@
                   </div>
                 </div>
 
-                <button class="btn btn-secondary" id="scorePrintAllBtn" type="button">พิมพ์ทั้งหมด</button>
-                <button class="btn btn-secondary" id="scorePrintStudentBtn" type="button">พิมพ์รายบุคคล</button>
-              </div>
-            </div>
-
-            <div class="score-print-panel hidden" id="scorePrintPanel">
-              <div class="score-print-grid">
-                <div class="field-group">
-                  <label class="field-label" for="scorePrintTemplate">Template</label>
-                  <select id="scorePrintTemplate">
-                    <option value="standard">มาตรฐานโรงเรียน</option>
-                    <option value="compact">แบบย่อ</option>
-                    <option value="formal">แบบทางการ</option>
-                  </select>
-                </div>
-                <div class="field-group">
-                  <label class="field-label" for="scorePrintLanguage">ภาษา</label>
-                  <select id="scorePrintLanguage">
-                    <option value="th">ไทย</option>
-                    <option value="en">English</option>
-                    <option value="th-en">ไทย / English</option>
-                  </select>
-                </div>
-                <div class="field-group hidden" id="scoreStudentPickerWrap">
-                  <label class="field-label" for="scoreStudentPicker">เลือกนักเรียน</label>
-                  <select id="scoreStudentPicker"></select>
-                </div>
-              </div>
-              <div class="score-print-preview" id="scorePrintPreview">เลือก template และภาษาเพื่อสร้างตัวอย่างก่อนพิมพ์</div>
-              <div class="filter-actions score-print-actions">
-                <button class="btn btn-secondary" id="scorePreviewBtn" type="button">สร้าง Preview</button>
-                <button class="btn btn-primary" id="scoreConfirmPrintBtn" type="button">พิมพ์</button>
+                <button class="btn btn-secondary" id="scorePrintBtn" type="button" disabled>พิมพ์รายงาน</button>
               </div>
             </div>
             <div class="table-wrap score-table-wrap">
@@ -712,11 +772,7 @@
           <div class="page-heading">
             <p class="eyebrow">ระบบรายงานสำหรับงานวิชาการ</p>
             <h1 id="averageYearPageTitle">รายงานคะแนนเฉลี่ยรายปี</h1>
-            <p class="subtitle">
-              ค้นหาและจัดทำรายงานคะแนนเฉลี่ยของนักเรียนตามปีการศึกษา ระดับชั้น และห้องเรียน พร้อมสรุปภาพรวมก่อนส่งออกเป็น Excel
-            </p>
           </div>
-
           <aside class="academic-card" aria-label="ข้อมูลปีการศึกษาปัจจุบัน">
             <span class="meta-label">ค่าตั้งต้นที่ใช้งาน</span>
             <strong class="meta-value" id="averageYearCurrentAcademicLabel">กำลังโหลด...</strong>
@@ -728,396 +784,262 @@
             <div class="panel-heading">
               <p class="section-kicker">ค้นหารายงาน</p>
               <h2 class="section-title" id="averageYearFilterTitle">เงื่อนไขการค้นหา</h2>
-              <p class="section-note">เลือกตัวกรองหลักก่อน แล้วใช้ตัวกรองเสริมเพื่อจำกัดข้อมูลให้ตรงกับงานรายงาน</p>
             </div>
-
             <form class="filters-form" id="averageYearFiltersForm" aria-label="เงื่อนไขการค้นหารายงานคะแนนเฉลี่ยรายปี">
               <section class="search-block" aria-labelledby="averageYearMainFilterTitle">
                 <div class="search-block-header">
                   <div>
                     <p class="search-block-kicker">ตัวกรองหลัก</p>
-                    <h3 class="search-block-title" id="averageYearMainFilterTitle">ปีการศึกษา ระดับชั้น และห้องเรียน</h3>
+                    <h3 class="search-block-title" id="averageYearMainFilterTitle">ปีการศึกษาและห้องเรียน</h3>
                   </div>
-                  <p class="search-block-note">ลำดับการค้นหาหลักตาม flow ของระบบเดิม</p>
                 </div>
-
                 <div class="base-filters-grid average-year-filters-grid">
-                  <div class="field-group">
-                    <label class="field-label" for="averageYearAcademicYear">ปีการศึกษา <span class="field-required">*</span></label>
-                    <select id="averageYearAcademicYear" name="academicYear"></select>
-                  </div>
-                  <div class="field-group">
-                    <label class="field-label" for="averageYearGrade">ระดับชั้น <span class="field-required">*</span></label>
-                    <select id="averageYearGrade" name="grade">
-                      <option value="">เลือกระดับชั้น</option>
-                    </select>
-                  </div>
-                  <div class="field-group">
-                    <label class="field-label" for="averageYearClassroom">ชั้นเรียน <span class="field-required">*</span></label>
-                    <select id="averageYearClassroom" name="classroom" disabled>
-                      <option value="">เลือกชั้นเรียน</option>
-                    </select>
-                  </div>
+                  <div class="field-group"><label class="field-label" for="averageYearAcademicYear">ปีการศึกษา</label><select id="averageYearAcademicYear" name="academicYear"></select></div>
+                  <div class="field-group"><label class="field-label" for="averageYearSemester">ภาคเรียน</label><select id="averageYearSemester" name="semester"></select></div>
+                  <div class="field-group"><label class="field-label" for="averageYearGrade">ระดับชั้น</label><select id="averageYearGrade" name="grade"></select></div>
+                  <div class="field-group"><label class="field-label" for="averageYearPlan">แผนการเรียน</label><select id="averageYearPlan" name="plan"></select></div>
+                  <div class="field-group"><label class="field-label" for="averageYearClassroom">ห้องเรียน</label><select id="averageYearClassroom" name="classroom"></select></div>
+                  <div class="field-group"><label class="field-label" for="averageYearStatus">สถานะนักเรียน</label><select id="averageYearStatus" name="status"><option value="active">กำลังศึกษา</option><option value="all">ทุกสถานะ</option><option value="watch">ต้องติดตาม</option><option value="excellent">ผลการเรียนดีเด่น</option></select></div>
+                  <div class="field-group average-year-keyword-field"><label class="field-label" for="averageYearKeyword">คำค้นหา</label><input id="averageYearKeyword" name="keyword" type="text" placeholder="รหัสนักเรียน ชื่อ หรือนามสกุล" /></div>
                 </div>
               </section>
-
-              <section class="search-block search-block-accent" aria-labelledby="averageYearAdvancedFilterTitle">
-                <div class="search-block-header">
-                  <div>
-                    <p class="search-block-kicker">ตัวกรองเสริม</p>
-                    <h3 class="search-block-title" id="averageYearAdvancedFilterTitle">ข้อมูลเพิ่มเติมสำหรับรายงาน</h3>
-                  </div>
-                </div>
-
-                <div class="base-filters-grid average-year-filters-grid">
-                  <div class="field-group">
-                    <label class="field-label" for="averageYearSemester">ภาคเรียน</label>
-                    <select id="averageYearSemester" name="semester">
-                      <option value="all">ทุกภาคเรียน</option>
-                    </select>
-                  </div>
-                  <div class="field-group">
-                    <label class="field-label" for="averageYearPlan">แผนการเรียน</label>
-                    <select id="averageYearPlan" name="plan">
-                      <option value="all">ทุกแผนการเรียน</option>
-                    </select>
-                  </div>
-                  <div class="field-group">
-                    <label class="field-label" for="averageYearStatus">สถานะนักเรียน</label>
-                    <select id="averageYearStatus" name="status">
-                      <option value="active">กำลังศึกษา</option>
-                      <option value="all">ทุกสถานะ</option>
-                      <option value="watch">ต้องติดตาม</option>
-                      <option value="excellent">ผลการเรียนดีเด่น</option>
-                    </select>
-                  </div>
-                  <div class="field-group field-group-wide">
-                    <label class="field-label" for="averageYearKeyword">คำค้นหา</label>
-                    <input id="averageYearKeyword" name="keyword" type="text" placeholder="ค้นหาด้วยรหัสนักเรียนหรือชื่อ-สกุล" />
-                  </div>
-                </div>
-              </section>
-            </form>
-
-            <div class="filter-actions" aria-label="คำสั่งค้นหาและส่งออกรายงานคะแนนเฉลี่ยรายปี">
-              <button class="btn btn-secondary" id="averageYearResetFiltersBtn" type="button">ล้างเงื่อนไข</button>
-              <div class="export-dropdown" id="averageYearExportDropdown">
-                <button class="btn btn-secondary export-trigger" id="averageYearExportBtn" type="button" aria-haspopup="true" aria-expanded="false" disabled>ส่งออก</button>
-                <div class="export-menu hidden" id="averageYearExportMenu" role="menu" aria-label="รูปแบบการส่งออก">
-                  <button type="button" role="menuitem" data-export="excel">Excel</button>
-                  <button type="button" role="menuitem" data-export="csv">CSV</button>
-                  <button type="button" role="menuitem" data-export="pdf">PDF</button>
-                </div>
+              <div class="filter-actions" aria-label="คำสั่งค้นหารายงานคะแนนเฉลี่ยรายปี">
+                <button class="btn btn-secondary" id="averageYearResetFiltersBtn" type="button">ล้างเงื่อนไข</button>
+                <button class="btn btn-primary" id="averageYearSearchBtn" type="submit">ค้นหาข้อมูล</button>
               </div>
-              <button class="btn btn-primary" id="averageYearSearchBtn" type="submit" disabled>ค้นหาข้อมูล</button>
+            </form>
+          </section>
+
+          <section class="results-panel average-year-summary-panel" aria-labelledby="averageYearSummaryTitle">
+            <div class="results-header">
+              <div><p class="section-kicker">ผลลัพธ์รายงาน</p><h2 class="section-title" id="averageYearSummaryTitle">สรุปคะแนนเฉลี่ยรายปี</h2><p class="section-note" id="averageYearSummaryScope">กำลังโหลด...</p></div>
+            </div>
+            <div class="summary-grid average-year-summary-grid" id="averageYearSummaryGrid" aria-label="ตัวเลขสรุปคะแนนเฉลี่ยรายปี"></div>
+          </section>
+
+          <section class="results-panel average-year-visualization-panel" aria-labelledby="averageYearVisualizationTitle">
+            <div class="panel-heading average-year-visualization-heading">
+              <div>
+                <p class="section-kicker">ผลการเรียน</p>
+                <h2 class="section-title" id="averageYearVisualizationTitle">ภาพรวมผลการเรียน</h2>
+              </div>
+              <div class="average-year-range-filter hidden" id="averageYearRangeFilter" role="status">
+                <span id="averageYearRangeFilterLabel"></span>
+                <button class="btn btn-secondary btn-small" id="averageYearClearRangeFilterBtn" type="button">ล้างการกรอง</button>
+              </div>
+            </div>
+            <div class="average-year-chart-grid">
+              <section class="average-year-chart-panel average-year-comparison-panel" aria-labelledby="averageYearComparisonTitle">
+                <div class="score-section-heading">
+                  <h3 class="insight-title" id="averageYearComparisonTitle">คะแนนเฉลี่ยแยกตามห้องเรียน</h3>
+                  <span class="score-threshold-label">เกณฑ์ 60 คะแนน</span>
+                </div>
+                <div class="average-year-chart-wrap average-year-comparison-chart-wrap">
+                  <canvas id="averageYearComparisonChart" role="img" aria-label="กราฟเปรียบเทียบคะแนนเฉลี่ย"></canvas>
+                  <div class="empty-state hidden" id="averageYearComparisonEmpty">ไม่มีข้อมูลเพียงพอสำหรับสร้างกราฟ</div>
+                </div>
+              </section>
+              <section class="average-year-chart-panel average-year-distribution-panel" aria-labelledby="averageYearDistributionTitle">
+                <div class="score-section-heading">
+                  <h3 class="insight-title" id="averageYearDistributionTitle">การกระจายช่วงคะแนนเฉลี่ยของนักเรียน</h3>
+                </div>
+                <div class="average-year-chart-wrap average-year-distribution-chart-wrap">
+                  <canvas id="averageYearDistributionChart" role="img" aria-label="กราฟการกระจายช่วงคะแนนเฉลี่ยของนักเรียน"></canvas>
+                  <div class="empty-state hidden" id="averageYearDistributionEmpty">ไม่มีข้อมูลเพียงพอสำหรับสร้างกราฟ</div>
+                </div>
+              </section>
             </div>
           </section>
 
-          <section class="results-panel average-year-results-panel" aria-labelledby="averageYearSummaryTitle">
-            <div class="results-header">
-              <div>
-                <p class="section-kicker">ผลลัพธ์รายงาน</p>
-                <h2 class="section-title" id="averageYearSummaryTitle">สรุปคะแนนเฉลี่ยรายปี</h2>
-                <p class="section-note" id="averageYearSummaryScope">ยังไม่มีผลการค้นหา</p>
-              </div>
-              <div class="results-meta">
-                <span>รูปแบบ: <strong id="averageYearViewMeta">ตารางแนวนอน</strong></span>
-                <span>ขอบเขต: <strong id="averageYearScopeMeta">ทุกภาคเรียน</strong></span>
-              </div>
-            </div>
-
-            <div class="summary-grid average-year-summary-grid" aria-label="ตัวเลขสรุปคะแนนเฉลี่ยรายปี">
-              <article class="metric metric-total">
-                <p class="metric-label">จำนวนนักเรียน</p>
-                <p class="metric-value" id="averageYearStudentCount">0</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">คะแนนเฉลี่ยรวม</p>
-                <p class="metric-value" id="averageYearAverageScore">0.00</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">คะแนนสูงสุด</p>
-                <p class="metric-value" id="averageYearHighestScore">0.00</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">คะแนนต่ำสุด</p>
-                <p class="metric-value" id="averageYearLowestScore">0.00</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">GPAX เฉลี่ย</p>
-                <p class="metric-value" id="averageYearGpaxAverage">0.00</p>
-              </article>
-            </div>
-
+          <section class="results-panel average-year-table-panel" aria-labelledby="averageYearTableTitle">
             <div class="table-toolbar score-toolbar">
-              <div class="table-toolbar-copy">
-                <strong class="table-toolbar-title">ตารางคะแนนเฉลี่ยรายปี</strong>
-                <span class="table-toolbar-subtitle">ตรึงข้อมูลนักเรียนทางซ้าย และแสดงค่าเฉลี่ยรายวิชาตามปีการศึกษาในตารางเดียว</span>
-              </div>
-
+              <div class="table-toolbar-copy"><strong class="table-toolbar-title" id="averageYearTableTitle">ภาพรวมรายห้อง</strong></div>
               <div class="score-toolbar-actions" aria-label="คำสั่งจัดการตารางคะแนนเฉลี่ยรายปี">
-                <button class="btn btn-secondary" id="averageYearPreviewBtn" type="button" disabled>ดู Preview</button>
+                <button class="btn btn-secondary" id="averageYearSubjectBtn" type="button" disabled>เลือกวิชา</button>
+                <button class="btn btn-secondary" id="averageYearExportBtn" type="button" disabled>ส่งออก</button>
                 <button class="btn btn-secondary" id="averageYearPrintBtn" type="button" disabled>พิมพ์รายงาน</button>
               </div>
             </div>
-
-            <div class="score-print-panel hidden" id="averageYearPreviewPanel">
-              <div class="score-print-grid">
-                <div class="field-group">
-                  <label class="field-label" for="averageYearTemplate">รูปแบบรายงาน</label>
-                  <select id="averageYearTemplate">
-                    <option value="standard">รายงานมาตรฐาน</option>
-                    <option value="compact">แบบย่อสำหรับตรวจสอบ</option>
-                    <option value="formal">แบบส่งงานวิชาการ</option>
-                  </select>
-                </div>
-                <div class="field-group">
-                  <label class="field-label" for="averageYearLanguage">ภาษา</label>
-                  <select id="averageYearLanguage">
-                    <option value="th">ไทย</option>
-                    <option value="th-en">ไทย / English</option>
-                  </select>
-                </div>
-                <div class="field-group">
-                  <label class="field-label" for="averageYearExportScope">ขอบเขตข้อมูล</label>
-                  <select id="averageYearExportScope">
-                    <option value="current">ผลลัพธ์ที่แสดงอยู่</option>
-                    <option value="all">ข้อมูลทั้งหมดของห้องเรียน</option>
-                  </select>
-                </div>
-              </div>
-              <div class="score-print-preview" id="averageYearPreviewSummary">เลือกข้อมูลเพื่อสร้างตัวอย่างก่อนส่งออกหรือพิมพ์</div>
-            </div>
-
+            <div class="average-year-subject-panel hidden" id="averageYearSubjectPanel"></div>
             <div class="table-wrap average-year-table-wrap">
-              <table class="score-table average-year-table">
-                <thead id="averageYearThead">
-                  <tr>
-                    <th class="sticky-top">ลำดับ</th>
-                    <th class="sticky-top">รหัสนักเรียน</th>
-                    <th class="sticky-top">ชื่อ-สกุล</th>
-                    <th class="sticky-top">คะแนนเฉลี่ย</th>
-                  </tr>
-                </thead>
-                <tbody id="averageYearTbody">
-                  <tr>
-                    <td colspan="4">
-                      <div class="empty-state">กดค้นหาข้อมูลเพื่อเริ่มแสดงรายงาน</div>
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <table class="score-table average-year-table"><thead id="averageYearThead"></thead><tbody id="averageYearTbody"><tr><td><div class="empty-state">กำลังประมวลผลคะแนนเฉลี่ยรายปี...</div></td></tr></tbody></table>
             </div>
           </section>
         </section>
+        <dialog class="average-year-print-dialog" id="averageYearPrintDialog" aria-labelledby="averageYearPrintTitle">
+          <form method="dialog" id="averageYearPrintForm"><div class="modal-header"><div><p class="section-kicker">พิมพ์รายงาน</p><h2 class="section-title" id="averageYearPrintTitle">ตั้งค่ารายงาน</h2></div><button class="icon-button" value="cancel" aria-label="ปิด">×</button></div>
+            <div class="average-year-print-grid">
+              <div class="field-group"><label class="field-label" for="averageYearPrintType">ประเภท</label><select id="averageYearPrintType"><option value="class">รายงานทั้งห้อง</option><option value="individual">รายงานรายบุคคล</option></select></div>
+              <div class="field-group"><label class="field-label" for="averageYearPrintPeriod">ช่วงข้อมูล</label><select id="averageYearPrintPeriod"><option value="all">ทั้งปี</option><option value="semester1">ภาคเรียน 1</option><option value="semester2">ภาคเรียน 2</option></select></div>
+              <div class="field-group"><label class="field-label" for="averageYearPrintSubjects">รายวิชา</label><select id="averageYearPrintSubjects"><option value="all">ทุกวิชา</option><option value="visible">เฉพาะวิชาที่แสดง</option><option value="custom">เลือกวิชาเอง</option></select></div>
+              <div class="field-group"><label class="field-label" for="averageYearPrintPaper">กระดาษ</label><select id="averageYearPrintPaper"><option value="a3">A3 แนวนอน</option><option value="a4">A4 แนวตั้ง</option></select></div>
+              <div class="field-group"><label class="field-label" for="averageYearPrintLanguage">ภาษา</label><select id="averageYearPrintLanguage"><option value="th">ไทย</option><option value="th-en">ไทย / English</option></select></div>
+              <div class="field-group"><label class="field-label" for="averageYearPrintTemplate">Template</label><select id="averageYearPrintTemplate"><option value="standard">มาตรฐานโรงเรียน</option></select></div>
+            </div>
+            <div class="average-year-print-preview" id="averageYearPrintPreview"></div>
+            <div class="modal-actions"><button class="btn btn-secondary" value="cancel">ยกเลิก</button><button class="btn btn-secondary" id="averageYearBuildPreviewBtn" value="default" type="button">ดูตัวอย่าง</button><button class="btn btn-primary" value="default">พิมพ์รายงาน</button></div>
+          </form>
+        </dialog>
       </section>
 
       <section class="app-page" data-page="record-report">
         <header class="page-header" aria-labelledby="recordReportPageTitle">
           <div class="page-heading">
             <p class="eyebrow">ระบบรายงานสำหรับครูผู้สอน</p>
-            <h1 id="recordReportPageTitle">รายงานผลการเรียนระเบียนสะสม</h1>
-            <p class="subtitle">
-              ค้นหาและตรวจสอบรายงานผลการเรียนสะสมกับรายงาน GPAX ภายใต้เงื่อนไขเดียวกัน โดยคงรูปแบบการใช้งานให้สอดคล้องกับระบบ Academic Report เดิม
-            </p>
+            <h1 id="recordReportPageTitle">รายงานผลการเรียนระเบียนสะสม / GPAX</h1>
           </div>
-
-          <aside class="academic-card" aria-label="ค่าตั้งต้นของรายงาน">
-            <span class="meta-label">ค่าตั้งต้นที่ใช้งาน</span>
+          <aside class="academic-card" aria-label="ขอบเขตรายงาน">
+            <span class="meta-label">ขอบเขตปัจจุบัน</span>
             <strong class="meta-value" id="recordCurrentAcademicLabel">กำลังโหลด...</strong>
           </aside>
         </header>
 
-        <section class="attendance-report record-report" aria-labelledby="recordFilterTitle">
-          <section class="search-panel" aria-labelledby="recordFilterTitle">
-            <div class="panel-heading">
-              <p class="section-kicker">ค้นหารายงาน</p>
-              <h2 class="section-title" id="recordFilterTitle">เงื่อนไขการค้นหา</h2>
-              <p class="section-note">ใช้ชุดตัวกรองเดียวกันสำหรับรายงานผลการเรียนระเบียนสะสมและรายงาน GPAX เพื่อลดขั้นตอนก่อนสร้างรายงาน</p>
-            </div>
-
-            <form class="filters-form" id="recordFiltersForm" aria-label="เงื่อนไขการค้นหารายงานผลการเรียนระเบียนสะสม">
-              <section class="search-block" aria-labelledby="recordMainFilterTitle">
-                <div class="search-block-header">
-                  <div>
-                    <p class="search-block-kicker">ตัวกรองหลัก</p>
-                    <h3 class="search-block-title" id="recordMainFilterTitle">ปีการศึกษา กลุ่มนักเรียน และประเภทรายงาน</h3>
-                  </div>
-                </div>
-
-                <div class="base-filters-grid record-filters-grid">
-                  <div class="field-group">
-                    <label class="field-label" for="recordAcademicYear">ปีการศึกษา</label>
-                    <select id="recordAcademicYear" name="academicYear"></select>
-                  </div>
-                  <div class="field-group">
-                    <label class="field-label" for="recordGrade">ระดับชั้น</label>
-                    <select id="recordGrade" name="grade">
-                      <option value="">เลือกระดับชั้น</option>
-                    </select>
-                  </div>
-                  <div class="field-group">
-                    <label class="field-label" for="recordPlan">แผนการเรียน</label>
-                    <select id="recordPlan" name="plan" disabled>
-                      <option value="">เลือกแผนการเรียน</option>
-                    </select>
-                  </div>
-                  <div class="field-group">
-                    <label class="field-label" for="recordClassroom">ชั้นเรียน</label>
-                    <select id="recordClassroom" name="classroom" disabled>
-                      <option value="">เลือกชั้นเรียน</option>
-                    </select>
-                  </div>
-                  <div class="field-group field-group-wide">
-                    <span class="field-label">ประเภทรายงาน</span>
-                    <div class="segmented-control record-report-type" role="radiogroup" aria-label="ประเภทรายงาน">
-                      <label class="segment-option">
-                        <input type="radio" name="recordReportType" value="transcript" checked />
-                        <span>ระเบียนสะสม</span>
-                      </label>
-                      <label class="segment-option">
-                        <input type="radio" name="recordReportType" value="gpax" />
-                        <span>GPAX</span>
-                      </label>
-                    </div>
-                  </div>
-                </div>
-              </section>
-            </form>
-
-            <div class="filter-actions" aria-label="คำสั่งค้นหา">
-              <button class="btn btn-secondary" id="recordResetFiltersBtn" type="button">ล้างเงื่อนไข</button>
-              <button class="btn btn-primary" id="recordSearchBtn" type="button" disabled>ค้นหาข้อมูล</button>
-            </div>
-          </section>
-
-          <section class="results-panel" aria-labelledby="recordResultsTitle">
+        <section class="attendance-report record-report" aria-labelledby="recordResultsTitle">
+          <section class="results-panel record-summary-panel" aria-labelledby="recordResultsTitle">
             <div class="results-header">
               <div>
                 <p class="section-kicker">ผลลัพธ์รายงาน</p>
                 <h2 class="section-title" id="recordResultsTitle">รายงานผลการเรียนระเบียนสะสม</h2>
-                <p class="section-note" id="recordSummaryScope">ยังไม่มีผลการค้นหา</p>
+                <p class="section-note" id="recordSummaryScope">กำลังประมวลผลข้อมูลผลการเรียนสะสม...</p>
               </div>
               <div class="results-meta">
-                <span>ประเภทรายงาน: <strong id="recordTypeMeta">ระเบียนสะสม</strong></span>
-                <span>มุมมอง: <strong id="recordViewMeta">ตารางแนวนอน</strong></span>
+                <span>มุมมอง: <strong id="recordViewMeta">ภาพรวมรายห้อง</strong></span>
               </div>
             </div>
 
-            <div class="summary-grid score-summary-grid record-summary-grid" aria-label="ตัวเลขสรุปผล">
-              <article class="metric metric-total">
-                <p class="metric-label">ทั้งหมด</p>
-                <p class="metric-value" id="recordTotalRecords">0</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label" id="recordMetricLabelSecondary">ภาคเรียน</p>
-                <p class="metric-value" id="recordMetricSecondary">0</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">จำนวนนักเรียน</p>
-                <p class="metric-value" id="recordStudentCount">0</p>
-              </article>
+            <div class="record-report-tabs" role="tablist" aria-label="ประเภทรายงาน">
+              <button class="record-report-tab is-active" id="recordTabRecord" type="button" role="tab" aria-selected="true" data-report-type="record">ระเบียนสะสม</button>
+              <button class="record-report-tab" id="recordTabGpax" type="button" role="tab" aria-selected="false" data-report-type="gpax">GPAX และหน่วยกิต</button>
             </div>
 
-            <div class="summary-grid record-gpax-summary hidden" id="recordGpaxSummary" aria-label="สรุปรายงาน GPAX">
-              <article class="metric">
-                <p class="metric-label">GPAX เฉลี่ย</p>
-                <p class="metric-value" id="recordAvgGpax">0.00</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">สถานะปกติ</p>
-                <p class="metric-value" id="recordNormalStatusCount">0</p>
-              </article>
-              <article class="metric">
-                <p class="metric-label">หน่วยกิตเฉลี่ย</p>
-                <p class="metric-value" id="recordAvgCredits">0</p>
-              </article>
-            </div>
+            <div class="summary-grid record-summary-grid" id="recordSummaryGrid" aria-label="สรุปผลการเรียน"></div>
 
+            <section class="record-visualization" aria-labelledby="recordVisualizationTitle">
+              <div class="record-section-heading">
+                <h3 id="recordVisualizationTitle">ภาพรวมผลการเรียนสะสม</h3>
+              </div>
+              <div class="record-chart-grid">
+                <article class="record-chart-panel">
+                  <h4 id="recordChartOneTitle">แนวโน้ม GPA เฉลี่ยรายภาคเรียน</h4>
+                  <div class="record-chart-wrap"><canvas id="recordChartOne" role="img" aria-label="กราฟแนวโน้ม GPA เฉลี่ยรายภาคเรียน"></canvas></div>
+                </article>
+                <article class="record-chart-panel">
+                  <h4 id="recordChartTwoTitle">การกระจายผลการเรียนสะสม</h4>
+                  <div class="record-chart-wrap"><canvas id="recordChartTwo" role="img" aria-label="กราฟการกระจายผลการเรียนสะสม"></canvas></div>
+                </article>
+              </div>
+            </section>
+          </section>
+
+          <section class="search-panel record-search-panel" aria-labelledby="recordFilterTitle">
+            <div class="panel-heading">
+              <p class="section-kicker">ตัวกรอง</p>
+              <h2 class="section-title" id="recordFilterTitle">ขอบเขตข้อมูล</h2>
+            </div>
+            <form class="filters-form" id="recordFiltersForm" aria-label="ตัวกรองรายงานผลการเรียน">
+              <div class="base-filters-grid record-filters-grid">
+                <div class="field-group">
+                  <label class="field-label" for="recordAcademicYear">ปีการศึกษา</label>
+                  <select id="recordAcademicYear" name="academicYear"></select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="recordGrade">ระดับชั้น</label>
+                  <select id="recordGrade" name="grade"></select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="recordPlan">แผนการเรียน</label>
+                  <select id="recordPlan" name="plan"></select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="recordClassroom">ห้องเรียน</label>
+                  <select id="recordClassroom" name="classroom"></select>
+                </div>
+                <div class="field-group">
+                  <label class="field-label" for="recordStudentStatus">สถานะนักเรียน</label>
+                  <select id="recordStudentStatus" name="studentStatus">
+                    <option value="active">กำลังศึกษา</option>
+                    <option value="all">ทุกสถานะ</option>
+                    <option value="transferred">ย้ายสถานศึกษา</option>
+                    <option value="graduated">สำเร็จการศึกษา</option>
+                  </select>
+                </div>
+                <div class="field-group record-keyword-field">
+                  <label class="field-label" for="recordKeyword">ค้นหานักเรียน</label>
+                  <input id="recordKeyword" name="keyword" type="text" autocomplete="off" placeholder="รหัสหรือชื่อ-สกุล" />
+                </div>
+              </div>
+              <div class="filter-actions" aria-label="คำสั่งค้นหา">
+                <button class="btn btn-secondary" id="recordResetFiltersBtn" type="button">ล้างเงื่อนไข</button>
+                <button class="btn btn-primary" id="recordSearchBtn" type="submit">ค้นหาข้อมูล</button>
+              </div>
+            </form>
+          </section>
+
+          <section class="table-panel record-table-panel" aria-labelledby="recordToolbarTitle">
             <div class="table-toolbar record-toolbar">
               <div class="table-toolbar-copy">
-                <strong class="table-toolbar-title" id="recordToolbarTitle">ตารางผลการเรียนรายภาคและผลการเรียนสะสม</strong>
-                <span class="table-toolbar-subtitle" id="recordToolbarSubtitle">ตรึงข้อมูลนักเรียนทางซ้าย และเลื่อนดูรายละเอียดผลการเรียนได้ในตารางเดียว</span>
+                <strong class="table-toolbar-title" id="recordToolbarTitle">สรุปผลรายห้อง</strong>
+                <span class="table-toolbar-subtitle" id="recordResultCount">0 ห้อง</span>
               </div>
-
               <div class="score-toolbar-actions" aria-label="คำสั่งจัดการรายงาน">
-                <button class="btn btn-secondary" id="recordPreviewPdfBtn" type="button">ดูตัวอย่าง PDF</button>
-
                 <div class="export-dropdown" id="recordExportDropdown">
-                  <button class="btn btn-secondary export-trigger" id="recordExportBtn" type="button" aria-haspopup="true" aria-expanded="false" disabled>ส่งออก</button>
+                  <button class="btn btn-secondary export-trigger" id="recordExportBtn" type="button" aria-haspopup="true" aria-expanded="false">ส่งออก ▼</button>
                   <div class="export-menu hidden" id="recordExportMenu" role="menu" aria-label="รูปแบบการส่งออก">
                     <button type="button" role="menuitem" data-export="pdf">PDF</button>
                     <button type="button" role="menuitem" data-export="excel">Excel</button>
                     <button type="button" role="menuitem" data-export="csv">CSV</button>
                   </div>
                 </div>
-
-                <button class="btn btn-secondary" id="recordPrintAllBtn" type="button">พิมพ์ทั้งหมด</button>
-                <button class="btn btn-secondary" id="recordPrintStudentBtn" type="button">พิมพ์รายบุคคล</button>
+                <button class="btn btn-secondary" id="recordPrintBtn" type="button">พิมพ์รายงาน</button>
               </div>
             </div>
-
-            <div class="score-print-panel hidden" id="recordPreviewPanel">
-              <div class="record-preview-header">
-                <div>
-                  <p class="search-block-kicker">ตัวอย่างก่อนดำเนินการ</p>
-                  <strong class="table-toolbar-title" id="recordPreviewActionLabel">ดูตัวอย่าง PDF</strong>
-                </div>
-                <span class="table-placeholder-chip" id="recordPreviewTypeChip">ระเบียนสะสม</span>
-              </div>
-
-              <div class="score-print-grid">
-                <div class="field-group">
-                  <label class="field-label" for="recordTemplate">รูปแบบเอกสาร</label>
-                  <select id="recordTemplate">
-                    <option value="standard">มาตรฐานโรงเรียน</option>
-                    <option value="compact">แบบย่อ</option>
-                    <option value="formal">แบบทางการ</option>
-                  </select>
-                </div>
-                <div class="field-group">
-                  <label class="field-label" for="recordLanguage">ภาษา</label>
-                  <select id="recordLanguage">
-                    <option value="th">ไทย</option>
-                    <option value="en">English</option>
-                    <option value="th-en">ไทย / English</option>
-                  </select>
-                </div>
-                <div class="field-group hidden" id="recordStudentPickerWrap">
-                  <label class="field-label" for="recordStudentPicker">เลือกนักเรียน</label>
-                  <select id="recordStudentPicker"></select>
-                </div>
-              </div>
-
-              <div class="score-print-preview" id="recordPreviewSummary">เลือก template และภาษาเพื่อสร้างตัวอย่างก่อนส่งออกหรือพิมพ์</div>
-
-              <div class="filter-actions score-print-actions">
-                <button class="btn btn-secondary" id="recordGeneratePreviewBtn" type="button">สร้าง Preview</button>
-                <button class="btn btn-primary" id="recordConfirmActionBtn" type="button">ยืนยัน</button>
-              </div>
-            </div>
-
-            <div class="table-wrap record-table-wrap">
+            <div class="record-table-state hidden" id="recordTableState" role="status"></div>
+            <div class="table-wrap record-table-wrap" id="recordTableWrap">
               <table class="score-table record-table">
-                <thead id="recordThead">
-                  <tr>
-                    <th class="sticky-top">ลำดับ</th>
-                    <th class="sticky-top">รหัสนักเรียน</th>
-                    <th class="sticky-top">ชื่อ</th>
-                    <th class="sticky-top">ข้อมูลรายงาน</th>
-                  </tr>
-                </thead>
-                <tbody id="recordTbody">
-                  <tr>
-                    <td colspan="4">
-                      <div class="empty-state">กดค้นหาข้อมูลเพื่อเริ่มแสดงรายงาน</div>
-                    </td>
-                  </tr>
-                </tbody>
+                <thead id="recordThead"></thead>
+                <tbody id="recordTbody"></tbody>
               </table>
             </div>
           </section>
         </section>
+
+        <dialog class="record-dialog record-student-dialog" id="recordStudentDialog" aria-labelledby="recordStudentDialogTitle">
+          <div class="record-dialog-header">
+            <div><p class="section-kicker">รายละเอียดรายบุคคล</p><h2 class="section-title" id="recordStudentDialogTitle">ข้อมูลนักเรียน</h2></div>
+            <button class="icon-button" type="button" data-record-close="student" aria-label="ปิด">×</button>
+          </div>
+          <div class="record-dialog-body" id="recordStudentDialogBody"></div>
+        </dialog>
+
+        <dialog class="record-dialog record-print-dialog" id="recordPrintDialog" aria-labelledby="recordPrintDialogTitle">
+          <form id="recordPrintForm">
+            <div class="record-dialog-header">
+              <div><p class="section-kicker">พิมพ์รายงาน</p><h2 class="section-title" id="recordPrintDialogTitle">ตั้งค่ารายงาน</h2></div>
+              <button class="icon-button" type="button" data-record-close="print" aria-label="ปิด">×</button>
+            </div>
+            <div class="record-print-grid">
+              <div class="field-group"><label class="field-label" for="recordPrintType">ประเภทรายงาน</label><select id="recordPrintType"><option value="record">ระเบียนสะสม</option><option value="gpax">GPAX และหน่วยกิต</option></select></div>
+              <div class="field-group"><label class="field-label" for="recordPrintScope">ขอบเขต</label><select id="recordPrintScope"><option value="class">รายงานทั้งห้อง</option><option value="student">รายงานรายบุคคล</option></select></div>
+              <div class="field-group hidden" id="recordPrintStudentWrap"><label class="field-label" for="recordPrintStudent">นักเรียน</label><select id="recordPrintStudent"></select></div>
+              <div class="field-group"><label class="field-label" for="recordPrintTemplate">Template</label><select id="recordPrintTemplate"><option value="standard">มาตรฐานโรงเรียน</option></select></div>
+              <div class="field-group"><label class="field-label" for="recordPrintLanguage">ภาษา</label><select id="recordPrintLanguage"><option value="th">ไทย</option><option value="th-en">ไทย / English</option></select></div>
+              <div class="field-group"><label class="field-label" for="recordPrintPaper">กระดาษ</label><select id="recordPrintPaper"><option value="a4">A4</option><option value="a3">A3</option></select></div>
+              <div class="field-group"><label class="field-label" for="recordPrintOrientation">แนวกระดาษ</label><select id="recordPrintOrientation"><option value="portrait">แนวตั้ง</option><option value="landscape">แนวนอน</option></select></div>
+            </div>
+            <fieldset class="record-print-options">
+              <legend>ข้อมูล</legend>
+              <label><input type="checkbox" name="recordPrintData" value="summary" checked /> ข้อมูลสรุป</label>
+              <label><input type="checkbox" name="recordPrintData" value="semester" checked /> ข้อมูลรายภาคเรียน</label>
+              <label><input type="checkbox" name="recordPrintData" value="credits" checked /> หน่วยกิตแยกกลุ่มสาระ</label>
+              <label><input type="checkbox" name="recordPrintData" value="status" checked /> สถานะและหมายเหตุ</label>
+            </fieldset>
+            <div class="record-print-preview hidden" id="recordPrintPreview"></div>
+            <div class="modal-actions">
+              <button class="btn btn-secondary" type="button" data-record-close="print">ยกเลิก</button>
+              <button class="btn btn-primary" id="recordBuildPrintPreviewBtn" type="button">ดูตัวอย่างรายงาน</button>
+            </div>
+          </form>
+        </dialog>
       </section>
 
       <section class="app-page" data-page="placeholder">
@@ -1137,13 +1059,65 @@
           <div class="table-placeholder">
             <div>
               <p class="table-placeholder-title" id="placeholderModuleTitle">โมดูลนี้ยังไม่ถูกเชื่อมข้อมูล</p>
-              <p class="table-placeholder-text" id="placeholderModuleText">ตอนนี้มีหน้ารายงานการเข้าเรียน รายงานผลพัฒนาผู้เรียนรายวิชา รายงานคะแนนเฉลี่ยรายปี รายงานผลการเรียนระเบียนสะสม / GPAX และรายงานผู้ไม่มีสิทธิ์สอบที่ใช้งานได้ใน prototype นี้</p>
+              <p class="table-placeholder-text" id="placeholderModuleText">ตอนนี้มีหน้ารายงานการเข้าเรียน รายงานคะแนนรายวิชา รายงานคะแนนเฉลี่ยรายปี รายงานผลการเรียนระเบียนสะสม / GPAX และรายงานผู้ไม่มีสิทธิ์สอบที่ใช้งานได้ใน prototype นี้</p>
             </div>
             <span class="table-placeholder-chip">Coming Soon</span>
           </div>
         </section>
       </section>
     </main>
+  </div>
+
+  <div class="pdf-preview-modal" id="scorePrintModal" hidden>
+    <div class="pdf-preview-backdrop" data-score-print-close></div>
+    <section class="pdf-preview-dialog score-print-dialog" role="dialog" aria-modal="true" aria-labelledby="scorePrintModalTitle">
+      <header class="pdf-preview-header">
+        <h2 class="pdf-preview-title" id="scorePrintModalTitle">พิมพ์รายงานคะแนนรายวิชา</h2>
+        <button class="pdf-preview-close" type="button" id="scorePrintCloseBtn" aria-label="ปิดหน้าต่างพิมพ์">×</button>
+      </header>
+
+      <div class="score-print-modal-body">
+        <div class="score-print-grid">
+          <div class="field-group">
+            <label class="field-label" for="scorePrintMode">ขอบเขตการพิมพ์</label>
+            <select id="scorePrintMode">
+              <option value="all">พิมพ์ทั้งห้อง</option>
+              <option value="student">พิมพ์รายบุคคล</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="scorePrintTemplate">Template</label>
+            <select id="scorePrintTemplate">
+              <option value="standard">มาตรฐานโรงเรียน</option>
+              <option value="compact">แบบย่อ</option>
+              <option value="formal">แบบทางการ</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label class="field-label" for="scorePrintLanguage">ภาษา</label>
+            <select id="scorePrintLanguage">
+              <option value="th">ไทย</option>
+              <option value="en">English</option>
+              <option value="th-en">ไทย / English</option>
+            </select>
+          </div>
+          <div class="field-group hidden" id="scoreStudentPickerWrap">
+            <label class="field-label" for="scoreStudentPicker">นักเรียน</label>
+            <select id="scoreStudentPicker"></select>
+          </div>
+        </div>
+
+        <div class="score-print-preview hidden" id="scorePrintPreview"></div>
+      </div>
+
+      <footer class="pdf-preview-footer">
+        <button class="btn btn-secondary" type="button" data-score-print-close>ยกเลิก</button>
+        <div class="score-print-modal-actions">
+          <button class="btn btn-secondary" id="scorePreviewBtn" type="button">สร้าง Preview</button>
+          <button class="btn btn-primary" id="scoreConfirmPrintBtn" type="button" disabled>พิมพ์</button>
+        </div>
+      </footer>
+    </section>
   </div>
 
   <div class="pdf-preview-modal" id="attendanceThresholdModal" hidden>
@@ -1196,10 +1170,11 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="script.js?v=attendance-auto-filter"></script>
-  <script src="score-per-subject.js"></script>
+  <script src="script.js?v=attendance-auto-filter-2"></script>
+  <script src="score-per-subject.js?v=score-subject-refactor-2"></script>
+  <script src="vendor/chart.umd.min.js"></script>
   <script src="average-score-year.js"></script>
   <script src="record-report.js"></script>
-  <script src="unable-exam-report.js"></script>
+  <script src="unable-exam-report.js?v=8"></script>
 </body>
 </html>

@@ -1,746 +1,892 @@
-(() => {
-const STORAGE_KEY = "recordReport:lastSearch";
+(function () {
+  "use strict";
 
-const exportLabels = {
-  pdf: "PDF",
-  excel: "Excel",
-  csv: "CSV"
-};
+  const STORAGE_KEY = "recordReport:lastSearch";
+  const ACADEMIC_STATUS_RULES = {
+    warningGpax: 2.00,
+    minimumGraduationGpax: 2.00
+  };
+  const REPORT_LABELS = {
+    record: "ระเบียนสะสม",
+    gpax: "GPAX และหน่วยกิต"
+  };
+  const STATUS_LABELS = {
+    active: "กำลังศึกษา",
+    transferred: "ย้ายสถานศึกษา",
+    graduated: "สำเร็จการศึกษา"
+  };
+  const GPAX_BINS = [
+    { label: "<1.50", min: 0, max: 1.5 },
+    { label: "1.50-1.99", min: 1.5, max: 2 },
+    { label: "2.00-2.49", min: 2, max: 2.5 },
+    { label: "2.50-2.99", min: 2.5, max: 3 },
+    { label: "3.00-3.49", min: 3, max: 3.5 },
+    { label: "3.50-4.00", min: 3.5, max: 4.01 }
+  ];
 
-const reportTypeLabels = {
-  transcript: "ระเบียนสะสม",
-  gpax: "GPAX"
-};
+  const els = {
+    page: document.querySelector('[data-page="record-report"]'),
+    year: document.getElementById("recordAcademicYear"),
+    grade: document.getElementById("recordGrade"),
+    plan: document.getElementById("recordPlan"),
+    classroom: document.getElementById("recordClassroom"),
+    studentStatus: document.getElementById("recordStudentStatus"),
+    keyword: document.getElementById("recordKeyword"),
+    form: document.getElementById("recordFiltersForm"),
+    searchBtn: document.getElementById("recordSearchBtn"),
+    resetBtn: document.getElementById("recordResetFiltersBtn"),
+    currentAcademicLabel: document.getElementById("recordCurrentAcademicLabel"),
+    summaryScope: document.getElementById("recordSummaryScope"),
+    viewMeta: document.getElementById("recordViewMeta"),
+    resultsTitle: document.getElementById("recordResultsTitle"),
+    summaryGrid: document.getElementById("recordSummaryGrid"),
+    toolbarTitle: document.getElementById("recordToolbarTitle"),
+    resultCount: document.getElementById("recordResultCount"),
+    tableWrap: document.getElementById("recordTableWrap"),
+    tableState: document.getElementById("recordTableState"),
+    thead: document.getElementById("recordThead"),
+    tbody: document.getElementById("recordTbody"),
+    chartOne: document.getElementById("recordChartOne"),
+    chartTwo: document.getElementById("recordChartTwo"),
+    chartOneTitle: document.getElementById("recordChartOneTitle"),
+    chartTwoTitle: document.getElementById("recordChartTwoTitle"),
+    exportDropdown: document.getElementById("recordExportDropdown"),
+    exportBtn: document.getElementById("recordExportBtn"),
+    exportMenu: document.getElementById("recordExportMenu"),
+    printBtn: document.getElementById("recordPrintBtn"),
+    studentDialog: document.getElementById("recordStudentDialog"),
+    studentDialogTitle: document.getElementById("recordStudentDialogTitle"),
+    studentDialogBody: document.getElementById("recordStudentDialogBody"),
+    printDialog: document.getElementById("recordPrintDialog"),
+    printType: document.getElementById("recordPrintType"),
+    printScope: document.getElementById("recordPrintScope"),
+    printStudentWrap: document.getElementById("recordPrintStudentWrap"),
+    printStudent: document.getElementById("recordPrintStudent"),
+    printPaper: document.getElementById("recordPrintPaper"),
+    printOrientation: document.getElementById("recordPrintOrientation"),
+    printPreview: document.getElementById("recordPrintPreview"),
+    buildPrintPreviewBtn: document.getElementById("recordBuildPrintPreviewBtn")
+  };
 
-const els = {
-  academicYear: document.getElementById("recordAcademicYear"),
-  grade: document.getElementById("recordGrade"),
-  plan: document.getElementById("recordPlan"),
-  classroom: document.getElementById("recordClassroom"),
-  searchBtn: document.getElementById("recordSearchBtn"),
-  resetBtn: document.getElementById("recordResetFiltersBtn"),
-  currentAcademicLabel: document.getElementById("recordCurrentAcademicLabel"),
-  summaryScope: document.getElementById("recordSummaryScope"),
-  typeMeta: document.getElementById("recordTypeMeta"),
-  viewMeta: document.getElementById("recordViewMeta"),
-  totalRecords: document.getElementById("recordTotalRecords"),
-  metricLabelSecondary: document.getElementById("recordMetricLabelSecondary"),
-  metricSecondary: document.getElementById("recordMetricSecondary"),
-  studentCount: document.getElementById("recordStudentCount"),
-  gpaxSummary: document.getElementById("recordGpaxSummary"),
-  avgGpax: document.getElementById("recordAvgGpax"),
-  normalStatusCount: document.getElementById("recordNormalStatusCount"),
-  avgCredits: document.getElementById("recordAvgCredits"),
-  toolbarTitle: document.getElementById("recordToolbarTitle"),
-  toolbarSubtitle: document.getElementById("recordToolbarSubtitle"),
-  resultsTitle: document.getElementById("recordResultsTitle"),
-  previewPdfBtn: document.getElementById("recordPreviewPdfBtn"),
-  exportBtn: document.getElementById("recordExportBtn"),
-  exportDropdown: document.getElementById("recordExportDropdown"),
-  exportMenu: document.getElementById("recordExportMenu"),
-  printAllBtn: document.getElementById("recordPrintAllBtn"),
-  printStudentBtn: document.getElementById("recordPrintStudentBtn"),
-  previewPanel: document.getElementById("recordPreviewPanel"),
-  previewActionLabel: document.getElementById("recordPreviewActionLabel"),
-  previewTypeChip: document.getElementById("recordPreviewTypeChip"),
-  template: document.getElementById("recordTemplate"),
-  language: document.getElementById("recordLanguage"),
-  studentPickerWrap: document.getElementById("recordStudentPickerWrap"),
-  studentPicker: document.getElementById("recordStudentPicker"),
-  previewSummary: document.getElementById("recordPreviewSummary"),
-  generatePreviewBtn: document.getElementById("recordGeneratePreviewBtn"),
-  confirmActionBtn: document.getElementById("recordConfirmActionBtn"),
-  thead: document.getElementById("recordThead"),
-  tbody: document.getElementById("recordTbody"),
-  toast: document.getElementById("toast"),
-  reportTypeInputs: document.querySelectorAll('input[name="recordReportType"]')
-};
+  if (!els.page) return;
 
-if (!els.academicYear || !els.grade || !els.plan || !els.classroom) {
-  return;
-}
+  const state = {
+    db: null,
+    activeReportType: "record",
+    mode: "overview",
+    baseResults: [],
+    visibleResults: [],
+    isInitializing: false,
+    initialized: false,
+    keywordTimer: null
+  };
 
-const state = {
-  db: null,
-  rows: [],
-  reportType: "transcript",
-  hasSearched: false,
-  actionMode: {
-    kind: "preview",
-    format: "pdf",
-    scope: "all"
+  function escapeHtml(value) {
+    return String(value == null ? "" : value)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
   }
-};
 
-function setToast(message, variant = "info") {
-  if (!els.toast) return;
-  els.toast.textContent = message;
-  els.toast.dataset.variant = variant;
-  els.toast.classList.add("show");
-  window.clearTimeout(setToast.timer);
-  setToast.timer = window.setTimeout(() => {
-    els.toast.classList.remove("show");
-  }, 2400);
-}
+  function round(value, digits) {
+    if (value == null || Number.isNaN(value)) return null;
+    const factor = Math.pow(10, digits == null ? 2 : digits);
+    return Math.round(value * factor) / factor;
+  }
 
-function buildInlineMockDatabase() {
-  const academicYears = [
-    { id: "ay-2568", name: "2568", isCurrent: false },
-    { id: "ay-2569", name: "2569", isCurrent: true }
-  ];
+  function average(values) {
+    const valid = values.filter(function (value) { return value != null && !Number.isNaN(value); });
+    return valid.length ? valid.reduce(function (sum, value) { return sum + value; }, 0) / valid.length : null;
+  }
 
-  const grades = [
-    { id: "grade-m1", name: "ม.1", order: 1 },
-    { id: "grade-m2", name: "ม.2", order: 2 },
-    { id: "grade-m3", name: "ม.3", order: 3 }
-  ];
+  function formatNumber(value, digits) {
+    if (value == null) return incompleteCell();
+    return Number(value).toFixed(digits == null ? 2 : digits);
+  }
 
-  const plans = [
-    { id: "plan-general", gradeId: "grade-m1", name: "แผนทั่วไป" },
-    { id: "plan-stem", gradeId: "grade-m2", name: "แผนวิทย์-คณิต" },
-    { id: "plan-language", gradeId: "grade-m2", name: "แผนภาษา" },
-    { id: "plan-intensive", gradeId: "grade-m3", name: "แผนเข้มข้นวิชาการ" }
-  ];
+  function incompleteCell() {
+    return '<span class="record-incomplete" title="ข้อมูลผลการเรียนยังไม่ครบ">-</span>';
+  }
 
-  const classrooms = [
-    { id: "room-m1-1", gradeId: "grade-m1", planId: "plan-general", name: "ม.1/1" },
-    { id: "room-m1-2", gradeId: "grade-m1", planId: "plan-general", name: "ม.1/2" },
-    { id: "room-m2-1", gradeId: "grade-m2", planId: "plan-stem", name: "ม.2/1" },
-    { id: "room-m2-2", gradeId: "grade-m2", planId: "plan-language", name: "ม.2/2" },
-    { id: "room-m3-1", gradeId: "grade-m3", planId: "plan-intensive", name: "ม.3/1" }
-  ];
+  function buildInlineMockDatabase() {
+    const academicYears = [
+      { id: "2566", name: "2566" },
+      { id: "2567", name: "2567" },
+      { id: "2568", name: "2568", isLatest: true }
+    ];
+    const grades = [
+      { id: "m1", name: "มัธยมศึกษาปีที่ 1" },
+      { id: "m2", name: "มัธยมศึกษาปีที่ 2" },
+      { id: "m3", name: "มัธยมศึกษาปีที่ 3" }
+    ];
+    const plans = [
+      { id: "general", name: "ห้องเรียนทั่วไป", gradeIds: ["m1", "m2", "m3"] },
+      { id: "science", name: "วิทยาศาสตร์-คณิตศาสตร์", gradeIds: ["m2", "m3"] },
+      { id: "language", name: "ภาษาอังกฤษ", gradeIds: ["m3"] }
+    ];
+    const classrooms = [
+      { id: "m1-1", name: "ม.1/1", gradeId: "m1", planId: "general" },
+      { id: "m1-2", name: "ม.1/2", gradeId: "m1", planId: "general" },
+      { id: "m2-1", name: "ม.2/1", gradeId: "m2", planId: "science" },
+      { id: "m2-2", name: "ม.2/2", gradeId: "m2", planId: "general" },
+      { id: "m3-1", name: "ม.3/1", gradeId: "m3", planId: "science" },
+      { id: "m3-2", name: "ม.3/2", gradeId: "m3", planId: "language" }
+    ];
+    const subjectGroups = [
+      { id: "thai", name: "ภาษาไทย", shortName: "ไทย", requiredCredits: 9, credit: 1.5 },
+      { id: "math", name: "คณิตศาสตร์", shortName: "คณิต", requiredCredits: 12, credit: 2 },
+      { id: "science", name: "วิทยาศาสตร์และเทคโนโลยี", shortName: "วิทย์ฯ", requiredCredits: 15, credit: 2.5 },
+      { id: "foreign", name: "ภาษาต่างประเทศ", shortName: "ภาษาต่างประเทศ", requiredCredits: 9, credit: 1.5 },
+      { id: "social", name: "สังคมศึกษา", shortName: "สังคม", requiredCredits: 9, credit: 1.5 },
+      { id: "health", name: "สุขศึกษาและพลศึกษา", shortName: "สุขศึกษา", requiredCredits: 6, credit: 1 },
+      { id: "art", name: "ศิลปะ", shortName: "ศิลปะ", requiredCredits: 6, credit: 1 },
+      { id: "career", name: "การงานอาชีพ", shortName: "การงาน", requiredCredits: 6, credit: 1 }
+    ];
+    const firstNames = ["กิตติพงศ์", "ชญานิน", "ณัฐวุฒิ", "ปภาวรินท์", "พีรวิชญ์", "วรัญญา", "ศุภกร", "สิริกานต์", "อชิรญา", "ธนกฤต"];
+    const lastNames = ["ใจดี", "แสงทอง", "วัฒนกุล", "บุญส่ง", "ศรีสุข", "รัตนวงศ์", "มั่นคง", "พรประเสริฐ", "นาคะ", "เจริญผล"];
+    const gradePoints = [1, 1.5, 2, 2.5, 3, 3.5, 4];
+    const gradeLabels = { "0": "0", "1": "1", "1.5": "1.5", "2": "2", "2.5": "2.5", "3": "3", "3.5": "3.5", "4": "4" };
+    const students = [];
+    const records = [];
 
-  const subjectGroups = [
-    { key: "thaiCredits", label: "ภาษาไทย" },
-    { key: "mathCredits", label: "คณิตศาสตร์" },
-    { key: "scienceCredits", label: "วิทยาศาสตร์" },
-    { key: "languageCredits", label: "ภาษาต่างประเทศ" },
-    { key: "socialCredits", label: "สังคมศึกษา" }
-  ];
+    classrooms.forEach(function (room, roomIndex) {
+      for (let studentIndex = 0; studentIndex < 20; studentIndex += 1) {
+        const serial = roomIndex * 20 + studentIndex + 1;
+        const studentId = "student-" + serial;
+        const enrollmentStatus = studentIndex === 18 ? "transferred" : studentIndex === 19 ? "graduated" : "active";
+        students.push({
+          id: studentId,
+          studentCode: String(68000 + serial),
+          firstName: firstNames[(studentIndex + roomIndex) % firstNames.length],
+          lastName: lastNames[(studentIndex * 3 + roomIndex) % lastNames.length],
+          gradeId: room.gradeId,
+          planId: room.planId,
+          classroomId: room.id,
+          enrollmentStatus: enrollmentStatus
+        });
 
-  const students = [
-    ["66001", "กานต์ธิดา สุขผล", "room-m1-1"],
-    ["66002", "ธนกฤต แซ่ตั้ง", "room-m1-1"],
-    ["66003", "ปวีณ์นุช อินทรา", "room-m1-1"],
-    ["66004", "ภูริณัฐ ขยันดี", "room-m1-1"],
-    ["66005", "ศุภวิชญ์ เจริญผล", "room-m1-2"],
-    ["66006", "ณิชกานต์ พูลทรัพย์", "room-m1-2"],
-    ["66007", "พชรพล สุขใจ", "room-m1-2"],
-    ["65001", "กมลชนก พรหมมา", "room-m2-1"],
-    ["65002", "พีรพัฒน์ วงศ์ดี", "room-m2-1"],
-    ["65003", "สุภชา ศรีงาม", "room-m2-1"],
-    ["65004", "นภสร รัตนกุล", "room-m2-2"],
-    ["65005", "ชวลิต วัฒนะ", "room-m2-2"],
-    ["64001", "ปวริศา ศรีสวัสดิ์", "room-m3-1"],
-    ["64002", "ชยพล แสงทอง", "room-m3-1"],
-    ["64003", "กรวิกา บุญส่ง", "room-m3-1"]
-  ].map(([studentCode, name, classroomId], index) => ({
-    id: `student-${studentCode}`,
-    studentCode,
-    name,
-    classroomId,
-    order: index + 1
-  }));
-
-  const transcriptRows = students.map((student, index) => {
-    const term1Gpa = (2.1 + ((index * 17) % 18) / 10).toFixed(2);
-    const term2Gpa = (2.2 + ((index * 13) % 17) / 10).toFixed(2);
-    const cumulativeGpa = ((Number(term1Gpa) + Number(term2Gpa)) / 2).toFixed(2);
-    const earnedCredits = 18 + (index % 5);
-    const status = Number(cumulativeGpa) >= 2 ? "ผ่าน" : "ต้องติดตาม";
-    return {
-      studentId: student.id,
-      term1Gpa,
-      term2Gpa,
-      cumulativeGpa,
-      earnedCredits,
-      passedSubjects: 8 + (index % 4),
-      remark: status === "ผ่าน" ? "ผลการเรียนอยู่ในเกณฑ์ปกติ" : "ควรวางแผนเสริมรายวิชาหลัก",
-      status
-    };
-  });
-
-  const gpaxRows = students.map((student, index) => {
-    const gpax = (2.05 + ((index * 9) % 19) / 10).toFixed(2);
-    const gpa = (2.15 + ((index * 7) % 16) / 10).toFixed(2);
-    const totalCredits = 42 + (index % 6) * 2;
-    const pr = 12 + (index * 5) % 88;
-    const status = Number(gpax) >= 2.3 ? "ปกติ" : "เฝ้าระวัง";
-    return {
-      studentId: student.id,
-      gpax,
-      gpa,
-      pr,
-      totalCredits,
-      thaiCredits: 8 + (index % 2),
-      mathCredits: 8 + ((index + 1) % 3),
-      scienceCredits: 8 + ((index + 2) % 3),
-      languageCredits: 8 + (index % 3),
-      socialCredits: 8 + ((index + 1) % 2),
-      status
-    };
-  });
-
-  return {
-    academicYears,
-    grades,
-    plans,
-    classrooms,
-    students,
-    transcriptRows,
-    gpaxRows,
-    subjectGroups
-  };
-}
-
-function getSelectedReportType() {
-  const active = Array.from(els.reportTypeInputs).find((input) => input.checked);
-  return active ? active.value : "transcript";
-}
-
-function populateAcademicYears() {
-  const options = state.db.academicYears.map((year) => {
-    const selected = year.isCurrent ? " selected" : "";
-    return `<option value="${year.id}"${selected}>${year.name}</option>`;
-  });
-  els.academicYear.innerHTML = options.join("");
-
-  const current = state.db.academicYears.find((year) => year.isCurrent) || state.db.academicYears[0];
-  els.currentAcademicLabel.textContent = `${current.name} / ${reportTypeLabels[getSelectedReportType()]}`;
-}
-
-function populateGrades() {
-  els.grade.innerHTML = ['<option value="">เลือกระดับชั้น</option>']
-    .concat(state.db.grades.map((grade) => `<option value="${grade.id}">${grade.name}</option>`))
-    .join("");
-}
-
-function syncPlans() {
-  const gradeId = els.grade.value;
-  const plans = state.db.plans.filter((plan) => plan.gradeId === gradeId);
-  els.plan.disabled = !gradeId;
-  els.plan.innerHTML = ['<option value="">เลือกแผนการเรียน</option>']
-    .concat(plans.map((plan) => `<option value="${plan.id}">${plan.name}</option>`))
-    .join("");
-  els.classroom.disabled = true;
-  els.classroom.innerHTML = '<option value="">เลือกชั้นเรียน</option>';
-}
-
-function syncClassrooms() {
-  const planId = els.plan.value;
-  const classrooms = state.db.classrooms.filter((room) => room.planId === planId);
-  els.classroom.disabled = !planId;
-  els.classroom.innerHTML = ['<option value="">เลือกชั้นเรียน</option>']
-    .concat(classrooms.map((room) => `<option value="${room.id}">${room.name}</option>`))
-    .join("");
-}
-
-function syncSearchButton() {
-  const requiredReady = Boolean(
-    els.academicYear.value &&
-    els.grade.value &&
-    els.plan.value &&
-    els.classroom.value &&
-    getSelectedReportType()
-  );
-  els.searchBtn.disabled = !requiredReady;
-}
-
-function saveLastSearch() {
-  const payload = {
-    academicYear: els.academicYear.value,
-    grade: els.grade.value,
-    plan: els.plan.value,
-    classroom: els.classroom.value,
-    reportType: getSelectedReportType()
-  };
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
-}
-
-function restoreLastSearch() {
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return;
-  try {
-    const saved = JSON.parse(raw);
-    if (saved.academicYear) {
-      els.academicYear.value = saved.academicYear;
-    }
-    if (saved.grade) {
-      els.grade.value = saved.grade;
-      syncPlans();
-    }
-    if (saved.plan) {
-      els.plan.value = saved.plan;
-      syncClassrooms();
-    }
-    if (saved.classroom) {
-      els.classroom.value = saved.classroom;
-    }
-    if (saved.reportType) {
-      const target = Array.from(els.reportTypeInputs).find((input) => input.value === saved.reportType);
-      if (target) {
-        target.checked = true;
+        academicYears.forEach(function (year, yearIndex) {
+          [1, 2].forEach(function (semester) {
+            subjectGroups.forEach(function (group, groupIndex) {
+              const isMissing = year.id === "2568" && semester === 2 && studentIndex % 10 === 0 && groupIndex === 2;
+              const isPending = year.id === "2568" && semester === 2 && studentIndex % 13 === 0 && groupIndex === 6;
+              const isFailed = !isMissing && !isPending && ((studentIndex % 7 === 0 && groupIndex === 1 && semester === 2) || (studentIndex % 11 === 0 && groupIndex === 3 && yearIndex === 1));
+              const point = isMissing || isPending ? null : isFailed ? 0 : gradePoints[(studentIndex + roomIndex + yearIndex + semester + groupIndex) % gradePoints.length];
+              records.push({
+                academicYear: year.id,
+                semester: semester,
+                studentId: studentId,
+                subjectId: group.id + "-" + year.id + "-" + semester,
+                subjectName: group.name + " " + semester,
+                subjectGroupId: group.id,
+                credit: group.credit,
+                grade: point == null ? null : gradeLabels[String(point)],
+                gradePoint: point,
+                status: isMissing ? "missing" : isPending ? "pending" : isFailed ? "failed" : "passed"
+              });
+            });
+          });
+        });
       }
+    });
+
+    return { academicYears: academicYears, grades: grades, plans: plans, classrooms: classrooms, subjectGroups: subjectGroups, students: students, records: records };
+  }
+
+  function calculateWeightedGpa(records) {
+    const eligible = records.filter(function (record) {
+      return record.gradePoint != null && record.status !== "pending" && record.status !== "missing";
+    });
+    const credits = eligible.reduce(function (sum, record) { return sum + record.credit; }, 0);
+    if (!credits) return null;
+    return round(eligible.reduce(function (sum, record) { return sum + record.gradePoint * record.credit; }, 0) / credits, 2);
+  }
+
+  function calculateCumulativeGpax(records, endAcademicYear) {
+    return calculateWeightedGpa(records.filter(function (record) {
+      return Number(record.academicYear) <= Number(endAcademicYear);
+    }));
+  }
+
+  function calculateEarnedCredits(records) {
+    return round(records.filter(function (record) {
+      return record.gradePoint != null && record.gradePoint >= 1 && record.status === "passed";
+    }).reduce(function (sum, record) { return sum + record.credit; }, 0), 1);
+  }
+
+  function calculateRegisteredCredits(records) {
+    return round(records.filter(function (record) {
+      return record.status !== "missing";
+    }).reduce(function (sum, record) { return sum + record.credit; }, 0), 1);
+  }
+
+  function calculateFailedSubjectCount(records) {
+    return records.filter(function (record) {
+      return record.status === "failed" || record.gradePoint === 0;
+    }).length;
+  }
+
+  function calculateCreditsBySubjectGroup(records) {
+    return state.db.subjectGroups.reduce(function (result, group) {
+      result[group.id] = calculateEarnedCredits(records.filter(function (record) {
+        return record.subjectGroupId === group.id;
+      }));
+      return result;
+    }, {});
+  }
+
+  function evaluateAcademicStatus(result) {
+    if (result.isIncomplete) return { label: "ข้อมูลผลการเรียนไม่ครบ", tone: "incomplete" };
+    if (result.failedSubjects > 0) return { label: "มีรายวิชาไม่ผ่าน", tone: "failed" };
+    if (result.missingCredits > 0) return { label: "หน่วยกิตไม่ครบ", tone: "credits" };
+    if (result.gpax != null && result.gpax < ACADEMIC_STATUS_RULES.warningGpax) return { label: "ควรติดตามผลการเรียน", tone: "warning" };
+    return { label: "ปกติ", tone: "normal" };
+  }
+
+  function buildStudentResult(student, endAcademicYear, index) {
+    const studentRecords = state.db.records.filter(function (record) {
+      return record.studentId === student.id && Number(record.academicYear) <= Number(endAcademicYear);
+    });
+    const selectedYearRecords = studentRecords.filter(function (record) { return record.academicYear === endAcademicYear; });
+    const semesterRows = [1, 2].map(function (semester) {
+      const records = selectedYearRecords.filter(function (record) { return record.semester === semester; });
+      return {
+        academicYear: endAcademicYear,
+        semester: semester,
+        gpa: calculateWeightedGpa(records),
+        registeredCredits: calculateRegisteredCredits(records),
+        earnedCredits: calculateEarnedCredits(records),
+        failedSubjects: calculateFailedSubjectCount(records),
+        isIncomplete: records.some(function (record) { return record.gradePoint == null || record.status === "pending" || record.status === "missing"; })
+      };
+    });
+    const gpax = calculateCumulativeGpax(studentRecords, endAcademicYear);
+    const registeredCredits = calculateRegisteredCredits(studentRecords);
+    const earnedCredits = calculateEarnedCredits(studentRecords);
+    const failedSubjects = calculateFailedSubjectCount(studentRecords);
+    const totalRequiredCredits = state.db.subjectGroups.reduce(function (sum, group) { return sum + group.requiredCredits; }, 0);
+    const result = {
+      index: index + 1,
+      student: student,
+      records: studentRecords,
+      semesters: semesterRows,
+      gpax: gpax,
+      latestGpa: semesterRows[1].gpa != null ? semesterRows[1].gpa : semesterRows[0].gpa,
+      registeredCredits: registeredCredits,
+      earnedCredits: earnedCredits,
+      failedSubjects: failedSubjects,
+      creditsByGroup: calculateCreditsBySubjectGroup(studentRecords),
+      missingCredits: Math.max(0, round(totalRequiredCredits - earnedCredits, 1)),
+      isIncomplete: studentRecords.some(function (record) { return record.gradePoint == null || record.status === "pending" || record.status === "missing"; })
+    };
+    result.academicStatus = evaluateAcademicStatus(result);
+    return result;
+  }
+
+  function optionMarkup(value, label) {
+    return '<option value="' + escapeHtml(value) + '">' + escapeHtml(label) + "</option>";
+  }
+
+  function populateBaseFilters() {
+    els.year.innerHTML = state.db.academicYears.map(function (year) { return optionMarkup(year.id, year.name); }).join("");
+    els.grade.innerHTML = optionMarkup("all", "ทุกระดับชั้น") + state.db.grades.map(function (grade) { return optionMarkup(grade.id, grade.name); }).join("");
+  }
+
+  function syncFilterDependencies(preferred) {
+    const gradeId = els.grade.value || "all";
+    const validPlans = state.db.plans.filter(function (plan) { return gradeId === "all" || plan.gradeIds.indexOf(gradeId) >= 0; });
+    const preferredPlan = preferred && preferred.plan != null ? preferred.plan : els.plan.value;
+    els.plan.innerHTML = optionMarkup("all", "ทุกแผนการเรียน") + validPlans.map(function (plan) { return optionMarkup(plan.id, plan.name); }).join("");
+    els.plan.value = validPlans.some(function (plan) { return plan.id === preferredPlan; }) ? preferredPlan : "all";
+
+    const planId = els.plan.value || "all";
+    const validRooms = state.db.classrooms.filter(function (room) {
+      return (gradeId === "all" || room.gradeId === gradeId) && (planId === "all" || room.planId === planId);
+    });
+    const preferredRoom = preferred && preferred.classroom != null ? preferred.classroom : els.classroom.value;
+    els.classroom.innerHTML = optionMarkup("all", "ทุกห้องเรียน") + validRooms.map(function (room) { return optionMarkup(room.id, room.name); }).join("");
+    els.classroom.value = validRooms.some(function (room) { return room.id === preferredRoom; }) ? preferredRoom : "all";
+  }
+
+  function getDefaultFilters() {
+    const latest = state.db.academicYears.find(function (year) { return year.isLatest; }) || state.db.academicYears[state.db.academicYears.length - 1];
+    return {
+      academicYear: latest.id,
+      grade: "all",
+      plan: "all",
+      classroom: "all",
+      studentStatus: "active",
+      reportType: "record",
+      keyword: ""
+    };
+  }
+
+  function loadSavedFilters() {
+    try {
+      return JSON.parse(window.localStorage.getItem(STORAGE_KEY) || "null");
+    } catch (error) {
+      return null;
     }
-  } catch (error) {
+  }
+
+  function applyFilters(filters) {
+    els.year.value = state.db.academicYears.some(function (year) { return year.id === filters.academicYear; }) ? filters.academicYear : getDefaultFilters().academicYear;
+    els.grade.value = state.db.grades.some(function (grade) { return grade.id === filters.grade; }) || filters.grade === "all" ? filters.grade : "all";
+    syncFilterDependencies({ plan: filters.plan, classroom: filters.classroom });
+    els.studentStatus.value = STATUS_LABELS[filters.studentStatus] || filters.studentStatus === "all" ? filters.studentStatus : "active";
+    els.keyword.value = filters.keyword || "";
+    setActiveReportType(filters.reportType === "gpax" ? "gpax" : "record", false);
+  }
+
+  function saveLastSearch() {
+    const filters = {
+      academicYear: els.year.value,
+      grade: els.grade.value,
+      plan: els.plan.value,
+      classroom: els.classroom.value,
+      studentStatus: els.studentStatus.value,
+      reportType: state.activeReportType,
+      keyword: els.keyword.value.trim()
+    };
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(filters));
+  }
+
+  function getName(collection, id, allLabel) {
+    if (id === "all") return allLabel;
+    const item = collection.find(function (entry) { return entry.id === id; });
+    return item ? item.name : allLabel;
+  }
+
+  function buildRecordRows(students) {
+    return students.map(function (student, index) { return buildStudentResult(student, els.year.value, index); });
+  }
+
+  function buildGpaxRows(students) {
+    return students.map(function (student, index) { return buildStudentResult(student, els.year.value, index); });
+  }
+
+  function filterCurrentResults() {
+    const query = els.keyword.value.trim().toLocaleLowerCase("th");
+    state.visibleResults = !query ? state.baseResults.slice() : state.baseResults.filter(function (result) {
+      const student = result.student;
+      const text = [student.studentCode, student.firstName, student.lastName, student.firstName + " " + student.lastName].join(" ").toLocaleLowerCase("th");
+      return text.indexOf(query) >= 0;
+    });
+  }
+
+  function statusChip(status) {
+    return '<span class="record-status" data-tone="' + status.tone + '">' + escapeHtml(status.label) + "</span>";
+  }
+
+  function metricCard(label, value, warning) {
+    return '<article class="metric' + (warning ? " record-metric-warning" : "") + '"><p class="metric-label">' + escapeHtml(label) + '</p><p class="metric-value">' + escapeHtml(value) + "</p></article>";
+  }
+
+  function summaryData(results) {
+    const incomplete = results.filter(function (result) { return result.isIncomplete; }).length;
+    return {
+      total: results.length,
+      avgGpax: average(results.map(function (result) { return result.gpax; })),
+      maxGpax: results.length ? Math.max.apply(null, results.map(function (result) { return result.gpax == null ? 0 : result.gpax; })) : null,
+      minGpax: results.filter(function (result) { return result.gpax != null; }).length ? Math.min.apply(null, results.filter(function (result) { return result.gpax != null; }).map(function (result) { return result.gpax; })) : null,
+      avgLatestGpa: average(results.map(function (result) { return result.latestGpa; })),
+      avgEarnedCredits: average(results.map(function (result) { return result.earnedCredits; })),
+      belowThreshold: results.filter(function (result) { return result.gpax != null && result.gpax < ACADEMIC_STATUS_RULES.warningGpax; }).length,
+      failed: results.filter(function (result) { return result.failedSubjects > 0; }).length,
+      missingCredits: results.filter(function (result) { return result.missingCredits > 0; }).length,
+      watch: results.filter(function (result) { return result.academicStatus.tone !== "normal"; }).length,
+      incomplete: incomplete,
+      completeness: results.length ? Math.round(((results.length - incomplete) / results.length) * 100) : 0
+    };
+  }
+
+  function renderRecordSummary() {
+    const data = summaryData(state.baseResults);
+    els.summaryGrid.innerHTML = [
+      metricCard("นักเรียนทั้งหมด", data.total),
+      metricCard("ผลการเรียนสะสมเฉลี่ย", data.avgGpax == null ? "-" : data.avgGpax.toFixed(2)),
+      metricCard("GPA เฉลี่ยภาคเรียนล่าสุด", data.avgLatestGpa == null ? "-" : data.avgLatestGpa.toFixed(2)),
+      metricCard("หน่วยกิตผ่านเฉลี่ย", data.avgEarnedCredits == null ? "-" : data.avgEarnedCredits.toFixed(1)),
+      metricCard("มีวิชาไม่ผ่าน", data.failed, data.failed > 0),
+      metricCard("ควรติดตาม", data.watch, data.watch > 0),
+      metricCard("ความครบถ้วนของข้อมูล", data.completeness + "%", data.completeness < 100)
+    ].join("");
+  }
+
+  function renderGpaxSummary() {
+    const data = summaryData(state.baseResults);
+    els.summaryGrid.innerHTML = [
+      metricCard("นักเรียนทั้งหมด", data.total),
+      metricCard("GPAX เฉลี่ย", data.avgGpax == null ? "-" : data.avgGpax.toFixed(2)),
+      metricCard("GPAX สูงสุด", data.maxGpax == null ? "-" : data.maxGpax.toFixed(2)),
+      metricCard("GPAX ต่ำสุด", data.minGpax == null ? "-" : data.minGpax.toFixed(2)),
+      metricCard("GPAX ต่ำกว่าเกณฑ์", data.belowThreshold, data.belowThreshold > 0),
+      metricCard("มีวิชาไม่ผ่าน", data.failed, data.failed > 0),
+      metricCard("หน่วยกิตไม่ครบ", data.missingCredits, data.missingCredits > 0),
+      metricCard("ความครบถ้วนของข้อมูล", data.completeness + "%", data.completeness < 100)
+    ].join("");
+  }
+
+  function setupCanvas(canvas, height) {
+    const ratio = window.devicePixelRatio || 1;
+    const width = Math.max(320, canvas.parentElement.clientWidth || 520);
+    canvas.width = width * ratio;
+    canvas.height = height * ratio;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+    const context = canvas.getContext("2d");
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
+    context.clearRect(0, 0, width, height);
+    context.font = "12px sans-serif";
+    return { context: context, width: width, height: height };
+  }
+
+  function drawBarChart(canvas, labels, values, options) {
+    const chart = setupCanvas(canvas, 260);
+    const context = chart.context;
+    const padding = { top: 20, right: 16, bottom: 48, left: 38 };
+    const innerWidth = chart.width - padding.left - padding.right;
+    const innerHeight = chart.height - padding.top - padding.bottom;
+    const max = Math.max(options && options.max ? options.max : 0, Math.max.apply(null, values.concat([1])));
+    context.strokeStyle = "#d8e0e8";
+    context.beginPath();
+    context.moveTo(padding.left, padding.top);
+    context.lineTo(padding.left, padding.top + innerHeight);
+    context.lineTo(padding.left + innerWidth, padding.top + innerHeight);
+    context.stroke();
+    const slot = innerWidth / Math.max(values.length, 1);
+    values.forEach(function (value, index) {
+      const barWidth = Math.min(44, slot * 0.58);
+      const height = value / max * innerHeight;
+      const x = padding.left + slot * index + (slot - barWidth) / 2;
+      const y = padding.top + innerHeight - height;
+      context.fillStyle = options && options.color ? options.color : "#315d88";
+      context.fillRect(x, y, barWidth, height);
+      context.fillStyle = "#334155";
+      context.textAlign = "center";
+      context.fillText(String(value), x + barWidth / 2, Math.max(13, y - 6));
+      context.fillText(labels[index], x + barWidth / 2, chart.height - 20);
+    });
+  }
+
+  function drawLineChart(canvas, labels, values) {
+    const chart = setupCanvas(canvas, 260);
+    const context = chart.context;
+    const padding = { top: 20, right: 18, bottom: 46, left: 40 };
+    const innerWidth = chart.width - padding.left - padding.right;
+    const innerHeight = chart.height - padding.top - padding.bottom;
+    context.strokeStyle = "#d8e0e8";
+    for (let line = 0; line <= 4; line += 1) {
+      const y = padding.top + innerHeight - (line / 4) * innerHeight;
+      context.beginPath();
+      context.moveTo(padding.left, y);
+      context.lineTo(padding.left + innerWidth, y);
+      context.stroke();
+      context.fillStyle = "#64748b";
+      context.textAlign = "right";
+      context.fillText(String(line), padding.left - 8, y + 4);
+    }
+    const points = values.map(function (value, index) {
+      return {
+        x: padding.left + (labels.length === 1 ? innerWidth / 2 : index * innerWidth / (labels.length - 1)),
+        y: value == null ? null : padding.top + innerHeight - (value / 4) * innerHeight
+      };
+    });
+    context.strokeStyle = "#315d88";
+    context.lineWidth = 2;
+    context.beginPath();
+    let started = false;
+    points.forEach(function (point) {
+      if (point.y == null) return;
+      if (!started) { context.moveTo(point.x, point.y); started = true; } else context.lineTo(point.x, point.y);
+    });
+    context.stroke();
+    points.forEach(function (point, index) {
+      if (point.y != null) {
+        context.fillStyle = "#315d88";
+        context.beginPath();
+        context.arc(point.x, point.y, 4, 0, Math.PI * 2);
+        context.fill();
+      }
+      context.fillStyle = "#475569";
+      context.textAlign = "center";
+      context.fillText(labels[index], point.x, chart.height - 20);
+    });
+  }
+
+  function drawHorizontalBars(canvas, labels, values) {
+    const height = Math.max(280, labels.length * 34 + 38);
+    const chart = setupCanvas(canvas, height);
+    const context = chart.context;
+    const labelWidth = Math.min(150, chart.width * 0.34);
+    const barWidth = chart.width - labelWidth - 55;
+    labels.forEach(function (label, index) {
+      const y = 20 + index * 34;
+      context.fillStyle = "#475569";
+      context.textAlign = "right";
+      context.fillText(label, labelWidth - 10, y + 13);
+      context.fillStyle = "#e8edf2";
+      context.fillRect(labelWidth, y, barWidth, 16);
+      context.fillStyle = values[index] >= 100 ? "#3f7656" : "#b7791f";
+      context.fillRect(labelWidth, y, Math.min(100, values[index]) / 100 * barWidth, 16);
+      context.fillStyle = "#334155";
+      context.textAlign = "left";
+      context.fillText(values[index] + "%", labelWidth + barWidth + 7, y + 13);
+    });
+  }
+
+  function renderVisualization() {
+    const values = GPAX_BINS.map(function (bin) {
+      return state.baseResults.filter(function (result) {
+        return result.gpax != null && result.gpax >= bin.min && result.gpax < bin.max;
+      }).length;
+    });
+    if (state.activeReportType === "record") {
+      els.chartOneTitle.textContent = "แนวโน้ม GPA เฉลี่ยรายภาคเรียน";
+      els.chartTwoTitle.textContent = "การกระจายผลการเรียนสะสม";
+      const labels = [];
+      const trend = [];
+      state.db.academicYears.filter(function (year) { return Number(year.id) <= Number(els.year.value); }).forEach(function (year) {
+        [1, 2].forEach(function (semester) {
+          labels.push(year.id.slice(-2) + "/" + semester);
+          trend.push(average(state.baseResults.map(function (result) {
+            return calculateWeightedGpa(result.records.filter(function (record) { return record.academicYear === year.id && record.semester === semester; }));
+          })));
+        });
+      });
+      drawLineChart(els.chartOne, labels, trend);
+      drawBarChart(els.chartTwo, GPAX_BINS.map(function (bin) { return bin.label; }), values);
+    } else {
+      els.chartOneTitle.textContent = "การกระจาย GPAX";
+      els.chartTwoTitle.textContent = "ความครบถ้วนของหน่วยกิตตามกลุ่มสาระ";
+      drawBarChart(els.chartOne, GPAX_BINS.map(function (bin) { return bin.label; }), values);
+      const groupValues = state.db.subjectGroups.map(function (group) {
+        const earned = state.baseResults.reduce(function (sum, result) { return sum + result.creditsByGroup[group.id]; }, 0);
+        const required = group.requiredCredits * state.baseResults.length;
+        return required ? Math.round(earned / required * 100) : 0;
+      });
+      drawHorizontalBars(els.chartTwo, state.db.subjectGroups.map(function (group) { return group.shortName; }), groupValues);
+    }
+  }
+
+  function buildOverviewRows(results) {
+    const groups = {};
+    results.forEach(function (result) {
+      const roomId = result.student.classroomId;
+      if (!groups[roomId]) groups[roomId] = [];
+      groups[roomId].push(result);
+    });
+    return Object.keys(groups).map(function (roomId) {
+      const classroom = state.db.classrooms.find(function (room) { return room.id === roomId; });
+      const grade = state.db.grades.find(function (item) { return item.id === classroom.gradeId; });
+      const plan = state.db.plans.find(function (item) { return item.id === classroom.planId; });
+      const resultsInRoom = groups[roomId];
+      const data = summaryData(resultsInRoom);
+      return {
+        classroom: classroom,
+        grade: grade,
+        plan: plan,
+        count: resultsInRoom.length,
+        avgGpax: data.avgGpax,
+        avgLatestGpa: data.avgLatestGpa,
+        avgEarnedCredits: data.avgEarnedCredits,
+        watch: data.watch,
+        failed: data.failed,
+        missingCredits: data.missingCredits,
+        incomplete: data.incomplete
+      };
+    }).sort(function (a, b) { return a.classroom.name.localeCompare(b.classroom.name, "th"); });
+  }
+
+  function showTableState(message) {
+    els.tableState.textContent = message;
+    els.tableState.classList.remove("hidden");
+    els.tableWrap.classList.add("hidden");
+  }
+
+  function showTable() {
+    els.tableState.classList.add("hidden");
+    els.tableWrap.classList.remove("hidden");
+  }
+
+  function renderOverviewTable() {
+    const rows = buildOverviewRows(state.visibleResults);
+    els.toolbarTitle.textContent = "สรุปผลรายห้อง";
+    els.resultCount.textContent = rows.length + " ห้อง";
+    els.thead.innerHTML = '<tr><th>ระดับชั้น</th><th>ห้องเรียน</th><th>แผนการเรียน</th><th>นักเรียน</th><th>' + (state.activeReportType === "record" ? "ผลสะสมเฉลี่ย" : "GPAX เฉลี่ย") + '</th><th>GPA ล่าสุดเฉลี่ย</th><th>หน่วยกิตผ่านเฉลี่ย</th><th>ควรติดตาม</th><th>มีวิชาไม่ผ่าน</th><th>หน่วยกิตไม่ครบ</th><th>ข้อมูลไม่ครบ</th><th>การดำเนินการ</th></tr>';
+    els.tbody.innerHTML = rows.map(function (row) {
+      return '<tr><td>' + escapeHtml(row.grade.name) + '</td><td><strong>' + escapeHtml(row.classroom.name) + '</strong></td><td>' + escapeHtml(row.plan.name) + '</td><td>' + row.count + '</td><td>' + (row.avgGpax == null ? incompleteCell() : row.avgGpax.toFixed(2)) + '</td><td>' + (row.avgLatestGpa == null ? incompleteCell() : row.avgLatestGpa.toFixed(2)) + '</td><td>' + (row.avgEarnedCredits == null ? incompleteCell() : row.avgEarnedCredits.toFixed(1)) + '</td><td>' + row.watch + '</td><td>' + row.failed + '</td><td>' + row.missingCredits + '</td><td>' + row.incomplete + '</td><td><button class="btn btn-secondary record-row-action" type="button" data-room-detail="' + row.classroom.id + '">ดูรายละเอียด</button></td></tr>';
+    }).join("");
+  }
+
+  function renderRecordTable() {
+    const year = escapeHtml(els.year.value);
+    els.toolbarTitle.textContent = "ระเบียนสะสมรายนักเรียน";
+    els.resultCount.textContent = state.visibleResults.length + " คน";
+    els.thead.innerHTML = '<tr><th class="record-sticky record-col-no" rowspan="2">ลำดับ</th><th class="record-sticky record-col-id" rowspan="2">รหัสนักเรียน</th><th class="record-sticky record-col-name" rowspan="2">ชื่อ-สกุล</th><th colspan="3">ภาคเรียน 1</th><th colspan="3">ภาคเรียน 2</th><th colspan="7">ผลสะสมถึงปีการศึกษา ' + year + '</th></tr><tr><th>GPA</th><th>ลงทะเบียน</th><th>ผ่าน</th><th>GPA</th><th>ลงทะเบียน</th><th>ผ่าน</th><th>ผลการเรียนสะสม</th><th>ลงทะเบียนสะสม</th><th>ผ่านสะสม</th><th>วิชาไม่ผ่าน</th><th>สถานะ</th><th>หมายเหตุ</th><th>การดำเนินการ</th></tr>';
+    els.tbody.innerHTML = state.visibleResults.map(function (result) {
+      const student = result.student;
+      const note = result.isIncomplete ? "ข้อมูลบางรายวิชายังไม่ครบ" : result.failedSubjects ? "ตรวจสอบรายวิชาไม่ผ่าน" : "-";
+      return '<tr><td class="record-sticky record-col-no">' + result.index + '</td><td class="record-sticky record-col-id">' + student.studentCode + '</td><td class="record-sticky record-col-name">' + escapeHtml(student.firstName + " " + student.lastName) + '</td><td>' + formatNumber(result.semesters[0].gpa, 2) + '</td><td>' + result.semesters[0].registeredCredits.toFixed(1) + '</td><td>' + result.semesters[0].earnedCredits.toFixed(1) + '</td><td>' + formatNumber(result.semesters[1].gpa, 2) + '</td><td>' + result.semesters[1].registeredCredits.toFixed(1) + '</td><td>' + result.semesters[1].earnedCredits.toFixed(1) + '</td><td><strong>' + formatNumber(result.gpax, 2) + '</strong></td><td>' + result.registeredCredits.toFixed(1) + '</td><td>' + result.earnedCredits.toFixed(1) + '</td><td>' + result.failedSubjects + '</td><td>' + statusChip(result.academicStatus) + '</td><td>' + escapeHtml(note) + '</td><td><button class="btn btn-secondary record-row-action" type="button" data-student-detail="' + student.id + '">ดูรายละเอียด</button></td></tr>';
+    }).join("");
+  }
+
+  function renderGpaxTable() {
+    els.toolbarTitle.textContent = "GPAX และหน่วยกิตรายนักเรียน";
+    els.resultCount.textContent = state.visibleResults.length + " คน";
+    const groupHeaders = state.db.subjectGroups.map(function (group) { return "<th>" + escapeHtml(group.shortName) + "</th>"; }).join("");
+    els.thead.innerHTML = '<tr><th class="record-sticky record-col-no" rowspan="2">ลำดับ</th><th class="record-sticky record-col-id" rowspan="2">รหัสนักเรียน</th><th class="record-sticky record-col-name" rowspan="2">ชื่อ-สกุล</th><th rowspan="2">GPAX</th><th rowspan="2">GPA ล่าสุด</th><th rowspan="2">ลงทะเบียนสะสม</th><th rowspan="2">ผ่านสะสม</th><th rowspan="2">วิชาไม่ผ่าน</th><th rowspan="2">หน่วยกิตที่ยังขาด</th><th colspan="8">หน่วยกิตตามกลุ่มสาระ</th><th rowspan="2">สถานะการศึกษา</th><th rowspan="2">การดำเนินการ</th></tr><tr>' + groupHeaders + "</tr>";
+    els.tbody.innerHTML = state.visibleResults.map(function (result) {
+      const student = result.student;
+      const groupCells = state.db.subjectGroups.map(function (group) {
+        const earned = result.creditsByGroup[group.id];
+        return '<td class="' + (earned < group.requiredCredits ? "record-credit-warning" : "") + '">' + earned.toFixed(1) + "/" + group.requiredCredits + "</td>";
+      }).join("");
+      return '<tr><td class="record-sticky record-col-no">' + result.index + '</td><td class="record-sticky record-col-id">' + student.studentCode + '</td><td class="record-sticky record-col-name">' + escapeHtml(student.firstName + " " + student.lastName) + '</td><td><strong>' + formatNumber(result.gpax, 2) + '</strong></td><td>' + formatNumber(result.latestGpa, 2) + '</td><td>' + result.registeredCredits.toFixed(1) + '</td><td>' + result.earnedCredits.toFixed(1) + '</td><td>' + result.failedSubjects + '</td><td>' + result.missingCredits.toFixed(1) + '</td>' + groupCells + '<td>' + statusChip(result.academicStatus) + '</td><td><button class="btn btn-secondary record-row-action" type="button" data-student-detail="' + student.id + '">ดูรายละเอียด</button></td></tr>';
+    }).join("");
+  }
+
+  function renderTable() {
+    if (!state.visibleResults.length) {
+      els.thead.innerHTML = "";
+      els.tbody.innerHTML = "";
+      els.resultCount.textContent = "0 รายการ";
+      showTableState("ไม่พบข้อมูลตามเงื่อนไขที่เลือก");
+      return;
+    }
+    showTable();
+    if (state.mode === "overview") renderOverviewTable();
+    else if (state.activeReportType === "record") renderRecordTable();
+    else renderGpaxTable();
+  }
+
+  function renderResults() {
+    const gradeName = getName(state.db.grades, els.grade.value, "ทุกระดับชั้น");
+    const planName = getName(state.db.plans, els.plan.value, "ทุกแผนการเรียน");
+    const classroomName = getName(state.db.classrooms, els.classroom.value, "ทุกห้องเรียน");
+    els.resultsTitle.textContent = state.activeReportType === "record" ? "รายงานผลการเรียนระเบียนสะสม" : "รายงาน GPAX และหน่วยกิตสะสม";
+    els.summaryScope.textContent = "ปีการศึกษา " + els.year.value + " | " + gradeName + " | " + planName + " | " + classroomName;
+    els.currentAcademicLabel.textContent = els.year.value + " / " + REPORT_LABELS[state.activeReportType];
+    els.viewMeta.textContent = state.mode === "overview" ? "ภาพรวมรายห้อง" : "รายละเอียดรายนักเรียน";
+    if (state.activeReportType === "record") renderRecordSummary();
+    else renderGpaxSummary();
+    renderVisualization();
+    renderTable();
+    populatePrintStudents();
+    els.exportBtn.disabled = !state.visibleResults.length;
+    els.printBtn.disabled = !state.visibleResults.length;
+  }
+
+  function runSearch(options) {
+    const settings = options || {};
+    if (!els.year.value) {
+      els.searchBtn.disabled = true;
+      return;
+    }
+    els.searchBtn.disabled = false;
+    showTableState("กำลังประมวลผลข้อมูลผลการเรียนสะสม...");
+    try {
+      const students = state.db.students.filter(function (student) {
+        return (els.grade.value === "all" || student.gradeId === els.grade.value)
+          && (els.plan.value === "all" || student.planId === els.plan.value)
+          && (els.classroom.value === "all" || student.classroomId === els.classroom.value)
+          && (els.studentStatus.value === "all" || student.enrollmentStatus === els.studentStatus.value);
+      });
+      state.baseResults = state.activeReportType === "record" ? buildRecordRows(students) : buildGpaxRows(students);
+      filterCurrentResults();
+      const roomCount = new Set(state.baseResults.map(function (result) { return result.student.classroomId; })).size;
+      state.mode = els.classroom.value !== "all" && roomCount === 1 ? "detail" : "overview";
+      if (!settings.skipSave) saveLastSearch();
+      renderResults();
+    } catch (error) {
+      state.baseResults = [];
+      state.visibleResults = [];
+      showTableState("ไม่สามารถประมวลผลรายงานได้ กรุณาลองค้นหาอีกครั้ง");
+    }
+  }
+
+  function setActiveReportType(type, shouldSearch) {
+    state.activeReportType = type === "gpax" ? "gpax" : "record";
+    document.querySelectorAll(".record-report-tab").forEach(function (tab) {
+      const isActive = tab.dataset.reportType === state.activeReportType;
+      tab.classList.toggle("is-active", isActive);
+      tab.setAttribute("aria-selected", String(isActive));
+    });
+    if (shouldSearch && state.initialized && !state.isInitializing) runSearch();
+  }
+
+  function openRoomDetail(roomId) {
+    const room = state.db.classrooms.find(function (item) { return item.id === roomId; });
+    if (!room) return;
+    els.grade.value = room.gradeId;
+    syncFilterDependencies({ plan: room.planId, classroom: room.id });
+    runSearch();
+    els.tableWrap.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function semesterDetailRows(result) {
+    const groups = {};
+    result.records.forEach(function (record) {
+      const key = record.academicYear + "-" + record.semester;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(record);
+    });
+    return Object.keys(groups).sort().map(function (key) {
+      const records = groups[key];
+      return '<tr><td>' + records[0].academicYear + '</td><td>' + records[0].semester + '</td><td>' + formatNumber(calculateWeightedGpa(records), 2) + '</td><td>' + calculateRegisteredCredits(records).toFixed(1) + '</td><td>' + calculateEarnedCredits(records).toFixed(1) + '</td><td>' + calculateFailedSubjectCount(records) + "</td></tr>";
+    }).join("");
+  }
+
+  function openStudentDetail(studentId) {
+    const result = state.baseResults.find(function (item) { return item.student.id === studentId; });
+    if (!result) return;
+    const student = result.student;
+    const grade = getName(state.db.grades, student.gradeId, "-");
+    const plan = getName(state.db.plans, student.planId, "-");
+    const classroom = getName(state.db.classrooms, student.classroomId, "-");
+    els.studentDialogTitle.textContent = student.studentCode + " " + student.firstName + " " + student.lastName;
+    let groupTable = "";
+    if (state.activeReportType === "gpax") {
+      groupTable = '<h3>หน่วยกิตตามกลุ่มสาระ</h3><div class="table-wrap"><table class="record-dialog-table"><thead><tr><th>กลุ่มสาระ</th><th>หน่วยกิตที่ได้</th><th>หน่วยกิตที่กำหนด</th></tr></thead><tbody>' + state.db.subjectGroups.map(function (group) {
+        return "<tr><td>" + escapeHtml(group.name) + "</td><td>" + result.creditsByGroup[group.id].toFixed(1) + "</td><td>" + group.requiredCredits + "</td></tr>";
+      }).join("") + "</tbody></table></div>";
+    }
+    els.studentDialogBody.innerHTML = '<dl class="record-student-facts"><div><dt>รหัส</dt><dd>' + student.studentCode + '</dd></div><div><dt>ชื่อ-สกุล</dt><dd>' + escapeHtml(student.firstName + " " + student.lastName) + '</dd></div><div><dt>ระดับชั้น</dt><dd>' + escapeHtml(grade) + '</dd></div><div><dt>ห้องเรียน</dt><dd>' + escapeHtml(classroom) + '</dd></div><div><dt>แผนการเรียน</dt><dd>' + escapeHtml(plan) + '</dd></div></dl><h3>ผลการเรียนรายภาค</h3><div class="table-wrap"><table class="record-dialog-table"><thead><tr><th>ปีการศึกษา</th><th>ภาคเรียน</th><th>GPA</th><th>ลงทะเบียน</th><th>ผ่าน</th><th>วิชาไม่ผ่าน</th></tr></thead><tbody>' + semesterDetailRows(result) + '</tbody></table></div><h3>ผลสะสม</h3><dl class="record-student-facts"><div><dt>GPAX</dt><dd>' + (result.gpax == null ? "-" : result.gpax.toFixed(2)) + '</dd></div><div><dt>ลงทะเบียนสะสม</dt><dd>' + result.registeredCredits.toFixed(1) + '</dd></div><div><dt>ผ่านสะสม</dt><dd>' + result.earnedCredits.toFixed(1) + '</dd></div><div><dt>หน่วยกิตที่ยังขาด</dt><dd>' + result.missingCredits.toFixed(1) + '</dd></div><div><dt>สถานะ</dt><dd>' + statusChip(result.academicStatus) + "</dd></div></dl>" + groupTable;
+    els.studentDialog.showModal();
+  }
+
+  function populatePrintStudents() {
+    els.printStudent.innerHTML = state.visibleResults.map(function (result) {
+      return optionMarkup(result.student.id, result.student.studentCode + " - " + result.student.firstName + " " + result.student.lastName);
+    }).join("");
+  }
+
+  function syncPrintScope() {
+    const isStudent = els.printScope.value === "student";
+    els.printStudentWrap.classList.toggle("hidden", !isStudent);
+    els.printPaper.value = isStudent ? "a4" : "a3";
+    els.printOrientation.value = isStudent ? "portrait" : "landscape";
+    els.printPreview.classList.add("hidden");
+  }
+
+  function renderPrintSettingsModal() {
+    els.printType.value = state.activeReportType;
+    els.printScope.value = state.mode === "detail" ? "class" : "class";
+    els.printPreview.innerHTML = "";
+    els.printPreview.classList.add("hidden");
+    syncPrintScope();
+    els.printDialog.showModal();
+  }
+
+  function buildRecordPrintPreview() {
+    const scope = els.printScope.value === "student" ? "รายงานรายบุคคล" : "รายงานทั้งห้อง";
+    const selected = state.visibleResults.find(function (result) { return result.student.id === els.printStudent.value; });
+    return '<strong>ตัวอย่างรายงานระเบียนสะสม</strong><p>' + scope + ' | ปีการศึกษา ' + escapeHtml(els.year.value) + (selected ? " | " + escapeHtml(selected.student.firstName + " " + selected.student.lastName) : "") + '</p><p>A' + (els.printPaper.value === "a3" ? "3" : "4") + " " + (els.printOrientation.value === "landscape" ? "แนวนอน" : "แนวตั้ง") + "</p>";
+  }
+
+  function buildGpaxPrintPreview() {
+    const scope = els.printScope.value === "student" ? "รายงานรายบุคคล" : "รายงานทั้งห้อง";
+    const selected = state.visibleResults.find(function (result) { return result.student.id === els.printStudent.value; });
+    return '<strong>ตัวอย่างรายงาน GPAX และหน่วยกิต</strong><p>' + scope + ' | ปีการศึกษา ' + escapeHtml(els.year.value) + (selected ? " | " + escapeHtml(selected.student.firstName + " " + selected.student.lastName) : "") + '</p><p>A' + (els.printPaper.value === "a3" ? "3" : "4") + " " + (els.printOrientation.value === "landscape" ? "แนวนอน" : "แนวตั้ง") + "</p>";
+  }
+
+  function buildPrintPreview() {
+    els.printPreview.innerHTML = els.printType.value === "gpax" ? buildGpaxPrintPreview() : buildRecordPrintPreview();
+    els.printPreview.classList.remove("hidden");
+  }
+
+  function closeExportMenu() {
+    els.exportMenu.classList.add("hidden");
+    els.exportBtn.setAttribute("aria-expanded", "false");
+  }
+
+  function resetFilters() {
     window.localStorage.removeItem(STORAGE_KEY);
-  }
-}
-
-function getContext() {
-  const classroom = state.db.classrooms.find((room) => room.id === els.classroom.value);
-  const plan = state.db.plans.find((item) => item.id === els.plan.value);
-  const grade = state.db.grades.find((item) => item.id === els.grade.value);
-  const year = state.db.academicYears.find((item) => item.id === els.academicYear.value);
-  return { classroom, plan, grade, year };
-}
-
-function buildRows() {
-  const { classroom } = getContext();
-  const students = state.db.students
-    .filter((student) => student.classroomId === classroom.id)
-    .sort((a, b) => a.order - b.order);
-
-  if (state.reportType === "transcript") {
-    return students.map((student, index) => {
-      const transcript = state.db.transcriptRows.find((row) => row.studentId === student.id);
-      return { ...student, index: index + 1, ...transcript };
-    });
-  }
-
-  return students.map((student, index) => {
-    const gpax = state.db.gpaxRows.find((row) => row.studentId === student.id);
-    return { ...student, index: index + 1, ...gpax };
-  });
-}
-
-function getStatusChip(status) {
-  if (status === "ผ่าน" || status === "ปกติ") {
-    return "score-grade-chip score-grade-chip-good";
-  }
-  return "score-grade-chip score-grade-chip-warn";
-}
-
-function renderTranscriptTable() {
-  els.thead.innerHTML = `
-    <tr>
-      <th class="sticky-top sticky-col-score-no">ลำดับ</th>
-      <th class="sticky-top sticky-col-score-id">รหัสนักเรียน</th>
-      <th class="sticky-top sticky-col-score-name">ชื่อ</th>
-      <th class="sticky-top">GPA ภาคเรียน 1</th>
-      <th class="sticky-top">GPA ภาคเรียน 2</th>
-      <th class="sticky-top">ผลการเรียนสะสม</th>
-      <th class="sticky-top">วิชาที่ผ่าน</th>
-      <th class="sticky-top">หน่วยกิตที่ได้</th>
-      <th class="sticky-top">สถานะ</th>
-      <th class="sticky-top">หมายเหตุ</th>
-    </tr>
-  `;
-
-  if (!state.hasSearched) {
-    els.tbody.innerHTML = `
-      <tr>
-        <td colspan="10">
-          <div class="empty-state">กดค้นหาข้อมูลเพื่อเริ่มแสดงรายงาน</div>
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  if (!state.rows.length) {
-    els.tbody.innerHTML = `
-      <tr>
-        <td colspan="10">
-          <div class="empty-state">ไม่พบข้อมูลสำหรับเงื่อนไขที่เลือก</div>
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  els.tbody.innerHTML = state.rows.map((row) => `
-    <tr>
-      <td class="sticky-col-score-no">${row.index}</td>
-      <td class="sticky-col-score-id">${row.studentCode}</td>
-      <td class="sticky-col-score-name">${row.name}</td>
-      <td>${row.term1Gpa}</td>
-      <td>${row.term2Gpa}</td>
-      <td><strong>${row.cumulativeGpa}</strong></td>
-      <td>${row.passedSubjects} วิชา</td>
-      <td>${row.earnedCredits}</td>
-      <td><span class="${getStatusChip(row.status)}">${row.status}</span></td>
-      <td>${row.remark}</td>
-    </tr>
-  `).join("");
-}
-
-function renderGpaxTable() {
-  els.thead.innerHTML = `
-    <tr>
-      <th class="sticky-top sticky-col-score-no">ลำดับ</th>
-      <th class="sticky-top sticky-col-score-id">รหัสนักเรียน</th>
-      <th class="sticky-top sticky-col-score-name">ชื่อ</th>
-      <th class="sticky-top">GPAX</th>
-      <th class="sticky-top">GPA ล่าสุด</th>
-      <th class="sticky-top">PR</th>
-      <th class="sticky-top">หน่วยกิตรวม</th>
-      <th class="sticky-top">ไทย</th>
-      <th class="sticky-top">คณิต</th>
-      <th class="sticky-top">วิทย์</th>
-      <th class="sticky-top">ภาษา</th>
-      <th class="sticky-top">สังคม</th>
-      <th class="sticky-top">สถานะการศึกษา</th>
-    </tr>
-  `;
-
-  if (!state.hasSearched) {
-    els.tbody.innerHTML = `
-      <tr>
-        <td colspan="13">
-          <div class="empty-state">กดค้นหาข้อมูลเพื่อเริ่มแสดงรายงาน</div>
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  if (!state.rows.length) {
-    els.tbody.innerHTML = `
-      <tr>
-        <td colspan="13">
-          <div class="empty-state">ไม่พบข้อมูลสำหรับเงื่อนไขที่เลือก</div>
-        </td>
-      </tr>
-    `;
-    return;
-  }
-
-  els.tbody.innerHTML = state.rows.map((row) => `
-    <tr>
-      <td class="sticky-col-score-no">${row.index}</td>
-      <td class="sticky-col-score-id">${row.studentCode}</td>
-      <td class="sticky-col-score-name">${row.name}</td>
-      <td><strong>${row.gpax}</strong></td>
-      <td>${row.gpa}</td>
-      <td>${row.pr}</td>
-      <td>${row.totalCredits}</td>
-      <td>${row.thaiCredits}</td>
-      <td>${row.mathCredits}</td>
-      <td>${row.scienceCredits}</td>
-      <td>${row.languageCredits}</td>
-      <td>${row.socialCredits}</td>
-      <td><span class="${getStatusChip(row.status)}">${row.status}</span></td>
-    </tr>
-  `).join("");
-}
-
-function renderTable() {
-  if (state.reportType === "transcript") {
-    renderTranscriptTable();
-    return;
-  }
-  renderGpaxTable();
-}
-
-function updateSummary() {
-  const { classroom, plan, grade, year } = getContext();
-  els.summaryScope.textContent = `${reportTypeLabels[state.reportType]} | ${year.name} | ${grade.name} | ${plan.name} | ${classroom.name}`;
-  els.typeMeta.textContent = reportTypeLabels[state.reportType];
-  els.previewTypeChip.textContent = reportTypeLabels[state.reportType];
-  els.resultsTitle.textContent = state.reportType === "transcript" ? "รายงานผลการเรียนระเบียนสะสม" : "รายงาน GPAX";
-  els.toolbarTitle.textContent = state.reportType === "transcript"
-    ? "ตารางผลการเรียนรายภาคและผลการเรียนสะสม"
-    : "ตารางสรุป GPAX และหน่วยกิตสะสม";
-  els.toolbarSubtitle.textContent = state.reportType === "transcript"
-    ? "ตรึงข้อมูลนักเรียนทางซ้าย และเลื่อนดูรายละเอียดผลการเรียนได้ในตารางเดียว"
-    : "แสดงตัวชี้วัด GPAX ที่จำเป็นสำหรับนักเรียนจำนวนมาก พร้อมหน่วยกิตตามกลุ่มสาระ";
-  els.viewMeta.textContent = state.reportType === "transcript" ? "ตารางรายภาค" : "ตารางสรุปสะสม";
-  els.totalRecords.textContent = String(state.rows.length);
-  els.studentCount.textContent = String(state.rows.length);
-
-  if (state.reportType === "transcript") {
-    els.metricLabelSecondary.textContent = "ภาคเรียน";
-    els.metricSecondary.textContent = "2";
-    els.gpaxSummary.classList.add("hidden");
-  } else {
-    els.metricLabelSecondary.textContent = "กลุ่มสาระ";
-    els.metricSecondary.textContent = String(state.db.subjectGroups.length);
-    els.gpaxSummary.classList.remove("hidden");
-
-    const avgGpax = state.rows.length
-      ? (state.rows.reduce((sum, row) => sum + Number(row.gpax), 0) / state.rows.length).toFixed(2)
-      : "0.00";
-    const normalCount = state.rows.filter((row) => row.status === "ปกติ").length;
-    const avgCredits = state.rows.length
-      ? Math.round(state.rows.reduce((sum, row) => sum + Number(row.totalCredits), 0) / state.rows.length)
-      : 0;
-
-    els.avgGpax.textContent = avgGpax;
-    els.normalStatusCount.textContent = String(normalCount);
-    els.avgCredits.textContent = String(avgCredits);
-  }
-}
-
-function populateStudentPicker() {
-  els.studentPicker.innerHTML = state.rows
-    .map((row) => `<option value="${row.studentId}">${row.studentCode} - ${row.name}</option>`)
-    .join("");
-}
-
-function buildRecordPreviewTable() {
-  const rows = state.rows
-    .filter((row) => state.actionMode.scope !== "student" || row.studentId === els.studentPicker.value)
-    .slice(0, state.actionMode.scope === "student" ? 1 : 6);
-
-  if (state.reportType === "transcript") {
-    return `
-      <table class="pdf-preview-table">
-        <thead>
-          <tr>
-            <th>ลำดับ</th>
-            <th>รหัส</th>
-            <th>ชื่อ-สกุล</th>
-            <th>GPA 1</th>
-            <th>GPA 2</th>
-            <th>สะสม</th>
-            <th>หน่วยกิต</th>
-            <th>สถานะ</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${rows.map((row) => `
-            <tr>
-              <td>${row.index}</td>
-              <td>${row.studentCode}</td>
-              <td class="pdf-name-cell">${row.name}</td>
-              <td>${row.term1Gpa}</td>
-              <td>${row.term2Gpa}</td>
-              <td>${row.cumulativeGpa}</td>
-              <td>${row.earnedCredits}</td>
-              <td>${row.status}</td>
-            </tr>
-          `).join("")}
-        </tbody>
-      </table>
-    `;
-  }
-
-  return `
-    <table class="pdf-preview-table">
-      <thead>
-        <tr>
-          <th>ลำดับ</th>
-          <th>รหัส</th>
-          <th>ชื่อ-สกุล</th>
-          <th>GPAX</th>
-          <th>GPA ล่าสุด</th>
-          <th>PR</th>
-          <th>หน่วยกิตรวม</th>
-          <th>สถานะ</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${rows.map((row) => `
-          <tr>
-            <td>${row.index}</td>
-            <td>${row.studentCode}</td>
-            <td class="pdf-name-cell">${row.name}</td>
-            <td>${row.gpax}</td>
-            <td>${row.gpa}</td>
-            <td>${row.pr}</td>
-            <td>${row.totalCredits}</td>
-            <td>${row.status}</td>
-          </tr>
-        `).join("")}
-      </tbody>
-    </table>
-  `;
-}
-
-function updatePreviewText() {
-  const { classroom, plan, grade, year } = getContext();
-  const selectedStudent = state.rows.find((row) => row.studentId === els.studentPicker.value);
-  const actionTitle = state.actionMode.kind === "print"
-    ? `พิมพ์${state.actionMode.scope === "student" ? "รายบุคคล" : "ทั้งหมด"}`
-    : state.actionMode.kind === "export"
-      ? `ส่งออก ${exportLabels[state.actionMode.format]}`
-      : "ดูตัวอย่าง PDF";
-  const languageLabel = {
-    th: "ไทย",
-    en: "English",
-    "th-en": "ไทย / English"
-  }[els.language.value] || els.language.value;
-
-  els.previewActionLabel.textContent = actionTitle;
-  els.previewSummary.innerHTML = `
-    <strong>${actionTitle}</strong><br />
-    รายงาน: ${reportTypeLabels[state.reportType]} | ปีการศึกษา ${year.name} | ${grade.name} ${plan.name} ${classroom.name}<br />
-    Template: ${els.template.options[els.template.selectedIndex].textContent} | ภาษา: ${languageLabel}
-    ${selectedStudent && state.actionMode.scope === "student" ? `<br />นักเรียน: ${selectedStudent.studentCode} - ${selectedStudent.name}` : ""}
-    ${buildRecordPreviewTable()}
-  `;
-}
-
-function openPreviewPanel(mode) {
-  state.actionMode = mode;
-  els.studentPickerWrap.classList.toggle("hidden", mode.scope !== "student");
-  els.previewPanel.classList.remove("hidden");
-  updatePreviewText();
-}
-
-function closeMenus() {
-  els.exportMenu.classList.add("hidden");
-  els.exportBtn.setAttribute("aria-expanded", "false");
-}
-
-function runSearch() {
-  state.reportType = getSelectedReportType();
-  state.rows = buildRows();
-  state.hasSearched = true;
-  saveLastSearch();
-  renderTable();
-  updateSummary();
-  populateStudentPicker();
-  els.exportBtn.disabled = state.rows.length === 0;
-  els.previewPdfBtn.disabled = state.rows.length === 0;
-  els.printAllBtn.disabled = state.rows.length === 0;
-  els.printStudentBtn.disabled = state.rows.length === 0;
-  setToast(`โหลดรายงาน${reportTypeLabels[state.reportType]}เรียบร้อย`, "success");
-}
-
-function resetFilters() {
-  const currentYear = state.db.academicYears.find((year) => year.isCurrent) || state.db.academicYears[0];
-  els.academicYear.value = currentYear.id;
-  els.grade.value = "";
-  els.plan.innerHTML = '<option value="">เลือกแผนการเรียน</option>';
-  els.plan.disabled = true;
-  els.classroom.innerHTML = '<option value="">เลือกชั้นเรียน</option>';
-  els.classroom.disabled = true;
-  const transcriptInput = Array.from(els.reportTypeInputs).find((input) => input.value === "transcript");
-  if (transcriptInput) {
-    transcriptInput.checked = true;
-  }
-  state.reportType = "transcript";
-  state.rows = [];
-  state.hasSearched = false;
-  els.summaryScope.textContent = "ยังไม่มีผลการค้นหา";
-  els.totalRecords.textContent = "0";
-  els.metricLabelSecondary.textContent = "ภาคเรียน";
-  els.metricSecondary.textContent = "0";
-  els.studentCount.textContent = "0";
-  els.gpaxSummary.classList.add("hidden");
-  els.previewPanel.classList.add("hidden");
-  els.exportBtn.disabled = true;
-  els.previewPdfBtn.disabled = true;
-  els.printAllBtn.disabled = true;
-  els.printStudentBtn.disabled = true;
-  renderTable();
-  syncSearchButton();
-  window.localStorage.removeItem(STORAGE_KEY);
-  setToast("ล้างเงื่อนไขเรียบร้อย", "info");
-}
-
-function confirmAction() {
-  const selectedStudent = state.rows.find((row) => row.studentId === els.studentPicker.value);
-  let message = "";
-  if (state.actionMode.kind === "print") {
-    message = state.actionMode.scope === "student"
-      ? `กำลังพิมพ์รายบุคคล: ${selectedStudent ? selectedStudent.name : "-"}`
-      : `กำลังพิมพ์รายงาน${reportTypeLabels[state.reportType]}ทั้งหมด`;
-  } else if (state.actionMode.kind === "export") {
-    message = `กำลังส่งออกรายงาน${reportTypeLabels[state.reportType]}เป็น ${exportLabels[state.actionMode.format]}`;
-  } else {
-    message = `กำลังเปิดตัวอย่าง PDF ของรายงาน${reportTypeLabels[state.reportType]}`;
-  }
-  window.alert(message);
-  setToast(message, "success");
-}
-
-function attachEvents() {
-  els.grade.addEventListener("change", () => {
-    syncPlans();
-    syncSearchButton();
-  });
-
-  els.plan.addEventListener("change", () => {
-    syncClassrooms();
-    syncSearchButton();
-  });
-
-  els.classroom.addEventListener("change", syncSearchButton);
-  els.academicYear.addEventListener("change", () => {
-    els.currentAcademicLabel.textContent = `${els.academicYear.options[els.academicYear.selectedIndex].textContent} / ${reportTypeLabels[getSelectedReportType()]}`;
-    syncSearchButton();
-  });
-
-  els.reportTypeInputs.forEach((input) => {
-    input.addEventListener("change", () => {
-      state.reportType = getSelectedReportType();
-      els.currentAcademicLabel.textContent = `${els.academicYear.options[els.academicYear.selectedIndex].textContent} / ${reportTypeLabels[state.reportType]}`;
-      syncSearchButton();
-      if (state.rows.length) {
-        runSearch();
-      }
-    });
-  });
-
-  els.searchBtn.addEventListener("click", runSearch);
-  els.resetBtn.addEventListener("click", resetFilters);
-
-  els.previewPdfBtn.addEventListener("click", () => openPreviewPanel({ kind: "preview", format: "pdf", scope: "all" }));
-  els.printAllBtn.addEventListener("click", () => openPreviewPanel({ kind: "print", format: "pdf", scope: "all" }));
-  els.printStudentBtn.addEventListener("click", () => openPreviewPanel({ kind: "print", format: "pdf", scope: "student" }));
-  els.generatePreviewBtn.addEventListener("click", () => {
-    updatePreviewText();
-    setToast("สร้าง Preview เรียบร้อย", "success");
-  });
-  els.confirmActionBtn.addEventListener("click", confirmAction);
-  els.template.addEventListener("change", updatePreviewText);
-  els.language.addEventListener("change", updatePreviewText);
-  els.studentPicker.addEventListener("change", updatePreviewText);
-
-  els.exportBtn.addEventListener("click", () => {
-    const isHidden = els.exportMenu.classList.contains("hidden");
-    closeMenus();
-    if (isHidden && !els.exportBtn.disabled) {
-      els.exportMenu.classList.remove("hidden");
-      els.exportBtn.setAttribute("aria-expanded", "true");
-    }
-  });
-
-  els.exportMenu.querySelectorAll("[data-export]").forEach((button) => {
-    button.addEventListener("click", () => {
-      closeMenus();
-      openPreviewPanel({ kind: "export", format: button.dataset.export, scope: "all" });
-    });
-  });
-
-  document.addEventListener("click", (event) => {
-    if (!els.exportDropdown.contains(event.target)) {
-      closeMenus();
-    }
-  });
-}
-
-function init() {
-  state.db = buildInlineMockDatabase();
-  populateAcademicYears();
-  populateGrades();
-  restoreLastSearch();
-  state.reportType = getSelectedReportType();
-  els.currentAcademicLabel.textContent = `${els.academicYear.options[els.academicYear.selectedIndex].textContent} / ${reportTypeLabels[state.reportType]}`;
-  syncSearchButton();
-  renderTable();
-  els.exportBtn.disabled = true;
-  els.previewPdfBtn.disabled = true;
-  els.printAllBtn.disabled = true;
-  els.printStudentBtn.disabled = true;
-  if (!els.searchBtn.disabled) {
+    applyFilters(getDefaultFilters());
     runSearch();
   }
-}
 
-attachEvents();
-init();
+  function attachEvents() {
+    els.form.addEventListener("submit", function (event) {
+      event.preventDefault();
+      runSearch();
+    });
+    els.resetBtn.addEventListener("click", resetFilters);
+    els.year.addEventListener("change", function () { els.searchBtn.disabled = !els.year.value; });
+    els.grade.addEventListener("change", function () { syncFilterDependencies({ plan: "all", classroom: "all" }); });
+    els.plan.addEventListener("change", function () { syncFilterDependencies({ plan: els.plan.value, classroom: "all" }); });
+    els.keyword.addEventListener("input", function () {
+      window.clearTimeout(state.keywordTimer);
+      state.keywordTimer = window.setTimeout(function () {
+        filterCurrentResults();
+        saveLastSearch();
+        renderTable();
+        populatePrintStudents();
+      }, 250);
+    });
+    document.querySelectorAll(".record-report-tab").forEach(function (tab) {
+      tab.addEventListener("click", function () { setActiveReportType(tab.dataset.reportType, true); });
+    });
+    els.tbody.addEventListener("click", function (event) {
+      const roomButton = event.target.closest("[data-room-detail]");
+      const studentButton = event.target.closest("[data-student-detail]");
+      if (roomButton) openRoomDetail(roomButton.dataset.roomDetail);
+      if (studentButton) openStudentDetail(studentButton.dataset.studentDetail);
+    });
+    els.exportBtn.addEventListener("click", function () {
+      const willOpen = els.exportMenu.classList.contains("hidden");
+      closeExportMenu();
+      if (willOpen && !els.exportBtn.disabled) {
+        els.exportMenu.classList.remove("hidden");
+        els.exportBtn.setAttribute("aria-expanded", "true");
+      }
+    });
+    els.exportMenu.addEventListener("click", function (event) {
+      const button = event.target.closest("[data-export]");
+      if (!button) return;
+      closeExportMenu();
+      window.alert("เตรียมส่งออกรายงาน " + REPORT_LABELS[state.activeReportType] + " เป็น " + button.dataset.export.toUpperCase());
+    });
+    document.addEventListener("click", function (event) {
+      if (!els.exportDropdown.contains(event.target)) closeExportMenu();
+    });
+    els.printBtn.addEventListener("click", renderPrintSettingsModal);
+    els.printScope.addEventListener("change", syncPrintScope);
+    [els.printType, els.printStudent, els.printPaper, els.printOrientation].forEach(function (element) {
+      element.addEventListener("change", function () { els.printPreview.classList.add("hidden"); });
+    });
+    els.buildPrintPreviewBtn.addEventListener("click", buildPrintPreview);
+    document.querySelectorAll("[data-record-close]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        if (button.dataset.recordClose === "student") els.studentDialog.close();
+        else els.printDialog.close();
+      });
+    });
+    window.addEventListener("resize", function () {
+      window.clearTimeout(state.resizeTimer);
+      state.resizeTimer = window.setTimeout(renderVisualization, 120);
+    });
+    if (window.ResizeObserver) {
+      const observer = new ResizeObserver(function (entries) {
+        if (entries.some(function (entry) { return entry.contentRect.width > 0; }) && state.baseResults.length) renderVisualization();
+      });
+      observer.observe(document.querySelector(".record-chart-grid"));
+    }
+  }
+
+  function initializeRecordReportPage() {
+    if (state.initialized || state.isInitializing) return;
+    state.isInitializing = true;
+    state.db = buildInlineMockDatabase();
+    populateBaseFilters();
+    const saved = loadSavedFilters();
+    applyFilters(Object.assign(getDefaultFilters(), saved || {}));
+    attachEvents();
+    state.initialized = true;
+    state.isInitializing = false;
+    runSearch({ skipSave: false });
+  }
+
+  initializeRecordReportPage();
 })();

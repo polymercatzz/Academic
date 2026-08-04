@@ -1,5 +1,6 @@
 (() => {
 const STORAGE_KEY = "scorePerSubject:lastSearch";
+const LOW_SCORE_THRESHOLD = 60;
 
 const exportLabels = {
   excel: "Excel",
@@ -12,22 +13,40 @@ const els = {
   semester: document.getElementById("scoreSemester"),
   grade: document.getElementById("scoreGrade"),
   classroom: document.getElementById("scoreClassroom"),
+  subject: document.getElementById("scoreSubject"),
   searchBtn: document.getElementById("scoreSearchBtn"),
   resetBtn: document.getElementById("scoreResetFiltersBtn"),
   currentAcademicLabel: document.getElementById("scoreCurrentAcademicLabel"),
+  summaryPeriod: document.getElementById("scoreSummaryPeriod"),
   summaryScope: document.getElementById("scoreSummaryScope"),
-  totalRecords: document.getElementById("scoreTotalRecords"),
-  subjectCount: document.getElementById("scoreSubjectCount"),
-  studentCount: document.getElementById("scoreStudentCount"),
+  matrixMeta: document.getElementById("scoreMatrixMeta"),
+  viewMeta: document.getElementById("scoreViewMeta"),
+  detailSummaryGrid: document.getElementById("scoreDetailSummaryGrid"),
+  overviewSummaryGrid: document.getElementById("scoreOverviewSummaryGrid"),
+  overviewPanel: document.getElementById("scoreOverviewPanel"),
+  overviewTbody: document.getElementById("scoreOverviewTbody"),
+  overviewStudentCount: document.getElementById("scoreOverviewStudentCount"),
+  overviewRoomCount: document.getElementById("scoreOverviewRoomCount"),
+  overviewSubjectCount: document.getElementById("scoreOverviewSubjectCount"),
+  overviewAverage: document.getElementById("scoreOverviewAverage"),
+  overviewFollowUpCount: document.getElementById("scoreOverviewFollowUpCount"),
+  overviewMissingCount: document.getElementById("scoreOverviewMissingCount"),
+  classAverage: document.getElementById("scoreClassAverage"),
+  followUpCount: document.getElementById("scoreFollowUpCount"),
+  lowSubjectCount: document.getElementById("scoreLowSubjectCount"),
+  completionRate: document.getElementById("scoreCompletionRate"),
+  subjectAverageChart: document.getElementById("scoreSubjectAverageChart"),
+  followUpTbody: document.getElementById("scoreFollowUpTbody"),
   columnToggleBtn: document.getElementById("scoreColumnToggleBtn"),
   columnChooserPanel: document.getElementById("scoreColumnChooserPanel"),
   showAllSubjectsBtn: document.getElementById("scoreShowAllSubjectsBtn"),
   exportBtn: document.getElementById("scoreExportBtn"),
   exportDropdown: document.getElementById("scoreExportDropdown"),
   exportMenu: document.getElementById("scoreExportMenu"),
-  printAllBtn: document.getElementById("scorePrintAllBtn"),
-  printStudentBtn: document.getElementById("scorePrintStudentBtn"),
-  printPanel: document.getElementById("scorePrintPanel"),
+  printBtn: document.getElementById("scorePrintBtn"),
+  printModal: document.getElementById("scorePrintModal"),
+  printCloseBtn: document.getElementById("scorePrintCloseBtn"),
+  printMode: document.getElementById("scorePrintMode"),
   printTemplate: document.getElementById("scorePrintTemplate"),
   printLanguage: document.getElementById("scorePrintLanguage"),
   previewBtn: document.getElementById("scorePreviewBtn"),
@@ -35,7 +54,6 @@ const els = {
   printPreview: document.getElementById("scorePrintPreview"),
   studentPickerWrap: document.getElementById("scoreStudentPickerWrap"),
   studentPicker: document.getElementById("scoreStudentPicker"),
-  tablePlaceholder: document.getElementById("scoreTablePlaceholder"),
   scoreThead: document.getElementById("scoreThead"),
   scoreTbody: document.getElementById("scoreTbody"),
   toast: document.getElementById("toast")
@@ -48,7 +66,11 @@ const state = {
   subjects: [],
   visibleSubjectIds: [],
   subjectKeyword: "",
-  printMode: "all"
+  printMode: "all",
+  resultMode: "overview",
+  overviewRows: [],
+  subjectAverages: [],
+  followUpRows: []
 };
 
 function buildInlineMockDatabase() {
@@ -116,12 +138,16 @@ function buildInlineMockDatabase() {
       const adjustedScore = subject.fullScore === 50
         ? Math.min(subject.fullScore, Math.max(20, Math.round(baseScore / 2)))
         : baseScore;
+      if ((studentIndex * subjects.length + subjectIndex) % 23 === 0) return;
+      const recordedScore = subjectIndex === 3
+        ? Math.max(0, adjustedScore - Math.round(subject.fullScore * 0.18))
+        : adjustedScore;
       subjectScores.push({
         studentId: student.id,
         subjectId: subject.id,
-        score: adjustedScore,
+        score: recordedScore,
         fullScore: subject.fullScore,
-        gradeLabel: getGradeLabel(adjustedScore, subject.fullScore)
+        gradeLabel: getGradeLabel(recordedScore, subject.fullScore)
       });
     });
   });
@@ -174,23 +200,33 @@ function populateSemesters() {
 }
 
 function populateGrades() {
-  els.grade.innerHTML = `<option value="">เลือกระดับชั้น</option>${state.db.grades
+  els.grade.innerHTML = `<option value="all">ทุกระดับชั้น</option>${state.db.grades
     .sort((a, b) => a.order - b.order)
     .map((grade) => `<option value="${grade.id}">${grade.name}</option>`)
     .join("")}`;
+  els.grade.value = "all";
 }
 
-function syncClassrooms() {
+function populateSubjects() {
+  els.subject.innerHTML = `<option value="all">ทุกวิชา</option>${state.db.subjects
+    .map((subject) => `<option value="${subject.id}">${subject.code} - ${subject.name}</option>`)
+    .join("")}`;
+  els.subject.value = "all";
+}
+
+function syncClassrooms(preferredValue = "all") {
   const classrooms = state.db.classrooms
-    .filter((classroom) => classroom.gradeId === els.grade.value)
+    .filter((classroom) => els.grade.value === "all" || classroom.gradeId === els.grade.value)
     .map((classroom) => `<option value="${classroom.id}">${classroom.name}</option>`)
     .join("");
-  els.classroom.innerHTML = `<option value="">เลือกชั้นเรียน</option>${classrooms}`;
-  els.classroom.disabled = !els.grade.value;
+  els.classroom.innerHTML = `<option value="all">ทุกห้องเรียน</option>${classrooms}`;
+  els.classroom.value = [...els.classroom.options].some((option) => option.value === preferredValue)
+    ? preferredValue
+    : "all";
 }
 
 function syncSearchButton() {
-  els.searchBtn.disabled = !(els.academicYear.value && els.semester.value && els.grade.value && els.classroom.value);
+  els.searchBtn.disabled = !(els.academicYear.value && els.semester.value);
 }
 
 function getFormValues() {
@@ -198,7 +234,8 @@ function getFormValues() {
     academicYearId: els.academicYear.value,
     semesterId: els.semester.value,
     gradeId: els.grade.value,
-    classroomId: els.classroom.value
+    classroomId: els.classroom.value,
+    subjectId: els.subject.value
   };
 }
 
@@ -208,44 +245,231 @@ function saveLastSearch() {
 
 function restoreLastSearch() {
   const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (!raw) return;
+  if (!raw) return false;
   try {
     const saved = JSON.parse(raw);
-    if (saved.academicYearId) els.academicYear.value = saved.academicYearId;
+    if ([...els.academicYear.options].some((option) => option.value === saved.academicYearId)) {
+      els.academicYear.value = saved.academicYearId;
+    }
     populateSemesters();
-    if (saved.semesterId) els.semester.value = saved.semesterId;
-    if (saved.gradeId) els.grade.value = saved.gradeId;
-    syncClassrooms();
-    if (saved.classroomId) els.classroom.value = saved.classroomId;
+    if ([...els.semester.options].some((option) => option.value === saved.semesterId)) {
+      els.semester.value = saved.semesterId;
+    }
+    els.grade.value = [...els.grade.options].some((option) => option.value === saved.gradeId)
+      ? saved.gradeId
+      : "all";
+    syncClassrooms(saved.classroomId || "all");
+    els.subject.value = [...els.subject.options].some((option) => option.value === saved.subjectId)
+      ? saved.subjectId
+      : "all";
+    return true;
   } catch (error) {
     console.error(error);
+    return false;
   }
 }
 
-function buildResultRows() {
+function getSelectedSubjects() {
+  return els.subject.value === "all"
+    ? [...state.db.subjects]
+    : state.db.subjects.filter((subject) => subject.id === els.subject.value);
+}
+
+function getSelectedClassrooms() {
+  return state.db.classrooms.filter((classroom) => {
+    const matchesGrade = els.grade.value === "all" || classroom.gradeId === els.grade.value;
+    const matchesClassroom = els.classroom.value === "all" || classroom.id === els.classroom.value;
+    return matchesGrade && matchesClassroom;
+  });
+}
+
+function updateResultScope() {
+  const year = state.maps.academicYears.get(els.academicYear.value);
+  const semester = state.maps.semesters.get(els.semester.value);
+  const grade = state.maps.grades.get(els.grade.value);
+  const classroom = state.maps.classrooms.get(els.classroom.value);
+  const subject = state.maps.subjects.get(els.subject.value);
+  const gradeText = grade ? grade.name : "ทุกระดับชั้น";
+  const classroomText = classroom ? `ห้อง ${classroom.name}` : "ทุกห้องเรียน";
+  const subjectText = subject ? subject.name : "ทุกวิชา";
+
+  els.summaryPeriod.textContent = `ปีการศึกษา ${year?.name || "-"} ภาคเรียน ${semester?.term || "-"}`;
+  els.summaryScope.textContent = `${gradeText} · ${classroomText} · ${subjectText}`;
+}
+
+function setResultMode(mode) {
+  state.resultMode = mode;
+  const isOverview = mode === "overview";
+  els.overviewSummaryGrid.classList.toggle("hidden", !isOverview);
+  els.overviewPanel.classList.toggle("hidden", !isOverview);
+  els.detailSummaryGrid.classList.toggle("hidden", isOverview);
+  document.querySelectorAll('[data-page="score-subject"] .score-detail-only')
+    .forEach((element) => element.classList.toggle("hidden", isOverview));
+  els.viewMeta.textContent = isOverview ? "ภาพรวมรายห้อง" : "ตารางแนวนอน";
+}
+
+function buildOverviewRows() {
+  const classrooms = getSelectedClassrooms();
+  const subjects = getSelectedSubjects();
+  const subjectIds = new Set(subjects.map((subject) => subject.id));
+  const selectedStudents = state.db.students.filter((student) => classrooms.some((room) => room.id === student.classroomId));
+  const selectedStudentIds = new Set(selectedStudents.map((student) => student.id));
+  const selectedScores = state.db.subjectScores.filter((score) => selectedStudentIds.has(score.studentId) && subjectIds.has(score.subjectId));
+
+  state.subjects = subjects;
+  state.rows = [];
+  state.visibleSubjectIds = subjects.map((subject) => subject.id);
+  state.overviewRows = classrooms.map((classroom) => {
+    const students = selectedStudents.filter((student) => student.classroomId === classroom.id);
+    const studentIds = new Set(students.map((student) => student.id));
+    const scores = selectedScores.filter((score) => studentIds.has(score.studentId));
+    const scorePercents = scores.map(getScorePercent);
+    const followUpStudentIds = new Set(scores
+      .filter((score) => getScorePercent(score) < LOW_SCORE_THRESHOLD)
+      .map((score) => score.studentId));
+    const expectedCount = students.length * subjects.length;
+    return {
+      classroomId: classroom.id,
+      gradeId: classroom.gradeId,
+      gradeName: state.maps.grades.get(classroom.gradeId)?.name || "-",
+      classroomName: classroom.name,
+      studentCount: students.length,
+      average: scorePercents.length ? scorePercents.reduce((sum, score) => sum + score, 0) / scorePercents.length : null,
+      followUpCount: followUpStudentIds.size,
+      missingCount: Math.max(0, expectedCount - scores.length)
+    };
+  });
+
+  const allScorePercents = selectedScores.map(getScorePercent);
+  const allFollowUpStudentIds = new Set(selectedScores
+    .filter((score) => getScorePercent(score) < LOW_SCORE_THRESHOLD)
+    .map((score) => score.studentId));
+  const expectedCount = selectedStudents.length * subjects.length;
+  els.overviewStudentCount.textContent = `${selectedStudents.length} คน`;
+  els.overviewRoomCount.textContent = `${classrooms.length} ห้อง`;
+  els.overviewSubjectCount.textContent = `${subjects.length} วิชา`;
+  els.overviewAverage.textContent = allScorePercents.length
+    ? `${(allScorePercents.reduce((sum, score) => sum + score, 0) / allScorePercents.length).toFixed(1)}%`
+    : "-";
+  els.overviewFollowUpCount.textContent = `${allFollowUpStudentIds.size} คน`;
+  els.overviewMissingCount.textContent = `${Math.max(0, expectedCount - selectedScores.length)} รายการ`;
+  els.matrixMeta.textContent = subjects.length > 8 ? `กำลังแสดง ${subjects.length} รายวิชา` : `${subjects.length} รายวิชา`;
+  els.exportBtn.disabled = true;
+  els.printBtn.disabled = true;
+}
+
+function buildStudentScoreRows() {
   const classroom = state.maps.classrooms.get(els.classroom.value);
   const students = state.db.students
     .filter((student) => student.classroomId === classroom.id)
     .sort((a, b) => a.studentCode.localeCompare(b.studentCode, "en"));
-
-  const scoreMap = new Map(state.db.subjectScores.map((item) => [`${item.studentId}|${item.subjectId}`, item]));
-  const subjects = [...state.db.subjects];
+  const subjects = getSelectedSubjects();
+  const studentIds = new Set(students.map((student) => student.id));
+  const subjectIds = new Set(subjects.map((subject) => subject.id));
+  const scoreMap = new Map(state.db.subjectScores
+    .filter((item) => studentIds.has(item.studentId) && subjectIds.has(item.subjectId))
+    .map((item) => [`${item.studentId}|${item.subjectId}`, item]));
 
   state.subjects = subjects;
   state.visibleSubjectIds = subjects.map((subject) => subject.id);
   state.rows = students.map((student, index) => ({
     no: index + 1,
+    sourceStudentId: student.id,
     studentId: student.studentCode,
     studentName: student.name,
     values: Object.fromEntries(subjects.map((subject) => [subject.id, scoreMap.get(`${student.id}|${subject.id}`) || null]))
   }));
 
-  els.totalRecords.textContent = String(students.length);
-  els.subjectCount.textContent = String(subjects.length);
-  els.studentCount.textContent = String(students.length);
-  els.summaryScope.textContent = `${classroom.name} | ${subjects.length} วิชา | ${students.length} คน`;
+  els.matrixMeta.textContent = subjects.length > 8 ? `กำลังแสดง ${subjects.length} รายวิชา` : `${subjects.length} รายวิชา`;
   els.exportBtn.disabled = students.length === 0;
+  els.printBtn.disabled = students.length === 0;
   populateStudentPicker(students);
+  buildScoreSummary();
+}
+
+function getScorePercent(scoreItem) {
+  return scoreItem ? (scoreItem.score / scoreItem.fullScore) * 100 : null;
+}
+
+function buildScoreSummary() {
+  const recordedScores = [];
+  let expectedScoreCount = 0;
+
+  state.subjectAverages = state.subjects.map((subject) => {
+    const subjectScores = state.rows
+      .map((row) => getScorePercent(row.values[subject.id]))
+      .filter((score) => score !== null);
+    recordedScores.push(...subjectScores);
+    expectedScoreCount += state.rows.length;
+    const average = subjectScores.length
+      ? subjectScores.reduce((sum, score) => sum + score, 0) / subjectScores.length
+      : null;
+    return { ...subject, average };
+  });
+
+  state.followUpRows = state.rows.map((row) => {
+    const lowSubjects = state.subjects.map((subject) => {
+      const percent = getScorePercent(row.values[subject.id]);
+      return percent !== null && percent < LOW_SCORE_THRESHOLD ? { subject, percent } : null;
+    }).filter(Boolean);
+    return { ...row, lowSubjects };
+  }).filter((row) => row.lowSubjects.length > 0);
+
+  const classAverage = recordedScores.length
+    ? recordedScores.reduce((sum, score) => sum + score, 0) / recordedScores.length
+    : null;
+  const lowSubjectCount = state.subjectAverages.filter(({ average }) => average !== null && average < LOW_SCORE_THRESHOLD).length;
+  const completionRate = expectedScoreCount ? (recordedScores.length / expectedScoreCount) * 100 : 0;
+
+  els.classAverage.textContent = classAverage === null ? "-" : `${classAverage.toFixed(1)}%`;
+  els.followUpCount.textContent = `${state.followUpRows.length} คน`;
+  els.lowSubjectCount.textContent = `${lowSubjectCount} วิชา`;
+  els.completionRate.textContent = `${completionRate.toFixed(1)}%`;
+}
+
+function renderSubjectAverageChart() {
+  if (!state.subjectAverages.length) {
+    els.subjectAverageChart.innerHTML = `<div class="empty-state">ไม่พบข้อมูลคะแนนรายวิชา</div>`;
+    return;
+  }
+
+  els.subjectAverageChart.innerHTML = state.subjectAverages.map((subject) => {
+    const average = subject.average;
+    const width = average === null ? 0 : Math.max(0, Math.min(100, average));
+    const tone = average !== null && average < LOW_SCORE_THRESHOLD ? " is-low" : "";
+    return `
+      <div class="score-bar-row">
+        <div class="score-bar-label" title="${subject.code} - ${subject.name}">
+          <strong>${subject.name}</strong>
+          <span>${subject.code}</span>
+        </div>
+        <div class="score-bar-track" aria-hidden="true">
+          <span class="score-bar-fill${tone}" style="width: ${width}%"></span>
+        </div>
+        <strong class="score-bar-value${tone}">${average === null ? "-" : `${average.toFixed(1)}%`}</strong>
+      </div>
+    `;
+  }).join("");
+}
+
+function renderFollowUpTable() {
+  if (!state.followUpRows.length) {
+    els.followUpTbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">ไม่มีนักเรียนที่มีคะแนนต่ำกว่าเกณฑ์</div></td></tr>`;
+    return;
+  }
+
+  els.followUpTbody.innerHTML = state.followUpRows.map((row) => {
+    const lowestScore = Math.min(...row.lowSubjects.map(({ percent }) => percent));
+    const subjectNames = row.lowSubjects.map(({ subject }) => subject.name).join(", ");
+    return `
+      <tr>
+        <td><strong>${row.studentName}</strong><span class="score-student-code">${row.studentId}</span></td>
+        <td>${subjectNames}</td>
+        <td><span class="score-low-value">${lowestScore.toFixed(1)}%</span></td>
+        <td><button class="btn btn-secondary score-detail-btn" type="button" data-score-student="${row.studentId}">ดูรายละเอียด</button></td>
+      </tr>
+    `;
+  }).join("");
 }
 
 function populateStudentPicker(students) {
@@ -319,7 +543,7 @@ function renderTable() {
   `;
 
   els.scoreTbody.innerHTML = state.rows.map((row) => `
-    <tr>
+    <tr data-score-row="${row.studentId}">
       <td class="sticky-col sticky-col-score-no">${row.no}</td>
       <td class="sticky-col sticky-col-score-id">${row.studentId}</td>
       <td class="sticky-col sticky-col-score-name">${row.studentName}</td>
@@ -342,46 +566,58 @@ function renderTable() {
   `).join("");
 }
 
-function runSearch() {
-  buildResultRows();
-  renderColumnChooser();
-  renderTable();
+function renderOverviewTable() {
+  if (!state.overviewRows.length) {
+    els.overviewTbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div></td></tr>`;
+    return;
+  }
+
+  els.overviewTbody.innerHTML = state.overviewRows.map((row) => `
+    <tr>
+      <td>${row.gradeName}</td>
+      <td><strong>${row.classroomName}</strong></td>
+      <td>${row.studentCount} คน</td>
+      <td>${row.average === null ? "-" : `${row.average.toFixed(1)}%`}</td>
+      <td>${row.followUpCount} คน</td>
+      <td>${row.missingCount} รายการ</td>
+      <td><button class="btn btn-secondary score-overview-detail-btn" type="button" data-score-grade="${row.gradeId}" data-score-classroom="${row.classroomId}">ดูรายละเอียด</button></td>
+    </tr>
+  `).join("");
+}
+
+function runSearch({ silent = false } = {}) {
+  updateResultScope();
+  state.subjectKeyword = "";
+
+  if (els.classroom.value === "all") {
+    setResultMode("overview");
+    buildOverviewRows();
+    renderOverviewTable();
+  } else {
+    setResultMode("detail");
+    buildStudentScoreRows();
+    renderColumnChooser();
+    renderSubjectAverageChart();
+    renderFollowUpTable();
+    renderTable();
+  }
+
   saveLastSearch();
-  els.tablePlaceholder.hidden = true;
-  setToast("แสดงรายงานผลพัฒนาผู้เรียนรายวิชาแล้ว", "success");
+  if (!silent) setToast("แสดงรายงานคะแนนรายวิชาแล้ว", "success");
 }
 
 function resetFilters() {
   populateAcademicYears();
   populateSemesters();
   populateGrades();
-  els.grade.value = "";
-  syncClassrooms();
+  populateSubjects();
+  els.grade.value = "all";
+  syncClassrooms("all");
+  els.subject.value = "all";
   state.subjectKeyword = "";
-  state.rows = [];
-  state.subjects = [];
-  state.visibleSubjectIds = [];
-  els.tablePlaceholder.hidden = false;
-  els.exportBtn.disabled = true;
-  els.printPanel.classList.add("hidden");
-  els.summaryScope.textContent = "ยังไม่มีผลการค้นหา";
-  els.totalRecords.textContent = "0";
-  els.subjectCount.textContent = "0";
-  els.studentCount.textContent = "0";
-  els.scoreThead.innerHTML = `
-    <tr>
-      <th class="sticky-top">ลำดับ</th>
-      <th class="sticky-top">รหัสนักเรียน</th>
-      <th class="sticky-top">ชื่อ</th>
-      <th class="sticky-top">วิชา</th>
-    </tr>
-  `;
-  els.scoreTbody.innerHTML = `
-    <tr>
-      <td colspan="4"><div class="empty-state">กดค้นหาข้อมูลเพื่อเริ่มแสดงรายงาน</div></td>
-    </tr>
-  `;
+  closePrintModal();
   syncSearchButton();
+  runSearch();
 }
 
 function toggleColumnPanel(force) {
@@ -428,10 +664,18 @@ function updatePrintPreview() {
   const languageText = els.printLanguage.options[els.printLanguage.selectedIndex].text;
   const studentText = state.printMode === "student" ? els.studentPicker.options[els.studentPicker.selectedIndex]?.text || "-" : "นักเรียนทั้งหมด";
   els.printPreview.innerHTML = `
-    <strong>ตัวอย่างพิมพ์รายงานผลพัฒนาผู้เรียนรายวิชา</strong>
+    <strong>ตัวอย่างพิมพ์รายงานคะแนนรายวิชา</strong>
     <span>Template: ${templateText} | ภาษา ${languageText} | ${studentText}</span>
     ${buildPreviewTableHtml(state.printMode === "student" ? 1 : 5, 4)}
   `;
+  els.printPreview.classList.remove("hidden");
+  els.confirmPrintBtn.disabled = false;
+}
+
+function invalidatePrintPreview() {
+  els.printPreview.classList.add("hidden");
+  els.printPreview.innerHTML = "";
+  els.confirmPrintBtn.disabled = true;
 }
 
 function openScoreExportPreview(format) {
@@ -441,15 +685,15 @@ function openScoreExportPreview(format) {
   }
 
   window.openReportPreviewModal({
-    title: "รายงานผลพัฒนาผู้เรียนรายวิชา",
+    title: "รายงานคะแนนรายวิชา",
     scope: `${els.summaryScope.textContent} | แสดงตัวอย่าง ${Math.min(state.rows.length, 6)} คน`,
     confirmText: "ดาวน์โหลด PDF",
-    mockMessage: "Mockup: ดาวน์โหลด PDF รายงานผลพัฒนาผู้เรียนรายวิชายังไม่ถูกเชื่อมต่อ",
+    mockMessage: "Mockup: ดาวน์โหลด PDF รายงานคะแนนรายวิชายังไม่ถูกเชื่อมต่อ",
     sheetHtml: `
       <div class="pdf-document-head">
         <div>
-          <p>ระบบรายงานผลพัฒนาผู้เรียน</p>
-          <h3>รายงานผลพัฒนาผู้เรียนรายวิชา</h3>
+          <p>ระบบรายงานคะแนน</p>
+          <h3>รายงานคะแนนรายวิชา</h3>
         </div>
         <span>PDF</span>
       </div>
@@ -463,11 +707,31 @@ function openScoreExportPreview(format) {
   });
 }
 
-function openPrintPanel(mode) {
-  state.printMode = mode;
-  els.studentPickerWrap.classList.toggle("hidden", mode !== "student");
-  els.printPanel.classList.remove("hidden");
-  updatePrintPreview();
+function openPrintModal() {
+  state.printMode = els.printMode.value;
+  els.studentPickerWrap.classList.toggle("hidden", state.printMode !== "student");
+  invalidatePrintPreview();
+  els.printModal.hidden = false;
+  document.body.classList.add("modal-open");
+  els.printMode.focus();
+}
+
+function closePrintModal() {
+  if (!els.printModal) return;
+  els.printModal.hidden = true;
+  document.body.classList.remove("modal-open");
+}
+
+function printPreviewDocument() {
+  const templateText = els.printTemplate.options[els.printTemplate.selectedIndex].text;
+  const languageText = els.printLanguage.options[els.printLanguage.selectedIndex].text;
+  const printWindow = window.open("", "_blank");
+  if (!printWindow) {
+    setToast("เบราว์เซอร์ปิดกั้นหน้าต่างพิมพ์", "info");
+    return;
+  }
+  printWindow.document.write(`<!doctype html><html lang="th"><head><meta charset="utf-8"><title>รายงานคะแนนรายวิชา</title><style>body{font-family:Tahoma,sans-serif;color:#172033;padding:24px}h1{font-size:20px;margin:0 0 8px}p{font-size:12px;color:#5e6b7d;margin:0 0 16px}table{width:100%;border-collapse:collapse;font-size:11px}th,td{border:1px solid #cbd5e1;padding:6px;text-align:center}th{background:#f1f5f9}td:nth-child(3),th:nth-child(3){text-align:left}@media print{body{padding:0}}</style></head><body><h1>รายงานคะแนนรายวิชา</h1><p>${els.summaryScope.textContent} | ${templateText} | ${languageText}</p>${buildPreviewTableHtml(Infinity, Infinity)}<script>window.addEventListener('load',()=>window.print());<\/script></body></html>`);
+  printWindow.document.close();
 }
 
 function attachEvents() {
@@ -477,11 +741,12 @@ function attachEvents() {
   });
   els.semester.addEventListener("change", syncSearchButton);
   els.grade.addEventListener("change", () => {
-    syncClassrooms();
+    syncClassrooms("all");
     syncSearchButton();
   });
   els.classroom.addEventListener("change", syncSearchButton);
-  els.searchBtn.addEventListener("click", runSearch);
+  els.subject.addEventListener("change", syncSearchButton);
+  els.searchBtn.addEventListener("click", () => runSearch());
   els.resetBtn.addEventListener("click", resetFilters);
   els.columnToggleBtn.addEventListener("click", () => toggleColumnPanel());
   els.showAllSubjectsBtn.addEventListener("click", () => {
@@ -511,19 +776,44 @@ function attachEvents() {
     els.exportMenu.classList.add("hidden");
     openScoreExportPreview(button.dataset.export);
   });
-  els.printAllBtn.addEventListener("click", () => openPrintPanel("all"));
-  els.printStudentBtn.addEventListener("click", () => openPrintPanel("student"));
+  els.printBtn.addEventListener("click", openPrintModal);
+  els.printCloseBtn.addEventListener("click", closePrintModal);
+  els.printModal.querySelectorAll("[data-score-print-close]").forEach((button) => button.addEventListener("click", closePrintModal));
+  els.printMode.addEventListener("change", () => {
+    state.printMode = els.printMode.value;
+    els.studentPickerWrap.classList.toggle("hidden", state.printMode !== "student");
+    invalidatePrintPreview();
+  });
   els.previewBtn.addEventListener("click", () => {
     updatePrintPreview();
     setToast("สร้างตัวอย่างก่อนพิมพ์เรียบร้อย", "info");
   });
   els.confirmPrintBtn.addEventListener("click", () => {
-    updatePrintPreview();
-    setToast(`เตรียมพิมพ์${state.printMode === "student" ? "รายบุคคล" : "ทั้งหมด"}จาก template ที่เลือก`, "info");
+    printPreviewDocument();
   });
-  els.printTemplate.addEventListener("change", updatePrintPreview);
-  els.printLanguage.addEventListener("change", updatePrintPreview);
-  els.studentPicker.addEventListener("change", updatePrintPreview);
+  els.printTemplate.addEventListener("change", invalidatePrintPreview);
+  els.printLanguage.addEventListener("change", invalidatePrintPreview);
+  els.studentPicker.addEventListener("change", invalidatePrintPreview);
+  els.followUpTbody.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-score-student]");
+    if (!button) return;
+    const targetRow = els.scoreTbody.querySelector(`[data-score-row="${button.dataset.scoreStudent}"]`);
+    if (!targetRow) return;
+    els.scoreTbody.querySelectorAll(".is-focused").forEach((row) => row.classList.remove("is-focused"));
+    targetRow.classList.add("is-focused");
+    targetRow.scrollIntoView({ block: "center", inline: "start" });
+  });
+  els.overviewTbody.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-score-classroom]");
+    if (!button) return;
+    els.grade.value = button.dataset.scoreGrade;
+    syncClassrooms(button.dataset.scoreClassroom);
+    els.classroom.value = button.dataset.scoreClassroom;
+    runSearch();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !els.printModal.hidden) closePrintModal();
+  });
   document.addEventListener("click", (event) => {
     if (!els.exportDropdown.contains(event.target)) {
       els.exportMenu.classList.add("hidden");
@@ -538,20 +828,26 @@ function init() {
   if (!els.academicYear) return;
   state.db = buildInlineMockDatabase();
   state.maps = {
-    classrooms: buildMap(state.db.classrooms)
+    academicYears: buildMap(state.db.academicYears),
+    semesters: buildMap(state.db.semesters),
+    grades: buildMap(state.db.grades),
+    classrooms: buildMap(state.db.classrooms),
+    subjects: buildMap(state.db.subjects)
   };
 
   populateAcademicYears();
   populateSemesters();
   populateGrades();
-  restoreLastSearch();
-  syncClassrooms();
+  populateSubjects();
+  const restoredLastSearch = restoreLastSearch();
+  if (!restoredLastSearch) syncClassrooms("all");
   syncSearchButton();
   attachEvents();
 
   const currentYear = getCurrentAcademicYear();
   const currentSemester = getCurrentSemester();
   els.currentAcademicLabel.textContent = `${currentYear.name} / เทอม ${currentSemester.term}`;
+  runSearch({ silent: true });
 }
 
 init();
