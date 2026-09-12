@@ -470,12 +470,34 @@
     });
   }
 
-  function drawLineChart(canvas, labels, values) {
+  function drawLineChart(canvas, labels, datasets) {
     const chart = setupCanvas(canvas, 260);
     const context = chart.context;
-    const padding = { top: 20, right: 18, bottom: 46, left: 40 };
+    const series = Array.isArray(datasets) && datasets.length && typeof datasets[0] === "object" && Array.isArray(datasets[0].values)
+      ? datasets
+      : [{ label: "", values: datasets, color: "#315d88" }];
+    const padding = { top: series.length > 1 ? 42 : 20, right: 18, bottom: 46, left: 40 };
     const innerWidth = chart.width - padding.left - padding.right;
     const innerHeight = chart.height - padding.top - padding.bottom;
+    if (series.length > 1) {
+      let legendX = padding.left;
+      series.forEach(function (item) {
+        context.strokeStyle = item.color || "#315d88";
+        context.lineWidth = 2;
+        context.beginPath();
+        context.moveTo(legendX, 20);
+        context.lineTo(legendX + 22, 20);
+        context.stroke();
+        context.fillStyle = item.color || "#315d88";
+        context.beginPath();
+        context.arc(legendX + 11, 20, 3, 0, Math.PI * 2);
+        context.fill();
+        context.fillStyle = "#475569";
+        context.textAlign = "left";
+        context.fillText(item.label, legendX + 30, 24);
+        legendX += context.measureText(item.label).width + 58;
+      });
+    }
     context.strokeStyle = "#d8e0e8";
     for (let line = 0; line <= 4; line += 1) {
       const y = padding.top + innerHeight - (line / 4) * innerHeight;
@@ -487,31 +509,35 @@
       context.textAlign = "right";
       context.fillText(String(line), padding.left - 8, y + 4);
     }
-    const points = values.map(function (value, index) {
-      return {
-        x: padding.left + (labels.length === 1 ? innerWidth / 2 : index * innerWidth / (labels.length - 1)),
-        y: value == null ? null : padding.top + innerHeight - (value / 4) * innerHeight
-      };
-    });
-    context.strokeStyle = "#315d88";
-    context.lineWidth = 2;
-    context.beginPath();
-    let started = false;
-    points.forEach(function (point) {
-      if (point.y == null) return;
-      if (!started) { context.moveTo(point.x, point.y); started = true; } else context.lineTo(point.x, point.y);
-    });
-    context.stroke();
-    points.forEach(function (point, index) {
-      if (point.y != null) {
-        context.fillStyle = "#315d88";
+    series.forEach(function (item) {
+      const points = item.values.map(function (value, index) {
+        return {
+          x: padding.left + (labels.length === 1 ? innerWidth / 2 : index * innerWidth / (labels.length - 1)),
+          y: value == null ? null : padding.top + innerHeight - (value / 4) * innerHeight
+        };
+      });
+      context.strokeStyle = item.color || "#315d88";
+      context.lineWidth = 2;
+      context.beginPath();
+      let started = false;
+      points.forEach(function (point) {
+        if (point.y == null) return;
+        if (!started) { context.moveTo(point.x, point.y); started = true; } else context.lineTo(point.x, point.y);
+      });
+      context.stroke();
+      points.forEach(function (point) {
+        if (point.y == null) return;
+        context.fillStyle = item.color || "#315d88";
         context.beginPath();
         context.arc(point.x, point.y, 4, 0, Math.PI * 2);
         context.fill();
-      }
+      });
+    });
+    labels.forEach(function (label, index) {
+      const x = padding.left + (labels.length === 1 ? innerWidth / 2 : index * innerWidth / (labels.length - 1));
       context.fillStyle = "#475569";
       context.textAlign = "center";
-      context.fillText(labels[index], point.x, chart.height - 20);
+      context.fillText(label, x, chart.height - 20);
     });
   }
 
@@ -545,17 +571,22 @@
     if (state.activeReportType === "record") {
       els.chartOneTitle.textContent = "แนวโน้ม GPA เฉลี่ยรายภาคเรียน";
       els.chartTwoTitle.textContent = "การกระจายผลการเรียนสะสม";
-      const labels = [];
-      const trend = [];
-      state.db.academicYears.filter(function (year) { return Number(year.id) <= Number(els.year.value); }).forEach(function (year) {
-        [1, 2].forEach(function (semester) {
-          labels.push(year.id.slice(-2) + "/" + semester);
-          trend.push(average(state.baseResults.map(function (result) {
-            return calculateWeightedGpa(result.records.filter(function (record) { return record.academicYear === year.id && record.semester === semester; }));
-          })));
-        });
+      const trendYears = state.db.academicYears.filter(function (year) { return Number(year.id) <= Number(els.year.value); });
+      const labels = trendYears.map(function (year) { return year.id; });
+      const semesterOneTrend = [];
+      const semesterTwoTrend = [];
+      trendYears.forEach(function (year) {
+        semesterOneTrend.push(average(state.baseResults.map(function (result) {
+          return calculateWeightedGpa(result.records.filter(function (record) { return record.academicYear === year.id && record.semester === 1; }));
+        })));
+        semesterTwoTrend.push(average(state.baseResults.map(function (result) {
+          return calculateWeightedGpa(result.records.filter(function (record) { return record.academicYear === year.id && record.semester === 2; }));
+        })));
       });
-      drawLineChart(els.chartOne, labels, trend);
+      drawLineChart(els.chartOne, labels, [
+        { label: "ภาคเรียน 1", values: semesterOneTrend, color: "#315d88" },
+        { label: "ภาคเรียน 2", values: semesterTwoTrend, color: "#3f7656" }
+      ]);
       drawBarChart(els.chartTwo, GPAX_BINS.map(function (bin) { return bin.label; }), values);
     } else {
       els.chartOneTitle.textContent = "การกระจาย GPAX";

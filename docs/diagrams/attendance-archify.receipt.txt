@@ -1,0 +1,15 @@
+diagram_type: workflow
+output: C:/Users/Panavat/Documents/GitHub/Academic_Report-/docs/diagrams/attendance-archify.html
+specification_sha256: 475167e8c41433c7cccbaa4b475c0116d4cf2c85c42f832d91056ce5a1e7a51d
+specification_bytes: 4003
+artifact_sha256: 42788226920066ee6a372f68d08d60b4ce2a9755c0496313edb04fd8d87f542f
+artifact_bytes: 805874
+validation: 9/9 showcase, 0 errors, 0 warnings
+browser_evidence: passed
+visual_review: passed
+correction_rounds: 2
+visual_review_scope: Inspected 2048x1320 light and 1440x900 dark screenshots; labels fit, routes are distinct and composition is contained.
+browser_viewports: 1440x900, 1600x1000, 1920x1080, 2048x1320
+language: Thai authored content; fixed viewer UI and html lang fall back to English.
+evidence: assets/js/core/script.js buildSearchResult, searchData, refreshAttendanceResults, attachEvents, init, mockExport, mockPdfDownload; index.html attendance report.
+scope: Main report reading workflow, not exhaustive editing or error handling paths. Default filters are populated before the initial automatic search.

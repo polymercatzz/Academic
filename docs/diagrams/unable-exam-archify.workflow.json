@@ -1,0 +1,74 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "รายงานผู้ไม่มีสิทธิ์สอบ",
+    "quality_profile": "showcase",
+    "legend": { "mode": "hidden" }
+  },
+  "lanes": [
+    { "id": "data", "label": "ข้อมูลตั้งต้น" },
+    { "id": "selection", "label": "ตั้งค่าและกรองรายงาน" },
+    { "id": "calculation", "label": "คำนวณสิทธิ์สอบ" },
+    { "id": "report", "label": "สรุปและส่งออกรายงาน" },
+    { "id": "preview", "label": "ตรวจเอกสาร" }
+  ],
+  "mainPath": [
+    "mockData",
+    "initReport",
+    "filters",
+    "selectSchedules",
+    "attendanceRate",
+    "classifyStatus",
+    "overview",
+    "detailTable",
+    "preview"
+  ],
+  "nodes": [
+    { "id": "mockData", "lane": "data", "col": 0, "type": "database", "label": "ข้อมูลจำลอง", "width": 150 },
+    { "id": "initReport", "lane": "selection", "col": 1, "type": "frontend", "label": "ตั้งค่ารายงาน", "width": 150 },
+    { "id": "filters", "lane": "selection", "col": 2, "type": "frontend", "label": "เลือกขอบเขต", "width": 150 },
+    { "id": "selectSchedules", "lane": "calculation", "col": 2, "type": "frontend", "label": "เลือกตารางเรียน", "width": 150 },
+    { "id": "attendanceRate", "lane": "calculation", "col": 3, "type": "frontend", "label": "คำนวณ % เข้าเรียน", "width": 160 },
+    { "id": "classifyStatus", "lane": "calculation", "col": 4, "type": "security", "label": "เทียบเกณฑ์", "width": 150 },
+    { "id": "overview", "lane": "report", "col": 4, "type": "frontend", "label": "ภาพรวมสิทธิ์สอบ", "width": 160 },
+    { "id": "detailTable", "lane": "report", "col": 5, "type": "frontend", "label": "ตารางติดตาม", "width": 150 },
+    { "id": "preview", "lane": "preview", "col": 5, "type": "external", "label": "ตัวอย่าง PDF / พิมพ์", "width": 170 }
+  ],
+  "edges": [
+    { "from": "mockData", "to": "initReport", "label": "โหลด", "role": "main" },
+    { "from": "initReport", "to": "filters", "label": "ค่าเริ่มต้น", "role": "main" },
+    { "from": "filters", "to": "selectSchedules", "label": "อัปเดตอัตโนมัติ", "role": "main" },
+    { "from": "selectSchedules", "to": "attendanceRate", "label": "รวมคาบจริง", "role": "main" },
+    { "from": "attendanceRate", "to": "classifyStatus", "label": "เทียบ 80%", "role": "main" },
+    { "from": "classifyStatus", "to": "overview", "label": "สรุปผล", "role": "main" },
+    { "from": "overview", "to": "detailTable", "label": "เลือกห้องหรือวิชา", "role": "main" },
+    { "from": "detailTable", "to": "preview", "label": "เปิดตัวอย่าง", "role": "main" }
+  ],
+  "cards": [
+    {
+      "dot": "rose",
+      "title": "เกณฑ์ตัดสิทธิ์",
+      "items": [
+        "ตรงเวลา สาย และกิจกรรมนับเป็นการเข้าเรียน",
+        "ต่ำกว่าเกณฑ์เปอร์เซ็นต์ที่ตั้งไว้จะแสดงเป็นไม่มีสิทธิ์สอบ"
+      ]
+    },
+    {
+      "dot": "cyan",
+      "title": "ผลลัพธ์รายงาน",
+      "items": [
+        "ภาพรวมแสดงจำนวน รายการตรวจสอบ และค่าเฉลี่ยทันที",
+        "ตารางรายละเอียดจะแสดงเมื่อเลือกห้องเรียนหรือรายวิชา"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "สถานะต้นแบบ",
+      "items": [
+        "ใช้ข้อมูล mock ในเบราว์เซอร์และจำค่าค้นหาครั้งล่าสุด",
+        "PDF และการพิมพ์เปิดตัวอย่างก่อนเชื่อมต่อการส่งออกจริง"
+      ]
+    }
+  ]
+}

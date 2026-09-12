@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flowchart · รายงานคะแนนรายวิชา</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>*, *::before, *::after { box-sizing: border-box; }
+    :root { --bg:#f7f8fa; --surface:#ffffff; --surface-muted:#f3f5f8; --border:#d9dee7; --text:#182230; --muted:#667085; --primary:#173b6d; --primary-soft:#eef3f8; --link:#2f6fba; --font-sans:"Prompt","Noto Sans Thai","Segoe UI",sans-serif; --font-mono:ui-monospace,"Cascadia Mono","Segoe UI Mono",monospace; }
+    body { margin:0; min-height:100vh; padding:40px 24px; background:var(--bg); color:var(--text); font-family:var(--font-sans); }
+    .frame { width:min(1280px,100%); margin:0 auto; }
+    .eyebrow { margin:0 0 8px; color:var(--primary); font-size:12px; font-weight:600; letter-spacing:.08em; text-transform:uppercase; }
+    h1 { margin:0 0 24px; color:var(--text); font-size:clamp(24px,3vw,32px); font-weight:600; line-height:1.2; }
+    .diagram-shell { width:100%; overflow-x:auto; border:1px solid var(--border); border-radius:6px; background:var(--surface); }
+    svg { display:block; width:100%; min-width:960px; height:auto; }
+    .svg-sans { font-family:"Prompt","Noto Sans Thai","Segoe UI",sans-serif; }
+    .svg-mono { font-family:ui-monospace,"Cascadia Mono","Segoe UI Mono",monospace; }</style>
+</head>
+<body>
+  <main class="frame">
+    <p class="eyebrow">Flowchart · รายงานคะแนนรายวิชา</p>
+    <h1>เส้นทางการดูคะแนนรายวิชา</h1>
+    <section class="diagram-shell" aria-label="เส้นทางการดูคะแนนรายวิชา"><svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="academic-report-score-subject-flowchart-title academic-report-score-subject-flowchart-desc">
+        <title id="academic-report-score-subject-flowchart-title">เส้นทางการดูคะแนนรายวิชา</title>
+        <desc id="academic-report-score-subject-flowchart-desc">Flowchart แสดงการเลือกภาคเรียนและรายวิชา สลับภาพรวมกับรายละเอียด และเตรียมพิมพ์หรือส่งออกรายงาน</desc>
+        <defs>
+          <marker id="academic-report-score-subject-flowchart-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#667085" /></marker>
+          <marker id="academic-report-score-subject-flowchart-arrow-primary" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#173b6d" /></marker>
+          <marker id="academic-report-score-subject-flowchart-arrow-link" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#2f6fba" /></marker>
+        </defs>
+        <rect width="1280" height="720" fill="#f7f8fa" />
+        <line x1="640" y1="104" x2="640" y2="140" stroke="#667085" stroke-width="1.2" marker-end="url(#academic-report-score-subject-flowchart-arrow)" />
+        <line x1="640" y1="204" x2="640" y2="248" stroke="#667085" stroke-width="1.2" marker-end="url(#academic-report-score-subject-flowchart-arrow)" />
+        <line x1="640" y1="312" x2="640" y2="356" stroke="#667085" stroke-width="1.2" marker-end="url(#academic-report-score-subject-flowchart-arrow)" />
+        <path d="M520 396 H448" fill="none" stroke="#667085" stroke-width="1.2" marker-end="url(#academic-report-score-subject-flowchart-arrow)" />
+        <path d="M760 396 H896" fill="none" stroke="#173b6d" stroke-width="1.4" marker-end="url(#academic-report-score-subject-flowchart-arrow-primary)" />
+        <path d="M344 364 V172 Q344 164 352 164 H536" fill="none" stroke="#667085" stroke-width="1.2" marker-end="url(#academic-report-score-subject-flowchart-arrow)" />
+        <line x1="1016" y1="428" x2="1016" y2="472" stroke="#173b6d" stroke-width="1.4" marker-end="url(#academic-report-score-subject-flowchart-arrow-primary)" />
+        <line x1="1016" y1="536" x2="1016" y2="584" stroke="#173b6d" stroke-width="1.4" marker-end="url(#academic-report-score-subject-flowchart-arrow-primary)" />
+        <rect x="452" y="372" width="64" height="16" rx="2" fill="#f7f8fa" />
+        <text x="484" y="384" fill="#667085" font-size="12" text-anchor="middle" class="svg-sans">ไม่พบ</text>
+        <rect x="784" y="372" width="88" height="16" rx="2" fill="#f7f8fa" />
+        <text x="828" y="384" fill="#173b6d" font-size="12" text-anchor="middle" class="svg-sans">พบข้อมูล</text>
+        <rect x="536" y="48" width="208" height="56" rx="28" fill="rgba(102,112,133,0.10)" stroke="#667085" stroke-width="1" />
+        <text x="640" y="82" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">เปิดโมดูลรายงาน</text>
+        <rect x="536" y="140" width="208" height="64" rx="6" fill="#ffffff" stroke="#182230" stroke-width="1" />
+        <text x="640" y="168" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">กำหนดเงื่อนไขคะแนน</text>
+        <text x="640" y="188" fill="#667085" font-size="12" text-anchor="middle" class="svg-sans">ปี · ภาค · ชั้น · ห้อง · วิชา</text>
+        <rect x="536" y="248" width="208" height="64" rx="6" fill="#eef3f8" stroke="#173b6d" stroke-width="1.2" />
+        <text x="640" y="276" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">คำนวณคะแนนรายวิชา</text>
+        <text x="640" y="296" fill="#667085" font-size="12" text-anchor="middle" class="svg-mono">runSearch() · score rows</text>
+        <polygon points="640,356 760,396 640,436 520,396" fill="#ffffff" stroke="#182230" stroke-width="1" />
+        <text x="640" y="392" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">พบข้อมูลตามเงื่อนไข?</text>
+        <rect x="240" y="364" width="208" height="64" rx="6" fill="#f3f5f8" stroke="#9aa6b8" stroke-width="1" stroke-dasharray="4 3" />
+        <text x="344" y="392" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">ปรับตัวกรอง</text>
+        <text x="344" y="412" fill="#667085" font-size="12" text-anchor="middle" class="svg-sans">เลือกห้องหรือปรับเงื่อนไขใหม่</text>
+        <rect x="896" y="364" width="240" height="64" rx="6" fill="#eef3f8" stroke="#173b6d" stroke-width="1.2" />
+        <text x="1016" y="392" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">แสดงภาพรวมรายห้อง</text>
+        <text x="1016" y="412" fill="#667085" font-size="12" text-anchor="middle" class="svg-sans">จำนวนนักเรียน · ติดตาม · ข้อมูลขาด</text>
+        <rect x="896" y="472" width="240" height="64" rx="6" fill="#ffffff" stroke="#182230" stroke-width="1" />
+        <text x="1016" y="500" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">ดูรายละเอียดคะแนน</text>
+        <text x="1016" y="520" fill="#667085" font-size="12" text-anchor="middle" class="svg-sans">ตาราง · คอลัมน์วิชา · follow-up</text>
+        <rect x="896" y="584" width="240" height="56" rx="28" fill="#eef3f8" stroke="#173b6d" stroke-width="1.2" />
+        <text x="1016" y="618" fill="#173b6d" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">Preview / พิมพ์ / ส่งออก</text>
+        <line x1="40" y1="660" x2="1240" y2="660" stroke="#d9dee7" stroke-width="1" />
+        <text x="40" y="684" fill="#667085" font-size="12" font-weight="600" letter-spacing="0.08em" class="svg-sans">คำอธิบาย</text>
+        <rect x="40" y="696" width="40" height="16" rx="8" fill="rgba(102,112,133,0.10)" stroke="#667085" stroke-width="1" /><text x="96" y="708" fill="#667085" font-size="12" class="svg-sans">เริ่มต้น</text>
+        <rect x="232" y="696" width="40" height="16" rx="2" fill="#ffffff" stroke="#182230" stroke-width="1" /><text x="288" y="708" fill="#667085" font-size="12" class="svg-sans">ขั้นตอน</text>
+        <polygon points="424,704 436,696 448,704 436,712" fill="#ffffff" stroke="#182230" stroke-width="1" /><text x="464" y="708" fill="#667085" font-size="12" class="svg-sans">ตัดสินใจ</text>
+        <line x1="632" y1="704" x2="672" y2="704" stroke="#173b6d" stroke-width="1.4" marker-end="url(#academic-report-score-subject-flowchart-arrow-primary)" /><text x="688" y="708" fill="#667085" font-size="12" class="svg-sans">ผลลัพธ์หลัก</text>
+      </svg></section>
+  </main>
+</body>
+</html>

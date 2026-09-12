@@ -13,9 +13,9 @@
 
 ไฟล์หลักที่เกี่ยวข้อง:
 
-- `index.html`
-- `styles.css`
-- `script.js`
+- `../index.html`
+- `../assets/css/styles.css`
+- `../assets/js/core/script.js`
 
 ## Current UI Direction
 
@@ -46,7 +46,7 @@ View mode มี 2 แบบ:
 
 ## Data Design
 
-ตอนนี้ใช้ relational mock data แบบ inline ใน `script.js`
+ตอนนี้ใช้ relational mock data แบบ inline ใน `../assets/js/core/script.js`
 
 จุดเริ่มต้นของข้อมูล:
 
@@ -167,7 +167,7 @@ Report View:
 ข้อจำกัดที่ตั้งใจยอมรับในรอบนี้:
 
 - ยังไม่มี backend จริง
-- ข้อมูล mock อยู่ใน `script.js`
+- ข้อมูล mock อยู่ใน `../assets/js/core/script.js`
 - ไม่มี persistence จริงหลัง refresh
 - bulk edit ยังไม่ทำจริง
 - export ยังไม่ทำจริง
@@ -177,7 +177,7 @@ Report View:
 
 ลำดับงานถัดไปที่แนะนำ:
 
-1. ย้าย relational mock data ออกจาก `script.js` ไปเป็น data module หรือ mock service ภายใน frontend
+1. ย้าย relational mock data ออกจาก `../assets/js/core/script.js` ไปเป็น data module หรือ mock service ภายใน frontend
 2. แยก data layer ออกจาก UI layer ให้ชัด
 3. ทำ bulk edit สำหรับหลายคนหรือหลายคาบ
 4. ทำ export ให้ตรงกับผลค้นหาจริง
@@ -188,7 +188,7 @@ Report View:
 
 ถ้ากลับมาทำต่อทีหลัง ให้เริ่มดูตามนี้:
 
-1. เปิด `script.js`
+1. เปิด `../assets/js/core/script.js`
 2. ดู `buildInlineMockDatabase()`
 3. ดู `buildSearchResult()`
 4. ดู `searchData()`
@@ -204,4 +204,4 @@ Report View:
 
 ถ้าจะเปลี่ยนหน้าตาราง:
 
-- แก้ `renderQuick*`, `renderReport*` และ `styles.css`
+- แก้ `renderQuick*`, `renderReport*` และ `../assets/css/styles.css`

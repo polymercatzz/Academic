@@ -1,0 +1,165 @@
+{
+  "schema_version": 2,
+  "diagram_type": "workflow",
+  "meta": {
+    "title": "ระบบรายงานการเข้าเรียน",
+    "quality_profile": "showcase",
+    "legend": {
+      "mode": "hidden"
+    }
+  },
+  "lanes": [
+    {
+      "label": "เปิดรายงาน",
+      "id": "selection"
+    },
+    {
+      "label": "กรองข้อมูล",
+      "id": "processing"
+    },
+    {
+      "label": "สรุปและอ่านผล",
+      "id": "reporting"
+    },
+    {
+      "label": "ตรวจเอกสาร",
+      "id": "preview"
+    }
+  ],
+  "mainPath": [
+    "mockSource",
+    "defaultReport",
+    "scopeFilters",
+    "matchRecords",
+    "calculateMetrics",
+    "showDashboard",
+    "showMatrix",
+    "pdfPreview"
+  ],
+  "nodes": [
+    {
+      "id": "mockSource",
+      "lane": "selection",
+      "col": 0,
+      "type": "database",
+      "label": "ข้อมูลจำลอง",
+      "width": 150
+    },
+    {
+      "id": "defaultReport",
+      "lane": "selection",
+      "col": 1,
+      "type": "frontend",
+      "label": "เปิดรายงาน",
+      "width": 150
+    },
+    {
+      "id": "scopeFilters",
+      "lane": "processing",
+      "col": 1,
+      "type": "frontend",
+      "label": "เลือกขอบเขต",
+      "width": 150
+    },
+    {
+      "id": "matchRecords",
+      "lane": "processing",
+      "col": 2,
+      "type": "frontend",
+      "label": "กรองข้อมูลรายคาบ",
+      "width": 150
+    },
+    {
+      "id": "calculateMetrics",
+      "lane": "reporting",
+      "col": 2,
+      "type": "frontend",
+      "label": "คำนวณผล",
+      "width": 150
+    },
+    {
+      "id": "showDashboard",
+      "lane": "reporting",
+      "col": 3,
+      "type": "frontend",
+      "label": "สรุปภาพรวม",
+      "width": 150
+    },
+    {
+      "id": "showMatrix",
+      "lane": "preview",
+      "col": 3,
+      "type": "frontend",
+      "label": "ตารางรายคาบ",
+      "width": 150
+    },
+    {
+      "id": "pdfPreview",
+      "lane": "preview",
+      "col": 4,
+      "type": "frontend",
+      "label": "ตัวอย่าง PDF",
+      "width": 150
+    }
+  ],
+  "edges": [
+    {
+      "from": "mockSource",
+      "to": "defaultReport",
+      "label": "โหลด",
+      "role": "main"
+    },
+    {
+      "from": "defaultReport",
+      "to": "scopeFilters",
+      "label": "ปรับตัวกรอง",
+      "role": "main"
+    },
+    {
+      "from": "scopeFilters",
+      "to": "matchRecords",
+      "label": "อัปเดตอัตโนมัติ",
+      "role": "main"
+    },
+    {
+      "from": "matchRecords",
+      "to": "calculateMetrics",
+      "label": "รวมรายบุคคล",
+      "role": "main"
+    },
+    {
+      "from": "calculateMetrics",
+      "to": "showDashboard",
+      "label": "แสดงผล",
+      "role": "main"
+    },
+    {
+      "from": "showDashboard",
+      "to": "showMatrix",
+      "label": "ดูรายละเอียด",
+      "role": "main"
+    },
+    {
+      "from": "showMatrix",
+      "to": "pdfPreview",
+      "label": "เปิดตัวอย่าง",
+      "role": "main"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "slate",
+      "title": "ขอบเขตต้นแบบ",
+      "items": [
+        "ข้อมูลจำลองและการคำนวณอยู่ในเบราว์เซอร์ ยังไม่มี backend จริง"
+      ]
+    },
+    {
+      "dot": "amber",
+      "title": "การส่งออก",
+      "items": [
+        "มีตัวอย่าง PDF แต่การดาวน์โหลด PDF และส่งออก Excel ยังเป็นการจำลอง"
+      ]
+    }
+  ]
+}

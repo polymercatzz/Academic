@@ -26,7 +26,7 @@
 
 ### 1. เพิ่มเมนูใน sidebar
 
-แก้ [index.html](C:\Users\Panavat\Documents\GitHub\Academic_Report-\index.html)
+แก้ [index.html](../index.html)
 
 - เพิ่มปุ่ม `nav-item`
 - ใส่ `data-system="module-name"`
@@ -52,9 +52,9 @@
 </section>
 ```
 
-### 3. ต่อ routing ใน script.js
+### 3. ต่อ routing ใน ../assets/js/core/script.js
 
-แก้ [script.js](C:\Users\Panavat\Documents\GitHub\Academic_Report-\script.js)
+แก้ [script.js](../assets/js/core/script.js)
 
 - เพิ่มชื่อใน `moduleLabels`
 - เพิ่มชื่อ module ใน list ของ `setActiveModule()`
@@ -64,7 +64,7 @@
 
 สร้างไฟล์ใหม่ เช่น:
 
-- `new-module.js`
+- `../assets/js/modules/new-module.js`
 
 แนวทาง:
 
@@ -103,11 +103,11 @@
 
 ### 5. ต่อ script ใน index.html
 
-ใส่ `<script src="new-module.js"></script>` ใต้ script อื่นช่วงท้ายหน้า
+ใส่ `<script src="assets/js/modules/new-module.js"></script>` ใต้ script อื่นช่วงท้ายหน้า
 
 ### 6. เพิ่ม style เฉพาะเท่าที่จำเป็น
 
-แก้ [styles.css](C:\Users\Panavat\Documents\GitHub\Academic_Report-\styles.css)
+แก้ [styles.css](../assets/css/styles.css)
 
 กฎ:
 

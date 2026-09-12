@@ -11,9 +11,20 @@ const statusProfiles = {
 
 const statusNotes = {
   unable: "ต่ำกว่าเกณฑ์สิทธิ์สอบ",
-  risk: "ใกล้ต่ำกว่าเกณฑ์",
   eligible: "ยังคงสิทธิ์สอบ"
 };
+
+const learningAreas = [
+  "ภาษาไทย",
+  "คณิตศาสตร์",
+  "วิทยาศาสตร์และเทคโนโลยี",
+  "สังคมศึกษา ศาสนา และวัฒนธรรม",
+  "สุขศึกษาและพลศึกษา",
+  "ศิลปะ",
+  "การงานอาชีพ",
+  "ภาษาต่างประเทศ",
+  "กิจกรรมพัฒนาผู้เรียน"
+];
 
 const exportLabels = {
   excel: "Excel",
@@ -42,13 +53,12 @@ const els = {
   currentAcademicLabel: document.getElementById("unableCurrentAcademicLabel"),
   summaryScope: document.getElementById("unableSummaryScope"),
   studentsFound: document.getElementById("unableStudentsFound"),
-  riskCount: document.getElementById("unableRiskCount"),
+  caseMetric: document.getElementById("unableCaseMetric"),
   attendanceAverage: document.getElementById("unableAttendanceAverage"),
   thresholdValue: document.getElementById("unableThresholdValue"),
   caseTotal: document.getElementById("unableCaseTotal"),
   statusChart: document.getElementById("unableStatusChart"),
-  gradeBreakdown: document.getElementById("unableGradeBreakdown"),
-  roomBreakdown: document.getElementById("unableRoomBreakdown"),
+  gradeRoomBreakdown: document.getElementById("unableGradeRoomBreakdown"),
   subjectBreakdown: document.getElementById("unableSubjectBreakdown"),
   totalRecords: document.getElementById("unableTotalRecords"),
   unableThead: document.getElementById("unableThead"),
@@ -122,26 +132,26 @@ function buildInlineMockDatabase() {
   ];
 
   const subjects = [
-    { id: "subject-math", code: "ma21101", name: "คณิตศาสตร์", shortName: "คณิต" },
-    { id: "subject-thai", code: "th21102", name: "ภาษาไทย", shortName: "ไทย" },
-    { id: "subject-english", code: "en21101", name: "ภาษาอังกฤษ", shortName: "อังกฤษ" },
-    { id: "subject-science", code: "sc21103", name: "วิทยาศาสตร์", shortName: "วิทย์" },
-    { id: "subject-social", code: "so21104", name: "สังคมศึกษา", shortName: "สังคม" },
-    { id: "subject-history", code: "hi21101", name: "ประวัติศาสตร์", shortName: "ประวัติ" },
-    { id: "subject-health", code: "he21101", name: "สุขศึกษา", shortName: "สุขศึกษา" },
-    { id: "subject-physical", code: "pe21101", name: "พลศึกษา", shortName: "พละ" },
-    { id: "subject-art", code: "ar21101", name: "ศิลปะ", shortName: "ศิลปะ" },
-    { id: "subject-music", code: "mu21101", name: "ดนตรี", shortName: "ดนตรี" },
-    { id: "subject-career", code: "oc21101", name: "การงานอาชีพ", shortName: "การงาน" },
-    { id: "subject-computer", code: "cs21101", name: "วิทยาการคำนวณ", shortName: "คอมพิวเตอร์" },
-    { id: "subject-design", code: "ds21101", name: "การออกแบบและเทคโนโลยี", shortName: "ออกแบบ" },
-    { id: "subject-chinese", code: "ch21101", name: "ภาษาจีน", shortName: "จีน" },
-    { id: "subject-japanese", code: "jp21101", name: "ภาษาญี่ปุ่น", shortName: "ญี่ปุ่น" },
-    { id: "subject-civics", code: "ci21101", name: "หน้าที่พลเมือง", shortName: "พลเมือง" },
-    { id: "subject-guidance", code: "gu21101", name: "แนะแนว", shortName: "แนะแนว" },
-    { id: "subject-research", code: "is21101", name: "การศึกษาค้นคว้า", shortName: "IS" },
-    { id: "subject-robotics", code: "rb21101", name: "หุ่นยนต์เบื้องต้น", shortName: "หุ่นยนต์" },
-    { id: "subject-environment", code: "ev21101", name: "สิ่งแวดล้อมศึกษา", shortName: "สิ่งแวดล้อม" }
+    { id: "subject-thai", code: "th21102", name: "ภาษาไทย", shortName: "ไทย", learningArea: "ภาษาไทย" },
+    { id: "subject-math", code: "ma21101", name: "คณิตศาสตร์", shortName: "คณิต", learningArea: "คณิตศาสตร์" },
+    { id: "subject-science", code: "sc21103", name: "วิทยาศาสตร์", shortName: "วิทย์", learningArea: "วิทยาศาสตร์และเทคโนโลยี" },
+    { id: "subject-computer", code: "cs21101", name: "วิทยาการคำนวณ", shortName: "คอมพิวเตอร์", learningArea: "วิทยาศาสตร์และเทคโนโลยี" },
+    { id: "subject-design", code: "ds21101", name: "การออกแบบและเทคโนโลยี", shortName: "ออกแบบ", learningArea: "วิทยาศาสตร์และเทคโนโลยี" },
+    { id: "subject-robotics", code: "rb21101", name: "หุ่นยนต์เบื้องต้น", shortName: "หุ่นยนต์", learningArea: "วิทยาศาสตร์และเทคโนโลยี" },
+    { id: "subject-social", code: "so21104", name: "สังคมศึกษา", shortName: "สังคม", learningArea: "สังคมศึกษา ศาสนา และวัฒนธรรม" },
+    { id: "subject-history", code: "hi21101", name: "ประวัติศาสตร์", shortName: "ประวัติ", learningArea: "สังคมศึกษา ศาสนา และวัฒนธรรม" },
+    { id: "subject-civics", code: "ci21101", name: "หน้าที่พลเมือง", shortName: "พลเมือง", learningArea: "สังคมศึกษา ศาสนา และวัฒนธรรม" },
+    { id: "subject-environment", code: "ev21101", name: "สิ่งแวดล้อมศึกษา", shortName: "สิ่งแวดล้อม", learningArea: "สังคมศึกษา ศาสนา และวัฒนธรรม" },
+    { id: "subject-health", code: "he21101", name: "สุขศึกษา", shortName: "สุขศึกษา", learningArea: "สุขศึกษาและพลศึกษา" },
+    { id: "subject-physical", code: "pe21101", name: "พลศึกษา", shortName: "พละ", learningArea: "สุขศึกษาและพลศึกษา" },
+    { id: "subject-art", code: "ar21101", name: "ศิลปะ", shortName: "ศิลปะ", learningArea: "ศิลปะ" },
+    { id: "subject-music", code: "mu21101", name: "ดนตรี", shortName: "ดนตรี", learningArea: "ศิลปะ" },
+    { id: "subject-career", code: "oc21101", name: "การงานอาชีพ", shortName: "การงาน", learningArea: "การงานอาชีพ" },
+    { id: "subject-english", code: "en21101", name: "ภาษาอังกฤษ", shortName: "อังกฤษ", learningArea: "ภาษาต่างประเทศ" },
+    { id: "subject-chinese", code: "ch21101", name: "ภาษาจีน", shortName: "จีน", learningArea: "ภาษาต่างประเทศ" },
+    { id: "subject-japanese", code: "jp21101", name: "ภาษาญี่ปุ่น", shortName: "ญี่ปุ่น", learningArea: "ภาษาต่างประเทศ" },
+    { id: "subject-guidance", code: "gu21101", name: "แนะแนว", shortName: "แนะแนว", learningArea: "กิจกรรมพัฒนาผู้เรียน" },
+    { id: "subject-research", code: "is21101", name: "การศึกษาค้นคว้า", shortName: "IS", learningArea: "กิจกรรมพัฒนาผู้เรียน" }
   ];
 
   const schedules = [
@@ -363,10 +373,20 @@ function syncSubjects() {
   );
   const subjects = state.db.subjects
     .filter((subject) => scheduleSubjectIds.has(subject.id))
-    .sort((a, b) => a.name.localeCompare(b.name, "th"));
-  els.subject.innerHTML = `<option value="">ทุกวิชา</option>${subjects
-    .map((subject) => `<option value="${subject.id}">${subject.code} - ${subject.name}</option>`)
-    .join("")}`;
+    .sort((a, b) => {
+      const areaOrder = learningAreas.indexOf(a.learningArea) - learningAreas.indexOf(b.learningArea);
+      return areaOrder || a.name.localeCompare(b.name, "th");
+    });
+  const groupedSubjectOptions = learningAreas
+    .map((area) => {
+      const areaSubjects = subjects.filter((subject) => subject.learningArea === area);
+      if (!areaSubjects.length) return "";
+      return `<optgroup label="${area}">${areaSubjects
+        .map((subject) => `<option value="${subject.id}">${subject.code} - ${subject.name}</option>`)
+        .join("")}</optgroup>`;
+    })
+    .join("");
+  els.subject.innerHTML = `<option value="">ทุกวิชา</option>${groupedSubjectOptions}`;
   els.subject.disabled = false;
   if (!subjects.some((subject) => subject.id === els.subject.value)) {
     els.subject.value = "";
@@ -408,7 +428,6 @@ function toggleAdvancedPanel(force) {
 
 function classifyStudent(attendancePercent, threshold) {
   if (attendancePercent < threshold) return "unable";
-  if (attendancePercent < threshold + 10) return "risk";
   return "eligible";
 }
 
@@ -419,9 +438,6 @@ function getAttendanceCredit(status) {
 function getRemark(studentSummary, threshold) {
   if (studentSummary.statusKey === "unable") {
     return `ต่ำกว่าเกณฑ์ ${threshold}% และขาด ${studentSummary.absentCount} ครั้ง`;
-  }
-  if (studentSummary.statusKey === "risk") {
-    return `ควรติดตามต่อเนื่องก่อนต่ำกว่าเกณฑ์ ${threshold}%`;
   }
   return `ผ่านเกณฑ์ปัจจุบัน ${threshold}%`;
 }
@@ -453,7 +469,7 @@ function buildReportRows(filters) {
       const lateCount = studentRecords.filter((record) => record.status === "สาย").length;
       const attendancePercent = totalSessions ? Math.round((presentCredits / totalSessions) * 100) : 0;
       const statusKey = classifyStudent(attendancePercent, filters.threshold);
-      const statusLabel = statusKey === "unable" ? "ไม่มีสิทธิ์สอบ" : statusKey === "risk" ? "กลุ่มเสี่ยง" : "ยังมีสิทธิ์สอบ";
+      const statusLabel = statusKey === "unable" ? "ไม่มีสิทธิ์สอบ" : "ยังมีสิทธิ์สอบ";
 
       rows.push({
         studentId: student.studentCode,
@@ -464,7 +480,7 @@ function buildReportRows(filters) {
         classroomName: classroom.name,
         subjectId: subject.id,
         subjectName: subject.name,
-        gradeClass: `${grade.name} / ${classroom.name}`,
+        gradeClass: classroom.name,
         attendancePercent,
         absentCount,
         lateCount,
@@ -518,7 +534,6 @@ function getUniqueStudentCount(rows, statusKey) {
 function renderStatusChart(rows) {
   const items = [
     { key: "unable", label: "ไม่มีสิทธิ์สอบ", tone: "danger" },
-    { key: "risk", label: "กลุ่มเสี่ยง", tone: "warning" },
     { key: "eligible", label: "ยังมีสิทธิ์สอบ", tone: "success" }
   ];
   const max = Math.max(1, ...items.map((item) => rows.filter((row) => row.statusKey === item.key).length));
@@ -540,15 +555,55 @@ function renderBreakdown(element, rows, key, labelKey, drillType) {
     grouped.get(id).rows.push(row);
   });
   const items = [...grouped.values()]
-    .map((item) => ({ ...item, unable: item.rows.filter((row) => row.statusKey === "unable").length, risk: item.rows.filter((row) => row.statusKey === "risk").length }))
-    .sort((a, b) => (b.unable + b.risk) - (a.unable + a.risk) || a.label.localeCompare(b.label, "th"));
+    .map((item) => ({ ...item, unable: item.rows.filter((row) => row.statusKey === "unable").length }))
+    .sort((a, b) => b.unable - a.unable || a.label.localeCompare(b.label, "th"));
 
   element.innerHTML = items.length ? items.map((item) => `
     <button class="unable-breakdown-row" type="button" data-drill-type="${drillType}" data-drill-id="${item.id}">
       <span>${item.label}</span>
-      <span class="unable-breakdown-counts"><strong>${item.unable}</strong> ไม่มีสิทธิ์ <strong>${item.risk}</strong> เสี่ยง</span>
+      <span class="unable-breakdown-counts"><strong>${item.unable}</strong> ไม่มีสิทธิ์</span>
       <span class="unable-drill-arrow" aria-hidden="true">›</span>
     </button>
+  `).join("") : `<div class="unable-breakdown-empty">ไม่มีข้อมูล</div>`;
+}
+
+function renderGradeRoomBreakdown(rows) {
+  const grades = state.db.grades
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map((grade) => {
+      const rooms = state.db.classrooms
+        .filter((room) => room.gradeId === grade.id)
+        .map((room) => {
+          const roomRows = rows.filter((row) => row.classroomId === room.id);
+          return {
+            id: room.id,
+            label: room.name,
+            total: roomRows.length,
+            unable: roomRows.filter((row) => row.statusKey === "unable").length
+          };
+        })
+        .filter((room) => room.total > 0)
+        .sort((a, b) => a.label.localeCompare(b.label, "th"));
+      return { ...grade, rooms };
+    })
+    .filter((grade) => grade.rooms.length);
+
+  els.gradeRoomBreakdown.innerHTML = grades.length ? grades.map((grade) => `
+    <section class="unable-grade-room-group">
+      <div class="unable-grade-room-heading">
+        <span>${grade.name}</span>
+        <strong>${grade.rooms.reduce((sum, room) => sum + room.unable, 0)}</strong>
+      </div>
+      <div class="unable-room-chip-list">
+        ${grade.rooms.map((room) => `
+          <button class="unable-room-chip" type="button" data-drill-type="classroom" data-drill-id="${room.id}">
+            <span>${room.label}</span>
+            <strong>${room.unable}</strong>
+          </button>
+        `).join("")}
+      </div>
+    </section>
   `).join("") : `<div class="unable-breakdown-empty">ไม่มีข้อมูล</div>`;
 }
 
@@ -569,14 +624,13 @@ function renderOverview(rows) {
     ? Math.round(rows.reduce((sum, row) => sum + row.attendancePercent, 0) / rows.length)
     : 0;
   els.studentsFound.textContent = String(getUniqueStudentCount(rows, "unable"));
-  els.riskCount.textContent = String(getUniqueStudentCount(rows, "risk"));
+  els.caseMetric.textContent = String(rows.length);
   els.attendanceAverage.textContent = `${attendanceAverage}%`;
   els.thresholdValue.textContent = `${normalizeThreshold(els.threshold.value)}%`;
   els.caseTotal.textContent = `${rows.length} รายการ`;
   els.summaryScope.textContent = getScopeLabel();
   renderStatusChart(rows);
-  renderBreakdown(els.gradeBreakdown, rows, "gradeId", "gradeName", "grade");
-  renderBreakdown(els.roomBreakdown, rows, "classroomId", "classroomName", "classroom");
+  renderGradeRoomBreakdown(rows);
   renderBreakdown(els.subjectBreakdown, rows, "subjectId", "subjectName", "subject");
 }
 
@@ -740,7 +794,7 @@ function restoreLastSearch() {
     if (saved.scheduleScope) els.scheduleScope.value = saved.scheduleScope;
     syncSubjects();
     if (saved.subject) els.subject.value = saved.subject;
-    if (saved.status) els.status.value = saved.status;
+    if (saved.status) els.status.value = saved.status === "risk" ? "unable" : saved.status;
     if (saved.threshold) els.threshold.value = saved.threshold;
     if (saved.keyword) els.keyword.value = saved.keyword;
     if (saved.status !== "unable" || saved.scheduleScope !== "current" || saved.keyword || Number(saved.threshold) !== 80) {
@@ -813,7 +867,6 @@ function handleExport(type) {
         <div class="pdf-summary-strip">
           <span>พบทั้งหมด <strong>${state.filteredRows.length}</strong></span>
           <span>ไม่มีสิทธิ์สอบ <strong>${getUniqueStudentCount(state.filteredRows, "unable")}</strong></span>
-          <span>กลุ่มเสี่ยง <strong>${getUniqueStudentCount(state.filteredRows, "risk")}</strong></span>
         </div>
         <table class="pdf-preview-table">
           <thead>

@@ -255,7 +255,7 @@ Student
 ### ระยะ 1: หน้าพื้นฐานและข้อมูล mock
 
 1. เพิ่มเมนู `การสอนคณิตศาสตร์` และ page section `data-page="teacher-math"`
-2. สร้าง `teacher-math.js` แยก state และ mock data ตาม data model นี้
+2. สร้าง `../assets/js/modules/teacher-math.js` แยก state และ mock data ตาม data model นี้
 3. โหลด assignment ของครูสมชาย และใช้ห้องล่าสุดเป็นค่าเริ่มต้น
 4. แสดง summary, ตัวกรอง และแท็บงานครบทั้ง 4 มุมมอง
 
@@ -284,9 +284,9 @@ Student
 
 | ไฟล์ | งาน |
 | --- | --- |
-| `index.html` | เมนู sidebar, section ของหน้า, modal/drawer ที่จำเป็น, script tag |
-| `teacher-math.js` | state, mock database, filter, render, validation และ event handlers |
-| `styles.css` | เฉพาะ class ที่ reuse จากระบบเดิมไม่ได้ |
+| `../index.html` | เมนู sidebar, section ของหน้า, modal/drawer ที่จำเป็น, script tag |
+| `../assets/js/modules/teacher-math.js` | state, mock database, filter, render, validation และ event handlers |
+| `../assets/css/styles.css` | เฉพาะ class ที่ reuse จากระบบเดิมไม่ได้ |
 | `TEACHER_MATH_MODULE_PLAN.md` | เอกสารแผนฉบับนี้ |
 
 ## 12. เกณฑ์รับงานของรุ่นแรก

@@ -219,8 +219,8 @@ summary card ควรใช้เมื่อ:
 
 ดู style และ component pattern จาก:
 
-- [index.html](C:\Users\Panavat\Documents\GitHub\Academic_Report-\index.html)
-- [styles.css](C:\Users\Panavat\Documents\GitHub\Academic_Report-\styles.css)
-- [score-per-subject.js](C:\Users\Panavat\Documents\GitHub\Academic_Report-\score-per-subject.js)
-- [record-report.js](C:\Users\Panavat\Documents\GitHub\Academic_Report-\record-report.js)
-- [unable-exam-report.js](C:\Users\Panavat\Documents\GitHub\Academic_Report-\unable-exam-report.js)
+- [index.html](index.html)
+- [styles.css](assets/css/styles.css)
+- [score-per-subject.js](assets/js/modules/score-per-subject.js)
+- [record-report.js](assets/js/modules/record-report.js)
+- [unable-exam-report.js](assets/js/modules/unable-exam-report.js)

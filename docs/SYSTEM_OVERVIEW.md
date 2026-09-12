@@ -14,13 +14,13 @@
 
 ## เทคโนโลยีที่ใช้
 
-- `index.html` เป็นโครงหน้าหลักของทุกโมดูล
-- `styles.css` เป็น design system และ style กลางของทั้งระบบ
-- `script.js` เป็น logic หลักของระบบ Attendance และตัวควบคุม sidebar/page switch
+- `../index.html` เป็นโครงหน้าหลักของทุกโมดูล
+- `../assets/css/styles.css` เป็น design system และ style กลางของทั้งระบบ
+- `../assets/js/core/script.js` เป็น logic หลักของระบบ Attendance และตัวควบคุม sidebar/page switch
 - script แยกตามโมดูล เช่น
-  - `score-per-subject.js`
-  - `unable-exam-report.js`
-  - `record-report.js`
+  - `../assets/js/modules/score-per-subject.js`
+  - `../assets/js/modules/unable-exam-report.js`
+  - `../assets/js/modules/record-report.js`
 
 ## โครงสร้างปัจจุบันของระบบ
 
@@ -80,12 +80,12 @@
 
 ## ไฟล์หลักในโปรเจกต์
 
-- [index.html](C:\Users\Panavat\Documents\GitHub\Academic_Report-\index.html)
-- [styles.css](C:\Users\Panavat\Documents\GitHub\Academic_Report-\styles.css)
-- [script.js](C:\Users\Panavat\Documents\GitHub\Academic_Report-\script.js)
-- [score-per-subject.js](C:\Users\Panavat\Documents\GitHub\Academic_Report-\score-per-subject.js)
-- [record-report.js](C:\Users\Panavat\Documents\GitHub\Academic_Report-\record-report.js)
-- [unable-exam-report.js](C:\Users\Panavat\Documents\GitHub\Academic_Report-\unable-exam-report.js)
+- [index.html](../index.html)
+- [styles.css](../assets/css/styles.css)
+- [script.js](../assets/js/core/script.js)
+- [score-per-subject.js](../assets/js/modules/score-per-subject.js)
+- [record-report.js](../assets/js/modules/record-report.js)
+- [unable-exam-report.js](../assets/js/modules/unable-exam-report.js)
 
 ## แนวทางข้อมูล mock
 
@@ -104,7 +104,7 @@
 
 ## การทำงานของ sidebar
 
-sidebar ใช้ nav กลางใน `index.html` และใช้ `setActiveModule()` ใน [script.js](C:\Users\Panavat\Documents\GitHub\Academic_Report-\script.js) เพื่อ:
+sidebar ใช้ nav กลางใน `../index.html` และใช้ `setActiveModule()` ใน [script.js](../assets/js/core/script.js) เพื่อ:
 
 - เปลี่ยนปุ่ม active
 - เปลี่ยนหน้า `.app-page`
@@ -127,7 +127,7 @@ sidebar ใช้ nav กลางใน `index.html` และใช้ `setAct
 
 ## เอกสารที่เกี่ยวข้อง
 
-- [README.md](C:\Users\Panavat\Documents\GitHub\Academic_Report-\README.md)
-- [ATTENDANCE_REPORT.md](C:\Users\Panavat\Documents\GitHub\Academic_Report-\ATTENDANCE_REPORT.md)
-- [STYLE_GUIDE.md](C:\Users\Panavat\Documents\GitHub\Academic_Report-\STYLE_GUIDE.md)
-- [MODULE_AUTHORING_GUIDE.md](C:\Users\Panavat\Documents\GitHub\Academic_Report-\MODULE_AUTHORING_GUIDE.md)
+- [README.md](../README.md)
+- [ATTENDANCE_REPORT.md](ATTENDANCE_REPORT.md)
+- [STYLE_GUIDE.md](../STYLE_GUIDE.md)
+- [MODULE_AUTHORING_GUIDE.md](MODULE_AUTHORING_GUIDE.md)

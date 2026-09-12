@@ -7,7 +7,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=unable-dashboard-tabs-2" />
+  <link rel="stylesheet" href="assets/css/styles.css?v=average-year-visuals-2" />
 </head>
 <body>
   <div class="layout-shell">
@@ -82,9 +82,9 @@
                 <p class="metric-value" id="totalStudents">32 คน</p>
               </article>
               <article class="metric">
-                <p class="metric-label">อัตราการเข้าเรียน</p>
-                <p class="metric-value" id="presentCount">94.6%</p>
-                <p class="metric-description" id="attendanceRateDesc">18 คาบเรียน</p>
+                <p class="metric-label">มาเรียน</p>
+                <p class="metric-value" id="presentCount">28 คน</p>
+                <p class="metric-description" id="presentDesc">142 คาบ</p>
               </article>
               <article class="metric">
                 <p class="metric-label">ขาดเรียน</p>
@@ -101,36 +101,32 @@
                 <p class="metric-value" id="leaveCount">1 คน</p>
                 <p class="metric-description" id="leaveDesc">ลากิจ 1 · ลาป่วย 0</p>
               </article>
-              <article class="metric metric-warning">
-                <p class="metric-label">ต้องติดตาม</p>
-                <p class="metric-value" id="priorityCount">3 คน</p>
-                <p class="metric-description" id="priorityDesc">ต่ำกว่าเกณฑ์ 3 คน</p>
-              </article>
             </div>
 
             <section class="attendance-trend" aria-labelledby="attendanceTrendTitle">
               <div class="insight-panel-heading">
                 <div>
-                  <h3 class="insight-title" id="attendanceTrendTitle">แนวโน้มการเข้าเรียน</h3>
+                  <h3 class="insight-title" id="attendanceTrendTitle">แนวโน้มเข้าเรียน</h3>
                 </div>
                 <div class="trend-summary" aria-label="สรุปแนวโน้ม">
-                  <span>ค่าเฉลี่ย <strong id="trendAverage">-</strong></span>
-                  <span>สูงสุด <strong id="trendMax">-</strong></span>
-                  <span>ต่ำสุด <strong id="trendMin">-</strong></span>
+                  <span>เข้าเรียน <strong id="trendAverage">-</strong></span>
+                  <span>ขาดเรียน <strong id="trendMax">-</strong></span>
+                  <span>มาสาย <strong id="trendMin">-</strong></span>
+                  <button class="trend-reset-btn" id="trendZoomOutBtn" type="button" hidden>กลับภาพรวม</button>
                 </div>
               </div>
               <div class="trend-chart-wrap">
-                <svg class="trend-chart" id="attendanceTrendChart" viewBox="0 0 720 300" role="img" aria-label="กราฟแนวโน้มอัตราการเข้าเรียน"></svg>
+                <svg class="trend-chart" id="attendanceTrendChart" viewBox="0 0 720 300" role="img" aria-label="กราฟแนวโน้มเข้าเรียน ขาดเรียน และมาสาย"></svg>
                 <div class="trend-tooltip" id="trendTooltip" hidden></div>
               </div>
             </section>
 
-            <div class="attendance-insights" aria-label="นักเรียนที่ต้องติดตาม">
+            <div class="attendance-insights" aria-label="นักเรียนที่เสี่ยงไม่มีสิทธิ์สอบ">
               <article class="insight-panel priority-panel">
                 <div class="insight-panel-heading">
                   <div>
-                    <h3 class="insight-title">นักเรียนที่ต้องติดตาม</h3>
-                    <p class="priority-threshold-note" id="priorityThresholdNote">อัตราการเข้าเรียนต่ำกว่า 80%</p>
+                    <h3 class="insight-title">นักเรียนที่เสี่ยงไม่มีสิทธิ์สอบ</h3>
+                    <p class="priority-threshold-note" id="priorityThresholdNote">ขาดถึง 50% ของเพดานที่ขาดได้</p>
                   </div>
                   <div class="insight-heading-actions">
                     <strong class="insight-emphasis priority-count" id="priorityInsightCount">0 คน</strong>
@@ -138,7 +134,7 @@
                   </div>
                 </div>
                 <div class="priority-list" id="priorityList" aria-live="polite">
-                  <div class="priority-empty">ไม่พบนักเรียนที่ต้องติดตาม<br>นักเรียนทุกคนมีเวลาเรียนผ่านเกณฑ์</div>
+                  <div class="priority-empty">ไม่พบนักเรียนกลุ่มเสี่ยง</div>
                 </div>
               </article>
             </div>
@@ -302,7 +298,7 @@
                   <tr>
                     <th style="width: 120px;">รหัสนักเรียน</th>
                     <th style="width: 220px;">ชื่อ-สกุล</th>
-                    <th style="width: 170px;">ชั้น/ห้อง</th>
+                    <th style="width: 170px;">ห้อง</th>
                     <th style="width: 190px;">สถานะ</th>
                     <th>หมายเหตุ</th>
                   </tr>
@@ -349,9 +345,9 @@
                 <p class="metric-label">ไม่มีสิทธิ์สอบ</p>
                 <p class="metric-value" id="unableStudentsFound">0</p>
               </article>
-              <article class="metric metric-warning">
-                <p class="metric-label">กลุ่มเสี่ยง</p>
-                <p class="metric-value" id="unableRiskCount">0</p>
+              <article class="metric">
+                <p class="metric-label">รายการตรวจสอบ</p>
+                <p class="metric-value" id="unableCaseMetric">0</p>
               </article>
               <article class="metric">
                 <p class="metric-label">ค่าเฉลี่ยการเข้าเรียน</p>
@@ -372,13 +368,11 @@
                   <h3 id="unableBreakdownTitle">สรุปแยกตาม</h3>
                 </div>
                 <div class="unable-breakdown-tabs" role="tablist" aria-label="มุมมองสรุป">
-                  <button class="unable-breakdown-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="unableGradeBreakdown" data-breakdown-tab="grade">ระดับชั้น</button>
-                  <button class="unable-breakdown-tab" type="button" role="tab" aria-selected="false" aria-controls="unableRoomBreakdown" data-breakdown-tab="room">ห้อง</button>
+                  <button class="unable-breakdown-tab is-active" type="button" role="tab" aria-selected="true" aria-controls="unableGradeRoomBreakdown" data-breakdown-tab="gradeRoom">ชั้น/ห้อง</button>
                   <button class="unable-breakdown-tab" type="button" role="tab" aria-selected="false" aria-controls="unableSubjectBreakdown" data-breakdown-tab="subject">รายวิชา</button>
                 </div>
                 <div class="unable-breakdown-viewport">
-                  <div class="unable-breakdown-list" id="unableGradeBreakdown" role="tabpanel" data-breakdown-panel="grade"></div>
-                  <div class="unable-breakdown-list hidden" id="unableRoomBreakdown" role="tabpanel" data-breakdown-panel="room"></div>
+                  <div class="unable-breakdown-list" id="unableGradeRoomBreakdown" role="tabpanel" data-breakdown-panel="gradeRoom"></div>
                   <div class="unable-breakdown-list hidden" id="unableSubjectBreakdown" role="tabpanel" data-breakdown-panel="subject"></div>
                 </div>
               </section>
@@ -452,7 +446,6 @@
                       <select id="unableStatus" name="status">
                         <option value="unable">ไม่มีสิทธิ์สอบ</option>
                         <option value="all">ทุกสถานะ</option>
-                        <option value="risk">กลุ่มเสี่ยง</option>
                         <option value="eligible">ยังมีสิทธิ์สอบ</option>
                       </select>
                     </div>
@@ -611,16 +604,13 @@
               <div class="results-meta">
                 <span>ตาราง: <strong id="scoreMatrixMeta">รายวิชาทั้งหมด</strong></span>
                 <span>มุมมอง: <strong id="scoreViewMeta">ตารางแนวนอน</strong></span>
+                <button class="btn btn-secondary btn-small hidden" id="scoreBackOverviewBtn" type="button">กลับไปภาพรวม</button>
               </div>
             </div>
 
             <div class="summary-grid score-summary-grid" id="scoreDetailSummaryGrid" aria-label="สรุปคะแนนรายวิชา">
-              <article class="metric metric-total">
-                <p class="metric-label">คะแนนเฉลี่ยของห้อง</p>
-                <p class="metric-value" id="scoreClassAverage">-</p>
-              </article>
               <article class="metric metric-warning">
-                <p class="metric-label">นักเรียนที่ต้องติดตาม</p>
+                <p class="metric-label">นักเรียนต่ำกว่าเกณฑ์</p>
                 <p class="metric-value" id="scoreFollowUpCount">0 คน</p>
               </article>
               <article class="metric metric-warning">
@@ -628,7 +618,7 @@
                 <p class="metric-value" id="scoreLowSubjectCount">0 วิชา</p>
               </article>
               <article class="metric">
-                <p class="metric-label">ความครบถ้วนของคะแนน</p>
+                <p class="metric-label">คะแนนที่กรอกแล้ว</p>
                 <p class="metric-value" id="scoreCompletionRate">0%</p>
               </article>
             </div>
@@ -646,16 +636,12 @@
                 <p class="metric-label">รายวิชา</p>
                 <p class="metric-value" id="scoreOverviewSubjectCount">0 วิชา</p>
               </article>
-              <article class="metric">
-                <p class="metric-label">คะแนนเฉลี่ยรวม</p>
-                <p class="metric-value" id="scoreOverviewAverage">-</p>
-              </article>
               <article class="metric metric-warning">
-                <p class="metric-label">นักเรียนที่ต้องติดตาม</p>
+                <p class="metric-label">นักเรียนต่ำกว่าเกณฑ์</p>
                 <p class="metric-value" id="scoreOverviewFollowUpCount">0 คน</p>
               </article>
               <article class="metric metric-warning">
-                <p class="metric-label">คะแนนยังไม่บันทึก</p>
+                <p class="metric-label">คะแนนที่ยังไม่กรอก</p>
                 <p class="metric-value" id="scoreOverviewMissingCount">0 รายการ</p>
               </article>
             </div>
@@ -671,9 +657,8 @@
                       <th>ระดับชั้น</th>
                       <th>ห้องเรียน</th>
                       <th>นักเรียน</th>
-                      <th>คะแนนเฉลี่ย</th>
-                      <th>ต้องติดตาม</th>
-                      <th>คะแนนไม่ครบ</th>
+                      <th>ต่ำกว่าเกณฑ์</th>
+                      <th>คะแนนที่ยังไม่กรอก</th>
                       <th aria-label="คำสั่ง"></th>
                     </tr>
                   </thead>
@@ -684,7 +669,7 @@
 
             <section class="score-analysis-panel score-detail-only" aria-labelledby="scoreSubjectAverageTitle">
               <div class="score-section-heading">
-                <h3 class="insight-title" id="scoreSubjectAverageTitle">คะแนนเฉลี่ยแต่ละวิชา</h3>
+                <h3 class="insight-title" id="scoreSubjectAverageTitle">คะแนนแต่ละวิชา</h3>
                 <span class="score-threshold-label">เกณฑ์ 60%</span>
               </div>
               <div class="score-bar-chart" id="scoreSubjectAverageChart">
@@ -694,7 +679,7 @@
 
             <section class="score-follow-up-panel score-detail-only" aria-labelledby="scoreFollowUpTitle">
               <div class="score-section-heading">
-                <h3 class="insight-title" id="scoreFollowUpTitle">นักเรียนที่ต้องติดตาม</h3>
+                <h3 class="insight-title" id="scoreFollowUpTitle">นักเรียนต่ำกว่าเกณฑ์</h3>
                 <span class="score-threshold-label">คะแนนต่ำกว่า 60%</span>
               </div>
               <div class="table-wrap score-follow-up-wrap">
@@ -703,13 +688,12 @@
                     <tr>
                       <th>ชื่อ</th>
                       <th>วิชาที่ต่ำกว่าเกณฑ์</th>
-                      <th>คะแนนต่ำสุด</th>
                       <th aria-label="คำสั่ง"></th>
                     </tr>
                   </thead>
                   <tbody id="scoreFollowUpTbody">
                     <tr>
-                      <td colspan="4"><div class="empty-state">ค้นหาข้อมูลเพื่อแสดงรายการ</div></td>
+                      <td colspan="3"><div class="empty-state">ค้นหาข้อมูลเพื่อแสดงรายการ</div></td>
                     </tr>
                   </tbody>
                 </table>
@@ -813,6 +797,7 @@
           <section class="results-panel average-year-summary-panel" aria-labelledby="averageYearSummaryTitle">
             <div class="results-header">
               <div><p class="section-kicker">ผลลัพธ์รายงาน</p><h2 class="section-title" id="averageYearSummaryTitle">สรุปคะแนนเฉลี่ยรายปี</h2><p class="section-note" id="averageYearSummaryScope">กำลังโหลด...</p></div>
+              <button class="btn btn-secondary hidden" id="averageYearBackOverviewBtn" type="button">กลับภาพรวม</button>
             </div>
             <div class="summary-grid average-year-summary-grid" id="averageYearSummaryGrid" aria-label="ตัวเลขสรุปคะแนนเฉลี่ยรายปี"></div>
           </section>
@@ -831,13 +816,14 @@
             <div class="average-year-chart-grid">
               <section class="average-year-chart-panel average-year-comparison-panel" aria-labelledby="averageYearComparisonTitle">
                 <div class="score-section-heading">
-                  <h3 class="insight-title" id="averageYearComparisonTitle">คะแนนเฉลี่ยแยกตามห้องเรียน</h3>
-                  <span class="score-threshold-label">เกณฑ์ 60 คะแนน</span>
+                  <h3 class="insight-title" id="averageYearComparisonTitle">เกรดเฉลี่ยแยกตามห้องเรียน</h3>
+                  <span class="score-threshold-label">เกณฑ์ GPA 2</span>
                 </div>
                 <div class="average-year-chart-wrap average-year-comparison-chart-wrap">
-                  <canvas id="averageYearComparisonChart" role="img" aria-label="กราฟเปรียบเทียบคะแนนเฉลี่ย"></canvas>
+                  <canvas id="averageYearComparisonChart" role="img" aria-label="กราฟเปรียบเทียบเกรดเฉลี่ยและคะแนนรายวิชา"></canvas>
                   <div class="empty-state hidden" id="averageYearComparisonEmpty">ไม่มีข้อมูลเพียงพอสำหรับสร้างกราฟ</div>
                 </div>
+                <div class="average-year-chart-legend hidden" id="averageYearSubjectLegend" aria-label="คำอธิบายสีรายวิชา"></div>
               </section>
               <section class="average-year-chart-panel average-year-distribution-panel" aria-labelledby="averageYearDistributionTitle">
                 <div class="score-section-heading">
@@ -1126,7 +1112,7 @@
       <header class="pdf-preview-header">
         <div>
           <h2 class="pdf-preview-title" id="attendanceThresholdTitle">ตั้งค่าเกณฑ์แจ้งเตือน</h2>
-          <p class="pdf-preview-subtitle">ใช้กำหนดรายการนักเรียนที่ต้องติดตามและการเน้นข้อมูลในตาราง</p>
+          <p class="pdf-preview-subtitle">ใช้กำหนดรายการนักเรียนที่เสี่ยงไม่มีสิทธิ์สอบและการเน้นข้อมูลในตาราง</p>
         </div>
         <button class="pdf-preview-close" type="button" id="attendanceThresholdCloseBtn" aria-label="ปิดการตั้งค่าเกณฑ์">×</button>
       </header>
@@ -1170,11 +1156,11 @@
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <script src="script.js?v=attendance-auto-filter-2"></script>
-  <script src="score-per-subject.js?v=score-subject-refactor-2"></script>
-  <script src="vendor/chart.umd.min.js"></script>
-  <script src="average-score-year.js"></script>
-  <script src="record-report.js"></script>
-  <script src="unable-exam-report.js?v=8"></script>
+  <script src="assets/js/core/script.js?v=attendance-auto-filter-2"></script>
+  <script src="assets/js/modules/score-per-subject.js?v=score-subject-refactor-2"></script>
+  <script src="assets/vendor/chart.umd.min.js"></script>
+  <script src="assets/js/modules/average-score-year.js?v=average-year-visuals-2"></script>
+  <script src="assets/js/modules/record-report.js"></script>
+  <script src="assets/js/modules/unable-exam-report.js?v=8"></script>
 </body>
 </html>

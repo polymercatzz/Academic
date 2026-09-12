@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Flowchart · Academic Report</title>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    :root {
+      --bg: #f7f8fa;
+      --surface: #ffffff;
+      --surface-muted: #f3f5f8;
+      --border: #d9dee7;
+      --border-soft: #e8ebf0;
+      --text: #182230;
+      --muted: #667085;
+      --primary: #173b6d;
+      --primary-soft: #eef3f8;
+      --link: #2f6fba;
+      --font-sans: "Prompt", "Noto Sans Thai", "Segoe UI", sans-serif;
+      --font-mono: ui-monospace, "Cascadia Mono", "Segoe UI Mono", monospace;
+    }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      padding: 40px 24px;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+    }
+    .frame { width: min(1280px, 100%); margin: 0 auto; }
+    .eyebrow {
+      margin: 0 0 8px;
+      color: var(--primary);
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+    }
+    h1 {
+      margin: 0 0 24px;
+      color: var(--text);
+      font-size: clamp(24px, 3vw, 32px);
+      font-weight: 600;
+      line-height: 1.2;
+    }
+    .diagram-shell {
+      width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--border-soft);
+      border-radius: 6px;
+      background: var(--surface);
+    }
+    svg { display: block; width: 100%; min-width: 960px; height: auto; }
+    .svg-sans { font-family: "Prompt", "Noto Sans Thai", "Segoe UI", sans-serif; }
+    .svg-mono { font-family: ui-monospace, "Cascadia Mono", "Segoe UI Mono", monospace; }
+  </style>
+</head>
+<body>
+  <main class="frame">
+    <p class="eyebrow">Flowchart · Academic Report</p>
+    <h1>เส้นทางการสร้างและใช้งานรายงาน</h1>
+    <section class="diagram-shell" aria-label="Flowchart การสร้างและใช้งานรายงานในระบบ Academic Report">
+      <svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="academic-report-flowchart-title academic-report-flowchart-desc">
+        <title id="academic-report-flowchart-title">เส้นทางการสร้างและใช้งานรายงาน</title>
+        <desc id="academic-report-flowchart-desc">Flowchart แสดงการเปิดระบบ เลือกโมดูล กำหนดเงื่อนไข กรองข้อมูล แสดงผล และเปิดตัวอย่างหรือส่งออกรายงาน</desc>
+        <defs>
+          <marker id="academic-flowchart-arrow" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#667085" />
+          </marker>
+          <marker id="academic-flowchart-arrow-primary" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+            <polygon points="0 0, 8 3, 0 6" fill="#173b6d" />
+          </marker>
+        </defs>
+
+        <rect width="1280" height="720" fill="#f7f8fa" />
+
+        <!-- Connectors are drawn first so nodes remain visually dominant. -->
+        <line x1="640" y1="104" x2="640" y2="140" stroke="#667085" stroke-width="1.2" marker-end="url(#academic-flowchart-arrow)" />
+        <line x1="640" y1="204" x2="640" y2="248" stroke="#667085" stroke-width="1.2" marker-end="url(#academic-flowchart-arrow)" />
+        <line x1="640" y1="312" x2="640" y2="356" stroke="#667085" stroke-width="1.2" marker-end="url(#academic-flowchart-arrow)" />
+        <line x1="640" y1="420" x2="640" y2="460" stroke="#667085" stroke-width="1.2" marker-end="url(#academic-flowchart-arrow)" />
+        <path d="M520 500 H448" fill="none" stroke="#667085" stroke-width="1.2" marker-end="url(#academic-flowchart-arrow)" />
+        <path d="M760 500 H896" fill="none" stroke="#173b6d" stroke-width="1.4" marker-end="url(#academic-flowchart-arrow-primary)" />
+        <path d="M344 468 V288 Q344 280 352 280 H536" fill="none" stroke="#667085" stroke-width="1.2" marker-end="url(#academic-flowchart-arrow)" />
+        <line x1="1016" y1="532" x2="1016" y2="580" stroke="#173b6d" stroke-width="1.4" marker-end="url(#academic-flowchart-arrow-primary)" />
+
+        <!-- Branch labels: masks preserve a readable gap above the connector. -->
+        <rect x="452" y="476" width="64" height="16" rx="2" fill="#f7f8fa" />
+        <text x="484" y="488" fill="#667085" font-size="12" text-anchor="middle" class="svg-sans">ไม่ใช่</text>
+        <rect x="796" y="476" width="56" height="16" rx="2" fill="#f7f8fa" />
+        <text x="824" y="488" fill="#173b6d" font-size="12" text-anchor="middle" class="svg-sans">ใช่</text>
+
+        <!-- Start -->
+        <rect x="536" y="48" width="208" height="56" rx="28" fill="rgba(102,112,133,0.10)" stroke="#667085" stroke-width="1" />
+        <text x="640" y="82" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">เปิด Academic Report</text>
+
+        <!-- Steps -->
+        <rect x="536" y="140" width="208" height="64" rx="6" fill="#ffffff" stroke="#182230" stroke-width="1" />
+        <text x="640" y="168" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">โหลดข้อมูลและค่าเริ่มต้น</text>
+        <text x="640" y="188" fill="#667085" font-size="12" text-anchor="middle" class="svg-mono">mock data · current term</text>
+
+        <rect x="536" y="248" width="208" height="64" rx="6" fill="#ffffff" stroke="#182230" stroke-width="1" />
+        <text x="640" y="276" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">เลือกโมดูลจาก sidebar</text>
+        <text x="640" y="296" fill="#667085" font-size="12" text-anchor="middle" class="svg-sans">เข้าเรียน · คะแนน · GPAX</text>
+
+        <rect x="536" y="356" width="208" height="64" rx="6" fill="#ffffff" stroke="#182230" stroke-width="1" />
+        <text x="640" y="384" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">กำหนดเงื่อนไขรายงาน</text>
+        <text x="640" y="404" fill="#667085" font-size="12" text-anchor="middle" class="svg-sans">ปี · ชั้น · ห้อง · วิชา · ช่วงเวลา</text>
+
+        <!-- Decision -->
+        <polygon points="640,460 760,500 640,540 520,500" fill="#ffffff" stroke="#182230" stroke-width="1" />
+        <text x="640" y="496" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">พบข้อมูลตามเงื่อนไข?</text>
+
+        <!-- No branch -->
+        <rect x="240" y="468" width="208" height="64" rx="6" fill="#f3f5f8" stroke="#9aa6b8" stroke-width="1" stroke-dasharray="4 3" />
+        <text x="344" y="496" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">ปรับเงื่อนไข</text>
+        <text x="344" y="516" fill="#667085" font-size="12" text-anchor="middle" class="svg-sans">แล้วกรองข้อมูลอีกครั้ง</text>
+
+        <!-- Yes branch -->
+        <rect x="896" y="468" width="240" height="64" rx="6" fill="#eef3f8" stroke="#173b6d" stroke-width="1.2" />
+        <text x="1016" y="496" fill="#182230" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">แสดง summary + table</text>
+        <text x="1016" y="516" fill="#667085" font-size="12" text-anchor="middle" class="svg-sans">ผลลัพธ์ตามโมดูลที่เลือก</text>
+
+        <!-- End -->
+        <rect x="896" y="580" width="240" height="56" rx="28" fill="#eef3f8" stroke="#173b6d" stroke-width="1.2" />
+        <text x="1016" y="614" fill="#173b6d" font-size="16" font-weight="600" text-anchor="middle" class="svg-sans">Preview / ส่งออก / พิมพ์</text>
+
+        <!-- Legend -->
+        <line x1="40" y1="660" x2="1240" y2="660" stroke="#d9dee7" stroke-width="1" />
+        <text x="40" y="684" fill="#667085" font-size="12" font-weight="600" letter-spacing="0.08em" class="svg-sans">คำอธิบาย</text>
+
+        <rect x="40" y="696" width="40" height="16" rx="8" fill="rgba(102,112,133,0.10)" stroke="#667085" stroke-width="1" />
+        <text x="96" y="708" fill="#667085" font-size="12" class="svg-sans">เริ่มต้น / สิ้นสุด</text>
+
+        <rect x="248" y="696" width="40" height="16" rx="2" fill="#ffffff" stroke="#182230" stroke-width="1" />
+        <text x="304" y="708" fill="#667085" font-size="12" class="svg-sans">ขั้นตอน</text>
+
+        <polygon points="456,704 468,696 480,704 468,712" fill="#ffffff" stroke="#182230" stroke-width="1" />
+        <text x="496" y="708" fill="#667085" font-size="12" class="svg-sans">จุดตัดสินใจ</text>
+
+        <line x1="696" y1="704" x2="736" y2="704" stroke="#173b6d" stroke-width="1.4" marker-end="url(#academic-flowchart-arrow-primary)" />
+        <text x="752" y="708" fill="#667085" font-size="12" class="svg-sans">เส้นทางผลลัพธ์</text>
+      </svg>
+    </section>
+  </main>
+</body>
+</html>

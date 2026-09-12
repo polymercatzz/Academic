@@ -1,0 +1,15 @@
+diagram_type: workflow
+output: C:/Users/Panavat/Documents/GitHub/Academic_Report-/docs/diagrams/unable-exam-archify.html
+specification_sha256: 6b890ee7ee4ad95d8818878c847c0866a6825473fd073a3a7db3b3ae24efe21c
+specification_bytes: 4385
+artifact_sha256: 456068423b699043d6df717bcb1f4d747be147fa4b7ecb39621a05952bdfe71c
+artifact_bytes: 809507
+validation: 9/9 showcase, 0 errors, 0 warnings
+browser_evidence: passed
+visual_review: passed
+correction_rounds: 2
+visual_review_scope: Inspected 2048x1320 light and 1440x900 dark screenshots; labels fit, routes are distinct, and composition is contained.
+browser_viewports: 1440x900, 1600x1000, 1920x1080, 2048x1320
+language: Thai authored content; fixed viewer UI and html lang fall back to English.
+evidence: assets/js/modules/unable-exam-report.js buildReportRows, renderOverview, renderDashboard, handleExport, init; index.html unable-exam report.
+scope: Main report reading workflow, including threshold classification, drill-down detail, and export preview. Rare empty/error states are summarized in cards rather than drawn as branches.

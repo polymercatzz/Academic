@@ -21,6 +21,7 @@ const els = {
   summaryScope: document.getElementById("scoreSummaryScope"),
   matrixMeta: document.getElementById("scoreMatrixMeta"),
   viewMeta: document.getElementById("scoreViewMeta"),
+  backOverviewBtn: document.getElementById("scoreBackOverviewBtn"),
   detailSummaryGrid: document.getElementById("scoreDetailSummaryGrid"),
   overviewSummaryGrid: document.getElementById("scoreOverviewSummaryGrid"),
   overviewPanel: document.getElementById("scoreOverviewPanel"),
@@ -28,10 +29,8 @@ const els = {
   overviewStudentCount: document.getElementById("scoreOverviewStudentCount"),
   overviewRoomCount: document.getElementById("scoreOverviewRoomCount"),
   overviewSubjectCount: document.getElementById("scoreOverviewSubjectCount"),
-  overviewAverage: document.getElementById("scoreOverviewAverage"),
   overviewFollowUpCount: document.getElementById("scoreOverviewFollowUpCount"),
   overviewMissingCount: document.getElementById("scoreOverviewMissingCount"),
-  classAverage: document.getElementById("scoreClassAverage"),
   followUpCount: document.getElementById("scoreFollowUpCount"),
   lowSubjectCount: document.getElementById("scoreLowSubjectCount"),
   completionRate: document.getElementById("scoreCompletionRate"),
@@ -303,6 +302,7 @@ function setResultMode(mode) {
   els.overviewSummaryGrid.classList.toggle("hidden", !isOverview);
   els.overviewPanel.classList.toggle("hidden", !isOverview);
   els.detailSummaryGrid.classList.toggle("hidden", isOverview);
+  els.backOverviewBtn.classList.toggle("hidden", isOverview);
   document.querySelectorAll('[data-page="score-subject"] .score-detail-only')
     .forEach((element) => element.classList.toggle("hidden", isOverview));
   els.viewMeta.textContent = isOverview ? "ภาพรวมรายห้อง" : "ตารางแนวนอน";
@@ -323,7 +323,6 @@ function buildOverviewRows() {
     const students = selectedStudents.filter((student) => student.classroomId === classroom.id);
     const studentIds = new Set(students.map((student) => student.id));
     const scores = selectedScores.filter((score) => studentIds.has(score.studentId));
-    const scorePercents = scores.map(getScorePercent);
     const followUpStudentIds = new Set(scores
       .filter((score) => getScorePercent(score) < LOW_SCORE_THRESHOLD)
       .map((score) => score.studentId));
@@ -334,13 +333,11 @@ function buildOverviewRows() {
       gradeName: state.maps.grades.get(classroom.gradeId)?.name || "-",
       classroomName: classroom.name,
       studentCount: students.length,
-      average: scorePercents.length ? scorePercents.reduce((sum, score) => sum + score, 0) / scorePercents.length : null,
       followUpCount: followUpStudentIds.size,
       missingCount: Math.max(0, expectedCount - scores.length)
     };
   });
 
-  const allScorePercents = selectedScores.map(getScorePercent);
   const allFollowUpStudentIds = new Set(selectedScores
     .filter((score) => getScorePercent(score) < LOW_SCORE_THRESHOLD)
     .map((score) => score.studentId));
@@ -348,9 +345,6 @@ function buildOverviewRows() {
   els.overviewStudentCount.textContent = `${selectedStudents.length} คน`;
   els.overviewRoomCount.textContent = `${classrooms.length} ห้อง`;
   els.overviewSubjectCount.textContent = `${subjects.length} วิชา`;
-  els.overviewAverage.textContent = allScorePercents.length
-    ? `${(allScorePercents.reduce((sum, score) => sum + score, 0) / allScorePercents.length).toFixed(1)}%`
-    : "-";
   els.overviewFollowUpCount.textContent = `${allFollowUpStudentIds.size} คน`;
   els.overviewMissingCount.textContent = `${Math.max(0, expectedCount - selectedScores.length)} รายการ`;
   els.matrixMeta.textContent = subjects.length > 8 ? `กำลังแสดง ${subjects.length} รายวิชา` : `${subjects.length} รายวิชา`;
@@ -415,13 +409,9 @@ function buildScoreSummary() {
     return { ...row, lowSubjects };
   }).filter((row) => row.lowSubjects.length > 0);
 
-  const classAverage = recordedScores.length
-    ? recordedScores.reduce((sum, score) => sum + score, 0) / recordedScores.length
-    : null;
   const lowSubjectCount = state.subjectAverages.filter(({ average }) => average !== null && average < LOW_SCORE_THRESHOLD).length;
   const completionRate = expectedScoreCount ? (recordedScores.length / expectedScoreCount) * 100 : 0;
 
-  els.classAverage.textContent = classAverage === null ? "-" : `${classAverage.toFixed(1)}%`;
   els.followUpCount.textContent = `${state.followUpRows.length} คน`;
   els.lowSubjectCount.textContent = `${lowSubjectCount} วิชา`;
   els.completionRate.textContent = `${completionRate.toFixed(1)}%`;
@@ -433,39 +423,39 @@ function renderSubjectAverageChart() {
     return;
   }
 
-  els.subjectAverageChart.innerHTML = state.subjectAverages.map((subject) => {
+  els.subjectAverageChart.style.setProperty("--score-threshold", `${LOW_SCORE_THRESHOLD}%`);
+  els.subjectAverageChart.innerHTML = `
+    <div class="score-threshold-overlay" aria-hidden="true"><span></span></div>
+    ${state.subjectAverages.map((subject) => {
     const average = subject.average;
     const width = average === null ? 0 : Math.max(0, Math.min(100, average));
     const tone = average !== null && average < LOW_SCORE_THRESHOLD ? " is-low" : "";
     return `
-      <div class="score-bar-row">
-        <div class="score-bar-label" title="${subject.code} - ${subject.name}">
-          <strong>${subject.name}</strong>
-          <span>${subject.code}</span>
-        </div>
-        <div class="score-bar-track" aria-hidden="true">
-          <span class="score-bar-fill${tone}" style="width: ${width}%"></span>
-        </div>
-        <strong class="score-bar-value${tone}">${average === null ? "-" : `${average.toFixed(1)}%`}</strong>
+      <div class="score-bar-label" title="${subject.code} - ${subject.name}">
+        <strong>${subject.name}</strong>
+        <span>${subject.code}</span>
       </div>
+      <div class="score-bar-track" aria-hidden="true">
+        <span class="score-bar-fill${tone}" style="width: ${width}%"></span>
+      </div>
+      <strong class="score-bar-value${tone}">${average === null ? "-" : `${average.toFixed(1)}%`}</strong>
     `;
-  }).join("");
+  }).join("")}
+  `;
 }
 
 function renderFollowUpTable() {
   if (!state.followUpRows.length) {
-    els.followUpTbody.innerHTML = `<tr><td colspan="4"><div class="empty-state">ไม่มีนักเรียนที่มีคะแนนต่ำกว่าเกณฑ์</div></td></tr>`;
+    els.followUpTbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">ไม่มีนักเรียนที่มีคะแนนต่ำกว่าเกณฑ์</div></td></tr>`;
     return;
   }
 
   els.followUpTbody.innerHTML = state.followUpRows.map((row) => {
-    const lowestScore = Math.min(...row.lowSubjects.map(({ percent }) => percent));
     const subjectNames = row.lowSubjects.map(({ subject }) => subject.name).join(", ");
     return `
       <tr>
         <td><strong>${row.studentName}</strong><span class="score-student-code">${row.studentId}</span></td>
         <td>${subjectNames}</td>
-        <td><span class="score-low-value">${lowestScore.toFixed(1)}%</span></td>
         <td><button class="btn btn-secondary score-detail-btn" type="button" data-score-student="${row.studentId}">ดูรายละเอียด</button></td>
       </tr>
     `;
@@ -577,7 +567,6 @@ function renderOverviewTable() {
       <td>${row.gradeName}</td>
       <td><strong>${row.classroomName}</strong></td>
       <td>${row.studentCount} คน</td>
-      <td>${row.average === null ? "-" : `${row.average.toFixed(1)}%`}</td>
       <td>${row.followUpCount} คน</td>
       <td>${row.missingCount} รายการ</td>
       <td><button class="btn btn-secondary score-overview-detail-btn" type="button" data-score-grade="${row.gradeId}" data-score-classroom="${row.classroomId}">ดูรายละเอียด</button></td>
@@ -611,6 +600,16 @@ function resetFilters() {
   populateSemesters();
   populateGrades();
   populateSubjects();
+  els.grade.value = "all";
+  syncClassrooms("all");
+  els.subject.value = "all";
+  state.subjectKeyword = "";
+  closePrintModal();
+  syncSearchButton();
+  runSearch();
+}
+
+function showOverviewFromDetail() {
   els.grade.value = "all";
   syncClassrooms("all");
   els.subject.value = "all";
@@ -748,6 +747,7 @@ function attachEvents() {
   els.subject.addEventListener("change", syncSearchButton);
   els.searchBtn.addEventListener("click", () => runSearch());
   els.resetBtn.addEventListener("click", resetFilters);
+  els.backOverviewBtn.addEventListener("click", showOverviewFromDetail);
   els.columnToggleBtn.addEventListener("click", () => toggleColumnPanel());
   els.showAllSubjectsBtn.addEventListener("click", () => {
     state.visibleSubjectIds = state.subjects.map((subject) => subject.id);
