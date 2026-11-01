@@ -1,0 +1,32 @@
+[
+    {
+        "id":  "subject-math",
+        "code":  "ma21101",
+        "name":  "คณิตศาสตร์",
+        "shortName":  "คณิต"
+    },
+    {
+        "id":  "subject-thai",
+        "code":  "th21102",
+        "name":  "ภาษาไทย",
+        "shortName":  "ไทย"
+    },
+    {
+        "id":  "subject-english",
+        "code":  "en21101",
+        "name":  "ภาษาอังกฤษ",
+        "shortName":  "อังกฤษ"
+    },
+    {
+        "id":  "subject-science",
+        "code":  "sc21103",
+        "name":  "วิทยาศาสตร์",
+        "shortName":  "วิทย์"
+    },
+    {
+        "id":  "subject-social",
+        "code":  "so21104",
+        "name":  "สังคมศึกษา",
+        "shortName":  "สังคม"
+    }
+]

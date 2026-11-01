@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายงานผลการสอบซ่อม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#f7f8fc',
+            surface: '#ffffff',
+            surfaceSoft: '#f2f5fb',
+            line: '#d9e2ef',
+            ink: '#1e293b',
+            muted: '#64748b',
+            brand: '#2563eb',
+            brandSoft: '#eaf2ff',
+            success: '#1f9d68',
+            warning: '#d97706',
+            danger: '#dc2626'
+          },
+          boxShadow: {
+            panel: '0 18px 50px rgba(15, 23, 42, 0.08)'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          fontSize: {
+            xs: ['1.15vh', { lineHeight: '1.55' }],
+            sm: ['1.35vh', { lineHeight: '1.6' }],
+            base: ['1.55vh', { lineHeight: '1.6' }],
+            lg: ['1.75vh', { lineHeight: '1.45' }],
+            xl: ['2vh', { lineHeight: '1.35' }],
+            '2xl': ['2.45vh', { lineHeight: '1.25' }],
+            '3xl': ['3vh', { lineHeight: '1.18' }],
+            '4xl': ['3.6vh', { lineHeight: '1.12' }],
+            '5xl': ['4.2vh', { lineHeight: '1.08' }]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .menu-link { display:flex; align-items:center; gap:.75rem; border-radius:.75rem; padding:.625rem .75rem; font-size:1.35vh; font-weight:500; color:#475569; text-decoration:none; transition:background-color .15s ease,color .15s ease; }
+    .menu-link:hover { background:#f8fafc; color:#0f172a; }
+    .menu-link.active { background:#eff6ff; color:#1d4ed8; }
+    .menu-icon { height:1rem; width:1rem; flex-shrink:0; fill:currentColor; }
+    .chip { display:inline-flex; align-items:center; gap:.4rem; border-radius:9999px; border:1px solid #d9e2ef; background:#fff; padding:.4rem .7rem; font-size:1.2vh; color:#334155; transition:background-color .15s ease,border-color .15s ease,color .15s ease,transform .15s ease; }
+    .chip:hover { background:#f8fafc; border-color:#cbd5e1; }
+    .chip-active { border-color:#2563eb; background:#2563eb; color:#fff; }
+    .tab-btn { border-radius:9999px; border:1px solid #d9e2ef; background:#fff; padding:.65rem 1rem; font-size:1.35vh; font-weight:600; color:#475569; transition:all .15s ease; }
+    .tab-btn-active { border-color:#2563eb; background:#2563eb; color:#fff; box-shadow:0 12px 28px rgba(37,99,235,.2); }
+    .card-swap { animation: cardSwap .22s ease-out; }
+    @keyframes cardSwap { from { opacity:0; transform: translateY(8px); } to { opacity:1; transform: translateY(0); } }
+  </style>
+</head>
+<body class="relative min-h-screen overflow-x-hidden bg-canvas font-body text-ink">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden">
+    <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl"></div>
+    <div class="absolute right-0 top-20 h-80 w-80 rounded-full bg-sky-100/60 blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-100/50 blur-3xl"></div>
+  </div>
+
+  <div id="layoutSidebar"></div>
+
+  <div class="relative lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="../shared/academic-layout.js?v=8"></script>
+    <script>AcademicLayout.mount({"active":"retake","title":"รายงานผลการสอบซ่อม"});</script>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8">
+      <div class="space-y-6">
+        <section class="mb-6">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                <span>รายงานผลการเรียน</span>
+                <span class="text-slate-300">></span>
+                <span class="font-medium text-slate-700">รายงานผลการสอบซ่อม</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-3">
+                <h1 class="text-3xl font-semibold tracking-tight text-slate-900 lg:text-4xl">รายงานผลการสอบซ่อม</h1>
+                <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:text-slate-700" title="รวมข้อมูลนักเรียนสอบซ่อมแบบรายคนและรายวิชาไว้ในหน้าเดียว">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 6.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM10.75 11h2.5v6h-2.5v-6Z"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ตัวกรองการค้นหา</p>
+              <h2 class="mt-2 text-xl font-semibold text-slate-900">เลือกเงื่อนไขก่อนแสดงผลลัพธ์</h2>
+            </div>
+            <div class="inline-flex rounded-full border border-line bg-surfaceSoft p-1">
+              <button id="tabStudent" type="button" class="tab-btn tab-btn-active">รายห้องเรียน</button>
+              <button id="tabSubject" type="button" class="tab-btn">รายวิชา</button>
+            </div>
+          </div>
+
+          <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">ปีการศึกษา</span>
+              <select id="year" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"></select>
+            </label>
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">ภาคเรียน</span>
+              <select id="term" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"></select>
+            </label>
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">ระดับชั้น</span>
+              <select id="gradeLevel" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"></select>
+            </label>
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">ห้องเรียน</span>
+              <select id="classRoom" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"></select>
+            </label>
+          </div>
+
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <button id="moreToggle" type="button" class="inline-flex items-center gap-2 rounded-full border border-line bg-surfaceSoft px-4 py-2 text-sm font-semibold text-ink transition hover:bg-slate-100">
+              <span>ตัวกรองเพิ่มเติม</span>
+              <span id="moreBadge" class="hidden rounded-full bg-brand px-2 py-0.5 text-xs text-white">0</span>
+            </button>
+          </div>
+
+          <div id="morePanel" class="mt-4 hidden rounded-3xl border border-line bg-surfaceSoft p-4">
+            <div id="studentMoreFilters" class="grid gap-4 md:grid-cols-2">
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">รายวิชา</span>
+                <select id="subject" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"></select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">สถานะ</span>
+                <select id="status" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
+                  <option value="ทั้งหมด">ทั้งหมด</option>
+                  <option value="รอสอบซ่อม">รอสอบซ่อม</option>
+                  <option value="สอบซ่อมแล้ว">สอบซ่อมแล้ว</option>
+                  <option value="ติดตามงาน">ติดตามงาน</option>
+                </select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">ช่วงการประเมิน</span>
+                <select id="category" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
+                  <option value="ทั้งหมด">ทั้งหมด</option>
+                  <option value="กลางภาค">กลางภาค</option>
+                  <option value="ปลายภาค">ปลายภาค</option>
+                </select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">ประเภทคะแนน</span>
+                <select id="scoreType" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
+                  <option value="ทั้งหมด">ทั้งหมด</option>
+                  <option value="คะแนนกลางภาค">คะแนนกลางภาค</option>
+                  <option value="คะแนนปลายภาค">คะแนนปลายภาค</option>
+                </select>
+              </label>
+            </div>
+            <div id="subjectMoreFilters" class="hidden grid gap-4 md:grid-cols-2">
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">สถานะสอบซ่อม</span>
+                <select id="subjectStatus" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
+                  <option value="ทั้งหมด">ทั้งหมด</option>
+                  <option value="รอสอบซ่อม">รอสอบซ่อม</option>
+                  <option value="สอบซ่อมแล้ว">สอบซ่อมแล้ว</option>
+                  <option value="ติดตามงาน">ติดตามงาน</option>
+                </select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">แผนการเรียน</span>
+                <select id="program" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"></select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">ครูผู้สอน</span>
+                <select id="teacher" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"></select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">รายวิชา</span>
+                <select id="subject2" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"></select>
+              </label>
+            </div>
+          </div>
+
+          <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+            <p id="draftNotice" class="hidden text-sm font-medium text-warning">ตัวกรองมีการเปลี่ยนแปลง กดค้นหาเพื่อแสดงผลใหม่</p>
+            <div class="flex flex-wrap gap-3">
+              <button id="resetButton" type="button" class="rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-surfaceSoft">ล้างค่า</button>
+              <button id="searchButton" type="button" class="inline-flex items-center gap-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M10 18a8 8 0 1 1 5.3-14l4.4 4.4-1.4 1.4-4.4-4.4A6 6 0 1 0 10 16a5.96 5.96 0 0 0 3.7-1.3l4.4 4.4-1.4 1.4-4.4-4.4A7.96 7.96 0 0 1 10 18Z"/></svg>
+                ค้นหา
+              </button>
+            </div>
+          </div>
+
+          <div class="mt-4 flex flex-wrap gap-2" id="activeFilterChips"></div>
+        </section>
+
+        <section id="summaryCards" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"></section>
+
+        <section class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div class="border-b border-slate-200 p-5 lg:p-6">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ผลลัพธ์การค้นหา</p>
+                <h3 id="tableTitle" class="mt-2 text-xl font-semibold text-slate-900">รายห้องเรียน</h3>
+                <p class="mt-2 text-sm leading-6 text-muted">ค้นหาได้ทั้งรหัส ชื่อ ห้องเรียน วิชา สถานะ และหมายเหตุจากตัวกรองเดียว</p>
+              </div>
+              <div class="relative">
+                <button id="exportDropdownButton" type="button" class="inline-flex items-center gap-2 rounded-full border border-line bg-surfaceSoft px-4 py-2.5 text-sm font-semibold text-ink transition hover:bg-slate-100">
+                  <span id="exportDropdownLabel">ส่งออกรายห้องเรียน</span>
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="m7 10 5 5 5-5H7Z"/></svg>
+                </button>
+                <div id="exportDropdown" class="absolute right-0 top-full z-20 mt-2 hidden w-64 overflow-hidden rounded-2xl border border-line bg-white shadow-lg">
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-5 grid gap-4 lg:grid-cols-[1.15fr_0.85fr]">
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">ค้นหาในตาราง</span>
+                <input id="tableSearch" type="text" placeholder="ค้นหาในตาราง..." class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">เรียงข้อมูล</span>
+                <select id="tableSort" class="w-full rounded-2xl border border-line bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100"></select>
+              </label>
+            </div>
+
+            <div class="mt-4 flex flex-wrap gap-2" id="quickFilters"></div>
+          </div>
+
+          <div class="px-4 pb-4 pt-4 lg:px-6 lg:pb-6 lg:pt-6">
+            <div class="overflow-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <table class="min-w-[1100px] w-full border-collapse text-sm">
+                <thead class="sticky top-0 z-10 bg-[#F5F7FA]">
+                  <tr class="border-b border-slate-200 text-slate-600" id="tableHead"></tr>
+                </thead>
+                <tbody id="tableBody" class="divide-y divide-slate-200 bg-white"></tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="previewModal" class="fixed inset-0 z-50 hidden bg-slate-950/65 p-4">
+    <div class="mx-auto flex min-h-full max-w-6xl items-center justify-center">
+      <div class="w-full overflow-hidden rounded-[2rem] bg-canvas shadow-2xl">
+        <div class="flex flex-col gap-3 border-b border-line px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p class="text-sm text-muted">ตัวอย่างก่อนดาวน์โหลด</p>
+            <h3 id="previewTitle" class="text-lg font-semibold text-ink">ตัวอย่างรายงาน</h3>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            <button id="downloadButton" class="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">ดาวน์โหลดไฟล์</button>
+            <button id="closeModal" class="rounded-full border border-line bg-white px-4 py-2 text-sm font-semibold text-ink transition hover:bg-surfaceSoft">ปิด</button>
+          </div>
+        </div>
+        <div class="max-h-[85vh] overflow-auto bg-canvas p-6 lg:p-10">
+          <div class="mx-auto max-w-5xl rounded-[2rem] border border-slate-300 bg-white p-8 shadow-sm lg:p-10">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p class="text-sm font-medium text-slate-500">รายงานผลการเรียน</p>
+                <h4 id="reportHeading" class="mt-1 text-2xl font-semibold text-slate-900">รายงาน</h4>
+                <p id="reportSubHeading" class="mt-2 text-sm text-slate-600">-</p>
+              </div>
+              <div class="text-right text-xs text-slate-500">
+                <div id="reportMode">-</div>
+                <div class="mt-1">Page 1</div>
+              </div>
+            </div>
+            <div id="previewNote" class="mt-6 rounded-2xl bg-slate-50 p-4 text-sm leading-6 text-slate-600"></div>
+            <div class="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+              <table class="w-full border-collapse text-sm">
+                <thead class="sticky top-0 z-10 bg-[#F5F7FA] text-slate-600">
+                  <tr class="border-b border-slate-200" id="previewHead"></tr>
+                </thead>
+                <tbody id="previewTable" class="divide-y divide-slate-200 bg-white"></tbody>
+              </table>
+            </div>
+            <div class="mt-6 flex items-center justify-between text-sm text-slate-600">
+              <p>รวม <span id="previewTotal" class="font-semibold text-slate-900">0</span> รายการ</p>
+              <p id="previewFooter" class="font-semibold text-slate-700">สิ้นสุดรายงาน</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const studentRecords = [
+      { id: 1, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', studentId: '4824', studentName: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'รอสอบซ่อม', remark: 'ขาดสอบย่อย' },
+      { id: 2, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', studentId: '4824', studentName: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ว23103', subjectName: 'วิทยาศาสตร์ 6', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'คะแนนรวมไม่ถึงเกณฑ์' },
+      { id: 3, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', studentId: '4824', studentName: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ท23103', subjectName: 'ภาษาไทย', score: 'ร', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'สอบซ่อมแล้ว', remark: 'รอประกาศผล' },
+      { id: 4, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', studentId: '4831', studentName: 'เด็กชายพีรวิชญ์ คงช่วย', subjectCode: 'ว23103', subjectName: 'วิทยาศาสตร์ 6', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'ไม่ส่งงานโครงงาน' },
+      { id: 5, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', studentId: '4831', studentName: 'เด็กชายพีรวิชญ์ คงช่วย', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: 'ร', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'ติดตามงาน', remark: 'ยังไม่ครบแบบฝึกหัด' },
+      { id: 6, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', studentId: '4837', studentName: 'เด็กหญิงสุภัสสรา ใจดี', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'รอสอบซ่อม', remark: 'ไม่เข้าสอบกลางภาค' },
+      { id: 7, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', studentId: '4843', studentName: 'เด็กชายธนกฤต ศรีสุข', subjectCode: 'อ23101', subjectName: 'ภาษาอังกฤษ 6', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'คะแนน speaking ต่ำ' },
+      { id: 8, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', studentId: '4843', studentName: 'เด็กชายธนกฤต ศรีสุข', subjectCode: 'ส23102', subjectName: 'สังคมศึกษา', score: 'ร', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'สอบซ่อมแล้ว', remark: '' },
+      { id: 9, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/1', studentId: '4708', studentName: 'เด็กหญิงพิชญาภา สุขทอง', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'รอสอบซ่อม', remark: 'ไม่ส่งใบงาน' },
+      { id: 10, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/1', studentId: '4716', studentName: 'เด็กชายภูผา ชูศรี', subjectCode: 'อ23101', subjectName: 'ภาษาอังกฤษ 6', score: 'ร', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'ติดตามงาน', remark: 'ขาดสอบปลายภาค' },
+      { id: 11, year: '2568', term: '1', gradeLevel: 'ม.3', classRoom: 'ม.3/2', studentId: '4824', studentName: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ค23100', subjectName: 'คณิตศาสตร์ 5', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'สอบซ่อมแล้ว', remark: 'ผ่านหลังสอบซ่อม' },
+      { id: 12, year: '2568', term: '1', gradeLevel: 'ม.2', classRoom: 'ม.2/3', studentId: '3610', studentName: 'เด็กหญิงอรปรียา เมืองทอง', subjectCode: 'ว22102', subjectName: 'วิทยาศาสตร์และเทคโนโลยี', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'คะแนนปฏิบัติไม่ครบ' },
+      { id: 13, year: '2568', term: '1', gradeLevel: 'ม.2', classRoom: 'ม.2/3', studentId: '3618', studentName: 'เด็กชายกฤตเมธ สุขสม', subjectCode: 'ท22101', subjectName: 'ภาษาไทยวิเคราะห์', score: 'ร', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'ติดตามงาน', remark: 'ไม่ส่งชิ้นงาน' },
+      { id: 14, year: '2567', term: '2', gradeLevel: 'ม.2', classRoom: 'ม.2/1', studentId: '3501', studentName: 'เด็กหญิงณิชานันท์ ทองดี', subjectCode: 'อ22102', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'สอบซ่อมแล้ว', remark: 'ผ่านแล้ว' }
+    ];
+
+    const subjectRecords = [
+      { id: 1, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/1', program: 'วิทย์-คณิต', teacher: 'อ.กมลชนก ชูเชิด', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', studentId: '4702', studentName: 'เด็กหญิงสุภัสสรา ทองมาก', grade: '1', retakeStatus: 'สอบซ่อมแล้ว', remark: 'ผ่านเกณฑ์' },
+      { id: 2, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/1', program: 'วิทย์-คณิต', teacher: 'อ.กมลชนก ชูเชิด', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', studentId: '4708', studentName: 'เด็กหญิงพิชญาภา สุขทอง', grade: '0', retakeStatus: 'รอสอบซ่อม', remark: 'ไม่ส่งใบงาน' },
+      { id: 3, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/1', program: 'วิทย์-คณิต', teacher: 'อ.ปวีณา สุดตา', subjectCode: 'ว23103', subjectName: 'วิทยาศาสตร์ 6', studentId: '4704', studentName: 'เด็กหญิงณิชาภัทร บุญเรือง', grade: '1', retakeStatus: 'สอบซ่อมแล้ว', remark: '' },
+      { id: 4, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', program: 'วิทย์-คณิต', teacher: 'อ.กมลชนก ชูเชิด', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', studentId: '4824', studentName: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', grade: '0', retakeStatus: 'รอสอบซ่อม', remark: 'ขาดสอบย่อย' },
+      { id: 5, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', program: 'วิทย์-คณิต', teacher: 'อ.ปวีณา สุดตา', subjectCode: 'ว23103', subjectName: 'วิทยาศาสตร์ 6', studentId: '4831', studentName: 'เด็กชายพีรวิชญ์ คงช่วย', grade: '0', retakeStatus: 'รอสอบซ่อม', remark: 'ไม่ส่งงาน' },
+      { id: 6, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', program: 'วิทย์-คณิต', teacher: 'อ.ปาริฉัตร สุดตา', subjectCode: 'ท23103', subjectName: 'ภาษาไทย', studentId: '4824', studentName: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', grade: 'ร', retakeStatus: 'สอบซ่อมแล้ว', remark: 'รอประกาศผล' },
+      { id: 7, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', program: 'วิทย์-คณิต', teacher: 'อ.จิราพร สุขใจ', subjectCode: 'อ23101', subjectName: 'ภาษาอังกฤษ 6', studentId: '4843', studentName: 'เด็กชายธนกฤต ศรีสุข', grade: '0', retakeStatus: 'รอสอบซ่อม', remark: 'คะแนน speaking ต่ำ' },
+      { id: 8, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', program: 'วิทย์-คณิต', teacher: 'อ.ปาริฉัตร สุดตา', subjectCode: 'ส23102', subjectName: 'สังคมศึกษา', studentId: '4843', studentName: 'เด็กชายธนกฤต ศรีสุข', grade: 'ร', retakeStatus: 'สอบซ่อมแล้ว', remark: '' },
+      { id: 9, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', program: 'วิทย์-คณิต', teacher: 'อ.กมลชนก ชูเชิด', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', studentId: '4831', studentName: 'เด็กชายพีรวิชญ์ คงช่วย', grade: 'ร', retakeStatus: 'ติดตามงาน', remark: 'ยังไม่ครบแบบฝึกหัด' },
+      { id: 10, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', program: 'วิทย์-คณิต', teacher: 'อ.กมลชนก ชูเชิด', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', studentId: '4837', studentName: 'เด็กหญิงสุภัสสรา ใจดี', grade: '0', retakeStatus: 'รอสอบซ่อม', remark: 'ไม่เข้าสอบกลางภาค' },
+      { id: 11, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', program: 'วิทย์-คณิต', teacher: 'อ.กมลชนก ชูเชิด', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', studentId: '4850', studentName: 'เด็กหญิงธัญชนก แสงทอง', grade: '0', retakeStatus: 'รอสอบซ่อม', remark: 'คะแนนแบบทดสอบไม่ถึงเกณฑ์' },
+      { id: 12, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', program: 'วิทย์-คณิต', teacher: 'อ.กมลชนก ชูเชิด', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', studentId: '4856', studentName: 'เด็กชายปุณณวิชญ์ สายแก้ว', grade: 'ร', retakeStatus: 'ติดตามงาน', remark: 'รอส่งใบงานแก้ตัว' },
+      { id: 13, year: '2568', term: '1', gradeLevel: 'ม.2', classRoom: 'ม.2/3', program: 'ศิลป์-ภาษา', teacher: 'อ.ชลธิชา ศรีสวัสดิ์', subjectCode: 'ส22102', subjectName: 'ประวัติศาสตร์', studentId: '6231', studentName: 'เด็กชายรัฐศาสตร์ พรชัย', grade: '0', retakeStatus: 'ติดตามงาน', remark: 'ขาดส่งรายงาน' },
+      { id: 14, year: '2568', term: '2', gradeLevel: 'ม.2', classRoom: 'ม.2/2', program: 'English Program', teacher: 'Mr. Daniel Clark', subjectCode: 'อ22102', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', studentId: '4812', studentName: 'เด็กชายเจษฎา สายชู', grade: '0', retakeStatus: 'รอสอบซ่อม', remark: 'คะแนน speaking ต่ำ' }
+    ];
+
+    const STATE_KEY = 'studentRetakeManagementState';
+    const defaultFilters = {
+      year: '2568',
+      term: '2',
+      gradeLevel: 'ม.3',
+      classRoom: 'ม.3/2',
+      subject: 'ทั้งหมด',
+      status: 'ทั้งหมด',
+      category: 'ทั้งหมด',
+      scoreType: 'ทั้งหมด',
+      subjectStatus: 'ทั้งหมด',
+      program: 'ทั้งหมด',
+      teacher: 'ทั้งหมด'
+    };
+
+    const state = {
+      view: 'student',
+      draftFilters: { ...defaultFilters },
+      appliedFilters: { ...defaultFilters },
+      draftTableSearch: '',
+      appliedTableSearch: '',
+      draftTableSort: 'default',
+      appliedTableSort: 'default',
+      quickFilter: 'ทั้งหมด',
+      moreOpen: false,
+      scrollPosition: 0,
+      previewMode: 'students'
+    };
+
+    const els = {
+      sidebar: document.getElementById('sidebar'),
+      sidebarOverlay: document.getElementById('sidebarOverlay'),
+      mobileMenuButton: document.getElementById('mobileMenuButton'),
+      timestampText: document.getElementById('timestampText'),
+      tabStudent: document.getElementById('tabStudent'),
+      tabSubject: document.getElementById('tabSubject'),
+      moreToggle: document.getElementById('moreToggle'),
+      moreBadge: document.getElementById('moreBadge'),
+      morePanel: document.getElementById('morePanel'),
+      studentMoreFilters: document.getElementById('studentMoreFilters'),
+      subjectMoreFilters: document.getElementById('subjectMoreFilters'),
+      draftNotice: document.getElementById('draftNotice'),
+      searchButton: document.getElementById('searchButton'),
+      resetButton: document.getElementById('resetButton'),
+      activeFilterChips: document.getElementById('activeFilterChips'),
+      summaryCards: document.getElementById('summaryCards'),
+      tableTitle: document.getElementById('tableTitle'),
+      tableHead: document.getElementById('tableHead'),
+      tableBody: document.getElementById('tableBody'),
+      tableSearch: document.getElementById('tableSearch'),
+      tableSort: document.getElementById('tableSort'),
+      year: document.getElementById('year'),
+      term: document.getElementById('term'),
+      gradeLevel: document.getElementById('gradeLevel'),
+      classRoom: document.getElementById('classRoom'),
+      subject: document.getElementById('subject'),
+      subject2: document.getElementById('subject2'),
+      status: document.getElementById('status'),
+      category: document.getElementById('category'),
+      scoreType: document.getElementById('scoreType'),
+      subjectStatus: document.getElementById('subjectStatus'),
+      program: document.getElementById('program'),
+      teacher: document.getElementById('teacher'),
+      quickFilters: document.getElementById('quickFilters'),
+      exportDropdownButton: document.getElementById('exportDropdownButton'),
+      exportDropdownLabel: document.getElementById('exportDropdownLabel'),
+      exportDropdown: document.getElementById('exportDropdown'),
+      previewModal: document.getElementById('previewModal'),
+      previewTitle: document.getElementById('previewTitle'),
+      reportHeading: document.getElementById('reportHeading'),
+      reportSubHeading: document.getElementById('reportSubHeading'),
+      reportMode: document.getElementById('reportMode'),
+      previewNote: document.getElementById('previewNote'),
+      previewHead: document.getElementById('previewHead'),
+      previewTable: document.getElementById('previewTable'),
+      previewTotal: document.getElementById('previewTotal'),
+      previewFooter: document.getElementById('previewFooter'),
+      downloadButton: document.getElementById('downloadButton'),
+      closeModal: document.getElementById('closeModal')
+    };
+
+    const sharedSorts = {
+      student: [
+        ['default', 'ค่าเริ่มต้น'],
+        ['studentNameAsc', 'ชื่อนักเรียน'],
+        ['studentIdAsc', 'รหัสนักเรียน'],
+        ['subjectsDesc', 'จำนวนวิชามากสุด'],
+        ['priorityDesc', 'ความเร่งด่วนสูงสุด'],
+        ['waitingDesc', 'รอสอบซ่อมมากสุด']
+      ],
+      subject: [
+        ['default', 'ค่าเริ่มต้น'],
+        ['subjectCodeAsc', 'รหัสวิชา'],
+        ['subjectNameAsc', 'ชื่อวิชา'],
+        ['studentsDesc', 'จำนวนนักเรียนมากสุด'],
+        ['waitingDesc', 'รอสอบซ่อมมากสุด'],
+        ['completionDesc', 'ดำเนินการแล้วมากสุด']
+      ]
+    };
+
+    const quickLabels = ['ทั้งหมด', 'รอสอบซ่อม', 'สอบซ่อมแล้ว', 'ติดตามงาน', 'หลายวิชา', 'คะแนน 0', 'ผล ร'];
+    const nf = new Intl.NumberFormat('th-TH');
+
+    function escapeHTML(value) {
+      return String(value).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
+    }
+
+    function getTimestamp() {
+      return new Intl.DateTimeFormat('th-TH', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      }).format(new Date());
+    }
+
+    function updateTimestamp() {
+      if (els.timestampText) els.timestampText.textContent = getTimestamp();
+    }
+
+    function setSelectOptions(selectEl, values, includeAll = true) {
+      const html = [];
+      if (includeAll) html.push('<option value="ทั้งหมด">ทั้งหมด</option>');
+      [...new Set(values)].sort((a, b) => String(a).localeCompare(String(b), 'th')).forEach((value) => {
+        html.push(`<option value="${escapeHTML(value)}">${escapeHTML(value)}</option>`);
+      });
+      selectEl.innerHTML = html.join('');
+    }
+
+    function snapshotDraftState() {
+      return {
+        filters: state.draftFilters,
+        search: state.draftTableSearch,
+        sort: state.draftTableSort
+      };
+    }
+
+    function snapshotAppliedState() {
+      return {
+        filters: state.appliedFilters,
+        search: state.appliedTableSearch,
+        sort: state.appliedTableSort
+      };
+    }
+
+    function isChanged() {
+      return JSON.stringify(snapshotDraftState()) !== JSON.stringify(snapshotAppliedState());
+    }
+
+    function showSidebar(open) {
+      els.sidebar.classList.toggle('-translate-x-full', !open);
+      els.sidebarOverlay.classList.toggle('hidden', !open);
+    }
+
+    function getClassroomTitleLabel() {
+      const classRoom = state.appliedFilters.classRoom;
+      if (!classRoom || classRoom === 'ทั้งหมด') return '';
+      return classRoom.replace(/^ม\./, '');
+    }
+
+    function updateTableTitle() {
+      if (state.view === 'student') {
+        const classRoomLabel = getClassroomTitleLabel();
+        els.tableTitle.textContent = classRoomLabel ? `รายห้องเรียน ${classRoomLabel}` : 'รายห้องเรียน';
+      } else {
+        els.tableTitle.textContent = 'รายวิชา';
+      }
+    }
+
+    function setView(view) {
+      state.view = view;
+      els.tabStudent.classList.toggle('tab-btn-active', view === 'student');
+      els.tabSubject.classList.toggle('tab-btn-active', view === 'subject');
+      els.morePanel.classList.toggle('hidden', !state.moreOpen);
+      els.studentMoreFilters.classList.toggle('hidden', view !== 'student');
+      els.subjectMoreFilters.classList.toggle('hidden', view !== 'subject');
+      updateTableTitle();
+      fillSorts();
+      renderExportOptions();
+      syncMoreBadge();
+      updateAll(false);
+    }
+
+    function renderExportOptions() {
+      if (state.view === 'student') {
+        els.exportDropdownLabel.textContent = 'ส่งออกรายห้องเรียน';
+        els.exportDropdown.innerHTML = [
+          ['students', 'ส่งออกรายชื่อนักเรียนในห้อง'],
+          ['summary', 'ส่งออกสรุปรายห้อง'],
+          ['pdf', 'ส่งออก PDF รายห้องเรียน'],
+          ['excel', 'ส่งออก Excel รายห้องเรียน']
+        ].map(([mode, label]) => `<button type="button" data-export-mode="${mode}" class="block w-full px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">${label}</button>`).join('');
+      } else {
+        els.exportDropdownLabel.textContent = 'ส่งออกรายวิชา';
+        els.exportDropdown.innerHTML = [
+          ['subjects', 'ส่งออกรายวิชา'],
+          ['pdf', 'ส่งออก PDF รายวิชา'],
+          ['excel', 'ส่งออก Excel รายวิชา']
+        ].map(([mode, label]) => `<button type="button" data-export-mode="${mode}" class="block w-full px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">${label}</button>`).join('');
+      }
+    }
+
+    function fillSorts() {
+      const rows = sharedSorts[state.view];
+      els.tableSort.innerHTML = rows.map(([value, label]) => `<option value="${value}">${label}</option>`).join('');
+      if (![...rows].some(([value]) => value === state.draftTableSort)) state.draftTableSort = 'default';
+      els.tableSort.value = state.draftTableSort;
+    }
+
+    function syncMoreBadge() {
+      const keys = state.view === 'student' ? ['subject', 'status', 'category', 'scoreType'] : ['subjectStatus', 'program', 'teacher', 'subject2'];
+      const count = keys.filter((key) => state.draftFilters[key] && state.draftFilters[key] !== 'ทั้งหมด').length;
+      els.moreBadge.textContent = count;
+      els.moreBadge.classList.toggle('hidden', count === 0);
+    }
+
+    function syncDraftInputs() {
+      els.year.value = state.draftFilters.year;
+      els.term.value = state.draftFilters.term;
+      els.gradeLevel.value = state.draftFilters.gradeLevel;
+      els.classRoom.value = state.draftFilters.classRoom;
+      els.subject.value = state.draftFilters.subject;
+      els.subject2.value = state.draftFilters.subject;
+      els.status.value = state.draftFilters.status;
+      els.category.value = state.draftFilters.category;
+      els.scoreType.value = state.draftFilters.scoreType;
+      els.subjectStatus.value = state.draftFilters.subjectStatus;
+      els.program.value = state.draftFilters.program;
+      els.teacher.value = state.draftFilters.teacher;
+      els.tableSearch.value = state.draftTableSearch;
+      els.tableSort.value = state.draftTableSort;
+      syncMoreBadge();
+      els.draftNotice.classList.toggle('hidden', !isChanged());
+    }
+
+    function refreshDependentOptions() {
+      const base = state.view === 'student' ? studentRecords : subjectRecords;
+      const year = state.draftFilters.year;
+      const term = state.draftFilters.term;
+      const gradeLevel = state.draftFilters.gradeLevel;
+      const classRoom = state.draftFilters.classRoom;
+      const subjectValues = base.filter((r) => r.year === year && r.term === term && r.gradeLevel === gradeLevel && (classRoom === 'ทั้งหมด' || r.classRoom === classRoom)).map((r) => r.subjectName || r.subjectName);
+      setSelectOptions(els.subject, subjectValues, true);
+      setSelectOptions(els.subject2, subjectValues, true);
+
+      if (state.view === 'student') {
+        setSelectOptions(els.category, base.filter((r) => r.year === year && r.term === term).map((r) => r.category), true);
+        setSelectOptions(els.scoreType, base.filter((r) => r.year === year && r.term === term).map((r) => r.scoreType), true);
+      } else {
+        setSelectOptions(els.program, base.filter((r) => r.year === year && r.term === term && r.gradeLevel === gradeLevel).map((r) => r.program), true);
+        setSelectOptions(els.teacher, base.filter((r) => r.year === year && r.term === term && r.gradeLevel === gradeLevel).map((r) => r.teacher), true);
+      }
+
+      syncDraftInputs();
+    }
+
+    function readUrlState() {
+      const params = new URLSearchParams(location.search);
+      if (!params.toString()) return null;
+      const filters = { ...defaultFilters };
+      let hasFilters = false;
+      Object.keys(defaultFilters).forEach((key) => {
+        if (params.has(key)) {
+          filters[key] = params.get(key) || defaultFilters[key];
+          hasFilters = true;
+        }
+      });
+      const search = params.has('search') ? (params.get('search') || '') : null;
+      const sort = params.has('sort') ? (params.get('sort') || 'default') : null;
+      const view = params.get('view') === 'subject' ? 'subject' : params.get('view') === 'student' ? 'student' : null;
+      return {
+        view,
+        filters,
+        search,
+        sort,
+        hasFilters: hasFilters || search !== null || sort !== null || view !== null
+      };
+    }
+
+    function uniqueBaseValues(key) {
+      return [...new Set([...studentRecords, ...subjectRecords].map((r) => r[key]).filter(Boolean))];
+    }
+
+    function restoreState() {
+      const raw = sessionStorage.getItem(STATE_KEY);
+      if (!raw) return null;
+      try { return JSON.parse(raw); } catch { return null; }
+    }
+
+    function saveState() {
+      sessionStorage.setItem(STATE_KEY, JSON.stringify({
+        view: state.view,
+        draftFilters: state.draftFilters,
+        appliedFilters: state.appliedFilters,
+        draftTableSearch: state.draftTableSearch,
+        appliedTableSearch: state.appliedTableSearch,
+        draftTableSort: state.draftTableSort,
+        appliedTableSort: state.appliedTableSort,
+        quickFilter: state.quickFilter,
+        scrollPosition: window.scrollY
+      }));
+    }
+
+    function getStudentGroups(rows) {
+      const map = new Map();
+      rows.forEach((row) => {
+        if (!map.has(row.studentId)) {
+          map.set(row.studentId, { studentId: row.studentId, name: row.studentName, gradeLevel: row.gradeLevel, classRoom: row.classRoom, subjects: [], subjectCount: 0, waitingCount: 0, completedCount: 0, followUpCount: 0, zeroCount: 0, pendingGradeCount: 0, order: row.id });
+        }
+        const g = map.get(row.studentId);
+        g.subjects.push(row);
+        g.subjectCount += 1;
+        g.waitingCount += row.status === 'รอสอบซ่อม' ? 1 : 0;
+        g.completedCount += row.status === 'สอบซ่อมแล้ว' ? 1 : 0;
+        g.followUpCount += row.status === 'ติดตามงาน' ? 1 : 0;
+        g.zeroCount += row.score === '0' ? 1 : 0;
+        g.pendingGradeCount += row.score === 'ร' ? 1 : 0;
+        g.order = Math.min(g.order, row.id);
+      });
+      return [...map.values()].map((g) => ({
+        ...g,
+        overallStatus: g.completedCount === g.subjectCount && g.subjectCount > 0 ? 'ดำเนินการครบแล้ว' : g.followUpCount > 0 ? 'ต้องติดตาม' : 'รอสอบซ่อม',
+        priority: g.completedCount === g.subjectCount && g.subjectCount > 0 ? { label: 'ดำเนินการครบแล้ว', rank: 0 } : (g.subjectCount >= 3 || g.waitingCount >= 2 || (g.zeroCount > 0 && g.pendingGradeCount > 0)) ? { label: 'เร่งด่วนสูง', rank: 3 } : (g.subjectCount >= 2 || g.followUpCount > 0) ? { label: 'ต้องติดตาม', rank: 2 } : { label: 'ปกติ', rank: 1 }
+      }));
+    }
+
+    function scoreValue(score) {
+      if (score === '0') return 0;
+      if (score === 'ร') return 0.5;
+      const n = Number(score);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function getSubjectGroups(rows) {
+      const map = new Map();
+      rows.forEach((row) => {
+        const key = `${row.subjectCode}|${row.subjectName}`;
+        if (!map.has(key)) {
+          map.set(key, { subjectCode: row.subjectCode, subjectName: row.subjectName, students: [], studentsCount: 0, waitingCount: 0, completedCount: 0, followUpCount: 0, totalScore: 0, scoreCount: 0, order: row.id });
+        }
+        const g = map.get(key);
+        g.students.push(row);
+        g.studentsCount = g.students.length;
+        g.waitingCount += row.retakeStatus === 'รอสอบซ่อม' ? 1 : 0;
+        g.completedCount += row.retakeStatus === 'สอบซ่อมแล้ว' ? 1 : 0;
+        g.followUpCount += row.retakeStatus === 'ติดตามงาน' ? 1 : 0;
+        g.totalScore += scoreValue(row.grade);
+        g.scoreCount += 1;
+        g.order = Math.min(g.order, row.id);
+      });
+      return [...map.values()].map((g) => ({
+        ...g,
+        averageScore: g.scoreCount ? g.totalScore / g.scoreCount : 0,
+        completionRate: g.scoreCount ? (g.completedCount / g.scoreCount) * 100 : 0
+      }));
+    }
+
+    function matchesStudentSearch(group, keyword) {
+      const q = keyword.trim().toLowerCase();
+      if (!q) return true;
+      if (`${group.studentId} ${group.name} ${group.gradeLevel} ${group.classRoom}`.toLowerCase().includes(q)) return true;
+      return group.subjects.some((r) => `${r.subjectCode} ${r.subjectName} ${r.status} ${r.remark} ${r.category} ${r.scoreType}`.toLowerCase().includes(q));
+    }
+
+    function matchesSubjectSearch(group, keyword) {
+      const q = keyword.trim().toLowerCase();
+      if (!q) return true;
+      if (`${group.subjectCode} ${group.subjectName}`.toLowerCase().includes(q)) return true;
+      return group.students.some((r) => `${r.studentId} ${r.studentName} ${r.retakeStatus} ${r.remark}`.toLowerCase().includes(q));
+    }
+
+    function filterStudentRows(rows) {
+      return rows.filter((r) => {
+        const f = state.appliedFilters;
+        return r.year === f.year && r.term === f.term && r.gradeLevel === f.gradeLevel && (f.classRoom === 'ทั้งหมด' || r.classRoom === f.classRoom) && (f.subject === 'ทั้งหมด' || r.subjectName === f.subject) && (f.status === 'ทั้งหมด' || r.status === f.status) && (f.category === 'ทั้งหมด' || r.category === f.category) && (f.scoreType === 'ทั้งหมด' || r.scoreType === f.scoreType);
+      });
+    }
+
+    function filterSubjectRows(rows) {
+      return rows.filter((r) => {
+        const f = state.appliedFilters;
+        return r.year === f.year && r.term === f.term && r.gradeLevel === f.gradeLevel && (f.classRoom === 'ทั้งหมด' || r.classRoom === f.classRoom) && (f.subject === 'ทั้งหมด' || r.subjectName === f.subject) && (f.subjectStatus === 'ทั้งหมด' || r.retakeStatus === f.subjectStatus) && (f.program === 'ทั้งหมด' || r.program === f.program) && (f.teacher === 'ทั้งหมด' || r.teacher === f.teacher);
+      });
+    }
+
+    function getCurrentRows() {
+      const baseRows = state.view === 'student' ? filterStudentRows(studentRecords) : filterSubjectRows(subjectRecords);
+      const groups = state.view === 'student' ? getStudentGroups(baseRows) : getSubjectGroups(baseRows);
+      const searched = groups.filter((g) => state.view === 'student' ? matchesStudentSearch(g, state.appliedTableSearch) : matchesSubjectSearch(g, state.appliedTableSearch));
+      const quick = searched.filter((g) => {
+        switch (state.quickFilter) {
+          case 'รอสอบซ่อม': return state.view === 'student' ? g.waitingCount > 0 : g.waitingCount > 0;
+          case 'สอบซ่อมแล้ว': return state.view === 'student' ? g.completedCount > 0 : g.completedCount > 0;
+          case 'ติดตามงาน': return g.followUpCount > 0;
+          case 'หลายวิชา': return state.view === 'student' ? g.subjectCount >= 2 : g.studentsCount >= 2;
+          case 'คะแนน 0': return state.view === 'student' ? g.zeroCount > 0 : g.averageScore === 0;
+          case 'ผล ร': return state.view === 'student' ? g.pendingGradeCount > 0 : g.students.some((s) => s.grade === 'ร');
+          default: return true;
+        }
+      });
+      const rows = [...quick];
+      if (state.view === 'student') {
+        const cmp = {
+          default: (a, b) => a.order - b.order,
+          studentNameAsc: (a, b) => a.name.localeCompare(b.name, 'th'),
+          studentIdAsc: (a, b) => a.studentId.localeCompare(b.studentId, 'th', { numeric: true }),
+          subjectsDesc: (a, b) => b.subjectCount - a.subjectCount || a.name.localeCompare(b.name, 'th'),
+          priorityDesc: (a, b) => b.priority.rank - a.priority.rank || b.waitingCount - a.waitingCount,
+          waitingDesc: (a, b) => b.waitingCount - a.waitingCount || b.subjectCount - a.subjectCount
+        }[state.appliedTableSort] || ((a, b) => a.order - b.order);
+        rows.sort(cmp);
+      } else {
+        const cmp = {
+          default: (a, b) => a.order - b.order,
+          subjectCodeAsc: (a, b) => a.subjectCode.localeCompare(b.subjectCode, 'th'),
+          subjectNameAsc: (a, b) => a.subjectName.localeCompare(b.subjectName, 'th'),
+          studentsDesc: (a, b) => b.studentsCount - a.studentsCount || a.subjectName.localeCompare(b.subjectName, 'th'),
+          waitingDesc: (a, b) => b.waitingCount - a.waitingCount || b.studentsCount - a.studentsCount,
+          completionDesc: (a, b) => b.completionRate - a.completionRate || a.subjectCode.localeCompare(b.subjectCode, 'th')
+        }[state.appliedTableSort] || ((a, b) => a.order - b.order);
+        rows.sort(cmp);
+      }
+      return { baseRows, groups, searched, rows };
+    }
+
+    function getSummaryCards(data) {
+      if (state.view === 'student') {
+        const uniqueStudents = data.rows.length;
+        return [
+          { label: 'นักเรียนที่ต้องสอบซ่อม', value: nf.format(uniqueStudents), hint: 'แสดง 1 แถวต่อนักเรียนในห้อง' },
+          { label: 'รายการวิชาที่ต้องสอบซ่อม', value: nf.format(data.baseRows.length), hint: `รวม ${nf.format(new Set(data.baseRows.map((r) => r.subjectCode)).size)} วิชา` },
+          { label: 'นักเรียนที่ติดหลายวิชา', value: nf.format(data.rows.filter((g) => g.subjectCount >= 2).length), hint: 'อย่างน้อย 2 วิชา' },
+          { label: 'รอสอบซ่อม', value: nf.format(data.baseRows.filter((r) => r.status === 'รอสอบซ่อม').length), hint: 'รายการที่ยังรอดำเนินการ' }
+        ];
+      }
+      return [
+        { label: 'รายวิชา', value: nf.format(data.rows.length), hint: 'แสดง 1 แถวต่อวิชา' },
+        { label: 'นักเรียน', value: nf.format(new Set(data.baseRows.map((r) => r.studentId)).size), hint: 'จำนวนนักเรียนไม่ซ้ำ' },
+        { label: 'สอบซ่อมแล้ว', value: nf.format(data.baseRows.filter((r) => r.retakeStatus === 'สอบซ่อมแล้ว').length), hint: 'รายการที่ดำเนินการแล้ว' },
+        { label: 'รอสอบซ่อม', value: nf.format(data.baseRows.filter((r) => r.retakeStatus === 'รอสอบซ่อม').length), hint: 'รายการที่ยังรอดำเนินการ' }
+      ];
+    }
+
+    function renderSummaryCards(data) {
+      const cards = getSummaryCards(data);
+      els.summaryCards.innerHTML = cards.map((c) => `<article class="rounded-[1.75rem] border border-line bg-white p-5 shadow-sm"><p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted">${c.label}</p><p class="mt-3 text-3xl font-semibold text-ink">${c.value}</p><p class="mt-2 text-sm leading-6 text-muted">${c.hint}</p></article>`).join('');
+      els.summaryCards.classList.remove('card-swap');
+      void els.summaryCards.offsetWidth;
+      els.summaryCards.classList.add('card-swap');
+    }
+
+    function renderChips(data) {
+      const counts = {
+        'ทั้งหมด': data.rows.length,
+        'รอสอบซ่อม': state.view === 'student' ? data.rows.filter((g) => g.waitingCount > 0).length : data.rows.filter((g) => g.waitingCount > 0).length,
+        'สอบซ่อมแล้ว': state.view === 'student' ? data.rows.filter((g) => g.completedCount > 0).length : data.rows.filter((g) => g.completedCount > 0).length,
+        'ติดตามงาน': data.rows.filter((g) => g.followUpCount > 0).length,
+        'หลายวิชา': state.view === 'student' ? data.rows.filter((g) => g.subjectCount >= 2).length : data.rows.filter((g) => g.studentsCount >= 2).length,
+        'คะแนน 0': state.view === 'student' ? data.rows.filter((g) => g.zeroCount > 0).length : data.rows.filter((g) => g.averageScore === 0).length,
+        'ผล ร': state.view === 'student' ? data.rows.filter((g) => g.pendingGradeCount > 0).length : data.rows.filter((g) => g.students.some((s) => s.grade === 'ร')).length
+      };
+      els.quickFilters.innerHTML = quickLabels.map((label) => `<button type="button" data-quick="${label}" class="chip ${state.quickFilter === label ? 'chip-active' : ''}">${label}<span class="text-xs opacity-70" data-quick-count="${label}">${nf.format(counts[label] || 0)}</span></button>`).join('');
+      els.quickFilters.querySelectorAll('[data-quick]').forEach((btn) => btn.addEventListener('click', () => { state.quickFilter = btn.dataset.quick; renderAll(); }));
+    }
+
+    function renderActiveChips() {
+      const chips = [
+        { key: 'year', label: state.appliedFilters.year },
+        { key: 'term', label: `ภาคเรียน ${state.appliedFilters.term}` },
+        { key: 'gradeLevel', label: `ระดับชั้น ${state.appliedFilters.gradeLevel}` },
+        { key: 'classRoom', label: state.appliedFilters.classRoom === 'ทั้งหมด' ? 'ทุกห้อง' : state.appliedFilters.classRoom },
+        { key: 'subject', label: state.appliedFilters.subject === 'ทั้งหมด' ? 'ทุกวิชา' : state.appliedFilters.subject }
+      ];
+      if (state.view === 'student') {
+        if (state.appliedFilters.status !== 'ทั้งหมด') chips.push({ key: 'status', label: state.appliedFilters.status });
+        if (state.appliedFilters.category !== 'ทั้งหมด') chips.push({ key: 'category', label: state.appliedFilters.category });
+        if (state.appliedFilters.scoreType !== 'ทั้งหมด') chips.push({ key: 'scoreType', label: state.appliedFilters.scoreType });
+      } else {
+        if (state.appliedFilters.subjectStatus !== 'ทั้งหมด') chips.push({ key: 'subjectStatus', label: state.appliedFilters.subjectStatus });
+        if (state.appliedFilters.program !== 'ทั้งหมด') chips.push({ key: 'program', label: state.appliedFilters.program });
+        if (state.appliedFilters.teacher !== 'ทั้งหมด') chips.push({ key: 'teacher', label: state.appliedFilters.teacher });
+      }
+      els.activeFilterChips.innerHTML = [...chips.map((c) => `<button type="button" data-chip="${c.key}" class="chip">${escapeHTML(c.label)}<span aria-hidden="true">×</span></button>`), '<button type="button" id="clearAll" class="chip chip-active">ล้างทั้งหมด</button>'].join('');
+      els.activeFilterChips.querySelectorAll('[data-chip]').forEach((btn) => btn.addEventListener('click', () => { const key = btn.dataset.chip; state.draftFilters[key] = defaultFilters[key] || 'ทั้งหมด'; syncDraftInputs(); renderAll(); }));
+      document.getElementById('clearAll').addEventListener('click', () => resetFilters());
+    }
+
+    function studentStatusBadge(status) {
+      return status === 'ดำเนินการครบแล้ว' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : status === 'ต้องติดตาม' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-sky-200 bg-sky-50 text-sky-700';
+    }
+
+    function priorityBadge(priority) {
+      return priority.label === 'เร่งด่วนสูง' ? 'border-rose-200 bg-rose-50 text-rose-700' : priority.label === 'ต้องติดตาม' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700';
+    }
+
+    function renderTable(data) {
+      if (state.view === 'student') {
+        els.tableHead.innerHTML = '<th class="px-5 py-5 text-left font-semibold">นักเรียน</th><th class="px-5 py-5 text-center font-semibold">ห้องเรียน</th><th class="px-5 py-5 text-left font-semibold">รายวิชา</th><th class="px-5 py-5 text-center font-semibold">รอสอบซ่อม</th><th class="px-5 py-5 text-center font-semibold">สอบซ่อมแล้ว</th><th class="px-5 py-5 text-center font-semibold">ความเร่งด่วน</th><th class="px-5 py-5 text-center font-semibold">สถานะ</th><th class="px-5 py-5 text-center font-semibold">จัดการ</th>';
+        els.tableBody.innerHTML = data.rows.map((g) => {
+          const q = new URLSearchParams({ studentId: g.studentId, year: state.appliedFilters.year, term: state.appliedFilters.term, gradeLevel: state.appliedFilters.gradeLevel, classRoom: state.appliedFilters.classRoom });
+          return `<tr class="transition hover:bg-surfaceSoft/70"><td class="px-5 py-5 align-top"><div class="text-xs font-semibold uppercase tracking-[0.16em] text-slate-400">${escapeHTML(g.studentId)}</div><div class="mt-1.5 text-[1.45vh] font-semibold leading-6 text-ink">${escapeHTML(g.name)}</div></td><td class="px-5 py-5 text-center align-top font-medium">${escapeHTML(g.classRoom)}</td><td class="px-5 py-5 align-top"><div class="font-semibold text-ink">${nf.format(g.subjectCount)} วิชา</div><div class="mt-2 flex flex-wrap gap-2"><span class="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">รอสอบซ่อม ${nf.format(g.waitingCount)}</span><span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">สอบซ่อมแล้ว ${nf.format(g.completedCount)}</span><span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">ติดตามงาน ${nf.format(g.followUpCount)}</span></div></td><td class="px-5 py-5 text-center align-top">${nf.format(g.waitingCount)}</td><td class="px-5 py-5 text-center align-top">${nf.format(g.completedCount)}</td><td class="px-5 py-5 text-center align-top"><span class="inline-flex rounded-full border px-3 py-1.5 text-xs font-semibold ${priorityBadge(g.priority)}">${escapeHTML(g.priority.label)}</span></td><td class="px-5 py-5 text-center align-top"><span class="inline-flex rounded-full border px-3 py-1.5 text-xs font-semibold ${studentStatusBadge(g.overallStatus)}">${escapeHTML(g.overallStatus)}</span></td><td class="px-5 py-5 align-top"><div class="flex flex-wrap justify-center gap-2"><button type="button" data-detail-student="${escapeHTML(q.toString())}" class="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700">ดูรายละเอียด</button><button type="button" data-export-row="student:${escapeHTML(g.studentId)}" class="rounded-full border border-line bg-white px-4 py-2 text-xs font-semibold text-ink transition hover:bg-surfaceSoft">ส่งออก</button></div></td></tr>`;
+        }).join('');
+      } else {
+        els.tableHead.innerHTML = '<th class="px-5 py-5 text-left font-semibold">รหัสวิชา</th><th class="px-5 py-5 text-left font-semibold">ชื่อวิชา</th><th class="px-5 py-5 text-center font-semibold">นักเรียน</th><th class="px-5 py-5 text-center font-semibold">รอสอบซ่อม</th><th class="px-5 py-5 text-center font-semibold">สอบซ่อมแล้ว</th><th class="px-5 py-5 text-center font-semibold">คะแนนเฉลี่ย</th><th class="px-5 py-5 text-center font-semibold">จัดการ</th>';
+        els.tableBody.innerHTML = data.rows.map((g) => {
+          const q = new URLSearchParams({ subjectCode: g.subjectCode, subjectName: g.subjectName, year: state.appliedFilters.year, semester: state.appliedFilters.term, grade: state.appliedFilters.gradeLevel, classroom: state.appliedFilters.classRoom });
+          return `<tr class="transition hover:bg-surfaceSoft/70"><td class="px-5 py-5 align-top"><div class="font-semibold text-ink">${escapeHTML(g.subjectCode)}</div></td><td class="px-5 py-5 align-top"><div class="text-[1.45vh] font-semibold leading-6 text-ink">${escapeHTML(g.subjectName)}</div><div class="mt-1 text-xs text-muted">${escapeHTML(g.students[0]?.teacher || '')}</div></td><td class="px-5 py-5 text-center align-top"><div class="font-semibold text-ink">${nf.format(g.studentsCount)} คน</div></td><td class="px-5 py-5 text-center align-top"><span class="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">${nf.format(g.waitingCount)} รอสอบซ่อม</span></td><td class="px-5 py-5 text-center align-top"><span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">${nf.format(g.completedCount)} สอบซ่อมแล้ว</span></td><td class="px-5 py-5 text-center align-top">${g.averageScore.toFixed(1)}</td><td class="px-5 py-5 align-top"><div class="flex flex-wrap justify-center gap-2"><button type="button" data-detail-subject="${escapeHTML(q.toString())}" class="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700">ดูรายละเอียด</button><button type="button" data-export-row="subject:${escapeHTML(g.subjectCode)}" class="rounded-full border border-line bg-white px-4 py-2 text-xs font-semibold text-ink transition hover:bg-surfaceSoft">ส่งออก</button></div></td></tr>`;
+        }).join('');
+      }
+    }
+
+    function updateAll(animate = true) {
+      const data = getCurrentRows();
+      updateTableTitle();
+      renderSummaryCards(data);
+      renderChips(data);
+      renderActiveChips();
+      renderTable(data);
+      syncMoreBadge();
+      els.draftNotice.classList.toggle('hidden', !isChanged());
+      if (animate) els.summaryCards.classList.add('card-swap');
+      els.summaryCards.addEventListener('animationend', () => els.summaryCards.classList.remove('card-swap'), { once: true });
+    }
+
+    function renderAll() {
+      updateAll(true);
+    }
+
+    function applyFilters() {
+      state.appliedFilters = { ...state.draftFilters };
+      state.appliedTableSearch = state.draftTableSearch.trim();
+      state.appliedTableSort = state.draftTableSort;
+      saveState();
+      renderAll();
+      updateTimestamp();
+    }
+
+    function resetFilters() {
+      state.draftFilters = { ...defaultFilters };
+      state.appliedFilters = { ...defaultFilters };
+      state.draftTableSearch = '';
+      state.appliedTableSearch = '';
+      state.draftTableSort = 'default';
+      state.appliedTableSort = 'default';
+      state.quickFilter = 'ทั้งหมด';
+      state.moreOpen = false;
+      syncDraftInputs();
+      refreshDependentOptions();
+      fillSorts();
+      state.appliedFilters = { ...state.draftFilters };
+      state.appliedTableSearch = state.draftTableSearch;
+      state.appliedTableSort = state.draftTableSort;
+      saveState();
+      renderAll();
+    }
+
+    function openPreview(mode, rowId) {
+      const data = getCurrentRows();
+      state.previewMode = mode;
+      let rows = data.rows;
+      let title = state.view === 'student' ? 'ตัวอย่างรายงานรายห้องเรียน' : 'ตัวอย่างรายงานรายวิชา';
+      let note = state.view === 'student' ? 'แสดง 1 แถวต่อนักเรียนในห้องเรียน' : 'แสดงรายชื่อนักเรียนแยกตามรายวิชา';
+      let head = state.view === 'student'
+        ? '<th class="px-3 py-3 text-center font-semibold">ลำดับ</th><th class="px-3 py-3 text-left font-semibold">นักเรียน</th><th class="px-3 py-3 text-center font-semibold">ห้องเรียน</th><th class="px-3 py-3 text-center font-semibold">จำนวนวิชา</th><th class="px-3 py-3 text-center font-semibold">รอสอบซ่อม</th>'
+        : '<th class="px-3 py-3 text-center font-semibold">ลำดับ</th><th class="px-3 py-3 text-center font-semibold">รหัสนักเรียน</th><th class="px-3 py-3 text-left font-semibold">ชื่อ-สกุล</th><th class="px-3 py-3 text-center font-semibold">ห้องเรียน</th><th class="px-3 py-3 text-center font-semibold">คะแนน/ผล</th><th class="px-3 py-3 text-center font-semibold">สถานะ</th>';
+      let previewKind = state.view;
+      if (mode === 'summary') {
+        title = state.view === 'student' ? 'ตัวอย่างสรุปรายห้องเรียน' : 'ตัวอย่างสรุปรายวิชา';
+        note = 'สรุปตามเงื่อนไขที่ค้นหาล่าสุด';
+        previewKind = 'summary';
+        rows = state.view === 'student'
+          ? [
+              { metric: 'นักเรียน', value: nf.format(data.rows.length), detail: 'แสดง 1 แถวต่อนักเรียน' },
+              { metric: 'รายการวิชา', value: nf.format(data.baseRows.length), detail: 'รายการที่ตรงกับตัวกรอง' },
+              { metric: 'ติดหลายวิชา', value: nf.format(data.rows.filter((g) => g.subjectCount >= 2).length), detail: 'นักเรียนที่ติดตั้งแต่ 2 วิชาขึ้นไป' },
+              { metric: 'รอสอบซ่อม', value: nf.format(data.baseRows.filter((r) => r.status === 'รอสอบซ่อม').length), detail: 'รายการที่ยังรอดำเนินการ' }
+            ]
+          : [
+              { metric: 'รายวิชา', value: nf.format(data.rows.length), detail: 'แสดง 1 แถวต่อรายวิชา' },
+              { metric: 'นักเรียน', value: nf.format(new Set(data.baseRows.map((r) => r.studentId)).size), detail: 'จำนวนนักเรียนไม่ซ้ำ' },
+              { metric: 'สอบซ่อมแล้ว', value: nf.format(data.baseRows.filter((r) => r.retakeStatus === 'สอบซ่อมแล้ว').length), detail: 'รายการที่ดำเนินการแล้ว' },
+              { metric: 'รอสอบซ่อม', value: nf.format(data.baseRows.filter((r) => r.retakeStatus === 'รอสอบซ่อม').length), detail: 'รายการที่ยังรอดำเนินการ' }
+            ];
+        head = '<th class="px-3 py-3 text-left font-semibold">รายการ</th><th class="px-3 py-3 text-center font-semibold">จำนวน</th><th class="px-3 py-3 text-left font-semibold">รายละเอียด</th>';
+      }
+      if (mode === 'pdf') title = 'ตัวอย่างรายงาน PDF';
+      if (mode === 'excel') title = 'ตัวอย่างรายงาน Excel';
+      const selected = rowId ? data.rows.find((r) => (state.view === 'student' ? r.studentId : r.subjectCode) === rowId) : null;
+      if (mode !== 'summary' && selected) rows = [selected];
+      const subjectExportRows = state.view === 'subject' && previewKind !== 'summary'
+        ? rows.flatMap((subject) => subject.students.map((student) => ({
+            subjectCode: subject.subjectCode,
+            subjectName: subject.subjectName,
+            studentId: student.studentId,
+            studentName: student.studentName,
+            classRoom: student.classRoom,
+            grade: student.grade,
+            retakeStatus: student.retakeStatus
+          })))
+        : [];
+      const subjectExportHtml = state.view === 'subject' && previewKind !== 'summary'
+        ? rows.map((subject) => {
+            const subjectHeader = `<tr class="bg-blue-50/80"><td colspan="6" class="px-3 py-3"><div class="font-semibold text-ink">${escapeHTML(subject.subjectCode)} ${escapeHTML(subject.subjectName)}</div><div class="mt-1 text-xs text-slate-600">ครูผู้สอน ${escapeHTML(subject.students[0]?.teacher || '-')} / นักเรียน ${nf.format(subject.students.length)} คน</div></td></tr>`;
+            const studentRows = subject.students.map((student, i) => `<tr><td class="px-3 py-3 text-center">${i + 1}</td><td class="px-3 py-3 text-center">${escapeHTML(student.studentId)}</td><td class="px-3 py-3">${escapeHTML(student.studentName)}</td><td class="px-3 py-3 text-center">${escapeHTML(student.classRoom)}</td><td class="px-3 py-3 text-center">${escapeHTML(student.grade)}</td><td class="px-3 py-3 text-center">${escapeHTML(student.retakeStatus)}</td></tr>`).join('');
+            return subjectHeader + studentRows;
+          }).join('')
+        : '';
+      const previewTotalRows = previewKind === 'summary' ? rows.length : state.view === 'subject' ? subjectExportRows.length : rows.length;
+      els.previewTitle.textContent = title;
+      els.reportHeading.textContent = title;
+      els.reportSubHeading.textContent = `ปีการศึกษา ${state.appliedFilters.year} / ภาคเรียน ${state.appliedFilters.term} / ${state.appliedFilters.gradeLevel} / ${state.appliedFilters.classRoom}`;
+      els.reportMode.textContent = previewKind === 'summary' ? 'สรุป' : (state.view === 'student' ? 'รายห้องเรียน' : 'รายวิชา');
+      els.previewNote.textContent = note;
+      els.previewHead.innerHTML = head;
+      els.previewTable.innerHTML = previewKind === 'summary'
+        ? rows.map((r) => `<tr><td class="px-3 py-3 font-semibold text-ink">${escapeHTML(r.metric)}</td><td class="px-3 py-3 text-center">${escapeHTML(r.value)}</td><td class="px-3 py-3 text-slate-600">${escapeHTML(r.detail)}</td></tr>`).join('')
+        : state.view === 'student'
+          ? rows.map((r, i) => `<tr><td class="px-3 py-3 text-center">${i + 1}</td><td class="px-3 py-3">${escapeHTML(r.name)}</td><td class="px-3 py-3 text-center">${escapeHTML(r.classRoom)}</td><td class="px-3 py-3 text-center">${nf.format(r.subjectCount)}</td><td class="px-3 py-3 text-center">${nf.format(r.waitingCount)}</td></tr>`).join('')
+          : subjectExportHtml;
+      els.previewTotal.textContent = nf.format(previewTotalRows);
+      els.previewFooter.textContent = previewKind === 'summary' ? 'ตัวอย่างสรุป' : (state.view === 'student' ? 'ตัวอย่างรายห้องเรียน' : 'ตัวอย่างรายวิชา');
+      els.previewModal.classList.remove('hidden');
+    }
+
+    function closePreview() { els.previewModal.classList.add('hidden'); }
+
+    function bindEvents() {
+      ['year', 'term', 'gradeLevel', 'classRoom', 'subject', 'subject2', 'status', 'category', 'scoreType', 'subjectStatus', 'program', 'teacher'].forEach((id) => {
+        els[id].addEventListener('change', () => {
+          const value = els[id].value;
+          if (id === 'subject2') state.draftFilters.subject = value;
+          else if (id === 'subject') state.draftFilters.subject = value;
+          else if (id in state.draftFilters) state.draftFilters[id] = value;
+          if (['year', 'term', 'gradeLevel', 'classRoom'].includes(id)) refreshDependentOptions();
+          els.draftNotice.classList.toggle('hidden', !isChanged());
+          syncMoreBadge();
+        });
+      });
+      els.searchButton.addEventListener('click', applyFilters);
+      els.resetButton.addEventListener('click', resetFilters);
+      els.tableSearch.addEventListener('input', (e) => {
+        state.draftTableSearch = e.target.value;
+        els.draftNotice.classList.toggle('hidden', !isChanged());
+      });
+      els.tableSearch.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          applyFilters();
+        }
+      });
+      els.tableSort.addEventListener('change', (e) => {
+        state.draftTableSort = e.target.value;
+        els.draftNotice.classList.toggle('hidden', !isChanged());
+      });
+      els.tabStudent.addEventListener('click', () => setView('student'));
+      els.tabSubject.addEventListener('click', () => setView('subject'));
+      els.moreToggle.addEventListener('click', () => { state.moreOpen = !state.moreOpen; els.morePanel.classList.toggle('hidden', !state.moreOpen); });
+      els.exportDropdownButton.addEventListener('click', () => els.exportDropdown.classList.toggle('hidden'));
+      els.downloadButton.addEventListener('click', () => alert(`Mock download: ${state.previewMode}.pdf`));
+      els.closeModal.addEventListener('click', closePreview);
+      els.previewModal.addEventListener('click', (e) => { if (e.target === els.previewModal) closePreview(); });
+      els.mobileMenuButton.addEventListener('click', () => showSidebar(true));
+      els.sidebarOverlay.addEventListener('click', () => showSidebar(false));
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('#exportDropdownButton') && !e.target.closest('#exportDropdown')) els.exportDropdown.classList.add('hidden');
+        const studentBtn = e.target.closest('[data-detail-student]');
+        if (studentBtn) { saveState(); window.location.href = `student-retake-detail.html?${studentBtn.dataset.detailStudent}`; }
+        const subjectBtn = e.target.closest('[data-detail-subject]');
+        if (subjectBtn) { saveState(); window.location.href = `subject-retake-detail.html?${subjectBtn.dataset.detailSubject}`; }
+        const exportRow = e.target.closest('[data-export-row]');
+        if (exportRow) {
+          const [kind, id] = exportRow.dataset.exportRow.split(':');
+          openPreview(kind === 'student' ? 'student' : 'subject', id);
+        }
+        const exportMode = e.target.closest('[data-export-mode]');
+        if (exportMode) {
+          els.exportDropdown.classList.add('hidden');
+          openPreview(exportMode.dataset.exportMode, null);
+        }
+      });
+      els.tableBody.addEventListener('click', (e) => {
+        const exp = e.target.closest('[data-export-row]');
+        if (exp) {
+          const [kind, id] = exp.dataset.exportRow.split(':');
+          openPreview(kind === 'student' ? 'student' : 'subject', id);
+        }
+      });
+      window.addEventListener('scroll', () => { state.scrollPosition = window.scrollY; }, { passive: true });
+    }
+
+    function loadFromSessionOrDefaults() {
+      const saved = restoreState();
+      const urlState = readUrlState();
+      if (saved) {
+        state.view = saved.view || 'student';
+        state.draftFilters = { ...defaultFilters, ...(saved.draftFilters || {}) };
+        state.appliedFilters = { ...defaultFilters, ...(saved.appliedFilters || {}) };
+        state.draftTableSearch = saved.draftTableSearch || saved.tableSearch || '';
+        state.appliedTableSearch = saved.appliedTableSearch || saved.tableSearch || '';
+        state.draftTableSort = saved.draftTableSort || saved.tableSort || 'default';
+        state.appliedTableSort = saved.appliedTableSort || saved.tableSort || 'default';
+        state.quickFilter = saved.quickFilter || 'ทั้งหมด';
+        state.scrollPosition = saved.scrollPosition || 0;
+      }
+      if (urlState?.hasFilters) {
+        if (urlState.view) state.view = urlState.view;
+        state.draftFilters = { ...state.draftFilters, ...urlState.filters };
+        state.appliedFilters = { ...state.appliedFilters, ...urlState.filters };
+        if (urlState.search !== null) {
+          state.draftTableSearch = urlState.search;
+          state.appliedTableSearch = urlState.search;
+        }
+        if (urlState.sort !== null) {
+          state.draftTableSort = urlState.sort;
+          state.appliedTableSort = urlState.sort;
+        }
+      }
+      setView(state.view);
+      fillSorts();
+      refreshDependentOptions();
+      syncDraftInputs();
+      renderAll();
+      if (state.scrollPosition) requestAnimationFrame(() => window.scrollTo(0, state.scrollPosition));
+    }
+
+    function init() {
+      setSelectOptions(els.year, uniqueBaseValues('year'), false);
+      setSelectOptions(els.term, uniqueBaseValues('term'), false);
+      setSelectOptions(els.gradeLevel, uniqueBaseValues('gradeLevel'), false);
+      setSelectOptions(els.classRoom, uniqueBaseValues('classRoom'), true);
+      setSelectOptions(els.subject, [...new Set(studentRecords.map((r) => r.subjectName).concat(subjectRecords.map((r) => r.subjectName)))], true);
+      setSelectOptions(els.subject2, [...new Set(studentRecords.map((r) => r.subjectName).concat(subjectRecords.map((r) => r.subjectName)))], true);
+      setSelectOptions(els.status, ['ทั้งหมด', 'รอสอบซ่อม', 'สอบซ่อมแล้ว', 'ติดตามงาน'], false);
+      setSelectOptions(els.category, ['ทั้งหมด', 'กลางภาค', 'ปลายภาค'], false);
+      setSelectOptions(els.scoreType, ['ทั้งหมด', 'คะแนนกลางภาค', 'คะแนนปลายภาค'], false);
+      setSelectOptions(els.subjectStatus, ['ทั้งหมด', 'รอสอบซ่อม', 'สอบซ่อมแล้ว', 'ติดตามงาน'], false);
+      setSelectOptions(els.program, [...new Set(subjectRecords.map((r) => r.program))], true);
+      setSelectOptions(els.teacher, [...new Set(subjectRecords.map((r) => r.teacher))], true);
+      fillSorts();
+      bindEvents();
+      loadFromSessionOrDefaults();
+      updateTimestamp();
+    }
+
+    init();
+  </script>
+</body>
+</html>

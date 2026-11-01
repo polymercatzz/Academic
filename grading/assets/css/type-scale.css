@@ -1,0 +1,524 @@
+/* Generated from style.css + attendance.css: every px font-size snapped to the vh type scale so the report modules use
+   the same viewport-height type scale as the Tailwind pages. Regenerate if either changes. */
+
+.ar-themed .brand-mark {
+  font-size: 1.35vh;
+}
+
+.ar-themed .brand-name {
+  font-size: 1.55vh;
+}
+
+.ar-themed .brand-sub {
+  font-size: 1.15vh;
+}
+
+.ar-themed .nav a {
+  font-size: 1.35vh;
+}
+
+.ar-themed .nav-badge {
+  font-size: 1.15vh;
+}
+
+.ar-themed .btn-link {
+  font-size: 1.35vh;
+}
+
+.ar-themed .demo-note {
+  font-size: 1.15vh;
+}
+
+.ar-themed .topbar-title {
+  font-size: 1.35vh;
+}
+
+.ar-themed .user-name {
+  font-size: 1.35vh;
+}
+
+.ar-themed .user-role {
+  font-size: 1.15vh;
+}
+
+.ar-themed .page-head h1 {
+  font-size: 2.45vh;
+}
+
+.ar-themed .btn {
+  font-size: 1.35vh;
+}
+
+.ar-themed .btn-sm {
+  font-size: 1.35vh;
+}
+
+.ar-themed .chip {
+  font-size: 1.35vh;
+}
+
+.ar-themed .empty h3 {
+  font-size: 1.55vh;
+}
+
+.ar-themed .callout {
+  font-size: 1.35vh;
+}
+
+.ar-themed .stat-label {
+  font-size: 1.35vh;
+}
+
+.ar-themed .stat-value {
+  font-size: 3.0vh;
+}
+
+.ar-themed .stat-value small {
+  font-size: 1.35vh;
+}
+
+.ar-themed .sec-code {
+  font-size: 1.35vh;
+}
+
+.ar-themed .sec-name {
+  font-size: 1.55vh;
+}
+
+.ar-themed .sec-meta {
+  font-size: 1.35vh;
+}
+
+.ar-themed .sec-room {
+  font-size: 2.45vh;
+}
+
+.ar-themed .sec-step {
+  font-size: 1.15vh;
+}
+
+.ar-themed .sec-foot {
+  font-size: 1.35vh;
+}
+
+.ar-themed .ws-title h1 {
+  font-size: 2.0vh;
+}
+
+.ar-themed .ws-sub {
+  font-size: 1.35vh;
+}
+
+.ar-themed .kpi-label {
+  font-size: 1.15vh;
+}
+
+.ar-themed .kpi-value {
+  font-size: 1.75vh;
+}
+
+.ar-themed .ring > span {
+  font-size: 1.15vh;
+}
+
+.ar-themed .tab {
+  font-size: 1.35vh;
+}
+
+.ar-themed .tab .step {
+  font-size: 1.15vh;
+}
+
+.ar-themed .legend {
+  font-size: 1.35vh;
+}
+
+.ar-themed table.grid {
+  font-size: 1.35vh;
+}
+
+.ar-themed .grid thead th {
+  font-size: 1.35vh;
+}
+
+.ar-themed .grid thead th.grp {
+  font-size: 1.35vh;
+}
+
+.ar-themed .col-head .ch-name {
+  font-size: 1.35vh;
+}
+
+.ar-themed .col-head .ch-meta {
+  font-size: 1.15vh;
+}
+
+.ar-themed .grid .c-id {
+  font-size: 1.35vh;
+}
+
+.ar-themed .cell {
+  font-size: 1.35vh;
+}
+
+.ar-themed .calc.grade {
+  font-size: 1.35vh;
+}
+
+.ar-themed .level-hint {
+  font-size: 1.15vh;
+}
+
+.ar-themed .actionbar .ab-status {
+  font-size: 1.35vh;
+}
+
+.ar-themed .kbd {
+  font-size: 1.15vh;
+}
+
+.ar-themed .weight-bar > div {
+  font-size: 1.35vh;
+}
+
+.ar-themed .group-title h3 {
+  font-size: 1.35vh;
+}
+
+.ar-themed .struct th {
+  font-size: 1.35vh;
+}
+
+.ar-themed .ind-chip {
+  font-size: 1.15vh;
+}
+
+.ar-themed .ind-add {
+  font-size: 1.15vh;
+}
+
+.ar-themed .check-item b {
+  font-size: 1.35vh;
+}
+
+.ar-themed .dist-bar .n {
+  font-size: 1.15vh;
+}
+
+.ar-themed .dist-bar .l {
+  font-size: 1.15vh;
+}
+
+.ar-themed .seg button {
+  font-size: 1.35vh;
+}
+
+.ar-themed .seg .cnt {
+  font-size: 1.15vh;
+}
+
+.ar-themed table.list {
+  font-size: 1.35vh;
+}
+
+.ar-themed .list th {
+  font-size: 1.35vh;
+}
+
+.ar-themed .tl-item {
+  font-size: 1.35vh;
+}
+
+.ar-themed .tl-time {
+  font-size: 1.35vh;
+}
+
+.ar-themed .modal-head h2 {
+  font-size: 1.75vh;
+}
+
+.ar-themed .toast {
+  font-size: 1.35vh;
+}
+
+.ar-themed .popover button {
+  font-size: 1.35vh;
+}
+
+.ar-themed .popover .pop-title {
+  font-size: 1.15vh;
+}
+
+.ar-themed .cl-item {
+  font-size: 1.35vh;
+}
+
+.ar-themed .steps-mini li {
+  font-size: 1.35vh;
+}
+
+.ar-themed .steps-mini li::before {
+  font-size: 1.15vh;
+}
+
+.ar-themed .back-link {
+  font-size: 1.35vh;
+}
+
+.ar-themed .nav-label {
+  font-size: 1.15vh;
+}
+
+.ar-themed .mx th {
+  font-size: 1.35vh;
+}
+
+.ar-themed .mx th.mx-room {
+  font-size: 1.35vh;
+}
+
+.ar-themed .mx-top {
+  font-size: 1.35vh;
+}
+
+.ar-themed .mx-teacher {
+  font-size: 1.15vh;
+}
+
+.ar-themed .mx-sum {
+  font-size: 1.35vh;
+}
+
+.ar-themed .mx-chip {
+  font-size: 1.15vh;
+}
+
+.ar-themed .note-item {
+  font-size: 1.35vh;
+}
+
+.ar-themed .unlock-req {
+  font-size: 1.35vh;
+}
+
+@media (max-width: 860px) {
+
+  .ar-themed .actionbar .ab-status {
+    font-size: 1.35vh;
+  }
+
+}
+
+@media (max-width: 520px) {
+
+  .ar-themed .page-head h1 {
+    font-size: 2.0vh;
+  }
+
+}
+
+/* ---------- attendance.css ---------- */
+.ar-themed .sub-head {
+  font-size: 1.55vh;
+}
+
+.ar-themed .cal-head b {
+  font-size: 1.35vh;
+}
+
+.ar-themed .cal-wd {
+  font-size: 1.15vh;
+}
+
+.ar-themed .cal-n {
+  font-size: 1.35vh;
+}
+
+.ar-themed .cal-legend {
+  font-size: 1.15vh;
+}
+
+.ar-themed .dd-head h3 {
+  font-size: 1.55vh;
+}
+
+.ar-themed .dd-no {
+  font-size: 1.35vh;
+}
+
+.ar-themed .dd-no b {
+  font-size: 3.0vh;
+}
+
+.ar-themed .dd-time {
+  font-size: 1.35vh;
+}
+
+.ar-themed .dd-period .chip {
+  font-size: 1.15vh;
+}
+
+.ar-themed .dd-count {
+  font-size: 1.15vh;
+}
+
+.ar-themed .dd-count span {
+  font-size: 2.0vh;
+}
+
+.ar-themed .dd-label {
+  font-size: 1.35vh;
+}
+
+.ar-themed .name-chip {
+  font-size: 1.35vh;
+}
+
+.ar-themed .name-chip b {
+  font-size: 1.15vh;
+}
+
+.ar-themed .dd-all {
+  font-size: 1.35vh;
+}
+
+.ar-themed .dd-empty {
+  font-size: 1.35vh;
+}
+
+.ar-themed .dd-at {
+  font-size: 1.15vh;
+}
+
+.ar-themed .period-no b {
+  font-size: 2.45vh;
+}
+
+.ar-themed .period-no span {
+  font-size: 1.15vh;
+}
+
+.ar-themed .period-title .sec-room {
+  font-size: 1.35vh;
+}
+
+.ar-themed .period-sub {
+  font-size: 1.35vh;
+}
+
+.ar-themed .lunch {
+  font-size: 1.15vh;
+}
+
+.ar-themed .att-seg button {
+  font-size: 1.35vh;
+}
+
+.ar-themed .att-chip {
+  font-size: 1.15vh;
+}
+
+.ar-themed .key-hint {
+  font-size: 1.35vh;
+}
+
+.ar-themed .key-pill b {
+  font-size: 1.15vh;
+}
+
+.ar-themed .hr-subj {
+  font-size: 1.15vh;
+}
+
+.ar-themed .stat-hint {
+  font-size: 1.15vh;
+}
+
+.ar-themed .hr-list-head h2 {
+  font-size: 1.55vh;
+}
+
+.ar-themed .hr-list-head .faint {
+  font-size: 1.35vh;
+}
+
+.ar-themed .hr-list-empty {
+  font-size: 1.35vh;
+}
+
+.ar-themed .stu-no {
+  font-size: 1.35vh;
+}
+
+.ar-themed .stu-no.big {
+  font-size: 1.55vh;
+}
+
+.ar-themed .stu-chips .chip {
+  font-size: 1.15vh;
+}
+
+.ar-themed .chart-card h2 {
+  font-size: 1.35vh;
+}
+
+.ar-themed .chart .tick {
+  font-size: 1.15vh;
+}
+
+.ar-themed .chart .threshold-label {
+  font-size: 1.15vh;
+}
+
+.ar-themed .chart-foot {
+  font-size: 1.15vh;
+}
+
+.ar-themed .chart-tip {
+  font-size: 1.35vh;
+}
+
+.ar-themed .dp-label b {
+  font-size: 1.35vh;
+}
+
+.ar-themed .dp-label span {
+  font-size: 1.15vh;
+}
+
+.ar-themed .dp-val {
+  font-size: 1.35vh;
+}
+
+.ar-themed .dp-val span {
+  font-size: 1.15vh;
+}
+
+.ar-themed .dp-axis > div span {
+  font-size: 1.15vh;
+}
+
+.ar-themed .drawer-head h2 {
+  font-size: 1.75vh;
+}
+
+.ar-themed .drawer-body h3 {
+  font-size: 1.35vh;
+}
+
+.ar-themed .dr-subj {
+  font-size: 1.35vh;
+}
+
+.ar-themed .dr-subj-name span {
+  font-size: 1.15vh;
+}
+
+.ar-themed .dr-subj-val .chip,
+.ar-themed .dr-subj-val .faint {
+  font-size: 1.15vh;
+}
+
+.ar-themed .dr-day {
+  font-size: 1.35vh;
+}

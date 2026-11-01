@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ER Diagram ระบบบันทึกคะแนน</title>
+<style>
+  :root { --bg:#f4f6fa; --card:#fff; --text:#1c2333; --muted:#56607a; --border:#e3e7ef; --primary:#3b5bdb; }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--text); font-family:"Sarabun","Noto Sans Thai","Leelawadee UI",Tahoma,sans-serif; }
+  header { padding:24px 24px 8px; max-width:1500px; margin:0 auto; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  p { margin:4px 0; color:var(--muted); }
+  .legend { display:flex; gap:16px; flex-wrap:wrap; font-size:14px; margin:10px 0; }
+  .sw { display:inline-block; width:14px; height:14px; border-radius:3px; vertical-align:-2px; margin-right:6px; border:1px solid #999; }
+  nav { display:flex; gap:6px; flex-wrap:wrap; margin-top:12px; }
+  nav a { text-decoration:none; color:var(--primary); border:1px solid var(--border); background:#fff; padding:6px 12px; border-radius:8px; font-size:14px; }
+  main { max-width:1500px; margin:0 auto; padding:8px 24px 40px; display:flex; flex-direction:column; gap:20px; }
+  section { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px 18px; }
+  .head { display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:8px; }
+  h2 { font-size:17px; margin:0; flex:1; }
+  button { font:inherit; font-size:13px; border:1px solid var(--border); background:#fff; border-radius:8px; padding:6px 12px; cursor:pointer; }
+  button:hover { border-color:var(--primary); color:var(--primary); }
+  .diagram { overflow:auto; }
+  .diagram svg { width:100% !important; max-width:100% !important; height:auto; }
+  .diagram.actual svg { width:auto !important; max-width:none !important; }
+  .err { color:#b42318; white-space:pre-wrap; font-size:13px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>ER Diagram — ระบบบันทึกคะแนน</h1>
+  <p>ต่อยอดจาก ER เดิมของโครงงาน · รายละเอียดฟิลด์และเหตุผลอยู่ใน <code>er-data-dictionary.md</code></p>
+  <div class="legend">
+    <span><span class="sw" style="background:#e1f5ee;border-color:#0f6e56"></span>ตารางใหม่</span>
+    <span><span class="sw" style="background:#faeeda;border-color:#854f0b"></span>ตารางเดิมที่แก้ไข</span>
+    <span><span class="sw" style="background:#fff"></span>ตารางเดิม (คงไว้)</span>
+    <span>ฟิลด์ที่มีคำอธิบาย "ใหม่" / "แก้" คือฟิลด์ที่เปลี่ยน</span>
+  </div>
+  <nav><a href="#d1">1. ผู้ใช้ นักเรียน รายวิชา</a><a href="#d2">2. โครงสร้างคะแนนและการบันทึก</a><a href="#d3">3. ผลการเรียนและการตรวจอนุมัติ</a><a href="#d0">ภาพรวมทั้งหมด</a></nav>
+</header>
+<main>
+
+<section id="d1"><div class="head"><h2>1. ผู้ใช้ บทบาท นักเรียน และห้องเรียนที่สอน</h2><button data-svg>ดาวน์โหลด SVG</button><button data-png>ดาวน์โหลด PNG</button><button data-zoom>ขนาดจริง</button></div>
+<div class="diagram"><pre class="mermaid">
+erDiagram
+  User ||--o{ UserRole : "มี"
+  Role ||--o{ UserRole : "มอบให้"
+  LearningArea |o--o{ User : "สังกัด"
+  LearningArea ||--o{ Subject : "จัดกลุ่ม"
+  Subject ||--o{ CurriculumSubject : "อยู่ในหลักสูตร"
+  CurriculumSubject ||--o{ Indicator : "มีตัวชี้วัด"
+  CurriculumSubject ||--o{ ClassSubject : "เปิดสอน"
+  Semester ||--o{ ClassSubject : "ในภาคเรียน"
+  ClassSubject ||--o{ TeachingGroup : "แบ่งกลุ่ม"
+  User ||--o{ TeachingGroup : "สอน"
+  Classroom |o--o{ TeachingGroup : "ของห้อง"
+  Student ||--o{ StudentClassroom : "อยู่ห้อง"
+  Classroom ||--o{ StudentClassroom : "มีนักเรียน"
+  Student ||--o{ StudentEnrollment : "ลงเรียน"
+  TeachingGroup ||--o{ StudentEnrollment : "มีผู้เรียน"
+
+  User {
+    int user_id PK
+    varchar username UK
+    varchar password_hash
+    varchar first_name
+    varchar last_name
+    varchar position
+    int learning_area_id FK
+    varchar status
+  }
+  Role {
+    int role_id PK
+    varchar role_code UK "teacher academic admin"
+    varchar role_name
+  }
+  UserRole {
+    int user_role_id PK
+    int user_id FK
+    int role_id FK
+    datetime assigned_at
+  }
+  LearningArea {
+    int learning_area_id PK
+    varchar area_name
+  }
+  Subject {
+    int subject_id PK
+    varchar subject_code
+    varchar subject_name
+    int learning_area_id FK "ใหม่"
+  }
+  CurriculumSubject {
+    int curriculum_subject_id PK
+    int subject_id FK
+    varchar subject_code
+    varchar grade_level
+    int semester_no
+    varchar subject_type
+    decimal credit
+    int learning_hours
+  }
+  Indicator {
+    int indicator_id PK
+    int curriculum_subject_id FK
+    varchar indicator_code
+    varchar description
+    int sequence
+  }
+  Semester {
+    int semester_id PK
+    int academic_year
+    int semester_no
+    date start_date
+    date end_date
+    date grade_submission_deadline "ใหม่"
+  }
+  ClassSubject {
+    int class_subject_id PK
+    int curriculum_subject_id FK
+    int semester_id FK
+  }
+  TeachingGroup {
+    int teaching_group_id PK
+    int class_subject_id FK
+    varchar group_name
+    int classroom_id FK "ใหม่"
+    int teacher_id FK "ใหม่ ย้ายจาก ClassSubject"
+    varchar grading_status "ใหม่"
+    datetime status_updated_at "ใหม่"
+  }
+  Classroom {
+    int classroom_id PK
+    int academic_year
+    varchar grade_level
+    int study_program_id FK
+    varchar classroom_name
+  }
+  Student {
+    int student_id PK
+    varchar student_code UK
+    varchar prefix
+    varchar first_name
+    varchar last_name
+    varchar status
+  }
+  StudentClassroom {
+    int student_classroom_id PK
+    int student_id FK
+    int classroom_id FK
+    int class_no "ใหม่ เลขที่"
+  }
+  StudentEnrollment {
+    int enrollment_id PK
+    int student_id FK
+    int teaching_group_id FK
+    varchar enrollment_status
+    datetime enrolled_at
+    decimal attendance_percent "ใหม่"
+  }
+  style User fill:#e1f5ee,stroke:#0f6e56
+  style Role fill:#e1f5ee,stroke:#0f6e56
+  style UserRole fill:#e1f5ee,stroke:#0f6e56
+  style LearningArea fill:#e1f5ee,stroke:#0f6e56
+  style Indicator fill:#e1f5ee,stroke:#0f6e56
+  style Student fill:#e1f5ee,stroke:#0f6e56
+  style Subject fill:#faeeda,stroke:#854f0b
+  style Semester fill:#faeeda,stroke:#854f0b
+  style ClassSubject fill:#faeeda,stroke:#854f0b
+  style TeachingGroup fill:#faeeda,stroke:#854f0b
+  style StudentClassroom fill:#faeeda,stroke:#854f0b
+  style StudentEnrollment fill:#faeeda,stroke:#854f0b
+</pre></div></section>
+
+<section id="d2"><div class="head"><h2>2. โครงสร้างคะแนนและการบันทึกคะแนน</h2><button data-svg>ดาวน์โหลด SVG</button><button data-png>ดาวน์โหลด PNG</button><button data-zoom>ขนาดจริง</button></div>
+<div class="diagram"><pre class="mermaid">
+erDiagram
+  CurriculumSubject ||--o{ AssessmentCategoryTemplate : "มีแม่แบบ"
+  ClassSubject ||--o{ AssessmentCategory : "มีหมวดคะแนน"
+  AssessmentCategoryTemplate |o--o{ AssessmentCategory : "สร้างจาก"
+  AssessmentCategory ||--o{ AssessmentItem : "มีองค์ประกอบ"
+  AssessmentItem ||--o{ AssessmentItemIndicator : "วัด"
+  Indicator ||--o{ AssessmentItemIndicator : "ถูกวัดโดย"
+  AssessmentItem ||--o{ StudentScore : "มีคะแนน"
+  Student ||--o{ StudentScore : "ได้คะแนน"
+  TraitItem ||--o{ StudentTraitScore : "ถูกประเมิน"
+  Student ||--o{ StudentTraitScore : "ได้ผลประเมิน"
+  TeachingGroup ||--o{ StudentTraitScore : "ประเมินในกลุ่ม"
+  TeachingGroup ||--o{ GradeChangeLog : "มีประวัติ"
+  User ||--o{ GradeChangeLog : "แก้ไข"
+
+  AssessmentCategoryTemplate {
+    int assessment_category_template_id PK
+    int curriculum_subject_id FK
+    varchar category_name
+    varchar category_type "ใหม่"
+    decimal weight_percent "แก้ จาก max_score"
+    int sequence
+  }
+  AssessmentCategory {
+    int assessment_category_id PK
+    int class_subject_id FK
+    int assessment_category_template_id FK
+    varchar category_name
+    varchar category_type "ใหม่ collect midterm final"
+    decimal weight_percent "แก้ จาก max_score รวม 100"
+    int sequence
+  }
+  AssessmentItem {
+    int assessment_item_id PK
+    int assessment_category_id FK
+    varchar item_name
+    decimal max_score "คะแนนดิบเต็ม"
+    decimal weight_percent "ใหม่ สัดส่วน"
+    date assessment_date
+    int sequence
+    int created_by FK "แก้ จาก teacher_id"
+    datetime created_at "ใหม่"
+  }
+  AssessmentItemIndicator {
+    int assessment_item_id PK, FK
+    int indicator_id PK, FK
+  }
+  StudentScore {
+    int student_score_id PK
+    int assessment_item_id FK
+    int student_id FK
+    decimal score "แก้ NULL ได้"
+    varchar score_status "แก้ scored pending_work absent"
+    datetime updated_at
+    int updated_by FK "ใหม่"
+  }
+  TraitItem {
+    int trait_item_id PK
+    varchar trait_type "characteristic reading_thinking"
+    int item_no
+    varchar item_name
+    boolean is_active
+  }
+  StudentTraitScore {
+    int student_trait_score_id PK
+    int teaching_group_id FK
+    int student_id FK
+    int trait_item_id FK
+    int level "0-3"
+    int updated_by FK
+    datetime updated_at
+  }
+  GradeChangeLog {
+    bigint change_log_id PK
+    int teaching_group_id FK
+    int student_id FK
+    varchar change_type "score trait structure remedial"
+    varchar field_label
+    varchar old_value
+    varchar new_value
+    int changed_by FK
+    datetime changed_at
+  }
+  style AssessmentItemIndicator fill:#e1f5ee,stroke:#0f6e56
+  style TraitItem fill:#e1f5ee,stroke:#0f6e56
+  style StudentTraitScore fill:#e1f5ee,stroke:#0f6e56
+  style GradeChangeLog fill:#e1f5ee,stroke:#0f6e56
+  style Indicator fill:#e1f5ee,stroke:#0f6e56
+  style User fill:#e1f5ee,stroke:#0f6e56
+  style Student fill:#e1f5ee,stroke:#0f6e56
+  style AssessmentCategoryTemplate fill:#faeeda,stroke:#854f0b
+  style AssessmentCategory fill:#faeeda,stroke:#854f0b
+  style AssessmentItem fill:#faeeda,stroke:#854f0b
+  style StudentScore fill:#faeeda,stroke:#854f0b
+  style ClassSubject fill:#faeeda,stroke:#854f0b
+  style TeachingGroup fill:#faeeda,stroke:#854f0b
+</pre></div></section>
+
+<section id="d3"><div class="head"><h2>3. ผลการเรียน เกณฑ์ และการตรวจอนุมัติ</h2><button data-svg>ดาวน์โหลด SVG</button><button data-png>ดาวน์โหลด PNG</button><button data-zoom>ขนาดจริง</button></div>
+<div class="diagram"><pre class="mermaid">
+erDiagram
+  GradingPolicy ||--o{ GradeScale : "ประกอบด้วย"
+  User ||--o{ GradingPolicy : "กำหนด"
+  GradeScale |o--o{ StudentSubjectResult : "ใช้ตัดสิน"
+  TeachingGroup ||--o{ StudentSubjectResult : "มีผลการเรียน"
+  Student ||--o{ StudentSubjectResult : "ได้ผล"
+  TeachingGroup ||--o{ GradeSubmission : "มีรอบการตรวจ"
+  User ||--o{ GradeSubmission : "ส่ง"
+  User |o--o{ GradeSubmission : "ตรวจ"
+  GradeSubmission ||--o{ ReviewNote : "มีหมุด"
+  Student ||--o{ ReviewNote : "ของนักเรียน"
+  AssessmentItem |o--o{ ReviewNote : "ปักที่ช่องคะแนน"
+  TraitItem |o--o{ ReviewNote : "ปักที่ช่องประเมิน"
+  TeachingGroup ||--o{ UnlockRequest : "มีคำขอ"
+  GradeSubmission ||--o{ UnlockRequest : "ขอปลดล็อกรอบ"
+  User ||--o{ UnlockRequest : "ยื่น/พิจารณา"
+
+  GradingPolicy {
+    int grading_policy_id PK
+    int academic_year
+    varchar education_level
+    decimal min_attendance_percent "80"
+    decimal remedial_pass_score "50"
+    decimal remedial_max_grade "1.0"
+    varchar rounding_method
+    int created_by FK
+    datetime created_at
+  }
+  GradeScale {
+    int grade_scale_id PK
+    int grading_policy_id FK "ใหม่"
+    decimal grade_value
+    varchar grade_label
+    decimal min_score
+    decimal max_score
+  }
+  StudentSubjectResult {
+    int student_subject_result_id PK
+    int teaching_group_id FK
+    int student_id FK
+    decimal total_score
+    varchar grade_result "4..0 ร มส"
+    int grade_scale_id FK "แก้ NULL ได้"
+    varchar result_status "แก้ เพิ่มค่า"
+    int characteristic_level "ใหม่"
+    int reading_level "ใหม่"
+    decimal remedial_score "ใหม่"
+    int remedial_recorded_by FK "ใหม่"
+    datetime remedial_recorded_at "ใหม่"
+    datetime calculated_at
+  }
+  GradeSubmission {
+    int grade_submission_id PK
+    int teaching_group_id FK
+    int round_no
+    int submitted_by FK
+    datetime submitted_at
+    int reviewer_id FK
+    varchar decision "approved returned unlocked"
+    varchar decision_reason
+    datetime decided_at
+    boolean is_self_review
+  }
+  ReviewNote {
+    int review_note_id PK
+    int grade_submission_id FK
+    int student_id FK
+    int assessment_item_id FK
+    int trait_item_id FK
+    varchar note_text
+    boolean is_resolved
+    datetime resolved_at
+    int created_by FK
+    datetime created_at
+  }
+  UnlockRequest {
+    int unlock_request_id PK
+    int teaching_group_id FK
+    int grade_submission_id FK
+    int requested_by FK
+    varchar reason
+    datetime requested_at
+    varchar status "pending approved rejected"
+    int decided_by FK
+    datetime decided_at
+    varchar reject_reason
+  }
+  style GradingPolicy fill:#e1f5ee,stroke:#0f6e56
+  style GradeSubmission fill:#e1f5ee,stroke:#0f6e56
+  style ReviewNote fill:#e1f5ee,stroke:#0f6e56
+  style UnlockRequest fill:#e1f5ee,stroke:#0f6e56
+  style TraitItem fill:#e1f5ee,stroke:#0f6e56
+  style User fill:#e1f5ee,stroke:#0f6e56
+  style Student fill:#e1f5ee,stroke:#0f6e56
+  style GradeScale fill:#faeeda,stroke:#854f0b
+  style StudentSubjectResult fill:#faeeda,stroke:#854f0b
+  style AssessmentItem fill:#faeeda,stroke:#854f0b
+  style TeachingGroup fill:#faeeda,stroke:#854f0b
+</pre></div></section>
+
+<section id="d0"><div class="head"><h2>ภาพรวมทั้งหมด (เฉพาะความสัมพันธ์ ไม่แสดงฟิลด์)</h2><button data-svg>ดาวน์โหลด SVG</button><button data-png>ดาวน์โหลด PNG</button><button data-zoom>ขนาดจริง</button></div>
+<p style="margin-bottom:8px">ส่วนตารางสอน (Timetable, TimetableEntry, Room, Period) และ StudyProgram ไม่ได้เปลี่ยน จึงไม่ได้แสดงในภาพนี้</p>
+<div class="diagram"><pre class="mermaid" data-elk>
+%%{init: {"layout": "elk"}}%%
+erDiagram
+  User ||--o{ UserRole : ""
+  Role ||--o{ UserRole : ""
+  LearningArea |o--o{ User : ""
+  LearningArea ||--o{ Subject : ""
+  Subject ||--o{ CurriculumSubject : ""
+  CurriculumSubject ||--o{ Indicator : ""
+  CurriculumSubject ||--o{ AssessmentCategoryTemplate : ""
+  CurriculumSubject ||--o{ ClassSubject : ""
+  Semester ||--o{ ClassSubject : ""
+  ClassSubject ||--o{ TeachingGroup : ""
+  ClassSubject ||--o{ AssessmentCategory : ""
+  AssessmentCategoryTemplate |o--o{ AssessmentCategory : ""
+  AssessmentCategory ||--o{ AssessmentItem : ""
+  AssessmentItem ||--o{ AssessmentItemIndicator : ""
+  Indicator ||--o{ AssessmentItemIndicator : ""
+  User ||--o{ TeachingGroup : "สอน"
+  Classroom |o--o{ TeachingGroup : ""
+  Student ||--o{ StudentClassroom : ""
+  Classroom ||--o{ StudentClassroom : ""
+  Student ||--o{ StudentEnrollment : ""
+  TeachingGroup ||--o{ StudentEnrollment : ""
+  AssessmentItem ||--o{ StudentScore : ""
+  Student ||--o{ StudentScore : ""
+  TraitItem ||--o{ StudentTraitScore : ""
+  Student ||--o{ StudentTraitScore : ""
+  TeachingGroup ||--o{ StudentTraitScore : ""
+  TeachingGroup ||--o{ GradeChangeLog : ""
+  GradingPolicy ||--o{ GradeScale : ""
+  GradeScale |o--o{ StudentSubjectResult : ""
+  TeachingGroup ||--o{ StudentSubjectResult : ""
+  Student ||--o{ StudentSubjectResult : ""
+  TeachingGroup ||--o{ GradeSubmission : ""
+  User |o--o{ GradeSubmission : "ตรวจ"
+  GradeSubmission ||--o{ ReviewNote : ""
+  AssessmentItem |o--o{ ReviewNote : ""
+  TraitItem |o--o{ ReviewNote : ""
+  TeachingGroup ||--o{ UnlockRequest : ""
+  GradeSubmission ||--o{ UnlockRequest : ""
+  style User fill:#e1f5ee,stroke:#0f6e56
+  style Role fill:#e1f5ee,stroke:#0f6e56
+  style UserRole fill:#e1f5ee,stroke:#0f6e56
+  style LearningArea fill:#e1f5ee,stroke:#0f6e56
+  style Indicator fill:#e1f5ee,stroke:#0f6e56
+  style Student fill:#e1f5ee,stroke:#0f6e56
+  style AssessmentItemIndicator fill:#e1f5ee,stroke:#0f6e56
+  style TraitItem fill:#e1f5ee,stroke:#0f6e56
+  style StudentTraitScore fill:#e1f5ee,stroke:#0f6e56
+  style GradeChangeLog fill:#e1f5ee,stroke:#0f6e56
+  style GradingPolicy fill:#e1f5ee,stroke:#0f6e56
+  style GradeSubmission fill:#e1f5ee,stroke:#0f6e56
+  style ReviewNote fill:#e1f5ee,stroke:#0f6e56
+  style UnlockRequest fill:#e1f5ee,stroke:#0f6e56
+  style Subject fill:#faeeda,stroke:#854f0b
+  style Semester fill:#faeeda,stroke:#854f0b
+  style ClassSubject fill:#faeeda,stroke:#854f0b
+  style TeachingGroup fill:#faeeda,stroke:#854f0b
+  style StudentClassroom fill:#faeeda,stroke:#854f0b
+  style StudentEnrollment fill:#faeeda,stroke:#854f0b
+  style AssessmentCategoryTemplate fill:#faeeda,stroke:#854f0b
+  style AssessmentCategory fill:#faeeda,stroke:#854f0b
+  style AssessmentItem fill:#faeeda,stroke:#854f0b
+  style StudentScore fill:#faeeda,stroke:#854f0b
+  style GradeScale fill:#faeeda,stroke:#854f0b
+  style StudentSubjectResult fill:#faeeda,stroke:#854f0b
+</pre></div></section>
+</main>
+
+<script type="module">
+  import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+  try {
+    const elk = await import('https://cdn.jsdelivr.net/npm/@mermaid-js/layout-elk@0/dist/mermaid-layout-elk.esm.min.mjs');
+    mermaid.registerLayoutLoaders(elk.default);
+  } catch (e) { console.warn('ELK layout ไม่พร้อมใช้ ใช้ layout ปกติแทน', e); }
+  mermaid.initialize({
+    startOnLoad: false,
+    theme: 'base',
+    themeVariables: { fontFamily: 'Sarabun, "Noto Sans Thai", "Leelawadee UI", Tahoma, sans-serif', fontSize: '14px', primaryColor: '#ffffff', primaryBorderColor: '#8a93a8', lineColor: '#56607a', tertiaryColor: '#f8f9fc' },
+    er: { useMaxWidth: false, layoutDirection: 'TB' },
+  });
+  try {
+    await mermaid.run({ querySelector: '.mermaid' });
+    document.querySelectorAll('.diagram svg').forEach((svg) => {
+      if (!svg.getAttribute('viewBox')) {
+        const b = svg.getBBox();
+        svg.setAttribute('viewBox', `${Math.floor(b.x) - 10} ${Math.floor(b.y) - 10} ${Math.ceil(b.width) + 20} ${Math.ceil(b.height) + 20}`);
+      }
+      svg.removeAttribute('height');
+    });
+  } catch (e) {
+    document.querySelectorAll('.mermaid').forEach((el) => { if (!el.querySelector('svg')) el.insertAdjacentHTML('beforeend', `<div class="err">${String(e.message || e)}</div>`); });
+  }
+  const name = (sec) => sec.querySelector('h2').textContent.trim().replace(/[\\/:*?"<>| ]+/g, '-');
+  const svgText = (svg) => new XMLSerializer().serializeToString(svg);
+  const save = (blob, file) => { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = file; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
+  document.querySelectorAll('[data-zoom]').forEach((b) => b.addEventListener('click', () => {
+    const d = b.closest('section').querySelector('.diagram');
+    d.classList.toggle('actual');
+    b.textContent = d.classList.contains('actual') ? 'พอดีหน้าจอ' : 'ขนาดจริง';
+  }));
+  document.querySelectorAll('[data-svg]').forEach((b) => b.addEventListener('click', () => {
+    const sec = b.closest('section'); const svg = sec.querySelector('svg');
+    save(new Blob([svgText(svg)], { type: 'image/svg+xml' }), `${name(sec)}.svg`);
+  }));
+  document.querySelectorAll('[data-png]').forEach((b) => b.addEventListener('click', () => {
+    const sec = b.closest('section'); const svg = sec.querySelector('svg');
+    const vb = (svg.getAttribute('viewBox') || '0 0 1200 800').split(/\s+/).map(Number);
+    const width = vb[2], height = vb[3];
+    const img = new Image();
+    img.onload = () => {
+      const scale = 2, c = document.createElement('canvas');
+      c.width = width * scale; c.height = height * scale;
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob((blob) => save(blob, `${name(sec)}.png`), 'image/png');
+    };
+    img.src = 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svgText(svg));
+  }));
+</script>
+</body>
+</html>

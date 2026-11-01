@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>คำขออนุมัติ | Academic Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#F7F9FC',
+            brand: '#2563eb',
+            ink: '#0f172a',
+            muted: '#64748b'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          boxShadow: {
+            soft: '0 12px 32px rgba(15, 23, 42, 0.06)',
+            modal: '0 24px 80px rgba(15, 23, 42, 0.18)'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .modal-backdrop { background: rgba(15, 23, 42, .46); backdrop-filter: blur(5px); }
+    .modal-panel { animation: modalIn .18s ease-out; }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .drawer-panel { animation: drawerIn .2s ease-out; }
+    @keyframes drawerIn { from { transform: translateX(24px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .field-invalid { border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, .1); }
+    .scroll-thin::-webkit-scrollbar { height: 8px; width: 8px; }
+    .scroll-thin::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+    .mark-wrap { position: relative; height: 100%; border-radius: .85rem; }
+    .mark-wrap > .mark-tag { position: absolute; top: -7px; left: 8px; z-index: 2; }
+  </style>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-canvas font-body text-ink">
+  <div id="layoutSidebar"></div>
+  <div class="lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="timetable-core.js"></script>
+    <script src="timetable-data.js"></script>
+    <script>TT.load();</script>
+    <script src="../shared/academic-layout.js?v=8"></script>
+    <script>AcademicLayout.mount({ active: 'timetable-approvals', eyebrow: 'ตารางเรียน', title: 'คำขออนุมัติ' });</script>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8">
+      <div id="pageRoot" class="mx-auto max-w-[1600px] space-y-6"></div>
+    </main>
+  </div>
+
+  <!-- Review drawer (คำร้องขอเปลี่ยนการจัด) -->
+  <div id="reviewDrawer" class="modal-backdrop fixed inset-0 z-50 hidden justify-end" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
+    <div id="reviewPanel" class="drawer-panel flex h-full w-full max-w-[1120px] flex-col bg-white shadow-modal"></div>
+  </div>
+
+  <!-- Unavailability decide modal -->
+  <div id="unDecideModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div id="unDecidePanel" class="modal-panel max-h-[92vh] w-full max-w-lg overflow-y-auto rounded-3xl bg-white shadow-modal"></div>
+  </div>
+
+  <!-- Add unavailability (เพิ่มแทนครู) modal -->
+  <div id="unAddModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div id="unAddPanel" class="modal-panel max-h-[92vh] w-full max-w-xl overflow-y-auto rounded-3xl bg-white shadow-modal"></div>
+  </div>
+
+  <script>
+  (function () {
+    const $ = (id) => document.getElementById(id);
+    const esc = TT.esc;
+    const db = () => TT.db;
+
+    /* ------------------------------------------------------------------ state */
+    const state = {
+      tab: location.hash.startsWith('#unavailability') ? 'unavailability' : 'requests',
+      term: 'all',
+      status: 'pending',
+      q: '',
+      review: null, // { id, mode:'asis'|'modify', final, note }
+      unDecide: null, // { id, approve, note }
+      unAdd: null
+    };
+    const hashReq = location.hash.match(/^#request=(.+)$/);
+
+    const INPUT = 'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100';
+    const BTN_PRIMARY = 'inline-flex items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:shadow-none';
+    const BTN_GHOST = 'inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100';
+    const BTN_DANGER = 'inline-flex items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-white px-4 py-3 text-sm font-semibold text-rose-600 shadow-sm transition hover:bg-rose-50 focus:outline-none focus:ring-4 focus:ring-rose-100';
+    const TYPE_CLS = { move: 'bg-blue-50 text-blue-700', swap: 'bg-violet-50 text-violet-700', room: 'bg-teal-50 text-teal-700' };
+    const TYPE_ICON = { move: 'arrow', swap: 'swap', room: 'room' };
+    const UN_STATUS = { pending: TT.REQUEST_STATUS.pending, approved: TT.REQUEST_STATUS.approved, rejected: TT.REQUEST_STATUS.rejected };
+
+    /* ------------------------------------------------------------------ helpers */
+    const badge = (label, cls) => `<span class="inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${cls}">${label}</span>`;
+    const statusBadge = (s) => { const st = TT.REQUEST_STATUS[s] || { label: s, cls: 'bg-slate-100 text-slate-600' }; return badge(esc(st.label), st.cls); };
+    const typeBadge = (t) => badge(`${TT.icon(TYPE_ICON[t], 'h-3.5 w-3.5')}${esc(TT.REQUEST_TYPES[t])}`, TYPE_CLS[t]);
+    const subjName = (code) => TT.subject(code)?.name || code;
+    const dt = (iso) => (iso ? TT.formatDateTime(iso) : '-');
+    const matchTeacher = (tid) => { const q = state.q.trim().toLowerCase(); return !q || TT.teacherName(tid).toLowerCase().includes(q) || tid.toLowerCase().includes(q); };
+    const reqVersion = (r) => TT.version(r.versionId) || TT.publishedOf(r.term);
+    const slotWithTime = (v, cid, slot) => { const t = v ? TT.slotTimeLabel(v, cid, slot) : ''; return `${TT.slotLabel(slot)}${t ? ` · ${t}` : ''}`; };
+    const dayTime = (v, cid, slot) => `${TT.DAYS[TT.parseSlot(slot)[0]].name} ${TT.slotTimeLabel(v, cid, slot)}`;
+    const draftsOf = (term) => TT.versionsOf(term).filter((v) => v.status === 'draft' && v.basedOn && TT.version(v.basedOn)?.term === term);
+    const nextRevName = (pub) => `${pub.name.replace(/ \(rev \d+\)$/, '')} (rev ${(pub.appliedRequests || []).length + 1})`;
+
+    function targetText(r, t, v) {
+      if (!t || !v) return '-';
+      if (r.type === 'move') return slotWithTime(v, r.classId, t.slot);
+      if (r.type === 'swap') {
+        const [c2, s2] = t.swap.split('|');
+        const e2 = v.entries[c2]?.[s2];
+        return `สลับกับ ${c2 !== r.classId ? `${TT.className(c2)} ` : ''}${slotWithTime(v, c2, s2)}${e2 ? ` (${e2.code} ${subjName(e2.code)})` : ''}`;
+      }
+      return `${TT.room(t.room)?.name || t.room}`;
+    }
+    function fromText(r, v) {
+      const e = v?.entries[r.classId]?.[r.slot];
+      if (r.type === 'room') return `${slotWithTime(v, r.classId, r.slot)} · ${e ? TT.roomShort(e.room) : '-'}`;
+      return slotWithTime(v, r.classId, r.slot);
+    }
+    // คาบสอนในฉบับเผยแพร่ที่ทับเวลาไม่ว่าง (ตัดสินด้วยเวลาจริง — ADR-0002)
+    function overlapsPublished(u) {
+      const pub = TT.publishedOf(u.term);
+      if (!pub) return { pub: null, list: [] };
+      const s = TT.toMin(u.start); const e = TT.toMin(u.end);
+      const list = TT.teacherBlocks(pub, u.teacherId).filter((b) => b.day === Number(u.day) && b.start < e && s < b.end);
+      return { pub, list };
+    }
+
+    /* ------------------------------------------------------------------ data selection */
+    function filteredRequests() {
+      return db().requests.filter((r) => (state.term === 'all' || r.term === state.term) && (state.status === 'all' || r.status === state.status) && matchTeacher(r.teacherId))
+        .sort((a, b) => (b.status === 'pending') - (a.status === 'pending') || (a.createdAt < b.createdAt ? 1 : -1));
+    }
+    function filteredUnavail() {
+      return db().unavailability.filter((u) => (state.term === 'all' || u.term === state.term) && (state.status === 'all' || u.status === state.status) && matchTeacher(u.teacherId));
+    }
+    function termsInData() {
+      const set = new Set([...db().requests.map((r) => r.term), ...db().unavailability.map((u) => u.term)]);
+      return Object.keys(db().terms).filter((t) => set.has(t));
+    }
+
+    /* ------------------------------------------------------------------ page */
+    function renderGuard() {
+      $('pageRoot').innerHTML = `<section class="mx-auto max-w-xl rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-soft">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-50 text-amber-600">${TT.icon('lock', 'h-7 w-7')}</div>
+        <h1 class="mt-4 text-xl font-semibold text-slate-950">หน้านี้สำหรับงานวิชาการ (admin)</h1>
+        <p class="mt-2 text-sm leading-6 text-slate-500">คุณกำลังใช้งานในบทบาทครู คำร้องขอเปลี่ยนการจัดและเวลาไม่ว่างของตนเองดูได้ที่หน้าตารางสอนของฉัน</p>
+        <div class="mt-6 flex flex-wrap justify-center gap-3"><a href="my-timetable.html" class="${BTN_GHOST}">ไปตารางสอนของฉัน</a><button id="becomeAdmin" type="button" class="${BTN_PRIMARY}">สลับเป็นงานวิชาการ (admin)</button></div>
+      </section>`;
+      $('becomeAdmin').addEventListener('click', () => { TT.setRole('admin'); location.reload(); });
+    }
+
+    function render() {
+      if (TT.role() !== 'admin') { renderGuard(); closeAll(); return; }
+      const reqs = db().requests.filter((r) => state.term === 'all' || r.term === state.term);
+      const uns = db().unavailability.filter((u) => state.term === 'all' || u.term === state.term);
+      const pendingReq = reqs.filter((r) => r.status === 'pending').length;
+      const pendingUn = uns.filter((u) => u.status === 'pending').length;
+      const approvedReq = reqs.filter((r) => r.status === 'approved' || r.status === 'modified').length;
+      const rejReq = reqs.filter((r) => r.status === 'rejected').length;
+      const rejUn = uns.filter((u) => u.status === 'rejected').length;
+      const scope = state.term === 'all' ? 'ทุกภาคเรียน' : TT.termLabel(state.term);
+      const stat = (label, value, hint, color, ic) => `<article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="text-sm font-semibold text-slate-500">${label}</p><p class="mt-2 text-3xl font-semibold tracking-tight text-slate-950">${value}</p><p class="mt-1 text-xs text-slate-400">${hint}</p></div><span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${color}">${TT.icon(ic, 'h-5 w-5')}</span></div></article>`;
+
+      const statusOpts = state.tab === 'requests'
+        ? [['pending', 'รออนุมัติ'], ['all', 'ทั้งหมด'], ['approved', 'อนุมัติแล้ว'], ['modified', 'อนุมัติพร้อมแก้ไข'], ['rejected', 'ไม่อนุมัติ']]
+        : [['pending', 'รออนุมัติ'], ['all', 'ทั้งหมด'], ['approved', 'อนุมัติแล้ว'], ['rejected', 'ไม่อนุมัติ']];
+      if (!statusOpts.some(([v]) => v === state.status)) state.status = 'pending';
+
+      const tabBtn = (key, label, n) => `<button type="button" data-tab="${key}" class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition ${state.tab === key ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}" aria-selected="${state.tab === key}" role="tab">${label}${n ? `<span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">${n}</span>` : ''}</button>`;
+
+      $('pageRoot').innerHTML = `
+        <section class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+          <div class="min-w-0">
+            <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
+              <a href="../reports/overview.html" class="font-medium text-slate-600 transition hover:text-brand">ภาพรวมงานวิชาการ</a>
+              <span class="text-slate-300">&gt;</span>
+              <a href="timetable.html" class="font-medium text-slate-600 transition hover:text-brand">ตารางเรียน</a>
+              <span class="text-slate-300">&gt;</span>
+              <span class="font-medium text-slate-800">คำขออนุมัติ</span>
+            </nav>
+            <div class="flex flex-wrap items-center gap-3">
+              <h1 class="text-3xl font-semibold tracking-tight text-slate-950 lg:text-4xl">คำขออนุมัติ</h1>
+              <span class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">${esc(scope)}</span>
+            </div>
+            <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-500">พิจารณาคำร้องขอเปลี่ยนการจัดและเวลาไม่ว่างของครู การอนุมัติคำร้องจะสร้างฉบับเผยแพร่ใหม่และเก็บฉบับเดิมเป็นฉบับเก่า ส่วนเวลาไม่ว่างมีผลเป็นข้อบังคับเมื่ออนุมัติแล้วเท่านั้น</p>
+          </div>
+          <div class="flex flex-wrap gap-3">
+            <a href="timetable.html" class="${BTN_GHOST}">${TT.icon('external', 'h-4 w-4')}ไปหน้าจัดตาราง</a>
+            <button id="openAddUn" type="button" class="${BTN_PRIMARY}">${TT.icon('plus', 'h-5 w-5')}เพิ่มเวลาไม่ว่างแทนครู</button>
+          </div>
+        </section>
+
+        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          ${stat('คำร้องรออนุมัติ', pendingReq, 'คำร้องขอเปลี่ยนการจัด', 'bg-amber-50 text-amber-600', 'clock')}
+          ${stat('เวลาไม่ว่างรออนุมัติ', pendingUn, 'เวลาไม่ว่างของครู', 'bg-violet-50 text-violet-600', 'user')}
+          ${stat('อนุมัติแล้ว (คำร้อง)', approvedReq, `รวมอนุมัติพร้อมแก้ไข ${reqs.filter((r) => r.status === 'modified').length} รายการ`, 'bg-emerald-50 text-emerald-600', 'check')}
+          ${stat('ไม่อนุมัติ', rejReq + rejUn, `คำร้อง ${rejReq} · เวลาไม่ว่าง ${rejUn}`, 'bg-rose-50 text-rose-600', 'x')}
+        </section>
+
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+            <div class="-mx-1 overflow-x-auto px-1"><div class="inline-flex gap-1 rounded-2xl bg-slate-100 p-1" role="tablist">
+              ${tabBtn('requests', 'คำร้องขอเปลี่ยนการจัด', pendingReq)}
+              ${tabBtn('unavailability', 'เวลาไม่ว่างของครู', pendingUn)}
+            </div></div>
+            <button id="clearFilters" type="button" class="inline-flex items-center justify-center gap-2 self-start rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100 xl:self-auto">ล้างตัวกรอง</button>
+          </div>
+          <div class="mt-5 grid gap-4 md:grid-cols-3">
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ภาคเรียน</span><select id="fTerm" class="${INPUT}"><option value="all">ทุกภาคเรียน</option>${termsInData().map((t) => `<option value="${t}" ${state.term === t ? 'selected' : ''}>${esc(TT.termLabel(t))}</option>`).join('')}</select></label>
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">สถานะ</span><select id="fStatus" class="${INPUT}">${statusOpts.map(([v, l]) => `<option value="${v}" ${state.status === v ? 'selected' : ''}>${l}</option>`).join('')}</select></label>
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ค้นหาครู</span><input id="fQ" type="search" value="${esc(state.q)}" placeholder="ชื่อครู หรือรหัสครู" class="${INPUT}"></label>
+          </div>
+        </section>
+
+        <section id="tabBody">${state.tab === 'requests' ? renderRequests() : renderUnavailability()}</section>`;
+
+      bindPage();
+      if (state.review) renderDrawer();
+      if (state.unDecide) renderUnDecide();
+    }
+
+    function emptyState(title, text) {
+      return `<div class="rounded-3xl border border-dashed border-slate-200 bg-white px-6 py-16 text-center"><div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">${TT.icon('check', 'h-7 w-7')}</div><h3 class="mt-4 text-base font-semibold text-slate-900">${title}</h3><p class="mt-1 text-sm text-slate-500">${text}</p>${state.status !== 'all' || state.q || state.term !== 'all' ? '<button type="button" data-clear class="mt-4 rounded-xl border border-slate-200 px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50">ดูทั้งหมด</button>' : ''}</div>`;
+    }
+
+    /* ------------------------------------------------------------------ requests tab */
+    function renderRequests() {
+      const list = filteredRequests();
+      if (!list.length) return emptyState(state.status === 'pending' ? 'ไม่มีคำร้องที่รออนุมัติ' : 'ไม่พบคำร้องที่ตรงกับเงื่อนไข', state.status === 'pending' ? 'คำร้องขอเปลี่ยนการจัดที่ครูยื่นจะแสดงที่นี่' : 'ลองเปลี่ยนภาคเรียน สถานะ หรือคำค้นหา');
+      return `<div class="grid gap-4 xl:grid-cols-2">${list.map(requestCard).join('')}</div>`;
+    }
+    function requestCard(r) {
+      const v = reqVersion(r);
+      const e = v?.entries[r.classId]?.[r.slot];
+      const code = e?.code;
+      const res = r.resultVersionId ? TT.version(r.resultVersionId) : null;
+      const decided = r.status !== 'pending';
+      return `<article class="flex min-w-0 flex-col rounded-3xl border ${r.status === 'pending' ? 'border-amber-200' : 'border-slate-200'} bg-white p-5 shadow-soft lg:p-6">
+        <div class="flex flex-wrap items-start justify-between gap-3">
+          <div class="flex min-w-0 items-center gap-3">
+            <span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">${TT.icon('user', 'h-5 w-5')}</span>
+            <div class="min-w-0"><p class="truncate font-semibold text-slate-950">${esc(TT.teacherName(r.teacherId))}</p><p class="text-xs text-slate-400">${esc(r.id)} · ${esc(TT.termLabel(r.term))} · ยื่นเมื่อ ${esc(dt(r.createdAt))}</p></div>
+          </div>
+          <div class="flex flex-wrap gap-2">${typeBadge(r.type)}${statusBadge(r.status)}</div>
+        </div>
+        <div class="mt-4 rounded-2xl bg-slate-50 p-4">
+          <p class="text-sm font-semibold text-slate-900">${esc(TT.className(r.classId))} · ${code ? `${esc(code)} ${esc(subjName(code))}` : '<span class="text-slate-400">ไม่พบคาบในฉบับที่ยื่น</span>'}</p>
+          <div class="mt-3 grid gap-2 text-sm sm:grid-cols-[1fr_auto_1fr] sm:items-center">
+            <div class="min-w-0 rounded-xl border border-slate-200 bg-white px-3 py-2"><p class="text-[11px] font-semibold text-slate-400">จาก</p><p class="break-words font-medium text-slate-800">${esc(fromText(r, v))}</p></div>
+            <span class="hidden text-slate-400 sm:block">${TT.icon(r.type === 'swap' ? 'swap' : 'arrow', 'h-5 w-5')}</span>
+            <div class="min-w-0 rounded-xl border border-blue-200 bg-blue-50/60 px-3 py-2"><p class="text-[11px] font-semibold text-blue-500">${r.type === 'room' ? 'ขอใช้ห้อง' : r.type === 'swap' ? 'ขอสลับกับ' : 'ขอย้ายไป'}</p><p class="break-words font-medium text-slate-800">${esc(targetText(r, r.target, v))}</p></div>
+          </div>
+          ${r.status === 'modified' && r.final ? `<p class="mt-2 text-xs font-semibold text-blue-700">admin ปรับเป็น: ${esc(targetText(r, r.final, v))}</p>` : ''}
+        </div>
+        <div class="mt-4 space-y-1 text-sm">
+          <p><span class="font-semibold text-slate-700">เหตุผล:</span> <span class="text-slate-600">${esc(r.reason || '-')}</span></p>
+          ${r.note ? `<p class="text-slate-500">${esc(r.note)}</p>` : ''}
+        </div>
+        ${decided ? `<div class="mt-4 rounded-2xl border ${r.status === 'rejected' ? 'border-rose-100 bg-rose-50/60' : 'border-emerald-100 bg-emerald-50/60'} p-4 text-sm">
+          <p class="text-xs text-slate-500">พิจารณาโดย ${esc(r.decidedBy || '-')} · ${esc(dt(r.decidedAt))}</p>
+          ${r.adminNote ? `<p class="mt-1 text-slate-700"><span class="font-semibold">หมายเหตุจาก admin:</span> ${esc(r.adminNote)}</p>` : ''}
+          ${res ? `<p class="mt-1 text-slate-700">สร้าง <a class="font-semibold text-blue-700 underline-offset-2 hover:underline" href="timetable.html#version=${encodeURIComponent(res.id)}">${esc(res.name)}</a> ${badge(esc(TT.VERSION_STATUS[res.status]?.label || res.status), TT.VERSION_STATUS[res.status]?.cls || '')}</p>` : ''}
+        </div>` : ''}
+        <div class="mt-auto flex flex-wrap justify-end gap-2 pt-4">
+          ${r.status === 'pending' ? `<button type="button" data-review="${esc(r.id)}" class="${BTN_PRIMARY}">พิจารณาคำร้อง</button>` : ''}
+        </div>
+      </article>`;
+    }
+
+    /* ------------------------------------------------------------------ review drawer */
+    function openReview(id) {
+      const r = db().requests.find((x) => x.id === id);
+      if (!r) return;
+      state.review = { id, mode: 'asis', final: null, note: '' };
+      $('reviewDrawer').classList.remove('hidden'); $('reviewDrawer').classList.add('flex');
+      document.body.classList.add('overflow-hidden');
+      renderDrawer();
+    }
+    function closeReview() {
+      state.review = null;
+      $('reviewDrawer').classList.add('hidden'); $('reviewDrawer').classList.remove('flex');
+      syncBodyLock();
+    }
+    function syncBodyLock() {
+      const open = ['reviewDrawer', 'unDecideModal', 'unAddModal'].some((id) => !$(id).classList.contains('hidden'));
+      document.body.classList.toggle('overflow-hidden', open);
+    }
+    function closeAll() { if (state.review) closeReview(); closeUnDecide(); closeUnAdd(); }
+
+    function moveOptions(pub, r) { return TT.suggestMoves(pub, r.classId, r.slot); }
+    function roomOptions(pub, r) {
+      const e = pub.entries[r.classId]?.[r.slot];
+      if (!e) return [];
+      return db().external.rooms.filter((rm) => rm.id !== e.room).map((rm) => {
+        const iss = TT.checkPlacement(pub, r.classId, r.slot, { ...e, room: rm.id }, { ignore: [`${r.classId}|${r.slot}`] });
+        return { room: rm, busy: iss.some((i) => i.type === 'room-clash'), warns: iss.filter((i) => i.sev === 'warn' && i.type.startsWith('room')) };
+      }).sort((a, b) => a.busy - b.busy || (a.room.type === 'regular') - (b.room.type === 'regular'));
+    }
+    function swapOptions(pub, r) {
+      const own = pub.entries[r.classId] || {};
+      const src = own[r.slot];
+      return Object.entries(own).filter(([k, e]) => k !== r.slot && e.teachers.includes(r.teacherId) && (!src || e.code !== src.code)).map(([k, e]) => {
+        const pv = TT.previewRequest(r, { swap: `${r.classId}|${k}` });
+        return { slot: k, entry: e, conflict: !pv.ok || pv.conflict };
+      }).sort((a, b) => a.slot.localeCompare(b.slot));
+    }
+
+    function cellFor(v, cid, marks) {
+      const issues = TT.computeIssues(v);
+      return (slot, e, act) => {
+        let inner;
+        if (act) inner = `<div class="tt-cell tt-hatch flex h-full min-h-[84px] flex-col justify-center rounded-xl border border-slate-200 bg-slate-50 px-2 text-center"><span class="text-[11px] font-semibold text-slate-600">${esc(act.name)}</span><span class="text-[10px] text-slate-400">กิจกรรมล็อกเวลา</span></div>`;
+        else if (!e) inner = `<div class="tt-cell flex h-full min-h-[84px] items-center justify-center rounded-xl border border-dashed border-slate-200 text-[11px] text-slate-300">ว่าง</div>`;
+        else inner = TT.entryCard({ code: e.code, line1: e.teachers.map(TT.teacherName).join(', ') || 'ไม่ระบุครู', line2: TT.roomShort(e.room), issues: issues.byCell.get(`${cid}|${slot}`) || [], locked: e.locked });
+        const m = marks[slot];
+        if (!m) return inner;
+        const tone = { src: ['ring-rose-400 bg-rose-50/40', 'bg-rose-500'], dst: ['ring-blue-500 bg-blue-50/40', 'bg-blue-600'], asked: ['ring-amber-400 ring-dashed', 'bg-amber-500'] }[m.tone];
+        return `<div class="mark-wrap ring-2 ring-offset-1 ${tone[0]}"><span class="mark-tag rounded-full ${tone[1]} px-2 py-0.5 text-[10px] font-semibold text-white shadow">${esc(m.label)}</span>${inner}</div>`;
+      };
+    }
+
+    function renderDrawer() {
+      const st = state.review;
+      const r = db().requests.find((x) => x.id === st.id);
+      const panel = $('reviewPanel');
+      if (!r) { closeReview(); return; }
+      const pub = TT.publishedOf(r.term);
+      const head = `<div class="flex items-start justify-between gap-3 border-b border-slate-100 px-5 py-4 lg:px-6">
+          <div class="min-w-0"><p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">พิจารณาคำร้อง · ${esc(r.id)}</p>
+          <h2 id="reviewTitle" class="mt-1 text-xl font-semibold text-slate-950">${esc(TT.teacherName(r.teacherId))}</h2>
+          <div class="mt-2 flex flex-wrap gap-2">${typeBadge(r.type)}${statusBadge(r.status)}<span class="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">${esc(TT.termLabel(r.term))}</span></div></div>
+          <button type="button" data-close-review class="rounded-xl p-2 text-slate-400 hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด">${TT.icon('close', 'h-5 w-5')}</button></div>`;
+      if (r.status !== 'pending' || !pub) {
+        panel.innerHTML = `${head}<div class="flex-1 overflow-y-auto p-6"><p class="text-sm text-slate-600">${!pub ? 'ภาคเรียนนี้ยังไม่มีฉบับเผยแพร่' : 'คำร้องนี้ถูกพิจารณาแล้ว'}</p></div>`;
+        return;
+      }
+      const e = pub.entries[r.classId]?.[r.slot];
+      const final = st.mode === 'modify' ? st.final : null;
+      const pv = st.mode === 'modify' && !final ? null : TT.previewRequest(r, final);
+      const t = final || r.target;
+
+      // marks for before/after grids
+      const before = {}; const after = {};
+      before[r.slot] = { tone: 'src', label: 'ต้นทาง' };
+      if (r.type === 'move') {
+        if (final && final.slot !== r.target.slot) before[r.target.slot] = { tone: 'asked', label: 'ที่ครูขอ' };
+        before[t.slot] = { tone: 'dst', label: final ? 'ปลายทางใหม่' : 'ปลายทาง' };
+        after[t.slot] = { tone: 'dst', label: 'ย้ายมา' };
+        after[r.slot] = { tone: 'src', label: 'ว่างลง' };
+      } else if (r.type === 'swap') {
+        const [c2, s2] = t.swap.split('|');
+        if (c2 === r.classId) before[s2] = { tone: 'dst', label: 'สลับกับ' };
+        after[s2] = { tone: 'dst', label: 'สลับแล้ว' };
+        after[r.slot] = { tone: 'dst', label: 'สลับแล้ว' };
+      } else {
+        before[r.slot] = { tone: 'src', label: `ห้องเดิม ${TT.roomShort(e?.room)}` };
+        after[r.slot] = { tone: 'dst', label: `ห้องใหม่ ${TT.roomShort(t.room)}` };
+      }
+
+      // modify choices
+      let choices = '';
+      if (st.mode === 'modify') {
+        if (r.type === 'move') {
+          const opts = moveOptions(pub, r);
+          choices = opts.length ? `<div class="flex flex-wrap gap-2">${opts.map((o) => { const sel = st.final?.slot === o.slot; return `<button type="button" data-final-slot="${o.slot}" class="rounded-xl border px-3 py-2 text-left text-xs transition ${sel ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50'}"><span class="block font-semibold">${esc(dayTime(pub, r.classId, o.slot))}</span><span class="block ${sel ? 'text-blue-100' : 'text-slate-400'}">${esc(TT.slotLabel(o.slot))}${o.issues.length ? ` · คำเตือน ${o.issues.length}` : ' · ไม่มีคำเตือน'}</span></button>`; }).join('')}</div>` : '<p class="text-sm text-slate-500">ไม่มีช่องว่างที่ย้ายไปได้โดยไม่เกิด Conflict</p>';
+        } else if (r.type === 'room') {
+          const opts = roomOptions(pub, r);
+          const free = opts.filter((o) => !o.busy); const busy = opts.filter((o) => o.busy);
+          choices = `<p class="mb-2 text-xs text-slate-500">ห้องที่ว่างใน ${esc(dayTime(pub, r.classId, r.slot))}: ${free.length} ห้อง · ไม่ว่าง ${busy.length} ห้อง</p>
+            <div class="scroll-thin flex max-h-56 flex-wrap gap-2 overflow-y-auto pr-1">${free.map((o) => { const sel = st.final?.room === o.room.id; return `<button type="button" data-final-room="${o.room.id}" class="rounded-xl border px-3 py-2 text-left text-xs transition ${sel ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50'}"><span class="block font-semibold">${esc(o.room.short || o.room.name)}</span><span class="block ${sel ? 'text-blue-100' : o.warns.length ? 'text-amber-600' : 'text-emerald-600'}">${o.warns.length ? esc(o.warns[0].msg) : `ว่าง · ${esc(TT.ROOM_TYPES[o.room.type] || '')}`}</span></button>`; }).join('')}
+            ${busy.map((o) => `<span class="cursor-not-allowed rounded-xl border border-dashed border-slate-200 px-3 py-2 text-xs text-slate-400" title="ห้องถูกใช้ในเวลานี้"><span class="block font-semibold">${esc(o.room.short || o.room.name)}</span><span class="block">ไม่ว่าง</span></span>`).join('')}</div>`;
+        } else {
+          const opts = swapOptions(pub, r);
+          choices = opts.length ? `<div class="flex flex-wrap gap-2">${opts.map((o) => { const sel = st.final?.swap === `${r.classId}|${o.slot}`; return `<button type="button" data-final-swap="${o.slot}" class="rounded-xl border px-3 py-2 text-left text-xs transition ${sel ? 'border-blue-600 bg-blue-600 text-white' : o.conflict ? 'border-rose-200 bg-rose-50/50 text-slate-700 hover:border-rose-300' : 'border-slate-200 bg-white text-slate-700 hover:border-blue-300 hover:bg-blue-50'}"><span class="block font-semibold">${esc(dayTime(pub, r.classId, o.slot))}</span><span class="block ${sel ? 'text-blue-100' : 'text-slate-400'}">${esc(TT.slotLabel(o.slot))} · ${esc(o.entry.code)}${o.conflict ? ' · <span class="text-rose-600">Conflict</span>' : ''}</span></button>`; }).join('')}</div>` : '<p class="text-sm text-slate-500">ครูไม่มีคาบอื่นในห้องนี้ให้สลับ</p>';
+        }
+      }
+
+      const errors = pv?.issues.filter((i) => i.sev === 'error') || [];
+      const warns = pv?.issues.filter((i) => i.sev === 'warn') || [];
+      const drafts = draftsOf(r.term);
+      const revName = nextRevName(pub);
+      const canApprove = pv && pv.ok && !pv.conflict && (st.mode === 'asis' || (final && st.note.trim()));
+      let issueHtml;
+      if (!pv) issueHtml = '<div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-500">เลือกทางเลือกด้านบนเพื่อดูผลก่อนอนุมัติ</div>';
+      else if (!pv.ok) issueHtml = `<div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700"><p class="font-semibold">ทำตามคำร้องนี้ไม่ได้</p><p class="mt-1">${esc(pv.msg)}</p></div>`;
+      else issueHtml = `<div class="space-y-2">
+          ${errors.length ? `<div class="rounded-2xl border border-rose-200 bg-rose-50 p-4"><p class="flex items-center gap-2 text-sm font-semibold text-rose-700">${TT.icon('warn')}Conflict ${errors.length} รายการ</p><ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-rose-700">${errors.map((i) => `<li>${esc(i.msg)}</li>`).join('')}</ul></div>` : '<div class="flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm font-semibold text-emerald-700">' + TT.icon('check') + 'ไม่มี Conflict</div>'}
+          ${warns.length ? `<div class="rounded-2xl border border-amber-200 bg-amber-50 p-4"><p class="flex items-center gap-2 text-sm font-semibold text-amber-700">${TT.icon('warn')}คำเตือน ${warns.length} รายการ <span class="font-normal text-amber-600">(ไม่ขวางการอนุมัติ)</span></p><ul class="mt-2 list-disc space-y-1 pl-5 text-sm text-amber-700">${warns.map((i) => `<li>${esc(i.msg)}</li>`).join('')}</ul></div>` : ''}
+        </div>`;
+
+      const approveLabel = st.mode === 'modify' ? 'อนุมัติพร้อมแก้ไข' : 'อนุมัติ';
+      let blockReason = '';
+      if (pv && pv.ok && pv.conflict) blockReason = st.mode === 'asis' ? 'อนุมัติตามคำขอไม่ได้เพราะเกิด Conflict — เลือก "อนุมัติพร้อมแก้ไข" แล้วเลือกช่องอื่น หรือไม่อนุมัติ' : 'ทางเลือกนี้ยังมี Conflict — เลือกทางเลือกอื่น';
+      else if (pv && !pv.ok) blockReason = 'คำร้องนี้ทำไม่ได้กับฉบับเผยแพร่ปัจจุบัน';
+      else if (st.mode === 'modify' && !final) blockReason = 'เลือกทางเลือกที่จะใช้แทนก่อน';
+      else if (st.mode === 'modify' && !st.note.trim()) blockReason = 'กรอกหมายเหตุถึงครูเพื่ออธิบายการแก้ไข';
+
+      panel.innerHTML = `${head}
+        <div class="scroll-thin flex-1 space-y-6 overflow-y-auto px-5 py-5 lg:px-6">
+          <section class="rounded-2xl bg-slate-50 p-4">
+            <p class="text-sm font-semibold text-slate-900">${esc(TT.className(r.classId))} · ${e ? `${esc(e.code)} ${esc(subjName(e.code))}` : '<span class="text-rose-600">คาบต้นทางไม่อยู่ในฉบับเผยแพร่แล้ว</span>'}</p>
+            <p class="mt-1 text-sm text-slate-600">จาก <span class="font-medium text-slate-800">${esc(fromText(r, pub))}</span> → <span class="font-medium text-slate-800">${esc(targetText(r, r.target, pub))}</span></p>
+            <p class="mt-2 text-sm"><span class="font-semibold text-slate-700">เหตุผล:</span> <span class="text-slate-600">${esc(r.reason)}</span>${r.note ? ` — <span class="text-slate-500">${esc(r.note)}</span>` : ''}</p>
+            <p class="mt-1 text-xs text-slate-400">ยื่นเมื่อ ${esc(dt(r.createdAt))} · อ้างอิง ${esc(reqVersion(r)?.name || '-')}</p>
+          </section>
+
+          <section>
+            <div class="inline-flex gap-1 rounded-2xl bg-slate-100 p-1">
+              <button type="button" data-mode="asis" class="rounded-xl px-4 py-2 text-sm font-semibold ${st.mode === 'asis' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}">ตามคำขอ</button>
+              <button type="button" data-mode="modify" class="rounded-xl px-4 py-2 text-sm font-semibold ${st.mode === 'modify' ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}">อนุมัติพร้อมแก้ไข</button>
+            </div>
+            ${st.mode === 'modify' ? `<div class="mt-4"><p class="mb-2 text-sm font-semibold text-slate-700">${r.type === 'move' ? 'เลือกช่องที่ย้ายไปได้ (ไม่เกิด Conflict)' : r.type === 'room' ? 'เลือกห้องเรียน' : 'เลือกคาบอื่นของครูในห้องเดียวกันเพื่อสลับ'}</p>${choices}</div>` : ''}
+          </section>
+
+          <section><h3 class="mb-2 text-sm font-semibold text-slate-900">ผลการตรวจ</h3>${issueHtml}</section>
+
+          ${pv && pv.ok ? `<section class="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-sm text-blue-900">
+            <p class="font-semibold">ผลเมื่ออนุมัติ</p>
+            <ul class="mt-1 list-disc space-y-1 pl-5">
+              <li>จะสร้างฉบับเผยแพร่ใหม่ "${esc(revName)}" และแจ้งครู · "${esc(pub.name)}" จะกลายเป็นฉบับเก่า</li>
+              ${drafts.length ? `<li>ฉบับร่าง ${drafts.length} ฉบับจะแสดงการเปลี่ยนแปลงนี้ให้นำมารวม (${drafts.map((d) => esc(d.name)).join(', ')})</li>` : ''}
+            </ul></section>` : ''}
+
+          <section class="space-y-4">
+            <div><h3 class="mb-2 text-sm font-semibold text-slate-900">ก่อน · ${esc(pub.name)} (ฉบับเผยแพร่)</h3>
+              <div class="scroll-thin overflow-x-auto pb-1">${TT.classGrid(pub, r.classId, { cellFn: cellFor(pub, r.classId, before), id: 'gridBefore' })}</div></div>
+            ${pv && pv.ok ? `<div><h3 class="mb-2 text-sm font-semibold text-slate-900">หลังอนุมัติ · ${esc(revName)}</h3>
+              <div class="scroll-thin overflow-x-auto pb-1">${TT.classGrid(pv.v, r.classId, { cellFn: cellFor(pv.v, r.classId, after), id: 'gridAfter' })}</div></div>` : ''}
+          </section>
+
+          <section>
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">หมายเหตุถึงครู <span class="font-normal text-slate-400">(จำเป็นเมื่อไม่อนุมัติหรืออนุมัติพร้อมแก้ไข)</span></span>
+            <textarea id="reviewNote" rows="3" class="${INPUT}" placeholder="เช่น ช่องที่ขอชนกับคาบสอนอื่น จึงปรับเป็นช่องที่ว่างแทน">${esc(st.note)}</textarea></label>
+          </section>
+        </div>
+        <div class="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-6">
+          <p id="blockReason" class="text-xs ${blockReason ? 'text-rose-600' : 'text-slate-400'}">${esc(blockReason || 'การอนุมัติจะเผยแพร่ทันที')}</p>
+          <div class="flex flex-wrap justify-end gap-2">
+            <button type="button" data-close-review class="${BTN_GHOST}">ปิด</button>
+            <button type="button" id="rejectBtn" class="${BTN_DANGER}">ไม่อนุมัติ</button>
+            <button type="button" id="approveBtn" class="${BTN_PRIMARY}" ${canApprove ? '' : 'disabled'}>${TT.icon('check')}${approveLabel}</button>
+          </div>
+        </div>`;
+
+      panel.querySelectorAll('[data-close-review]').forEach((b) => b.addEventListener('click', closeReview));
+      panel.querySelectorAll('[data-mode]').forEach((b) => b.addEventListener('click', () => { st.mode = b.dataset.mode; if (st.mode === 'asis') st.final = null; renderDrawer(); }));
+      panel.querySelectorAll('[data-final-slot]').forEach((b) => b.addEventListener('click', () => { st.final = { slot: b.dataset.finalSlot }; renderDrawer(); }));
+      panel.querySelectorAll('[data-final-room]').forEach((b) => b.addEventListener('click', () => { st.final = { room: b.dataset.finalRoom }; renderDrawer(); }));
+      panel.querySelectorAll('[data-final-swap]').forEach((b) => b.addEventListener('click', () => { st.final = { swap: `${r.classId}|${b.dataset.finalSwap}` }; renderDrawer(); }));
+      const note = $('reviewNote');
+      note.addEventListener('input', () => {
+        st.note = note.value; note.classList.remove('field-invalid');
+        if (st.mode === 'modify') { // update approve availability without full re-render
+          const ok = pv && pv.ok && !pv.conflict && final && st.note.trim();
+          $('approveBtn').disabled = !ok;
+          const br = $('blockReason');
+          if (ok) { br.textContent = 'การอนุมัติจะเผยแพร่ทันที'; br.className = 'text-xs text-slate-400'; }
+          else if (pv && pv.ok && !pv.conflict && final) { br.textContent = 'กรอกหมายเหตุถึงครูเพื่ออธิบายการแก้ไข'; br.className = 'text-xs text-rose-600'; }
+        }
+      });
+      $('rejectBtn').addEventListener('click', async () => {
+        if (!st.note.trim()) { note.classList.add('field-invalid'); note.focus(); TT.toast('กรอกหมายเหตุก่อน', 'การไม่อนุมัติต้องแจ้งเหตุผลให้ครูทราบ', 'warn'); return; }
+        const okc = await TT.confirm({ title: 'ไม่อนุมัติคำร้องนี้?', message: `${esc(TT.teacherName(r.teacherId))} จะได้รับแจ้งพร้อมหมายเหตุ ฉบับเผยแพร่ไม่เปลี่ยนแปลง`, okText: 'ไม่อนุมัติ', tone: 'danger' });
+        if (!okc) return;
+        const res = TT.decideRequest(r.id, { approve: false, adminNote: st.note.trim() });
+        afterDecide(res, 'ไม่อนุมัติคำร้องแล้ว', `แจ้ง ${TT.teacherName(r.teacherId)} แล้ว`);
+      });
+      $('approveBtn').addEventListener('click', async () => {
+        if (st.mode === 'modify' && !st.note.trim()) { note.classList.add('field-invalid'); note.focus(); return; }
+        const okc = await TT.confirm({ title: `${approveLabel}?`, message: `จะสร้างฉบับเผยแพร่ใหม่ "${esc(revName)}" และแจ้งครู${drafts.length ? `<br>ฉบับร่าง ${drafts.length} ฉบับจะแสดงการเปลี่ยนแปลงนี้ให้นำมารวม` : ''}`, okText: approveLabel, tone: 'success' });
+        if (!okc) return;
+        const res = TT.decideRequest(r.id, { approve: true, final: st.mode === 'modify' ? final : null, adminNote: st.note.trim() });
+        afterDecide(res, `${approveLabel}แล้ว`, res.ok ? `เผยแพร่ "${res.version.name}" และแจ้ง ${TT.teacherName(r.teacherId)} แล้ว` : '');
+      });
+    }
+    function afterDecide(res, title, msg) {
+      if (!res.ok) { TT.toast('ดำเนินการไม่สำเร็จ', res.msg || '', 'error'); renderDrawer(); return; }
+      closeReview();
+      render();
+      AcademicLayout.refresh();
+      TT.toast(title, msg, 'success');
+    }
+
+    /* ------------------------------------------------------------------ unavailability tab */
+    function renderUnavailability() {
+      const list = filteredUnavail();
+      const terms = state.term === 'all' ? [...new Set(db().unavailability.map((u) => u.term))].filter((t) => db().terms[t]).sort() : [state.term];
+      const deadlines = `<div class="grid gap-3 md:grid-cols-2 xl:grid-cols-3">${terms.map((t) => {
+        const d = db().terms[t]?.unavailDeadline; const open = TT.unavailabilityOpen(t); const pub = TT.publishedOf(t);
+        return `<div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"><div class="flex items-center justify-between gap-2"><p class="text-sm font-semibold text-slate-900">${esc(TT.termLabel(t))}</p>${open ? badge(`เปิดรับ · เหลือ ${TT.daysLeft(d)} วัน`, 'bg-emerald-50 text-emerald-700') : badge('ปิดรับแล้ว', 'bg-slate-100 text-slate-500')}</div>
+          <p class="mt-1 text-xs text-slate-500">วันปิดรับเวลาไม่ว่าง ${esc(TT.formatDate(d))}</p>
+          <p class="mt-1 text-xs text-slate-400">${pub ? `ฉบับเผยแพร่: ${esc(pub.name)}` : 'ยังไม่มีฉบับเผยแพร่'}</p></div>`;
+      }).join('')}</div>`;
+      if (!list.length) return `<div class="space-y-4">${deadlines}${emptyState(state.status === 'pending' ? 'ไม่มีเวลาไม่ว่างที่รออนุมัติ' : 'ไม่พบเวลาไม่ว่างที่ตรงกับเงื่อนไข', state.status === 'pending' ? 'เวลาไม่ว่างที่ครูกรอกจะแสดงที่นี่จนถึงวันปิดรับเวลาไม่ว่าง' : 'ลองเปลี่ยนภาคเรียน สถานะ หรือคำค้นหา')}</div>`;
+      const byTeacher = new Map();
+      list.forEach((u) => { if (!byTeacher.has(u.teacherId)) byTeacher.set(u.teacherId, []); byTeacher.get(u.teacherId).push(u); });
+      const groups = [...byTeacher.entries()].sort((a, b) => b[1].filter((u) => u.status === 'pending').length - a[1].filter((u) => u.status === 'pending').length || TT.teacherName(a[0]).localeCompare(TT.teacherName(b[0]), 'th'));
+      const th = 'px-4 py-3 text-left text-xs font-semibold text-slate-500';
+      return `<div class="space-y-4">${deadlines}${groups.map(([tid, rows]) => `
+        <article class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft">
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 px-5 py-4 lg:px-6">
+            <div class="flex min-w-0 items-center gap-3"><span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">${TT.icon('user', 'h-5 w-5')}</span><div class="min-w-0"><p class="truncate font-semibold text-slate-950">${esc(TT.teacherName(tid))}</p><p class="text-xs text-slate-400">${esc(tid)} · ${rows.length} รายการ</p></div></div>
+            ${rows.some((u) => u.status === 'pending') ? badge(`รออนุมัติ ${rows.filter((u) => u.status === 'pending').length}`, 'bg-amber-50 text-amber-700') : ''}
+          </div>
+          <div class="scroll-thin overflow-x-auto">
+            <table class="w-full min-w-[920px] text-sm">
+              <thead class="bg-slate-50"><tr>${state.term === 'all' ? `<th class="${th}">ภาคเรียน</th>` : ''}<th class="${th}">วัน</th><th class="${th}">เวลา</th><th class="${th}">เหตุผล</th><th class="${th}">หมายเหตุ</th><th class="${th}">สถานะ</th><th class="${th}">ยื่นเมื่อ</th><th class="${th}">โดย</th><th class="${th} text-right">จัดการ</th></tr></thead>
+              <tbody class="divide-y divide-slate-100">${rows.sort((a, b) => a.term.localeCompare(b.term) || a.day - b.day || a.start.localeCompare(b.start)).map((u) => {
+                const ov = u.status === 'pending' ? overlapsPublished(u) : { list: [] };
+                return `<tr class="align-top">
+                  ${state.term === 'all' ? `<td class="px-4 py-3 text-slate-600">${esc(TT.termLabel(u.term))}</td>` : ''}
+                  <td class="px-4 py-3 font-medium text-slate-800"><span class="inline-flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full ${TT.DAYS[u.day].dot}"></span>${esc(TT.DAYS[u.day].name)}</span></td>
+                  <td class="whitespace-nowrap px-4 py-3 text-slate-800">${esc(u.start)}–${esc(u.end)}</td>
+                  <td class="px-4 py-3 text-slate-700">${esc(u.reason)}</td>
+                  <td class="max-w-[240px] px-4 py-3 text-slate-500">${esc(u.note || '-')}${ov.list.length ? `<p class="mt-1 text-xs font-semibold text-amber-700">ตรงกับคาบสอนในฉบับเผยแพร่ ${ov.list.length} คาบ</p>` : ''}</td>
+                  <td class="px-4 py-3">${badge(esc(UN_STATUS[u.status]?.label || u.status), UN_STATUS[u.status]?.cls || '')}${u.status !== 'pending' ? `<p class="mt-1 text-[11px] text-slate-400">${esc(u.decidedBy || '-')} · ${esc(dt(u.decidedAt))}</p>` : ''}${u.adminNote ? `<p class="mt-1 max-w-[200px] text-xs text-slate-600">หมายเหตุ: ${esc(u.adminNote)}</p>` : ''}</td>
+                  <td class="whitespace-nowrap px-4 py-3 text-slate-500">${esc(dt(u.createdAt))}</td>
+                  <td class="px-4 py-3">${u.by === 'admin' ? badge('admin', 'bg-blue-50 text-blue-700') : badge('ครู', 'bg-slate-100 text-slate-600')}</td>
+                  <td class="whitespace-nowrap px-4 py-3 text-right">${u.status === 'pending' ? `<div class="inline-flex gap-2"><button type="button" data-un-reject="${esc(u.id)}" class="rounded-xl border border-rose-200 px-3 py-2 text-xs font-semibold text-rose-600 hover:bg-rose-50">ไม่อนุมัติ</button><button type="button" data-un-approve="${esc(u.id)}" class="rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700">อนุมัติ</button></div>` : '<span class="text-xs text-slate-300">—</span>'}</td>
+                </tr>`;
+              }).join('')}</tbody>
+            </table>
+          </div>
+        </article>`).join('')}</div>`;
+    }
+
+    /* ---------- decide unavailability */
+    function openUnDecide(id, approve) {
+      state.unDecide = { id, approve, note: '' };
+      $('unDecideModal').classList.remove('hidden'); $('unDecideModal').classList.add('flex');
+      syncBodyLock();
+      renderUnDecide();
+    }
+    function closeUnDecide() { state.unDecide = null; $('unDecideModal').classList.add('hidden'); $('unDecideModal').classList.remove('flex'); syncBodyLock(); }
+    function renderUnDecide() {
+      const st = state.unDecide;
+      const u = db().unavailability.find((x) => x.id === st.id);
+      if (!u || u.status !== 'pending') { closeUnDecide(); return; }
+      const ov = overlapsPublished(u);
+      const drafts = draftsOf(u.term);
+      const panel = $('unDecidePanel');
+      panel.innerHTML = `<div class="px-6 py-5">
+          <div class="flex items-start justify-between gap-3"><div><p class="text-xs font-semibold uppercase tracking-[0.18em] ${st.approve ? 'text-blue-600' : 'text-rose-600'}">${st.approve ? 'อนุมัติเวลาไม่ว่าง' : 'ไม่อนุมัติเวลาไม่ว่าง'}</p><h2 class="mt-1 text-lg font-semibold text-slate-950">${esc(TT.teacherName(u.teacherId))}</h2></div><button type="button" data-close-un class="rounded-xl p-2 text-slate-400 hover:bg-slate-100" aria-label="ปิด">${TT.icon('close', 'h-5 w-5')}</button></div>
+          <div class="mt-4 rounded-2xl bg-slate-50 p-4 text-sm"><p class="font-semibold text-slate-900">${esc(TT.termLabel(u.term))} · ${esc(TT.DAYS[u.day].name)} ${esc(u.start)}–${esc(u.end)}</p><p class="mt-1 text-slate-600">${esc(u.reason)}${u.note ? ` — ${esc(u.note)}` : ''}</p></div>
+          ${st.approve ? `<div class="mt-4 space-y-2 text-sm">
+            ${ov.pub && ov.list.length ? `<div class="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-amber-800"><p class="font-semibold">ตรงกับคาบสอนในฉบับเผยแพร่ ${ov.list.length} คาบ — ตารางจะไม่เปลี่ยนเอง ครูต้องยื่นคำร้องเปลี่ยนการจัด</p><ul class="mt-2 list-disc space-y-0.5 pl-5 text-xs">${ov.list.map((b) => `<li>${esc(TT.className(b.cid))} · ${esc(b.entry.code)} ${esc(subjName(b.entry.code))} · ${esc(TT.fmt(b.start))}–${esc(TT.fmt(b.end))}</li>`).join('')}</ul><p class="mt-2 text-xs">อ้างอิง ${esc(ov.pub.name)}</p></div>` : ov.pub ? `<div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-700">ไม่ตรงกับคาบสอนใน ${esc(ov.pub.name)}</div>` : '<div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-slate-600">ภาคเรียนนี้ยังไม่มีฉบับเผยแพร่ เวลาไม่ว่างจะถูกใช้เป็นข้อบังคับตอนจัดตาราง</div>'}
+            <p class="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-blue-900">เมื่ออนุมัติแล้ว คาบที่ตรงกับเวลานี้จะแสดงเป็น Conflict ในฉบับร่างของ${esc(TT.termLabel(u.term))}${drafts.length ? ` (${drafts.length} ฉบับร่าง)` : ''} และการจัดอัตโนมัติจะไม่วางคาบในช่วงนี้</p>
+          </div>` : ''}
+          <label class="mt-4 block"><span class="mb-2 block text-sm font-semibold text-slate-700">หมายเหตุถึงครู ${st.approve ? '<span class="font-normal text-slate-400">(ไม่บังคับ)</span>' : '<span class="font-normal text-rose-500">(จำเป็น ครูจะเห็นข้อความนี้)</span>'}</span>
+            <textarea id="unNote" rows="3" class="${INPUT}" placeholder="${st.approve ? 'เช่น อนุมัติตามคำสั่งฝ่ายบริหาร' : 'เช่น เป็นธุระส่วนตัว ไม่ใช่ภารกิจในโรงเรียน กรุณาใช้การลา'}">${esc(st.note)}</textarea></label>
+        </div>
+        <div class="flex justify-end gap-2 border-t border-slate-100 px-6 py-4">
+          <button type="button" data-close-un class="${BTN_GHOST}">ยกเลิก</button>
+          <button type="button" id="unConfirm" class="${st.approve ? BTN_PRIMARY : 'inline-flex items-center justify-center gap-2 rounded-2xl bg-rose-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-rose-700'}">${st.approve ? 'อนุมัติ' : 'ไม่อนุมัติ'}</button>
+        </div>`;
+      panel.querySelectorAll('[data-close-un]').forEach((b) => b.addEventListener('click', closeUnDecide));
+      const note = $('unNote');
+      note.addEventListener('input', () => { st.note = note.value; note.classList.remove('field-invalid'); });
+      $('unConfirm').addEventListener('click', () => {
+        const text = st.note.trim();
+        if (!st.approve && !text) { note.classList.add('field-invalid'); note.focus(); TT.toast('กรอกหมายเหตุก่อน', 'ครูจะเห็นเหตุผลที่ไม่อนุมัติ', 'warn'); return; }
+        const approve = st.approve;
+        u.status = approve ? 'approved' : 'rejected';
+        u.decidedAt = TT.nowIso(); u.decidedBy = TT.me().name; u.adminNote = text;
+        const when = `${TT.termLabel(u.term)} · ${TT.DAYS[u.day].name} ${u.start}–${u.end}`;
+        TT.notify(u.teacherId, approve ? 'เวลาไม่ว่างได้รับอนุมัติ' : 'เวลาไม่ว่างไม่ได้รับอนุมัติ', `${when}${approve && ov.list.length ? ` — ตรงกับคาบสอน ${ov.list.length} คาบ กรุณายื่นคำร้องขอเปลี่ยนการจัด` : ''}${text ? ` — ${text}` : ''}`, 'my-timetable.html#unavailability');
+        TT.logHistory(u.term, ov.pub ? ov.pub.id : null, approve ? 'อนุมัติเวลาไม่ว่าง' : 'ไม่อนุมัติเวลาไม่ว่าง', `${TT.teacherName(u.teacherId)} · ${TT.DAYS[u.day].name} ${u.start}–${u.end} (${u.reason})${text ? ` · ${text}` : ''}`);
+        state.unDecide = null;
+        closeUnDecide();
+        TT.save(); // → onChange → render + refresh
+        TT.toast(approve ? 'อนุมัติเวลาไม่ว่างแล้ว' : 'ไม่อนุมัติเวลาไม่ว่างแล้ว', `แจ้ง ${TT.teacherName(u.teacherId)} แล้ว${approve && ov.list.length ? ` · ตรงกับคาบสอน ${ov.list.length} คาบ` : ''}`, approve && ov.list.length ? 'warn' : 'success');
+      });
+    }
+
+    /* ---------- add unavailability on behalf of a teacher (admin) */
+    function openUnAdd() {
+      const terms = Object.keys(db().terms);
+      const defTerm = state.term !== 'all' ? state.term : (terms.find((t) => TT.unavailabilityOpen(t)) || terms[terms.length - 1]);
+      state.unAdd = { teacherId: '', term: defTerm, day: 0, start: '08:30', end: '10:10', reason: TT.UNAVAIL_REASONS[0], note: '' };
+      $('unAddModal').classList.remove('hidden'); $('unAddModal').classList.add('flex');
+      syncBodyLock();
+      renderUnAdd();
+    }
+    function closeUnAdd() { state.unAdd = null; $('unAddModal').classList.add('hidden'); $('unAddModal').classList.remove('flex'); syncBodyLock(); }
+    function unAddPreview() {
+      const st = state.unAdd;
+      if (!st.teacherId || !st.start || !st.end || TT.toMin(st.end) <= TT.toMin(st.start)) return '';
+      const ov = overlapsPublished(st);
+      const open = TT.unavailabilityOpen(st.term);
+      return `${!open ? `<p class="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">เลยวันปิดรับเวลาไม่ว่างของ${esc(TT.termLabel(st.term))}แล้ว (${esc(TT.formatDate(db().terms[st.term]?.unavailDeadline))}) — admin เพิ่มได้</p>` : ''}
+        ${ov.list.length ? `<p class="rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-800">ตรงกับคาบสอนในฉบับเผยแพร่ ${ov.list.length} คาบ — ตารางจะไม่เปลี่ยนเอง ครูต้องยื่นคำร้องเปลี่ยนการจัด และจะแสดงเป็น Conflict ในฉบับร่างของภาคเรียนนี้</p>` : ''}`;
+    }
+    function renderUnAdd() {
+      const st = state.unAdd;
+      const teachers = [...db().external.teachers].sort((a, b) => a.name.localeCompare(b.name, 'th'));
+      const pub = TT.publishedOf(st.term);
+      const days = pub ? TT.versionDays(pub) : [0, 1, 2, 3, 4];
+      const panel = $('unAddPanel');
+      panel.innerHTML = `<div class="px-6 py-5">
+          <div class="flex items-start justify-between gap-3"><div><p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">เวลาไม่ว่างของครู</p><h2 class="mt-1 text-lg font-semibold text-slate-950">เพิ่มแทนครู</h2><p class="mt-1 text-sm text-slate-500">รายการที่ admin เพิ่มจะอนุมัติทันที และเพิ่มได้แม้เลยวันปิดรับเวลาไม่ว่าง</p></div><button type="button" data-close-add class="rounded-xl p-2 text-slate-400 hover:bg-slate-100" aria-label="ปิด">${TT.icon('close', 'h-5 w-5')}</button></div>
+          <div class="mt-5 grid gap-4 sm:grid-cols-2">
+            <label class="block sm:col-span-2"><span class="mb-2 block text-sm font-semibold text-slate-700">ครู</span><select id="aTeacher" class="${INPUT}"><option value="">เลือกครู</option>${teachers.map((t) => `<option value="${t.id}" ${st.teacherId === t.id ? 'selected' : ''}>${esc(t.name)} (${t.id})</option>`).join('')}</select></label>
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ภาคเรียน</span><select id="aTerm" class="${INPUT}">${Object.keys(db().terms).map((t) => `<option value="${t}" ${st.term === t ? 'selected' : ''}>${esc(TT.termLabel(t))}${TT.unavailabilityOpen(t) ? '' : ' · ปิดรับแล้ว'}</option>`).join('')}</select></label>
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">วัน</span><select id="aDay" class="${INPUT}">${days.map((d) => `<option value="${d}" ${Number(st.day) === d ? 'selected' : ''}>${TT.DAYS[d].name}</option>`).join('')}</select></label>
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">เวลาเริ่ม</span><input id="aStart" type="time" step="300" value="${esc(st.start)}" class="${INPUT}"></label>
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">เวลาสิ้นสุด</span><input id="aEnd" type="time" step="300" value="${esc(st.end)}" class="${INPUT}"></label>
+            <label class="block sm:col-span-2"><span class="mb-2 block text-sm font-semibold text-slate-700">เหตุผล (ภารกิจในโรงเรียน)</span><select id="aReason" class="${INPUT}">${TT.UNAVAIL_REASONS.map((x) => `<option ${st.reason === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}</select></label>
+            <label class="block sm:col-span-2"><span class="mb-2 block text-sm font-semibold text-slate-700">หมายเหตุ</span><textarea id="aNote" rows="2" class="${INPUT}" placeholder="เช่น คุมซ้อมนักกีฬาโรงเรียน">${esc(st.note)}</textarea></label>
+          </div>
+          <div id="aPreview" class="mt-4 space-y-2">${unAddPreview()}</div>
+        </div>
+        <div class="flex justify-end gap-2 border-t border-slate-100 px-6 py-4">
+          <button type="button" data-close-add class="${BTN_GHOST}">ยกเลิก</button>
+          <button type="button" id="aSave" class="${BTN_PRIMARY}">บันทึกและอนุมัติ</button>
+        </div>`;
+      panel.querySelectorAll('[data-close-add]').forEach((b) => b.addEventListener('click', closeUnAdd));
+      const sync = () => {
+        st.teacherId = $('aTeacher').value; st.day = Number($('aDay').value); st.start = $('aStart').value; st.end = $('aEnd').value; st.reason = $('aReason').value; st.note = $('aNote').value;
+        $('aPreview').innerHTML = unAddPreview();
+      };
+      ['aTeacher', 'aDay', 'aStart', 'aEnd', 'aReason', 'aNote'].forEach((id) => { $(id).addEventListener('input', () => { $(id).classList.remove('field-invalid'); sync(); }); $(id).addEventListener('change', sync); });
+      $('aTerm').addEventListener('change', () => { sync(); st.term = $('aTerm').value; renderUnAdd(); });
+      $('aSave').addEventListener('click', () => {
+        sync();
+        let bad = false;
+        if (!st.teacherId) { $('aTeacher').classList.add('field-invalid'); bad = true; }
+        if (!st.start) { $('aStart').classList.add('field-invalid'); bad = true; }
+        if (!st.end || (st.start && TT.toMin(st.end) <= TT.toMin(st.start))) { $('aEnd').classList.add('field-invalid'); bad = true; }
+        if (bad) { TT.toast('ข้อมูลไม่ครบ', 'เลือกครู และเวลาสิ้นสุดต้องหลังเวลาเริ่ม', 'warn'); return; }
+        const dup = db().unavailability.find((u) => u.term === st.term && u.teacherId === st.teacherId && u.day === st.day && u.status !== 'rejected' && TT.toMin(u.start) < TT.toMin(st.end) && TT.toMin(st.start) < TT.toMin(u.end));
+        if (dup) { TT.toast('ทับกับเวลาไม่ว่างที่มีอยู่', `${dup.start}–${dup.end} (${UN_STATUS[dup.status].label})`, 'warn'); return; }
+        const ov = overlapsPublished(st);
+        const now = TT.nowIso(); const by = TT.me().name;
+        const rec = { id: TT.newId('UN'), term: st.term, teacherId: st.teacherId, day: st.day, start: st.start, end: st.end, reason: st.reason, note: st.note.trim(), status: 'approved', by: 'admin', createdAt: now, decidedAt: now, decidedBy: by, adminNote: '' };
+        db().unavailability.push(rec);
+        const when = `${TT.termLabel(rec.term)} · ${TT.DAYS[rec.day].name} ${rec.start}–${rec.end}`;
+        TT.notify(rec.teacherId, 'admin เพิ่มเวลาไม่ว่างให้', `${when} (${rec.reason})${ov.list.length ? ` — ตรงกับคาบสอน ${ov.list.length} คาบ กรุณายื่นคำร้องขอเปลี่ยนการจัด` : ''}`, 'my-timetable.html#unavailability');
+        TT.logHistory(rec.term, ov.pub ? ov.pub.id : null, 'เพิ่มเวลาไม่ว่างแทนครู', `${TT.teacherName(rec.teacherId)} · ${TT.DAYS[rec.day].name} ${rec.start}–${rec.end} (${rec.reason})`);
+        closeUnAdd();
+        state.tab = 'unavailability';
+        TT.save();
+        TT.toast('เพิ่มเวลาไม่ว่างแล้ว', `${TT.teacherName(rec.teacherId)} · ${when}`, ov.list.length ? 'warn' : 'success');
+      });
+    }
+
+    /* ------------------------------------------------------------------ bindings */
+    function bindPage() {
+      document.querySelectorAll('[data-tab]').forEach((b) => b.addEventListener('click', () => {
+        state.tab = b.dataset.tab;
+        history.replaceState(null, '', state.tab === 'unavailability' ? '#unavailability' : location.pathname + location.search);
+        render();
+      }));
+      $('fTerm').addEventListener('change', (e) => { state.term = e.target.value; render(); });
+      $('fStatus').addEventListener('change', (e) => { state.status = e.target.value; render(); });
+      const q = $('fQ');
+      q.addEventListener('input', () => {
+        state.q = q.value;
+        $('tabBody').innerHTML = state.tab === 'requests' ? renderRequests() : renderUnavailability();
+        bindBody();
+      });
+      $('clearFilters').addEventListener('click', clearFilters);
+      $('openAddUn').addEventListener('click', openUnAdd);
+      bindBody();
+    }
+    function bindBody() {
+      document.querySelectorAll('[data-review]').forEach((b) => b.addEventListener('click', () => openReview(b.dataset.review)));
+      document.querySelectorAll('[data-un-approve]').forEach((b) => b.addEventListener('click', () => openUnDecide(b.dataset.unApprove, true)));
+      document.querySelectorAll('[data-un-reject]').forEach((b) => b.addEventListener('click', () => openUnDecide(b.dataset.unReject, false)));
+      document.querySelectorAll('[data-clear]').forEach((b) => b.addEventListener('click', () => { state.status = 'all'; state.q = ''; state.term = 'all'; render(); }));
+    }
+    function clearFilters() { state.term = 'all'; state.status = 'pending'; state.q = ''; render(); }
+
+    $('reviewDrawer').addEventListener('click', (e) => { if (e.target.id === 'reviewDrawer') closeReview(); });
+    $('unDecideModal').addEventListener('click', (e) => { if (e.target.id === 'unDecideModal') closeUnDecide(); });
+    $('unAddModal').addEventListener('click', (e) => { if (e.target.id === 'unAddModal') closeUnAdd(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (document.getElementById('ttConfirm') && !document.getElementById('ttConfirm').classList.contains('hidden')) return;
+      if (state.unAdd) closeUnAdd(); else if (state.unDecide) closeUnDecide(); else if (state.review) closeReview();
+    });
+    window.addEventListener('hashchange', () => {
+      if (location.hash.startsWith('#unavailability')) { state.tab = 'unavailability'; render(); }
+      const m = location.hash.match(/^#request=(.+)$/); if (m) { state.tab = 'requests'; render(); openReview(decodeURIComponent(m[1])); }
+    });
+    // Workaround: the bell (academic-layout.js) writes "read" flags straight to localStorage; reload TT's in-memory copy
+    // so the next TT.save() does not overwrite them.
+    document.addEventListener('click', (e) => { if (e.target.closest && e.target.closest('[data-bell-item],[data-bell-readall]')) setTimeout(() => TT.load(true), 0); });
+
+    TT.onChange(() => { render(); AcademicLayout.refresh(); });
+    render();
+    if (hashReq && TT.role() === 'admin') openReview(decodeURIComponent(hashReq[1]));
+  }());
+  </script>
+</body>
+</html>

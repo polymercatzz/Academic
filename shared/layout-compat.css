@@ -1,0 +1,79 @@
+/*
+ * Lets the shared sidebar/header (academic-layout.js, Tailwind classes) sit on pages that keep
+ * their own stylesheet and therefore run Tailwind without its preflight reset
+ * (reports/academic-report.html, reports/teacher-attendance.html, grading/*.html).
+ */
+
+/* ---------- minimal reset for the shared sidebar/header ---------- */
+:where(#layoutSidebar, #layoutHeader) *,
+:where(#layoutSidebar, #layoutHeader) *::before,
+:where(#layoutSidebar, #layoutHeader) *::after {
+  border-width: 0;
+  border-style: solid;
+  border-color: #e2e8f0;
+}
+
+:where(#layoutSidebar, #layoutHeader) :where(p, h1, h2, h3) {
+  margin: 0;
+}
+
+:where(#layoutSidebar, #layoutHeader) :where(button) {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  color: inherit;
+  text-align: inherit;
+  cursor: pointer;
+}
+
+:where(#layoutSidebar, #layoutHeader) :where(a) {
+  color: inherit;
+  text-decoration: inherit;
+}
+
+:where(#layoutSidebar, #layoutHeader) :where(svg) {
+  display: block;
+}
+
+/* page stylesheets that style every svg as a stroke icon must not hollow out the filled layout icons */
+#layoutSidebar svg,
+#layoutHeader svg {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* ---------- breadcrumb: หน้าหลัก > group > page, as on the Tailwind pages ---------- */
+.ar-breadcrumb {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  color: #64748b;
+  font-size: 1.35vh;
+}
+
+.ar-breadcrumb a {
+  color: #475569;
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.ar-breadcrumb a:hover {
+  color: var(--primary);
+}
+
+.ar-breadcrumb > span:not(.ar-breadcrumb-current) {
+  color: #cbd5e1;
+}
+
+.ar-breadcrumb > span:nth-of-type(2) {
+  color: #64748b;
+}
+
+.ar-breadcrumb-current {
+  color: #1e293b;
+  font-weight: 500;
+}

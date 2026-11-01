@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตารางสอน | Academic Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: { canvas: '#F7F9FC', brand: '#2563eb', ink: '#0f172a', muted: '#64748b' },
+          fontFamily: { body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif'] },
+          boxShadow: { soft: '0 12px 32px rgba(15, 23, 42, 0.06)', modal: '0 24px 80px rgba(15, 23, 42, 0.18)' }
+        }
+      }
+    };
+  </script>
+  <style>
+    .modal-backdrop { background: rgba(15, 23, 42, .46); backdrop-filter: blur(5px); }
+    .modal-panel { animation: modalIn .18s ease-out; }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .drawer-panel { animation: drawerIn .2s ease-out; }
+    @keyframes drawerIn { from { transform: translateX(24px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    .pool-drop.is-over { border-color: #2563eb; background: #eff6ff; }
+    .drop-zone.is-ready { border-color: #2563eb; background: #eff6ff; }
+    .spin { animation: spin 1s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .step-dot.is-active { background: #2563eb; color: #fff; }
+    .step-dot.is-done { background: #10b981; color: #fff; }
+  </style>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-canvas font-body text-ink">
+  <div id="layoutSidebar"></div>
+  <div class="lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="timetable-core.js"></script>
+    <script src="timetable-data.js"></script>
+    <script>TT.load();</script>
+    <script src="../shared/academic-layout.js?v=8"></script>
+    <script>AcademicLayout.mount({ active: 'timetable', eyebrow: 'ตารางเรียน', title: 'ตารางสอน' });</script>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8">
+      <div id="roleGuard" class="mx-auto hidden max-w-xl"></div>
+      <div id="page" class="mx-auto max-w-[1600px] space-y-6">
+        <section class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
+              <a href="../reports/overview.html" class="font-medium text-slate-600 transition hover:text-brand">ภาพรวมงานวิชาการ</a><span class="text-slate-300">&gt;</span>
+              <span class="font-medium text-slate-800">ตารางเรียน</span><span class="text-slate-300">&gt;</span>
+              <span class="font-medium text-slate-800">ตารางสอน</span>
+            </nav>
+            <div class="flex flex-wrap items-center gap-3">
+              <h1 class="text-3xl font-semibold tracking-tight text-slate-950 lg:text-4xl">ตารางสอน</h1>
+              <span id="termBadge" class="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700"></span>
+            </div>
+            <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-500">สร้างตารางสอนของทุกครูในแต่ละภาคเรียน (คัดลอกจากฉบับที่มี หรือสร้างใหม่ทั้งหมด) จัดเอง จัดอัตโนมัติตามเงื่อนไข หรือจัดอัตโนมัติมาตรฐาน แล้วเผยแพร่ให้ครูเห็น ฉบับเผยแพร่แก้ไขไม่ได้ ต้องคัดลอกเป็นฉบับร่างก่อน</p>
+          </div>
+          <div class="flex flex-wrap items-end gap-3">
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ภาคเรียน</span>
+              <select id="termSelect" class="w-56 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select></label>
+            <button id="openWizardButton" type="button" class="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6v-2Z"/></svg>สร้างตารางสอนใหม่
+            </button>
+          </div>
+        </section>
+
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+          <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">ฉบับของตารางสอน</p>
+              <h2 id="versionsTitle" class="mt-2 text-xl font-semibold text-slate-950"></h2>
+            </div>
+            <p id="deadlineInfo" class="text-sm text-slate-500"></p>
+          </div>
+          <div id="versionList" class="mt-4 grid gap-3 md:grid-cols-2 2xl:grid-cols-4"></div>
+        </section>
+
+        <div id="workspace" class="space-y-6"></div>
+      </div>
+    </main>
+  </div>
+
+  <div id="drawer" class="fixed inset-0 z-50 hidden" role="dialog" aria-modal="true" aria-labelledby="drawerTitle">
+    <div data-close-drawer class="absolute inset-0 bg-slate-900/30"></div>
+    <div class="drawer-panel absolute inset-y-0 right-0 flex w-full max-w-[480px] flex-col bg-white shadow-modal">
+      <div class="flex items-start justify-between border-b border-slate-100 px-5 py-5">
+        <div><p id="drawerEyebrow" class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600"></p><h2 id="drawerTitle" class="mt-1 text-xl font-semibold text-slate-950"></h2><p id="drawerSubtitle" class="mt-1 text-sm text-slate-500"></p></div>
+        <button data-close-drawer type="button" class="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg></button>
+      </div>
+      <div id="drawerBody" class="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5 tt-scroll"></div>
+      <div id="drawerFooter" class="flex items-center justify-between gap-3 border-t border-slate-100 px-5 py-4"></div>
+    </div>
+  </div>
+
+  <div id="modal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div id="modalPanel" class="modal-panel flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-modal">
+      <div class="flex items-start justify-between border-b border-slate-100 px-5 py-5 lg:px-7">
+        <div><p id="modalEyebrow" class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600"></p><h2 id="modalTitle" class="mt-1 text-xl font-semibold text-slate-950"></h2><p id="modalSubtitle" class="mt-1 text-sm text-slate-500"></p></div>
+        <button data-close-modal type="button" class="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg></button>
+      </div>
+      <div id="modalSteps" class="hidden border-b border-slate-100 px-5 py-3 lg:px-7"></div>
+      <div id="modalBody" class="min-h-0 flex-1 overflow-y-auto px-5 py-6 lg:px-7 tt-scroll"></div>
+      <div id="modalFooter" class="flex flex-col-reverse gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-end lg:px-7"></div>
+    </div>
+  </div>
+
+  <script>
+    /* ==================================================================
+     * timetable.html — admin: versions, creation wizard, scheduling editor
+     * Terms: see GLOSSARY.md. Engine & store: timetable-core.js (window.TT).
+     * ================================================================== */
+    const $ = (id) => document.getElementById(id);
+    const { esc, icon } = TT;
+    const sel = 'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100';
+    const selSm = 'rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100';
+    const btn2 = 'inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40';
+    const btnP = 'inline-flex items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-40';
+    const btnG = 'rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 hover:bg-slate-100';
+    const db = () => TT.db;
+
+    const state = {
+      term: '2570-1', versionId: null, tab: 'teacher', group: '', search: '', teacherId: 't05', level: 1, classId: '1-1', roomId: 'LAB1', highlight: '',
+      readinessOpen: false, undo: {}, drag: null, drawer: null, modal: null, simulatedFixes: new Set()
+    };
+    const ver = () => TT.version(state.versionId);
+    const editable = () => ver()?.status === 'draft' && TT.role() === 'admin';
+    const allTerms = () => Object.keys(db().terms).sort();
+
+    /* ------------------------------------------------------------------ selection */
+    function pickDefaultVersion(term) {
+      const list = TT.versionsOf(term);
+      const draft = list.filter((v) => v.status === 'draft').sort((a, b) => (a.createdAt < b.createdAt ? 1 : -1))[0];
+      return (draft || TT.publishedOf(term) || list[0] || null)?.id || null;
+    }
+    function applyHash() {
+      const m = location.hash.match(/version=([^&]+)/);
+      const v = m && TT.version(decodeURIComponent(m[1]));
+      if (v) { state.term = v.term; state.versionId = v.id; }
+    }
+
+    /* ------------------------------------------------------------------ mutations + undo */
+    function commit(action, detail, fn) {
+      const v = ver();
+      state.undo[v.id] = state.undo[v.id] || [];
+      state.undo[v.id].push({ snap: JSON.stringify(v.entries), action });
+      if (state.undo[v.id].length > 40) state.undo[v.id].shift();
+      fn(v);
+      TT.logHistory(v.term, v.id, action, detail);
+      TT.save();
+    }
+    function undo() {
+      const v = ver(); const stack = state.undo[v?.id] || [];
+      const last = stack.pop();
+      if (!last) return;
+      v.entries = JSON.parse(last.snap);
+      TT.logHistory(v.term, v.id, 'ย้อนกลับ', `ยกเลิกการ "${last.action}"`);
+      TT.save();
+      TT.toast('ย้อนกลับแล้ว', `ยกเลิกการ "${last.action}"`);
+    }
+
+    /* ------------------------------------------------------------------ render: heading + versions */
+    function render() {
+      AcademicLayout.refresh();
+      if (TT.role() !== 'admin') {
+        $('page').classList.add('hidden'); $('roleGuard').classList.remove('hidden');
+        $('roleGuard').innerHTML = `<div class="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-soft"><p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">สำหรับงานวิชาการ</p><h1 class="mt-2 text-2xl font-semibold text-slate-950">หน้านี้สำหรับ admin เท่านั้น</h1><p class="mt-2 text-sm text-slate-500">ครูดูตารางที่เผยแพร่แล้วได้ที่หน้า "ตารางสอนของฉัน"</p><div class="mt-5 flex justify-center gap-3"><a href="my-timetable.html" class="${btn2}">ไปที่ตารางสอนของฉัน</a><button id="becomeAdmin" type="button" class="${btnP}">สลับเป็น admin</button></div></div>`;
+        $('becomeAdmin').onclick = () => { TT.setRole('admin'); location.reload(); };
+        return;
+      }
+      $('page').classList.remove('hidden'); $('roleGuard').classList.add('hidden');
+      if (!state.versionId || !TT.version(state.versionId) || TT.version(state.versionId).term !== state.term) state.versionId = pickDefaultVersion(state.term);
+      $('termSelect').innerHTML = allTerms().map((t) => `<option value="${t}" ${t === state.term ? 'selected' : ''}>${TT.termLabel(t)}</option>`).join('');
+      $('termBadge').textContent = TT.termLabel(state.term);
+      renderVersions();
+      renderWorkspace();
+      if (state.drawer) renderDrawer();
+    }
+    function renderVersions() {
+      const order = { published: 0, draft: 1, old: 2 };
+      const list = TT.versionsOf(state.term).sort((a, b) => order[a.status] - order[b.status] || (a.createdAt < b.createdAt ? 1 : -1));
+      const info = TT.termInfo(state.term);
+      $('versionsTitle').textContent = `${TT.termLabel(state.term)} · ${list.length} ฉบับ`;
+      const open = TT.unavailabilityOpen(state.term);
+      $('deadlineInfo').innerHTML = info ? `เปิดภาคเรียน ${TT.formatDate(info.start)} · วันปิดรับเวลาไม่ว่าง <span class="font-semibold ${open ? 'text-blue-700' : 'text-slate-700'}">${TT.formatDate(info.unavailDeadline)}</span> ${open ? `(เหลือ ${TT.daysLeft(info.unavailDeadline)} วัน)` : '(ปิดรับแล้ว)'}` : '';
+      if (!list.length) {
+        $('versionList').innerHTML = `<div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center md:col-span-2 2xl:col-span-4"><p class="font-semibold text-slate-800">${TT.termLabel(state.term)} ยังไม่มีตารางสอน</p><p class="mt-1 text-sm text-slate-500">สร้างตารางสอนใหม่ โดยคัดลอกจากฉบับที่มีหรือสร้างใหม่ทั้งหมด</p><button data-act="wizard" type="button" class="${btnP} mt-4">สร้างตารางสอน</button></div>`;
+        return;
+      }
+      $('versionList').innerHTML = list.map((v) => {
+        const st = TT.VERSION_STATUS[v.status];
+        const iss = TT.computeIssues(v);
+        const prog = TT.versionProgress(v);
+        const active = v.id === state.versionId;
+        const base = v.basedOn && TT.version(v.basedOn);
+        const div = v.status === 'draft' ? TT.divergence(v).length : 0;
+        return `<article class="flex flex-col rounded-2xl border p-4 transition ${active ? 'border-blue-500 bg-blue-50/50 ring-1 ring-blue-500' : 'border-slate-200 bg-white hover:border-blue-200'}">
+          <div class="flex items-start justify-between gap-2"><button data-open-version="${v.id}" type="button" class="min-w-0 text-left"><p class="truncate font-semibold text-slate-900">${esc(v.name)}</p><p class="mt-0.5 text-xs text-slate-500">${base ? `คัดลอกจาก "${esc(base.name)}"` : 'สร้างใหม่ทั้งหมด'}</p></button><span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${st.cls}">${st.label}</span></div>
+          <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${iss.errorCells ? 'bg-rose-500' : prog.pct === 100 ? 'bg-emerald-500' : 'bg-blue-600'}" style="width:${prog.pct}%"></div></div>
+          <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500"><span>จัดแล้ว ${prog.pct}%</span><span class="${iss.errorCells ? 'font-semibold text-rose-600' : ''}">Conflict ${iss.errorCells}</span><span>คำเตือน ${iss.warnCells}</span>${div ? `<span class="font-semibold text-violet-700">ล้าหลังฉบับเผยแพร่ ${div}</span>` : ''}</div>
+          <p class="mt-2 text-[11px] text-slate-400">${v.status === 'draft' ? `สร้าง ${TT.formatDateTime(v.createdAt)} · ${esc(v.createdBy)}` : `เผยแพร่ ${TT.formatDateTime(v.publishedAt)}`}</p>
+          <div class="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
+            ${active ? '<span class="rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white">กำลังเปิด</span>' : `<button data-open-version="${v.id}" type="button" class="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">เปิด</button>`}
+            <button data-copy-version="${v.id}" type="button" class="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">คัดลอกเป็นฉบับร่าง</button>
+            ${v.status === 'draft' ? `<button data-rename-version="${v.id}" type="button" class="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">เปลี่ยนชื่อ</button><button data-delete-version="${v.id}" type="button" class="rounded-lg border border-rose-200 px-2.5 py-1 text-xs font-semibold text-rose-600 hover:bg-rose-50">ลบ</button>` : ''}
+          </div>
+        </article>`;
+      }).join('');
+    }
+
+    /* ------------------------------------------------------------------ render: workspace */
+    function renderWorkspace() {
+      const v = ver();
+      if (!v) { $('workspace').innerHTML = ''; return; }
+      const st = TT.VERSION_STATUS[v.status];
+      const iss = TT.computeIssues(v);
+      const prog = TT.versionProgress(v);
+      const div = v.status === 'draft' ? TT.divergence(v) : [];
+      const ready = v.status === 'draft' ? TT.readiness(v) : null;
+      const overload = iss.teacherWarnings.length;
+      const canUndo = (state.undo[v.id] || []).length;
+      const cards = [
+        { label: 'ความคืบหน้า', value: `${prog.pct}%`, hint: `จัดแล้ว ${prog.placed}/${prog.required} คาบ`, color: 'bg-blue-50 text-blue-600', ic: 'check', bar: prog.pct },
+        { label: 'รายการรอจัด', value: prog.required - prog.placed, hint: 'คาบที่ยังไม่ได้วางลงตาราง', color: 'bg-indigo-50 text-indigo-600', ic: 'grip' },
+        { label: 'Conflict', value: iss.errorCells, hint: 'ต้องเป็น 0 ก่อนเผยแพร่', color: iss.errorCells ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600', ic: 'warn' },
+        { label: 'คำเตือน', value: iss.warnCells, hint: 'ขัดเงื่อนไขที่กำหนดเพิ่ม', color: iss.warnCells ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600', ic: 'info' },
+        { label: 'ครูภาระเกิน', value: overload, hint: 'คาบต่อสัปดาห์เกินกำหนด', color: overload ? 'bg-violet-50 text-violet-600' : 'bg-slate-100 text-slate-600', ic: 'user' }
+      ];
+      $('workspace').innerHTML = `
+        <section class="rounded-3xl border border-slate-200 bg-white shadow-soft">
+          <div class="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2"><h2 class="text-xl font-semibold text-slate-950">${esc(v.name)}</h2><span class="rounded-full px-2.5 py-1 text-xs font-semibold ${st.cls}">${st.label}</span></div>
+              <p class="mt-1 text-sm text-slate-500">${v.timeStructures.map((ts) => `${esc(ts.name)}: ${ts.start}–${TT.fmt(TT.dayEnd(ts))} · ${ts.periods} คาบ × ${ts.periodMin} นาที`).join(' · ')}</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2">
+              ${editable() ? `
+                <button data-act="undo" type="button" class="${btn2}" ${canUndo ? '' : 'disabled'}>${icon('swap')}ย้อนกลับ</button>
+                <button data-act="settings" type="button" class="${btn2}">${icon('clock')}โครงสร้างเวลา / กิจกรรม</button>
+                <button data-act="conditions" type="button" class="${btn2}">${icon('info')}เงื่อนไขการจัด</button>
+                <button data-act="import" type="button" class="${btn2}">${icon('upload')}นำเข้า Excel</button>
+                <button data-act="export" type="button" class="${btn2}">${icon('download')}ส่งออก</button>
+                <button data-act="auto" type="button" class="${btnP} !rounded-xl !py-2">✦ จัดอัตโนมัติ</button>
+                <button data-act="publish" type="button" class="inline-flex items-center gap-2 rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">${icon('send')}เผยแพร่</button>`
+              : `<button data-act="export" type="button" class="${btn2}">${icon('download')}ส่งออก</button><button data-copy-version="${v.id}" type="button" class="${btnP} !py-2">${icon('copy')}คัดลอกเป็นฉบับร่างเพื่อแก้ไข</button>`}
+            </div>
+          </div>
+          ${v.status !== 'draft' ? `<div class="mx-5 mb-5 flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 lg:mx-6">${icon('lock', 'h-5 w-5 shrink-0 text-slate-400')}<span>${v.status === 'published' ? 'ฉบับเผยแพร่แก้ไขไม่ได้ ครูกำลังใช้ฉบับนี้ หากต้องการเปลี่ยนให้คัดลอกเป็นฉบับร่าง แล้วเผยแพร่ใหม่ หรืออนุมัติคำร้องของครูที่หน้าคำขออนุมัติ' : 'ฉบับเก่าถูกแทนที่แล้ว ใช้ดูย้อนหลังเท่านั้น'}</span></div>` : ''}
+          ${div.length ? `<div class="mx-5 mb-5 flex flex-col gap-3 rounded-2xl border border-violet-200 bg-violet-50 p-4 lg:mx-6 lg:flex-row lg:items-center lg:justify-between"><div class="flex gap-3">${icon('info', 'h-5 w-5 shrink-0 text-violet-600')}<div><p class="text-sm font-semibold text-violet-900">ฉบับเผยแพร่มีการเปลี่ยนแปลง ${div.length} รายการหลังคัดลอกฉบับร่างนี้</p><p class="mt-1 text-xs text-violet-800/80">${div.map((r) => `${esc(TT.teacherName(r.teacherId))}: ${TT.REQUEST_TYPES[r.type]} ${TT.className(r.classId)} ${TT.slotLabel(r.slot)}`).join(' · ')}</p></div></div><button data-act="merge" type="button" class="shrink-0 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700">นำมารวม</button></div>` : ''}
+        </section>
+        <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">${cards.map((c) => `<article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="text-sm font-semibold text-slate-500">${c.label}</p><p class="mt-2 text-3xl font-semibold tracking-tight text-slate-950">${c.value}</p><p class="mt-1 text-xs text-slate-400">${c.hint}</p></div><span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${c.color}">${icon(c.ic, 'h-5 w-5')}</span></div>${c.bar !== undefined ? `<div class="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-blue-600" style="width:${c.bar}%"></div></div>` : ''}</article>`).join('')}</section>
+        ${ready ? readinessCard(ready) : ''}
+        <section class="rounded-3xl border border-slate-200 bg-white shadow-soft">
+          <div class="flex gap-2 overflow-x-auto border-b border-slate-100 px-5 py-4 tt-scroll lg:px-6" role="tablist">
+            ${[['teacher', editable() ? '✎ จัดตารางสอนครู' : 'ตารางสอนรายครู'], ['class', 'ตารางเรียนรายห้อง'], ['room', 'ตารางการใช้ห้อง'], ['level', 'ตารางรวมระดับชั้น'], ['report', 'รายงาน']].map(([k, l]) => `<button data-tab="${k}" type="button" class="whitespace-nowrap rounded-2xl px-4 py-2.5 text-sm font-semibold transition ${state.tab === k ? 'bg-blue-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}">${l}</button>`).join('')}
+          </div>
+          <div id="tabBody"></div>
+        </section>`;
+      ({ teacher: renderTeacherTab, class: renderClassTab, room: renderRoomTab, level: renderLevelTab, report: renderReportTab })[state.tab]();
+    }
+
+    function readinessCard(r) {
+      return `<section class="rounded-3xl border border-slate-200 bg-white shadow-soft">
+        <button data-act="toggle-readiness" type="button" class="flex w-full items-center justify-between gap-3 px-5 py-4 text-left lg:px-6">
+          <span class="flex items-center gap-3"><span class="flex h-10 w-10 items-center justify-center rounded-2xl ${r.fails ? 'bg-rose-50 text-rose-600' : 'bg-emerald-50 text-emerald-600'}">${icon(r.fails ? 'warn' : 'check', 'h-5 w-5')}</span>
+          <span><span class="block font-semibold text-slate-900">การตรวจความพร้อม</span><span class="block text-sm text-slate-500">${r.fails ? 'มีรายการ "ไม่ผ่าน" — จัดอัตโนมัติไม่ได้จนกว่าจะแก้ (จัดเองได้)' : 'พร้อมจัดอัตโนมัติ'}</span></span></span>
+          <span class="flex items-center gap-2">${r.fails ? `<span class="rounded-full bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700">ไม่ผ่าน ${r.fails}</span>` : ''}${r.warns ? `<span class="rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-700">คำเตือน ${r.warns}</span>` : ''}<svg class="h-5 w-5 text-slate-400 transition ${state.readinessOpen ? 'rotate-180' : ''}" viewBox="0 0 24 24" fill="currentColor"><path d="m7.41 8.59 4.59 4.58 4.59-4.58L18 10l-6 6-6-6 1.41-1.41Z"/></svg></span>
+        </button>
+        <div class="${state.readinessOpen ? '' : 'hidden'} border-t border-slate-100 p-5 lg:p-6">${readinessList(r)}</div>
+      </section>`;
+    }
+    const SOURCE_LABEL = { curriculum: ['หน้าจัดการหลักสูตร', 'bg-blue-50 text-blue-700'], external: ['ระบบงานบุคคล / อาคารสถานที่', 'bg-slate-100 text-slate-600'], timetable: ['ตารางสอนฉบับนี้', 'bg-emerald-50 text-emerald-700'] };
+    function readinessList(r) {
+      const style = { pass: ['bg-emerald-50 text-emerald-600', 'check'], fail: ['bg-rose-50 text-rose-600', 'x'], warn: ['bg-amber-50 text-amber-600', 'warn'], info: ['bg-blue-50 text-blue-600', 'info'] };
+      return `<div class="mb-4 flex flex-wrap items-center justify-between gap-3"><p class="text-sm text-slate-500">แก้ข้อมูลที่ต้นทางแล้วกด "ตรวจใหม่" · ข้อมูลของทีมอื่นแก้ในระบบนี้ไม่ได้ ให้คัดลอกรายการไปส่งต่อ</p><button data-act="recheck" type="button" class="${btn2}">${icon('swap')}ตรวจใหม่</button></div>
+        <div class="grid gap-3 lg:grid-cols-2">${r.items.map((i) => `<div class="rounded-2xl border border-slate-200 p-4">
+          <div class="flex gap-3"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${style[i.status][0]}">${icon(style[i.status][1])}</span><div class="min-w-0 flex-1"><div class="flex flex-wrap items-center gap-2"><p class="text-sm font-semibold text-slate-800">${esc(i.title)}</p><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold ${SOURCE_LABEL[i.source][1]}">${SOURCE_LABEL[i.source][0]}</span></div><p class="mt-1 text-xs leading-5 text-slate-500">${esc(i.detail)}</p></div></div>
+          ${i.rows.length ? `<details class="mt-3"><summary class="cursor-pointer text-xs font-semibold text-blue-700">ดู ${i.rows.length} รายการ</summary><div class="mt-2 max-h-56 space-y-1.5 overflow-y-auto pr-1 tt-scroll">${i.rows.map((row) => `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs"><span class="min-w-0 text-slate-700">${esc(row.text)}</span>${row.link ? `<a href="${row.link}" target="_blank" rel="noopener" data-fix-link="${esc(row.text)}" class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white px-2 py-1 font-semibold text-blue-700 shadow-sm hover:bg-blue-50">ไปแก้ไข ${icon('external', 'h-3 w-3')}</a>` : row.external ? '<span class="shrink-0 text-[10px] font-semibold text-slate-400">ต้องแก้ที่ระบบต้นทาง</span>' : ''}</div>`).join('')}</div>${i.source === 'external' ? `<button data-copy-rows="${i.id}" type="button" class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900">${icon('copy', 'h-3.5 w-3.5')}คัดลอกรายการไปส่งต่อ</button>` : ''}</details>` : ''}
+        </div>`).join('')}</div>`;
+    }
+
+    /* ------------------------------------------------------------------ teacher tab (editor) */
+    const visibleTeachers = () => db().external.teachers.filter((t) => (!state.group || t.group === state.group) && (!state.search || t.name.includes(state.search) || t.id.includes(state.search)) && (TT.loadOfTeacher(ver().term, t.id).length || TT.teacherBlocks(ver(), t.id).length));
+    function teacherErrorCount(v, tid, iss) { return new Set(iss.list.filter((i) => i.sev === 'error' && (i.teachers || []).includes(tid)).map((i) => `${i.cid}|${i.slot}`)).size; }
+    function renderTeacherTab() {
+      const v = ver();
+      const iss = TT.computeIssues(v);
+      const list = visibleTeachers();
+      if (list.length && !list.some((t) => t.id === state.teacherId)) state.teacherId = list[0].id;
+      const tid = state.teacherId;
+      const t = TT.teacher(tid);
+      const prog = TT.teacherProgress(v, tid);
+      const blocks = TT.teacherBlocks(v, tid);
+      const cond = TT.teacherCond(v, tid);
+      const days = TT.versionDays(v);
+      const perDay = days.map((d) => blocks.filter((b) => b.day === d).length);
+      $('tabBody').innerHTML = `
+        <div class="border-b border-slate-100 px-5 py-4 lg:px-6">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <select id="groupFilter" class="${selSm}"><option value="">ทุกกลุ่มสาระ</option>${Object.entries(TT.GROUPS).filter(([k]) => k !== 'ก').map(([k, g]) => `<option value="${k}" ${state.group === k ? 'selected' : ''}>${g.name}</option>`).join('')}</select>
+            <div id="teacherCombo" class="relative w-full lg:w-80">
+              <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4a6 6 0 1 0 3.8 10.6l4.3 4.3 1.4-1.4-4.3-4.3A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg></span>
+              <input id="teacherSearch" type="text" autocomplete="off" value="${esc(state.search)}" placeholder="พิมพ์ชื่อครู หรือเลือกจากรายการ" role="combobox" aria-expanded="false" aria-controls="teacherComboList" aria-autocomplete="list" class="${selSm} w-full pl-9 pr-16">
+              ${state.search ? '<button id="teacherSearchClear" type="button" class="absolute inset-y-0 right-9 flex items-center px-1 text-slate-400 hover:text-slate-700" aria-label="ล้างคำค้นหา">✕</button>' : ''}
+              <button id="teacherComboToggle" type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-700" aria-label="เปิดรายการครู"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="m7.41 8.59 4.59 4.58 4.59-4.58L18 10l-6 6-6-6 1.41-1.41Z"/></svg></button>
+              <div id="teacherComboList" role="listbox" class="absolute left-0 right-0 top-full z-30 mt-1 hidden max-h-96 overflow-y-auto rounded-2xl border border-slate-200 bg-white py-1 shadow-xl tt-scroll"></div>
+            </div>
+            <span id="teacherCount" class="text-xs text-slate-400">${list.length} คน · ครูที่ได้รับการมอบหมายสอนในภาคเรียนนี้</span>
+          </div>
+          <div class="mt-3 flex gap-2 overflow-x-auto pb-1 tt-scroll">${list.map((x) => {
+            const p = TT.teacherProgress(v, x.id); const errs = teacherErrorCount(v, x.id, iss); const active = x.id === tid;
+            const status = !p.required ? '<span class="text-slate-400">ไม่มีการมอบหมาย</span>' : p.placed === 0 ? '<span class="text-slate-400">ยังไม่เริ่มจัด</span>' : errs ? `<span class="text-rose-600">${errs} Conflict</span>` : p.pct === 100 ? '<span class="text-emerald-600">จัดครบแล้ว</span>' : `<span class="text-amber-600">รอจัด ${p.required - p.placed} คาบ</span>`;
+            return `<button data-teacher="${x.id}" type="button" class="min-w-[170px] shrink-0 rounded-2xl border px-4 py-3 text-left transition ${active ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-slate-200 bg-white hover:border-blue-200 hover:bg-slate-50'}">
+              <span class="flex items-center justify-between gap-2"><span class="truncate font-semibold ${active ? 'text-blue-700' : 'text-slate-900'}">${esc(x.name)}</span><span class="text-xs font-semibold text-slate-500">${p.pct}%</span></span>
+              <span class="mt-0.5 flex items-center gap-1.5 truncate text-[11px] text-slate-400"><span class="h-2 w-2 shrink-0 rounded-full ${TT.GROUPS[x.group].dot}"></span>${TT.GROUPS[x.group].name}</span>
+              <span class="mt-2 block h-1.5 overflow-hidden rounded-full bg-slate-100"><span class="block h-full rounded-full ${errs ? 'bg-rose-500' : p.pct === 100 ? 'bg-emerald-500' : 'bg-blue-500'}" style="width:${p.pct}%"></span></span>
+              <span class="mt-1.5 block text-xs font-medium">${status}</span></button>`;
+          }).join('') || '<p class="py-4 text-sm text-slate-400">ไม่พบครูตามตัวกรอง</p>'}</div>
+        </div>
+        ${t ? `<div class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+          <div class="flex flex-wrap items-center gap-x-5 gap-y-2"><h3 class="text-lg font-semibold text-slate-950">ตารางสอน ${esc(t.name)}</h3><span class="text-sm text-slate-500">${TT.GROUPS[t.group].name}</span><span class="text-sm text-slate-500">คาบสอน <span class="font-semibold text-slate-800">${blocks.length}/${cond.maxPerWeek}</span> ต่อสัปดาห์</span><span class="text-sm text-slate-500">ต่อวัน ${days.map((d, i) => `<span class="${perDay[i] > cond.maxPerDay ? 'font-semibold text-rose-600' : ''}">${TT.DAYS[d].short}${perDay[i]}</span>`).join(' ')} (กำหนด ${cond.maxPerDay})</span></div>
+          ${editable() ? `<div class="flex flex-wrap gap-2"><button data-act="import-teacher" type="button" class="${btn2}">${icon('upload')}นำเข้า Excel ของครูคนนี้</button><button data-act="auto-teacher" type="button" class="${btn2}">✦ จัดอัตโนมัติเฉพาะครูคนนี้</button><div class="relative" id="clearMenuWrap"><button data-act="clear-menu" type="button" aria-haspopup="menu" aria-expanded="false" class="${btn2} !border-rose-200 !text-rose-600">ล้างข้อมูล<svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="m7.41 8.59 4.59 4.58 4.59-4.58L18 10l-6 6-6-6 1.41-1.41Z"/></svg></button>
+            <div id="clearMenu" role="menu" class="absolute right-0 top-full z-30 mt-1 hidden w-72 overflow-hidden rounded-2xl border border-slate-200 bg-white py-1 shadow-xl">
+              <button data-act="clear-teacher" role="menuitem" type="button" class="block w-full px-4 py-2.5 text-left hover:bg-rose-50"><span class="block text-sm font-semibold text-slate-800">ล้างตารางครู</span><span class="block text-xs text-slate-500">เฉพาะคาบของ${esc(TT.teacherShort(tid))} (ไม่รวมคาบที่ล็อก)</span></button>
+              <button data-act="clear-all" role="menuitem" type="button" class="block w-full px-4 py-2.5 text-left hover:bg-rose-50"><span class="block text-sm font-semibold text-rose-700">ล้างตารางทั้งฉบับ</span><span class="block text-xs text-slate-500">ทุกครู ทุกห้องในฉบับร่างนี้ (ไม่รวมคาบที่ล็อก)</span></button>
+            </div></div></div>` : ''}
+        </div>
+        <div class="grid min-[1760px]:grid-cols-[minmax(0,1fr)_300px]">
+          <div class="min-w-0 p-4 lg:p-5">
+            <div class="overflow-x-auto tt-scroll">${TT.timeline({ id: 'teacherTimeline', days, range: TT.versionRange(v), bands: TT.teacherBands(v, tid), blocks: blocks.map((b) => ({ ...b, attrs: `data-entry="${b.cid}|${b.slot}"`, html: TT.entryCard({ code: b.entry.code, title: `${TT.className(b.cid)} · ${b.entry.code}`, line1: `${TT.roomShort(b.entry.room)} · ${TT.fmt(b.start)}`, line2: b.entry.teachers.length > 1 ? `ร่วมสอน: ${b.entry.teachers.filter((x) => x !== tid).map(TT.teacherShort).join(', ')}` : '', issues: iss.byCell.get(`${b.cid}|${b.slot}`) || [], locked: b.entry.locked, draggable: editable() && !b.entry.locked, dragAttrs: 'data-drag="entry"', extraClass: 'cursor-pointer' }) })), emptyClickAttr: editable() ? 'data-row-add="1"' : '' })}</div>
+            <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400"><span>แกนเวลาจริง: ม.ต้น และ ม.ปลาย มีเวลาคาบต่างกัน ระบบตรวจซ้อนจากเวลาที่ทับกัน</span>${editable() ? '<span>ลากจากรายการรอจัดมาวางบนช่องคาบของห้องนั้น · ลากคาบกลับไปที่รายการเพื่อนำออก · คลิกที่ว่างเพื่อเพิ่มคาบ</span>' : '<span>ฉบับนี้ดูได้อย่างเดียว</span>'}</p>
+          </div>
+          <aside class="grid gap-5 border-t border-slate-100 p-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:p-5 min-[1760px]:block min-[1760px]:border-l min-[1760px]:border-t-0">
+            ${poolHtml(v, tid, prog)}
+            <div class="h-fit rounded-2xl border border-slate-200 p-4 min-[1760px]:mt-5"><p class="text-sm font-semibold text-slate-800">สัญลักษณ์</p><div class="mt-3 grid grid-cols-2 gap-x-3 gap-y-2 text-xs text-slate-600">${legendHtml()}</div></div>
+          </aside>
+        </div>` : ''}`;
+    }
+    function poolHtml(v, tid, prog) {
+      const done = prog.required > 0 && !prog.remaining.length;
+      return `<div><div class="flex items-center justify-between gap-3"><div><p class="font-semibold text-slate-900">รายการรอจัด</p><p class="text-xs text-slate-500">จากการมอบหมายสอน · จัดแล้ว ${prog.placed}/${prog.required} คาบ</p></div><span class="rounded-full ${done ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'} px-2.5 py-1 text-xs font-semibold">${done ? 'ครบแล้ว' : `${prog.required - prog.placed} คาบ`}</span></div>
+        <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${done ? 'bg-emerald-500' : 'bg-blue-600'}" style="width:${prog.pct}%"></div></div>
+        <div id="poolDrop" class="pool-drop mt-4 grid gap-2 rounded-2xl border-2 border-dashed border-transparent transition sm:grid-cols-2 xl:grid-cols-3 min-[1760px]:grid-cols-1">
+          ${!prog.required ? '<div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">ครูคนนี้ยังไม่ได้รับมอบหมายสอนในภาคเรียนนี้</div>' : done ? '<div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800"><p class="font-semibold">จัดครบทุกรายวิชาแล้ว</p><p class="mt-1 text-xs text-emerald-700/80">ลากคาบมาวางที่นี่เพื่อนำออก</p></div>' : prog.remaining.map((s) => {
+            const g = TT.GROUPS[s.subject.group];
+            const rt = TT.subjectCond(v, s.code).roomType;
+            return `<div ${editable() ? `draggable="true" data-drag="pool" data-cid="${s.classId}" data-code="${s.code}"` : ''} class="flex items-center gap-3 rounded-2xl border ${g.card} p-3 transition ${editable() ? 'cursor-grab hover:shadow-md' : ''}">
+              <span class="text-slate-400">${icon('grip')}</span>
+              <div class="min-w-0 flex-1"><p class="text-xs font-bold ${g.text}">${TT.className(s.classId)} · ${s.code}</p><p class="truncate text-sm font-semibold text-slate-800">${esc(s.subject.name)}</p><p class="truncate text-xs text-slate-500">${TT.tsOfClass(v, s.classId).name}${rt ? ` · ${TT.ROOM_TYPES[rt]}` : ''}${s.teachers.length > 1 ? ' · ร่วมสอน' : ''}</p></div>
+              <span class="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-700 shadow-sm">×${s.remain}</span></div>`;
+          }).join('')}
+        </div></div>`;
+    }
+    function legendHtml() {
+      return Object.values(TT.GROUPS).map((g) => `<span class="flex items-center gap-2"><span class="h-2.5 w-2.5 shrink-0 rounded-full ${g.dot}"></span><span class="truncate">${g.name}</span></span>`).join('') +
+        `<span class="flex items-center gap-2"><span class="h-3 w-3 shrink-0 rounded ring-2 ring-rose-400"></span>Conflict</span><span class="flex items-center gap-2"><span class="h-3 w-3 shrink-0 rounded ring-2 ring-amber-300"></span>คำเตือน</span><span class="flex items-center gap-2 text-slate-500">${icon('lock', 'h-3 w-3')}คาบที่ล็อก</span><span class="flex items-center gap-2"><span class="tt-hatch h-3 w-3 shrink-0 rounded border border-slate-300"></span>กิจกรรม / เวลาไม่ว่าง</span>`;
+    }
+
+    /* ------------------------------------------------------------------ drag & drop on the clock timeline */
+    function freeRoomFor(v, cid, slot, code) {
+      const rt = TT.subjectCond(v, code).roomType;
+      if (!rt) return TT.cls(cid).homeroom;
+      const rooms = db().external.rooms.filter((r) => r.type === rt);
+      const ok = rooms.find((r) => !TT.checkPlacement(v, cid, slot, { code, teachers: [], room: r.id }).some((i) => i.type === 'room-clash'));
+      return (ok || rooms[0]).id;
+    }
+    function dragCand(slot) {
+      const v = ver(); const d = state.drag;
+      if (d.type === 'entry') return v.entries[d.cid][d.slot];
+      const l = TT.loadOfClass(v.term, d.cid).find((x) => x.code === d.code);
+      return { code: l.code, teachers: [...l.teachers], room: freeRoomFor(v, d.cid, slot, l.code) };
+    }
+    function evalZone(slot) {
+      const v = ver(); const d = state.drag; const cid = d.cid;
+      if (d.type === 'entry' && d.slot === slot) return { level: 'self' };
+      const act = TT.classActivityAt(v, cid, slot);
+      if (act) return { level: 'blocked', reason: `${TT.className(cid)} มีกิจกรรมล็อกเวลา "${act.name}"` };
+      const occ = v.entries[cid][slot];
+      if (occ) {
+        if (occ.locked) return { level: 'blocked', reason: `${TT.className(cid)} มีคาบที่ล็อกไว้` };
+        if (d.type === 'pool' || !occ.teachers.includes(state.teacherId)) return { level: 'blocked', reason: `${TT.className(cid)} เรียน ${occ.code} กับ${TT.teachersLabel(occ.teachers)} อยู่แล้ว` };
+      }
+      const ignore = [`${cid}|${slot}`]; if (d.type === 'entry') ignore.push(`${cid}|${d.slot}`);
+      const iss = TT.checkPlacement(v, cid, slot, dragCand(slot), { ignore });
+      return { level: TT.worstSev(iss) === 'error' ? 'bad' : iss.length ? 'warn' : 'ok', reason: iss.map((i) => i.msg).join('\n') || 'วางได้ ไม่พบ Conflict', swap: !!occ };
+    }
+    function showZones() {
+      const v = ver(); const cid = state.drag.cid;
+      const [lo, hi] = TT.versionRange(v);
+      const pct = (m) => (m - lo) / (hi - lo) * 100;
+      TT.classSlots(v, cid).forEach((slot) => {
+        const r = evalZone(slot);
+        if (r.level === 'self') return;
+        const iv = TT.slotInterval(v, cid, slot);
+        const row = document.querySelector(`#teacherTimeline .tt-tl-row[data-day="${iv.day}"]`);
+        if (!row) return;
+        const z = document.createElement('div');
+        z.className = `tt-zone absolute inset-y-1 z-20 rounded-xl tt-drop-${r.level}`;
+        z.style.left = `${pct(iv.start)}%`; z.style.width = `${pct(iv.end) - pct(iv.start)}%`;
+        z.dataset.zone = slot; z.dataset.level = r.level; z.title = r.reason;
+        z.innerHTML = `<span class="pointer-events-none absolute left-1 right-1 top-1 truncate text-center text-[10px] font-bold text-slate-700">${TT.className(cid)} คาบ ${slot.split('-')[1]}${r.swap ? ' · สลับ' : ''}</span>`;
+        row.appendChild(z);
+      });
+    }
+    function clearZones() { document.querySelectorAll('.tt-zone').forEach((z) => z.remove()); document.querySelectorAll('.is-dragging').forEach((el) => el.classList.remove('is-dragging')); $('poolDrop')?.classList.remove('is-over'); }
+    function bindDrag() {
+      const root = $('workspace');
+      root.addEventListener('dragstart', (ev) => {
+        const el = ev.target.closest('[data-drag]');
+        if (!el || !editable()) return;
+        if (el.dataset.drag === 'pool') state.drag = { type: 'pool', cid: el.dataset.cid, code: el.dataset.code };
+        else { const [cid, slot] = el.closest('[data-entry]').dataset.entry.split('|'); state.drag = { type: 'entry', cid, slot }; }
+        ev.dataTransfer.effectAllowed = 'move'; ev.dataTransfer.setData('text/plain', 'tt');
+        requestAnimationFrame(() => { el.classList.add('is-dragging'); showZones(); });
+      });
+      root.addEventListener('dragend', () => { state.drag = null; clearZones(); });
+      root.addEventListener('dragover', (ev) => {
+        if (!state.drag) return;
+        const z = ev.target.closest('.tt-zone');
+        document.querySelectorAll('.tt-zone.tt-drop-hover').forEach((x) => { if (x !== z) x.classList.remove('tt-drop-hover'); });
+        if (z && z.dataset.level !== 'blocked') { ev.preventDefault(); z.classList.add('tt-drop-hover'); }
+        const pool = ev.target.closest('#poolDrop');
+        if (pool && state.drag.type === 'entry') { ev.preventDefault(); pool.classList.add('is-over'); } else $('poolDrop')?.classList.remove('is-over');
+      });
+      root.addEventListener('drop', (ev) => {
+        if (!state.drag) return;
+        ev.preventDefault();
+        const d = state.drag;
+        const v = ver();
+        if (ev.target.closest('#poolDrop') && d.type === 'entry') {
+          state.drag = null; clearZones();
+          const e = v.entries[d.cid][d.slot];
+          commit('นำคาบออก', `${TT.teachersLabel(e.teachers)} · ${TT.className(d.cid)} ${e.code} · ${TT.slotLabel(d.slot)}`, (vv) => { delete vv.entries[d.cid][d.slot]; });
+          TT.toast('นำคาบออกแล้ว', `${TT.className(d.cid)} ${e.code} กลับไปอยู่ในรายการรอจัด`);
+          return;
+        }
+        const z = ev.target.closest('.tt-zone');
+        if (!z) { state.drag = null; clearZones(); return; }
+        const slot = z.dataset.zone;
+        const r = evalZone(slot); const cand = dragCand(slot);
+        state.drag = null; clearZones();
+        if (r.level === 'blocked') { TT.toast('วางไม่ได้', r.reason, 'error'); return; }
+        if (d.type === 'pool') commit('เพิ่มคาบ', `${TT.teachersLabel(cand.teachers)} · ${TT.className(d.cid)} ${cand.code} → ${TT.slotLabel(slot)}`, (vv) => { vv.entries[d.cid][slot] = { ...cand, src: 'manual' }; });
+        else commit(v.entries[d.cid][slot] ? 'สลับคาบ' : 'ย้ายคาบ', `${TT.teachersLabel(cand.teachers)} · ${TT.className(d.cid)} ${cand.code} ${TT.slotLabel(d.slot)} → ${TT.slotLabel(slot)}`, (vv) => {
+          const a = vv.entries[d.cid][d.slot]; const b = vv.entries[d.cid][slot];
+          vv.entries[d.cid][slot] = { ...a, src: 'manual' };
+          if (b) vv.entries[d.cid][d.slot] = { ...b, src: 'manual' }; else delete vv.entries[d.cid][d.slot];
+        });
+        const iss = TT.computeIssues(ver()).byCell.get(`${d.cid}|${slot}`) || [];
+        if (TT.worstSev(iss) === 'error') TT.toast('วางแล้ว แต่เป็น Conflict', iss[0].msg, 'error');
+        else if (iss.length) TT.toast('วางแล้ว มีคำเตือน', iss[0].msg, 'warn');
+        else TT.toast('บันทึกแล้ว', `${TT.className(d.cid)} · ${TT.slotLabel(slot)} ${TT.slotTimeLabel(v, d.cid, slot)}`);
+      });
+    }
+
+    /* ------------------------------------------------------------------ drawer (detail / edit / add) */
+    function openEntry(cid, slot, readOnly = !editable()) {
+      const v = ver(); const e = v.entries[cid]?.[slot];
+      if (!e) return;
+      const [d, p] = TT.parseSlot(slot);
+      state.drawer = { mode: readOnly ? 'view' : 'edit', cid, slot, d, p, form: TT.clone(e) };
+      $('drawer').classList.remove('hidden'); document.body.classList.add('overflow-hidden');
+      renderDrawer();
+    }
+    function openAdd(day, minute) {
+      const v = ver(); const tid = state.teacherId;
+      const prog = TT.teacherProgress(v, tid);
+      const options = prog.remaining.length ? prog.remaining : TT.loadOfTeacher(v.term, tid);
+      if (!options.length) { TT.toast('ครูคนนี้ยังไม่มีการมอบหมายสอน', 'แก้ที่หน้าจัดการหลักสูตร', 'info'); return; }
+      const pick = options[0];
+      const ts = TT.tsOfClass(v, pick.classId);
+      const pts = TT.periodTimes(ts);
+      const near = pts.reduce((best, pt) => (Math.abs(pt.start - minute) < Math.abs(best.start - minute) ? pt : best), pts[0]);
+      const d = ts.days.includes(day) ? day : ts.days[0];
+      state.drawer = { mode: 'add', cid: pick.classId, slot: `${d}-${near.no}`, d, p: near.no, form: { code: pick.code, teachers: [...pick.teachers], room: freeRoomFor(v, pick.classId, `${d}-${near.no}`, pick.code), locked: false } };
+      $('drawer').classList.remove('hidden'); document.body.classList.add('overflow-hidden');
+      renderDrawer();
+    }
+    function closeDrawer() { $('drawer').classList.add('hidden'); document.body.classList.remove('overflow-hidden'); state.drawer = null; }
+    function drawerBlock(st) {
+      const v = ver(); const target = `${st.d}-${st.p}`;
+      const act = TT.classActivityAt(v, st.cid, target);
+      if (act) return `${TT.className(st.cid)} มีกิจกรรมล็อกเวลา "${act.name}"`;
+      const occ = v.entries[st.cid][target];
+      if (!occ || (st.mode === 'edit' && target === st.slot)) return null;
+      if (occ.locked) return `${TT.className(st.cid)} มีคาบที่ล็อกไว้ในเวลานี้`;
+      if (st.mode === 'add' || !occ.teachers.some((t) => st.form.teachers.includes(t))) return `${TT.className(st.cid)} เรียน ${occ.code} กับ${TT.teachersLabel(occ.teachers)} อยู่แล้ว`;
+      return null;
+    }
+    function issueListHtml(iss) {
+      return iss.length ? iss.map((i) => `<div class="flex gap-2 rounded-xl ${i.sev === 'error' ? 'bg-rose-50 text-rose-800' : 'bg-amber-50 text-amber-800'} px-3 py-2 text-sm"><span class="mt-0.5">${icon('warn')}</span><span><span class="font-semibold">${i.sev === 'error' ? 'Conflict' : 'คำเตือน'}:</span> ${esc(i.msg)}</span></div>`).join('') : `<div class="flex gap-2 rounded-xl bg-emerald-50 px-3 py-2 text-sm text-emerald-800">${icon('check')}ไม่พบ Conflict</div>`;
+    }
+    function renderDrawer() {
+      const st = state.drawer; if (!st) return;
+      const v = ver(); const { cid, form } = st;
+      const target = `${st.d}-${st.p}`;
+      const subj = TT.subject(form.code);
+      const g = TT.groupOf(form.code);
+      const e = v.entries[cid][st.slot];
+      const srcLabel = { auto: 'จัดอัตโนมัติ', manual: 'จัดเอง', import: 'นำเข้าจาก Excel', copy: 'คัดลอก', request: 'จากคำร้องครู' }[e?.src] || '';
+      $('drawerEyebrow').textContent = st.mode === 'add' ? 'เพิ่มคาบสอน' : st.mode === 'view' ? 'รายละเอียดคาบ' : 'แก้ไขคาบสอน';
+      $('drawerTitle').textContent = `${TT.className(cid)} · ${TT.slotLabel(st.mode === 'add' ? target : st.slot)}`;
+      $('drawerSubtitle').textContent = `${TT.slotTimeLabel(v, cid, st.mode === 'add' ? target : st.slot)} น. · ${TT.tsOfClass(v, cid).name} · ${v.name}`;
+      const card = `<div class="rounded-2xl border ${g.card} p-5"><div class="flex items-start justify-between gap-3"><div><p class="text-xs font-bold ${g.text}">${form.code} · ${esc(g.name)}</p><p class="mt-1 text-lg font-semibold text-slate-900">${esc(subj?.name || form.code)}</p></div>${srcLabel && st.mode !== 'add' ? `<span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">${srcLabel}</span>` : ''}</div>
+        <dl class="mt-4 grid grid-cols-2 gap-3 text-sm"><div><dt class="text-xs text-slate-500">ห้องเรียน (นักเรียน)</dt><dd class="font-semibold text-slate-800">${TT.className(cid)}</dd></div><div><dt class="text-xs text-slate-500">ครูผู้สอน</dt><dd class="font-semibold text-slate-800">${esc(form.teachers.map(TT.teacherName).join(', ') || 'ยังไม่กำหนด')}</dd></div><div><dt class="text-xs text-slate-500">สถานที่</dt><dd class="font-semibold text-slate-800">${esc(TT.room(form.room)?.name || '-')}</dd></div><div><dt class="text-xs text-slate-500">คาบต่อสัปดาห์</dt><dd class="font-semibold text-slate-800">${TT.countCode(v.entries[cid], form.code)}/${subj?.hours ?? '-'} คาบ</dd></div></dl></div>`;
+      if (st.mode === 'view') {
+        const iss = TT.computeIssues(v).byCell.get(`${cid}|${st.slot}`) || [];
+        $('drawerBody').innerHTML = `${card}${e.locked ? `<p class="flex items-center gap-2 text-sm font-semibold text-slate-600">${icon('lock')}คาบนี้ถูกล็อกไว้</p>` : ''}<div><p class="text-sm font-semibold text-slate-800">ผลตรวจสอบ</p><div class="mt-2 space-y-2">${issueListHtml(iss)}</div></div>${v.status === 'draft' ? '<div class="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm leading-6 text-blue-900">ตารางเรียนรายห้องและตารางการใช้ห้องแสดงผลจากตารางสอนครู แก้ไขคาบนี้ได้ที่ตารางสอนครูผู้สอน</div>' : ''}`;
+        $('drawerFooter').innerHTML = `<button data-close-drawer type="button" class="${btnG}">ปิด</button>${editable() && e.teachers.length ? `<button id="drawerGoTeacher" type="button" class="${btnP}">แก้ไขในตารางสอนครู ${icon('arrow')}</button>` : ''}`;
+        if ($('drawerGoTeacher')) $('drawerGoTeacher').onclick = () => { state.tab = 'teacher'; state.teacherId = e.teachers[0]; state.group = ''; state.search = ''; closeDrawer(); render(); openEntry(cid, st.slot, false); };
+        return;
+      }
+      const block = drawerBlock(st);
+      const iss = TT.checkPlacement(v, cid, target, form, { ignore: st.mode === 'edit' ? [`${cid}|${st.slot}`, `${cid}|${target}`] : [`${cid}|${target}`] });
+      if (block) iss.unshift({ sev: 'error', msg: block });
+      const ts = TT.tsOfClass(v, cid);
+      const pts = TT.periodTimes(ts);
+      const assigned = TT.loadOfClass(v.term, cid).find((l) => l.code === form.code)?.teachers || [];
+      const pairOptions = st.mode === 'add' ? TT.loadOfTeacher(v.term, state.teacherId).map((l) => `<option value="${l.classId}|${l.code}" ${l.classId === cid && l.code === form.code ? 'selected' : ''}>${TT.className(l.classId)} · ${l.code} ${esc(l.subject.name)} (${TT.countCode(v.entries[l.classId], l.code)}/${l.ppw})</option>`).join('') : '';
+      const suggestions = st.mode === 'edit' ? TT.suggestMoves(v, cid, st.slot, 8) : TT.classSlots(v, cid).filter((k) => !v.entries[cid][k] && !TT.classActivityAt(v, cid, k)).map((k) => ({ slot: k, issues: TT.checkPlacement(v, cid, k, form) })).filter((x) => !x.issues.some((i) => i.sev === 'error')).slice(0, 8);
+      $('drawerBody').innerHTML = `${card}
+        <div class="space-y-4">
+          ${st.mode === 'add' ? `<label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ห้อง · รายวิชา (การมอบหมายสอนของ${esc(TT.teacherShort(state.teacherId))})</span><select data-f="pair" class="${sel}">${pairOptions}</select></label>` : ''}
+          <label class="block"><span class="mb-2 flex items-center justify-between text-sm font-semibold text-slate-700">ครูผู้สอน ${form.teachers.join() !== assigned.join() ? '<span class="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] text-violet-700">ไม่ตรงการมอบหมายสอน</span>' : ''}</span>
+            <select data-f="teacher0" class="${sel}">${db().external.teachers.filter((t) => t.group === TT.subject(form.code)?.group || form.teachers.includes(t.id)).map((t) => `<option value="${t.id}" ${t.id === form.teachers[0] ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select>
+            ${form.teachers.length > 1 ? `<span class="mt-1 block text-xs text-slate-500">ครูร่วมสอน: ${esc(form.teachers.slice(1).map(TT.teacherName).join(', '))}</span>` : ''}</label>
+          <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">สถานที่เรียน</span><select data-f="room" class="${sel}">${Object.entries(TT.ROOM_TYPES).map(([k, n]) => `<optgroup label="${n}">${db().external.rooms.filter((r) => r.type === k && (k !== 'regular' || r.id === TT.cls(cid).homeroom || r.id === form.room || r.id === 'LIB')).map((r) => `<option value="${r.id}" ${r.id === form.room ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</optgroup>`).join('')}</select></label>
+          <div class="grid grid-cols-2 gap-3">
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">วัน</span><select data-f="d" class="${sel}">${ts.days.map((d) => `<option value="${d}" ${d === st.d ? 'selected' : ''}>${TT.DAYS[d].name}</option>`).join('')}</select></label>
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">คาบ (${esc(ts.name)})</span><select data-f="p" class="${sel}">${pts.map((p) => `<option value="${p.no}" ${p.no === st.p ? 'selected' : ''}>คาบ ${p.no} · ${TT.fmt(p.start)}–${TT.fmt(p.end)}</option>`).join('')}</select></label>
+          </div>
+          ${st.mode === 'edit' && target !== st.slot && v.entries[cid][target] && !block ? `<p class="rounded-xl bg-blue-50 px-3 py-2 text-xs font-medium text-blue-800">ช่องปลายทางมี ${v.entries[cid][target].code} ของครูคนเดียวกัน ระบบจะสลับให้</p>` : ''}
+          <label class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 p-4"><span><span class="block text-sm font-semibold text-slate-800">ล็อกคาบนี้</span><span class="block text-xs text-slate-500">การจัดอัตโนมัติจะไม่ย้ายหรือลบคาบนี้</span></span><input data-f="locked" type="checkbox" ${form.locked ? 'checked' : ''} class="h-5 w-5 rounded text-blue-600"></label>
+        </div>
+        <div><p class="text-sm font-semibold text-slate-800">ผลตรวจสอบแบบ Real-time</p><div class="mt-2 space-y-2">${issueListHtml(iss)}</div></div>
+        <div><p class="text-sm font-semibold text-slate-800">ช่องเวลาที่แนะนำ (ไม่เกิด Conflict)</p><div class="mt-2 flex flex-wrap gap-2">${suggestions.length ? suggestions.map((x) => `<button data-suggest="${x.slot}" type="button" class="rounded-xl border ${x.issues.length ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'} px-3 py-1.5 text-xs font-semibold hover:brightness-95">${TT.DAYS[TT.parseSlot(x.slot)[0]].short} คาบ ${TT.parseSlot(x.slot)[1]} · ${TT.slotTimeLabel(v, cid, x.slot)}</button>`).join('') : '<span class="text-xs text-slate-500">ไม่มีช่องว่างที่ไม่เกิด Conflict</span>'}</div></div>`;
+      $('drawerFooter').innerHTML = `<div>${st.mode === 'edit' ? '<button id="drawerDelete" type="button" class="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50">ลบคาบ</button>' : ''}</div><div class="flex gap-3"><button data-close-drawer type="button" class="${btnG}">ยกเลิก</button><button id="drawerSave" type="button" ${block ? 'disabled' : ''} class="${btnP}">${st.mode === 'add' ? 'เพิ่มคาบ' : 'บันทึก'}</button></div>`;
+      $('drawerBody').querySelectorAll('[data-f]').forEach((el) => el.addEventListener('change', () => {
+        const f = el.dataset.f;
+        if (f === 'd' || f === 'p') st[f] = Number(el.value);
+        else if (f === 'locked') form.locked = el.checked;
+        else if (f === 'room') form.room = el.value;
+        else if (f === 'teacher0') form.teachers = [el.value, ...form.teachers.slice(1).filter((x) => x !== el.value)];
+        else if (f === 'pair') {
+          const [c, code] = el.value.split('|');
+          const prevStart = TT.slotInterval(v, st.cid, `${st.d}-${st.p}`)?.start || 0;
+          st.cid = c; form.code = code;
+          form.teachers = [...(TT.loadOfClass(v.term, c).find((l) => l.code === code)?.teachers || [])];
+          const nts = TT.tsOfClass(v, c); const npts = TT.periodTimes(nts);
+          st.p = npts.reduce((best, pt) => (Math.abs(pt.start - prevStart) < Math.abs(npts[best - 1].start - prevStart) ? pt.no : best), 1);
+          if (!nts.days.includes(st.d)) st.d = nts.days[0];
+          form.room = freeRoomFor(v, c, `${st.d}-${st.p}`, code);
+        }
+        renderDrawer();
+      }));
+      $('drawerBody').querySelectorAll('[data-suggest]').forEach((b) => b.addEventListener('click', () => { [st.d, st.p] = TT.parseSlot(b.dataset.suggest); if (TT.subjectCond(v, form.code).roomType) form.room = freeRoomFor(v, cid, b.dataset.suggest, form.code); renderDrawer(); }));
+      $('drawerSave').onclick = () => {
+        const s2 = state.drawer; const tgt = `${s2.d}-${s2.p}`;
+        const blk = drawerBlock(s2);
+        if (blk) { TT.toast('บันทึกไม่ได้', blk, 'error'); return; }
+        const entry = { code: s2.form.code, teachers: s2.form.teachers, room: s2.form.room, src: 'manual', ...(s2.form.locked ? { locked: true } : {}) };
+        const moved = s2.mode === 'edit' && tgt !== s2.slot;
+        closeDrawer();
+        commit(s2.mode === 'add' ? 'เพิ่มคาบ' : moved ? 'ย้ายคาบ' : 'แก้ไขคาบ', `${TT.teachersLabel(entry.teachers)} · ${TT.className(s2.cid)} ${entry.code} · ${moved ? `${TT.slotLabel(s2.slot)} → ` : ''}${TT.slotLabel(tgt)}`, (vv) => {
+          if (moved) { const other = vv.entries[s2.cid][tgt]; if (other) vv.entries[s2.cid][s2.slot] = { ...other, src: 'manual' }; else delete vv.entries[s2.cid][s2.slot]; }
+          vv.entries[s2.cid][tgt] = entry;
+        });
+        const after = TT.computeIssues(ver()).byCell.get(`${s2.cid}|${tgt}`) || [];
+        if (TT.worstSev(after) === 'error') TT.toast('บันทึกแล้ว แต่เป็น Conflict', after[0].msg, 'error'); else TT.toast('บันทึกคาบสอนแล้ว', `${TT.className(s2.cid)} ${entry.code} · ${TT.slotLabel(tgt)}`);
+      };
+      if ($('drawerDelete')) $('drawerDelete').onclick = () => {
+        const ent = v.entries[cid][st.slot];
+        closeDrawer();
+        commit('ลบคาบ', `${TT.teachersLabel(ent.teachers)} · ${TT.className(cid)} ${ent.code} · ${TT.slotLabel(st.slot)}`, (vv) => { delete vv.entries[cid][st.slot]; });
+        TT.toast('ลบคาบแล้ว', 'คาบกลับไปอยู่ในรายการรอจัด');
+      };
+    }
+
+    /* ------------------------------------------------------------------ class / room / level tabs (read-only, derived from teachers) */
+    function renderClassTab() {
+      const v = ver();
+      const classes = TT.classesOfLevel(state.level);
+      if (!classes.some((c) => c.id === state.classId)) state.classId = classes[0].id;
+      const cid = state.classId; const c = TT.cls(cid);
+      const iss = TT.computeIssues(v);
+      const prog = TT.classProgress(v, cid);
+      $('tabBody').innerHTML = `
+        <div class="border-b border-slate-100 px-5 py-4 lg:px-6"><div class="flex flex-col gap-3 lg:flex-row lg:items-center"><select id="levelSelect" class="${selSm}">${[1, 2, 3, 4, 5, 6].map((l) => `<option value="${l}" ${l === state.level ? 'selected' : ''}>มัธยมศึกษาปีที่ ${l} (${TT.stageOfLevel(v, l)?.name || '-'})</option>`).join('')}</select><span class="inline-flex w-fit items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">${icon('info', 'h-3.5 w-3.5')}แสดงผลจากตารางสอนครู · ดูได้อย่างเดียว</span></div>
+          <div class="mt-3 flex gap-2 overflow-x-auto pb-1 tt-scroll">${classes.map((x) => { const p = TT.classProgress(v, x.id); const errs = new Set(iss.list.filter((i) => i.cid === x.id && i.sev === 'error').map((i) => i.slot)).size; const active = x.id === cid; return `<button data-class="${x.id}" type="button" class="min-w-[140px] shrink-0 rounded-2xl border px-4 py-3 text-left transition ${active ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-slate-200 bg-white hover:bg-slate-50'}"><span class="flex justify-between gap-2"><span class="font-semibold ${active ? 'text-blue-700' : 'text-slate-900'}">${x.name}</span><span class="text-xs font-semibold text-slate-500">${p.pct}%</span></span><span class="mt-2 block h-1.5 overflow-hidden rounded-full bg-slate-100"><span class="block h-full rounded-full ${errs ? 'bg-rose-500' : p.pct === 100 ? 'bg-emerald-500' : 'bg-blue-500'}" style="width:${p.pct}%"></span></span><span class="mt-1.5 block text-xs font-medium ${errs ? 'text-rose-600' : 'text-slate-500'}">${errs ? `${errs} Conflict` : p.placed === 0 ? 'ยังไม่มีคาบ' : p.pct === 100 ? 'ครบทุกวิชา' : `ขาด ${p.required - p.placed} คาบ`}</span></button>`; }).join('')}</div></div>
+        <div class="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-slate-100 px-5 py-3 text-sm text-slate-500 lg:px-6"><span class="font-semibold text-slate-900">${c.name}</span><span>${esc(TT.planOfClass(cid)?.name || '')}</span><span>ครูประจำชั้น <span class="font-semibold text-slate-700">${c.advisor ? esc(TT.teacherName(c.advisor)) : '<span class="text-amber-600">ยังไม่มี (รอข้อมูลงานบุคคล)</span>'}</span></span><span>นักเรียน ${c.students} คน</span><span>จัดแล้ว ${prog.placed}/${prog.required} คาบ</span></div>
+        <div class="grid min-[1760px]:grid-cols-[minmax(0,1fr)_300px]">
+          <div class="min-w-0 overflow-x-auto p-4 tt-scroll lg:p-5">${TT.classGrid(v, cid, { tdAttrs: (slot, e) => (e ? `data-view="${cid}|${slot}" style="cursor:pointer"` : '') })}</div>
+          <aside class="border-t border-slate-100 p-4 lg:p-5 min-[1760px]:border-l min-[1760px]:border-t-0"><p class="font-semibold text-slate-900">รายวิชาและครูผู้สอน</p><p class="text-xs text-slate-500">จากแผนการเรียน + การมอบหมายสอน</p>
+            <div class="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3 min-[1760px]:grid-cols-1">${TT.loadOfClass(v.term, cid).map((l) => { const n = TT.countCode(v.entries[cid], l.code); return `<button ${l.teachers.length ? `data-goto-teacher="${l.teachers[0]}"` : 'disabled'} type="button" class="flex items-center gap-3 rounded-2xl border border-slate-200 p-3 text-left ${l.teachers.length ? 'hover:border-blue-200 hover:bg-blue-50/60' : 'bg-rose-50/60'}"><span class="h-8 w-1.5 shrink-0 rounded-full ${TT.GROUPS[l.subject.group].dot}"></span><span class="min-w-0 flex-1"><span class="block text-xs font-bold ${TT.GROUPS[l.subject.group].text}">${l.code}</span><span class="block truncate text-sm font-semibold text-slate-800">${esc(l.subject.name)}</span><span class="block truncate text-xs ${l.teachers.length ? 'text-slate-500' : 'font-semibold text-rose-600'}">${l.teachers.length ? esc(l.teachers.map(TT.teacherName).join(', ')) : 'ยังไม่มีครูผู้สอน'}</span></span><span class="shrink-0 text-xs font-bold ${n >= l.ppw ? 'text-emerald-600' : 'text-amber-600'}">${n}/${l.ppw}</span></button>`; }).join('')}</div></aside>
+        </div>`;
+    }
+    function renderRoomTab() {
+      const v = ver(); const r = TT.room(state.roomId);
+      const blocks = TT.roomBlocks(v, r.id);
+      const iss = TT.computeIssues(v);
+      const bands = TT.roomCond(v, r.id).unavailable.map((u) => ({ day: u.day, start: TT.toMin(u.start), end: TT.toMin(u.end), label: `ไม่พร้อมใช้ · ${u.note || ''}`, cls: 'tt-hatch bg-amber-50 text-amber-700' }));
+      $('tabBody').innerHTML = `<div class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 lg:flex-row lg:items-center lg:px-6"><select id="roomSelect" class="${selSm}">${Object.entries(TT.ROOM_TYPES).map(([k, n]) => `<optgroup label="${n}">${db().external.rooms.filter((x) => x.type === k).map((x) => `<option value="${x.id}" ${x.id === r.id ? 'selected' : ''}>${esc(x.name)}</option>`).join('')}</optgroup>`).join('')}</select><span class="text-sm text-slate-500">${TT.ROOM_TYPES[r.type]} · ${esc(r.building)} · ใช้พร้อมกันได้ ${r.maxClasses} ห้อง · ใช้ ${blocks.length} คาบ/สัปดาห์</span><span class="inline-flex w-fit items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">ดูได้อย่างเดียว · แกนเวลาจริง</span></div>
+        <div class="overflow-x-auto p-4 tt-scroll lg:p-5">${TT.timeline({ id: 'roomTimeline', days: TT.versionDays(v), range: TT.versionRange(v), bands, blocks: blocks.map((b) => ({ ...b, attrs: `data-view="${b.cid}|${b.slot}"`, html: TT.entryCard({ code: b.entry.code, title: `${TT.className(b.cid)} · ${b.entry.code}`, line1: TT.teachersLabel(b.entry.teachers), issues: iss.byCell.get(`${b.cid}|${b.slot}`) || [], extraClass: 'cursor-pointer' }) })) })}</div>`;
+    }
+    function renderLevelTab() {
+      const v = ver();
+      const ts = TT.stageOfLevel(v, state.level);
+      const pts = TT.periodTimes(ts);
+      const iss = TT.computeIssues(v);
+      const hl = state.highlight;
+      const th = 'border-b border-slate-200 bg-slate-50 px-1 py-2 text-center text-[11px] font-semibold text-slate-500';
+      const classes = TT.classesOfLevel(state.level);
+      const teachersHere = [...new Set(classes.flatMap((c) => Object.values(v.entries[c.id]).flatMap((e) => e.teachers)))];
+      $('tabBody').innerHTML = `<div class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 lg:flex-row lg:items-center lg:px-6"><select id="levelSelect" class="${selSm}">${[1, 2, 3, 4, 5, 6].map((l) => `<option value="${l}" ${l === state.level ? 'selected' : ''}>มัธยมศึกษาปีที่ ${l}</option>`).join('')}</select><select id="highlightSelect" class="${selSm}"><option value="">— ไฮไลต์ครู —</option>${teachersHere.map((t) => `<option value="${t}" ${t === hl ? 'selected' : ''}>${esc(TT.teacherName(t))}</option>`).join('')}</select><span class="text-sm text-slate-500">${esc(ts.name)} · ทุกห้องพร้อมกัน · คลิกช่องเพื่อดูรายละเอียด</span></div>
+        <div class="overflow-x-auto p-4 tt-scroll lg:p-5"><table class="tt-table w-full min-w-[1400px] overflow-hidden rounded-2xl border border-slate-200"><thead><tr><th rowspan="2" class="${th} sticky left-0 z-10 w-24 px-3 text-left">ห้อง</th>${ts.days.map((d) => `<th colspan="${pts.length}" class="${th} border-l border-slate-200"><span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full ${TT.DAYS[d].dot}"></span>${TT.DAYS[d].name}</span></th>`).join('')}</tr><tr>${ts.days.map(() => pts.map((p) => `<th class="${th} ${p.no === 1 ? 'border-l border-slate-200' : ''}" title="${TT.fmt(p.start)}–${TT.fmt(p.end)}">${p.no}</th>`).join('')).join('')}</tr></thead>
+        <tbody>${classes.map((c) => `<tr><th class="sticky left-0 z-10 border-b border-slate-100 bg-white px-3 py-2 text-left"><button data-class-go="${c.id}" type="button" class="text-sm font-semibold text-slate-900 hover:text-blue-700">${c.name}</button><span class="block text-[11px] text-slate-400">${TT.classProgress(v, c.id).pct}%</span></th>${ts.days.map((d) => pts.map((p) => {
+          const slot = `${d}-${p.no}`; const e = v.entries[c.id][slot]; const act = TT.classActivityAt(v, c.id, slot);
+          const bl = p.no === 1 ? 'border-l border-slate-200' : '';
+          if (act) return `<td class="border-b border-slate-100 p-0.5 ${bl}"><div class="tt-hatch flex h-11 min-w-[38px] items-center justify-center rounded-lg border border-slate-200 bg-slate-50 text-[9px] font-semibold text-slate-400" title="${esc(act.name)}">${esc(act.name.slice(0, 4))}</div></td>`;
+          if (!e) return `<td class="border-b border-slate-100 p-0.5 ${bl}"><div class="flex h-11 min-w-[38px] items-center justify-center rounded-lg border border-dashed border-slate-200 text-[10px] text-slate-300">–</div></td>`;
+          const g = TT.groupOf(e.code); const sev = TT.worstSev(iss.byCell.get(`${c.id}|${slot}`) || []);
+          const ring = sev === 'error' ? 'ring-2 ring-rose-500' : sev === 'warn' ? 'ring-2 ring-amber-300' : hl && e.teachers.includes(hl) ? 'ring-2 ring-blue-500' : '';
+          return `<td class="border-b border-slate-100 p-0.5 ${bl}"><button data-view="${c.id}|${slot}" type="button" title="${esc(`${e.code} ${TT.subject(e.code)?.name}\n${TT.teachersLabel(e.teachers)}\n${TT.roomShort(e.room)}`)}" class="flex h-11 w-full min-w-[38px] items-center justify-center rounded-lg border ${g.card} ${ring} ${hl && !e.teachers.includes(hl) ? 'opacity-20' : ''} text-[10px] font-bold ${g.text} transition hover:scale-105">${esc(e.code.replace(/^(.)\d{2}(\d{3})$/, '$1$2'))}</button></td>`;
+        }).join('')).join('')}</tr>`).join('')}</tbody></table></div>`;
+    }
+
+    /* ------------------------------------------------------------------ reports */
+    function renderReportTab() {
+      const v = ver(); const iss = TT.computeIssues(v);
+      const busyAll = TT.activityTeacherBusy(v);
+      const rows = db().external.teachers.map((t) => {
+        const scheduled = TT.teacherBlocks(v, t.id).length; const assigned = TT.loadOfTeacher(v.term, t.id).reduce((a, l) => a + l.ppw, 0);
+        const max = TT.teacherCond(v, t.id).maxPerWeek; const busy = busyAll.filter((b) => b.tid === t.id).length;
+        return { t, scheduled, assigned, max, free: Math.max(0, 40 - scheduled - busy), errs: teacherErrorCount(v, t.id, iss) };
+      }).filter((x) => x.assigned || x.scheduled).sort((a, b) => b.scheduled / b.max - a.scheduled / a.max);
+      const byType = {};
+      iss.list.forEach((i) => { (byType[i.type] = byType[i.type] || []).push(i); });
+      const order = Object.keys(byType).sort((a, b) => (byType[a][0].sev === 'error' ? 0 : 1) - (byType[b][0].sev === 'error' ? 0 : 1));
+      const hist = db().history.filter((h) => h.term === v.term);
+      $('tabBody').innerHTML = `<div class="grid gap-6 p-5 lg:p-6 2xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
+        <div class="space-y-6">
+          <div><h3 class="font-semibold text-slate-900">ภาระงานสอนและคาบว่างของครู</h3><p class="text-xs text-slate-500">คาบว่างนับจาก 40 ช่องต่อสัปดาห์ หักคาบสอนและกิจกรรมล็อกเวลา · คลิกเพื่อเปิดตารางสอนครู</p>
+            <div class="mt-3 max-h-[520px] overflow-auto rounded-2xl border border-slate-200 tt-scroll"><table class="w-full min-w-[640px] text-sm"><thead class="sticky top-0 bg-slate-50 text-xs font-semibold text-slate-500"><tr><th class="px-4 py-3 text-left">ครู</th><th class="px-3 py-3 text-left">คาบสอน / กำหนด</th><th class="px-3 py-3 text-center">มอบหมาย</th><th class="px-3 py-3 text-center">คาบว่าง</th><th class="px-3 py-3 text-left">สถานะ</th></tr></thead><tbody class="divide-y divide-slate-100">${rows.map((x) => { const pct = Math.min(100, Math.round(x.scheduled / x.max * 100)); const s = x.errs ? ['มี Conflict', 'bg-rose-50 text-rose-700', 'bg-rose-500'] : x.scheduled > x.max ? ['เกินภาระ', 'bg-violet-50 text-violet-700', 'bg-violet-500'] : x.scheduled < x.assigned ? ['ยังจัดไม่ครบ', 'bg-amber-50 text-amber-700', 'bg-amber-400'] : ['ปกติ', 'bg-emerald-50 text-emerald-700', 'bg-emerald-500']; return `<tr data-goto-teacher="${x.t.id}" class="cursor-pointer hover:bg-slate-50"><td class="px-4 py-2.5"><p class="font-semibold text-slate-900">${esc(x.t.name)}</p><p class="text-xs text-slate-400">${TT.GROUPS[x.t.group].name}</p></td><td class="px-3 py-2.5"><div class="flex items-center gap-2"><div class="h-2 w-24 overflow-hidden rounded-full bg-slate-100"><div class="h-full ${s[2]}" style="width:${pct}%"></div></div><span class="font-semibold text-slate-800">${x.scheduled}/${x.max}</span></div></td><td class="px-3 py-2.5 text-center text-slate-600">${x.assigned}</td><td class="px-3 py-2.5 text-center text-slate-600">${x.free}</td><td class="px-3 py-2.5"><span class="rounded-full px-2.5 py-1 text-xs font-semibold ${s[1]}">${s[0]}</span></td></tr>`; }).join('')}</tbody></table></div></div>
+          <div><h3 class="font-semibold text-slate-900">รายงาน Conflict และคำเตือน</h3>
+            <div class="mt-3 space-y-4">${order.length ? order.map((t) => `<details ${byType[t][0].sev === 'error' ? 'open' : ''} class="rounded-2xl border ${byType[t][0].sev === 'error' ? 'border-rose-100' : 'border-amber-100'}"><summary class="cursor-pointer px-4 py-3 text-sm font-semibold ${byType[t][0].sev === 'error' ? 'text-rose-700' : 'text-amber-700'}">${byType[t][0].sev === 'error' ? 'Conflict' : 'คำเตือน'} · ${TT.ISSUE_LABEL[t] || t} (${byType[t].length})</summary><div class="space-y-2 px-4 pb-4">${byType[t].slice(0, 60).map((i) => `<div class="flex items-start justify-between gap-3 rounded-xl bg-slate-50 p-3"><div class="min-w-0"><p class="text-sm font-semibold text-slate-800">${TT.className(i.cid)} · ${TT.slotLabel(i.slot)} · ${i.code}</p><p class="text-xs text-slate-600">${esc(i.msg)}</p></div><button data-goto-entry="${i.cid}|${i.slot}" type="button" class="shrink-0 rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-50">ไปที่คาบ</button></div>`).join('')}</div></details>`).join('') : '<div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-center text-sm font-semibold text-emerald-800">ไม่พบ Conflict หรือคำเตือน</div>'}</div></div>
+        </div>
+        <div class="space-y-6">
+          <div><h3 class="font-semibold text-slate-900">การใช้ห้องเฉพาะทาง</h3><div class="mt-3 space-y-3">${db().external.rooms.filter((r) => r.type !== 'regular').map((r) => { const n = TT.roomBlocks(v, r.id).length; const cap = 40 * r.maxClasses; const pct = Math.round(n / cap * 100); return `<button data-goto-room="${r.id}" type="button" class="block w-full text-left"><div class="flex justify-between text-sm"><span class="font-semibold text-slate-700">${esc(r.name)}</span><span class="text-xs text-slate-500">${n} คาบ · ${pct}%</span></div><div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${pct > 85 ? 'bg-rose-500' : pct > 60 ? 'bg-amber-400' : 'bg-blue-600'}" style="width:${Math.min(pct, 100)}%"></div></div></button>`; }).join('')}</div></div>
+          <div><div class="flex items-end justify-between"><h3 class="font-semibold text-slate-900">ประวัติการแก้ไข (${TT.termLabel(v.term)})</h3><span class="text-xs text-slate-400">${hist.length} รายการ</span></div>
+            <div class="mt-3 max-h-[560px] space-y-3 overflow-y-auto pr-1 tt-scroll">${hist.map((h) => `<div class="flex gap-3"><span class="mt-1.5 h-2 w-2 shrink-0 rounded-full ${h.versionId === v.id ? 'bg-blue-500' : 'bg-slate-300'}"></span><div class="min-w-0"><p class="text-sm"><span class="font-semibold text-slate-900">${esc(h.user)}</span> <span class="text-slate-600">${esc(h.action)}</span></p><p class="text-xs text-slate-500">${esc(h.detail)}</p><p class="mt-0.5 text-[11px] text-slate-400">${TT.formatDateTime(h.at)}${h.versionId && TT.version(h.versionId) ? ` · ${esc(TT.version(h.versionId).name)}` : ''}</p></div></div>`).join('') || '<p class="text-sm text-slate-400">ยังไม่มีประวัติ</p>'}</div></div>
+        </div></div>`;
+    }
+
+    /* ------------------------------------------------------------------ modal shell */
+    function openModal({ eyebrow, title, subtitle = '', width = 'max-w-4xl', steps = null }) {
+      $('modalEyebrow').textContent = eyebrow; $('modalTitle').textContent = title; $('modalSubtitle').textContent = subtitle;
+      $('modalPanel').className = `modal-panel flex max-h-[94vh] w-full ${width} flex-col overflow-hidden rounded-3xl bg-white shadow-modal`;
+      $('modalSteps').classList.toggle('hidden', !steps);
+      if (steps) $('modalSteps').innerHTML = steps;
+      $('modal').classList.remove('hidden'); $('modal').classList.add('flex'); document.body.classList.add('overflow-hidden');
+    }
+    function closeModal() { $('modal').classList.add('hidden'); $('modal').classList.remove('flex'); document.body.classList.remove('overflow-hidden'); state.modal = null; }
+
+    /* ------------------------------------------------------------------ creation wizard (5 steps) */
+    const WIZ_STEPS = ['ข้อมูลฉบับ', 'โครงสร้างเวลา', 'กิจกรรมล็อกเวลา', 'วันปิดรับเวลาไม่ว่าง', 'ตรวจความพร้อม'];
+    const baseVersion = () => db().versions.find((v) => v.status === 'published') || db().versions[0];
+    function nextTermKey() { const last = allTerms().slice(-1)[0]; const [y, t] = last.split('-').map(Number); return t === 1 ? `${y}-2` : `${y + 1}-1`; }
+    function openWizard({ copyFrom = null } = {}) {
+      const src = copyFrom ? TT.version(copyFrom) : null;
+      const term = src ? src.term : state.term;
+      state.modal = { kind: 'wizard', step: 0, term, method: 'copy', sourceId: src ? src.id : (TT.publishedOf(state.term) || baseVersion())?.id, name: '', timeStructures: null, activities: null, deadline: db().terms[term]?.unavailDeadline || '' };
+      renderWizard();
+    }
+    function wizSource() { return state.modal.method === 'copy' ? TT.version(state.modal.sourceId) : null; }
+    function wizEnsureSettings() {
+      const m = state.modal; const src = wizSource();
+      if (!m.timeStructures) m.timeStructures = TT.clone((src || baseVersion()).timeStructures);
+      if (!m.activities) m.activities = TT.clone((src || baseVersion()).activities);
+    }
+    function renderWizard() {
+      const m = state.modal;
+      const steps = `<div class="flex flex-wrap items-center gap-2">${WIZ_STEPS.map((s, i) => `<span class="flex items-center gap-2 text-xs font-semibold ${i === m.step ? 'text-blue-700' : 'text-slate-500'}"><span class="step-dot ${i === m.step ? 'is-active' : i < m.step ? 'is-done' : ''} flex h-6 w-6 items-center justify-center rounded-full bg-slate-200 text-[11px]">${i < m.step ? '✓' : i + 1}</span>${s}</span>${i < WIZ_STEPS.length - 1 ? '<span class="h-px w-6 bg-slate-200"></span>' : ''}`).join('')}</div>`;
+      openModal({ eyebrow: 'สร้างตารางสอนใหม่', title: WIZ_STEPS[m.step], subtitle: `ขั้นที่ ${m.step + 1} จาก ${WIZ_STEPS.length}`, width: 'max-w-5xl', steps });
+      [wizStep1, wizStep2, wizStep3, wizStep4, wizStep5][m.step]();
+      $('modalFooter').innerHTML = `<button data-close-modal type="button" class="${btnG}">ยกเลิก</button>${m.step ? `<button data-wiz="back" type="button" class="${btn2}">ย้อนกลับ</button>` : ''}${m.step < WIZ_STEPS.length - 1 ? `<button data-wiz="next" type="button" class="${btnP}">ถัดไป</button>` : `<button data-wiz="create" type="button" class="${btnP}">สร้างฉบับร่าง</button>`}`;
+    }
+    function wizStep1() {
+      const m = state.modal;
+      const terms = [...allTerms(), nextTermKey()];
+      const versions = db().versions.slice().sort((a, b) => (a.term < b.term ? 1 : -1));
+      if (!m.name) m.name = m.method === 'copy' && wizSource() ? `ร่าง ${m.term.split('-').reverse().join('/')} (คัดลอก)` : `ร่างแรก ${m.term.split('-').reverse().join('/')}`;
+      $('modalBody').innerHTML = `<div class="space-y-6">
+        <div class="grid gap-4 md:grid-cols-2">
+          <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ภาคเรียนของตารางสอน</span><select data-w="term" class="${sel}">${terms.map((t) => `<option value="${t}" ${t === m.term ? 'selected' : ''}>${TT.termLabel(t)}${db().terms[t] ? ` · ${TT.versionsOf(t).length} ฉบับ` : ' · ภาคเรียนใหม่'}</option>`).join('')}</select></label>
+          <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ชื่อฉบับร่าง</span><input data-w="name" value="${esc(m.name)}" class="${sel}"></label>
+        </div>
+        ${TT.publishedOf(m.term) ? `<div class="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm text-blue-900">${TT.termLabel(m.term)} มีฉบับเผยแพร่ "${esc(TT.publishedOf(m.term).name)}" อยู่แล้ว ฉบับร่างใหม่จะไม่กระทบครูจนกว่าจะเผยแพร่ (เมื่อเผยแพร่ ฉบับเดิมจะกลายเป็นฉบับเก่า)</div>` : ''}
+        <div><p class="text-sm font-semibold text-slate-800">วิธีสร้าง</p><div class="mt-3 grid gap-3 md:grid-cols-2">
+          <label class="flex cursor-pointer gap-3 rounded-2xl border p-4 ${m.method === 'copy' ? 'border-blue-500 bg-blue-50/60 ring-1 ring-blue-500' : 'border-slate-200'}"><input type="radio" name="wizMethod" value="copy" ${m.method === 'copy' ? 'checked' : ''} class="mt-1 h-4 w-4 text-blue-600"><span><span class="block font-semibold text-slate-900">คัดลอกจากตารางที่มี</span><span class="mt-1 block text-sm leading-6 text-slate-500">คัดลอกโครงสร้างเวลา กิจกรรม เงื่อนไข และคาบทั้งหมด คาบที่ไม่ตรงกับการมอบหมายสอนของภาคเรียนใหม่จะถูกตัดทิ้งและแจ้งรายการ</span></span></label>
+          <label class="flex cursor-pointer gap-3 rounded-2xl border p-4 ${m.method === 'new' ? 'border-blue-500 bg-blue-50/60 ring-1 ring-blue-500' : 'border-slate-200'}"><input type="radio" name="wizMethod" value="new" ${m.method === 'new' ? 'checked' : ''} class="mt-1 h-4 w-4 text-blue-600"><span><span class="block font-semibold text-slate-900">สร้างใหม่ทั้งหมด</span><span class="mt-1 block text-sm leading-6 text-slate-500">เริ่มจากตารางว่าง ใช้โครงสร้างเวลาค่าเริ่มต้นแล้วปรับได้ในขั้นถัดไป</span></span></label>
+        </div></div>
+        ${m.method === 'copy' ? `<label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ฉบับต้นทาง</span><select data-w="source" class="${sel}">${allTerms().filter((t) => TT.versionsOf(t).length).map((t) => `<optgroup label="${TT.termLabel(t)}">${versions.filter((v) => v.term === t).map((v) => `<option value="${v.id}" ${v.id === m.sourceId ? 'selected' : ''}>${esc(v.name)} · ${TT.VERSION_STATUS[v.status].label} · จัดแล้ว ${TT.versionProgress(v).pct}%</option>`).join('')}</optgroup>`).join('')}</select>${wizSource() && wizSource().term !== m.term ? '<span class="mt-2 block text-xs text-slate-500">ต่างภาคเรียน: ระบบจับคู่ด้วยชื่อห้องและรหัสวิชาของภาคเรียนปลายทาง</span>' : ''}</label>` : ''}
+      </div>`;
+      const body = $('modalBody');
+      body.querySelector('[data-w="term"]').onchange = (e) => { m.term = e.target.value; m.deadline = db().terms[m.term]?.unavailDeadline || ''; m.name = ''; renderWizard(); };
+      body.querySelector('[data-w="name"]').oninput = (e) => { m.name = e.target.value; };
+      body.querySelectorAll('input[name="wizMethod"]').forEach((el) => { el.onchange = () => { m.method = el.value; m.timeStructures = null; m.activities = null; m.name = ''; renderWizard(); }; });
+      const s = body.querySelector('[data-w="source"]'); if (s) s.onchange = () => { m.sourceId = s.value; m.timeStructures = null; m.activities = null; renderWizard(); };
+    }
+    function tsPreview(list) {
+      if (!list.length) return '';
+      const lo = Math.min(...list.map((ts) => TT.toMin(ts.start) - (ts.homeroom?.min || 0)));
+      const hi = Math.max(...list.map(TT.dayEnd));
+      const pct = (x) => (x - lo) / (hi - lo) * 100;
+      return `<div class="space-y-2 rounded-2xl border border-slate-200 p-4"><p class="text-sm font-semibold text-slate-800">เปรียบเทียบช่วงชั้น (เวลาจริง)</p>${list.map((ts) => `<div class="flex items-center gap-3"><span class="w-16 shrink-0 text-xs font-semibold text-slate-600">${esc(ts.name)}</span><div class="relative h-9 flex-1 rounded-lg bg-slate-50">${ts.homeroom ? `<div class="tt-hatch absolute inset-y-0 rounded bg-slate-100" style="left:${pct(TT.toMin(ts.start) - ts.homeroom.min)}%;width:${pct(TT.toMin(ts.start)) - pct(TT.toMin(ts.start) - ts.homeroom.min)}%"></div>` : ''}${TT.periodTimes(ts).map((p) => `<div class="absolute inset-y-1 flex items-center justify-center rounded bg-blue-500/80 text-[10px] font-bold text-white" style="left:${pct(p.start)}%;width:calc(${pct(p.end) - pct(p.start)}% - 2px)" title="${TT.fmt(p.start)}–${TT.fmt(p.end)}">${p.no}</div>`).join('')}${TT.breakTimes(ts).map((b) => `<div class="tt-hatch absolute inset-y-1 rounded bg-amber-100" style="left:${pct(b.start)}%;width:${pct(b.end) - pct(b.start)}%" title="${esc(b.name)} ${TT.fmt(b.start)}–${TT.fmt(b.end)}"></div>`).join('')}</div><span class="w-20 shrink-0 text-right text-xs text-slate-500">เลิก ${TT.fmt(TT.dayEnd(ts))}</span></div>`).join('')}<div class="flex justify-between pl-[76px] pr-[92px] text-[10px] text-slate-400"><span>${TT.fmt(lo)}</span><span>${TT.fmt(hi)}</span></div></div>`;
+    }
+    function tsEditor(list, onChange) {
+      const used = (lvl, self) => list.some((ts, i) => i !== self && ts.levels.includes(lvl));
+      const html = `<div class="space-y-4">${list.map((ts, i) => `<div class="rounded-2xl border border-slate-200 p-4" data-ts="${i}">
+        <div class="flex flex-wrap items-center justify-between gap-3"><input data-k="name" value="${esc(ts.name)}" class="${selSm} w-40 font-semibold">${list.length > 1 ? `<button data-ts-remove="${i}" type="button" class="text-xs font-semibold text-rose-600">ลบช่วงชั้นนี้</button>` : ''}</div>
+        <div class="mt-3 flex flex-wrap items-center gap-2"><span class="text-xs font-semibold text-slate-500">ระดับชั้น:</span>${[1, 2, 3, 4, 5, 6].map((l) => `<label class="flex items-center gap-1 rounded-lg border px-2 py-1 text-xs ${ts.levels.includes(l) ? 'border-blue-300 bg-blue-50 text-blue-700' : used(l, i) ? 'border-slate-100 text-slate-300' : 'border-slate-200 text-slate-600'}"><input data-level="${l}" type="checkbox" ${ts.levels.includes(l) ? 'checked' : ''} ${used(l, i) ? 'disabled' : ''} class="h-3.5 w-3.5 rounded">ม.${l}</label>`).join('')}
+          <span class="ml-2 text-xs font-semibold text-slate-500">วันเรียน:</span>${[0, 1, 2, 3, 4, 5].map((d) => `<label class="flex items-center gap-1 rounded-lg border px-2 py-1 text-xs ${ts.days.includes(d) ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-slate-200 text-slate-600'}"><input data-day="${d}" type="checkbox" ${ts.days.includes(d) ? 'checked' : ''} class="h-3.5 w-3.5 rounded">${TT.DAYS[d].short}</label>`).join('')}</div>
+        <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <label class="block text-xs font-semibold text-slate-600">เวลาเริ่มคาบ 1<input data-k="start" type="time" value="${ts.start}" class="${selSm} mt-1 w-full"></label>
+          <label class="block text-xs font-semibold text-slate-600">ความยาวคาบ (นาที)<input data-k="periodMin" type="number" min="30" max="90" value="${ts.periodMin}" class="${selSm} mt-1 w-full"></label>
+          <label class="block text-xs font-semibold text-slate-600">จำนวนคาบต่อวัน<input data-k="periods" type="number" min="4" max="10" value="${ts.periods}" class="${selSm} mt-1 w-full"></label>
+          <label class="block text-xs font-semibold text-slate-600">เข้าแถว/โฮมรูมก่อนคาบ 1 (นาที)<input data-k="homeroom" type="number" min="0" max="60" value="${ts.homeroom?.min || 0}" class="${selSm} mt-1 w-full"></label>
+        </div>
+        <div class="mt-3"><p class="text-xs font-semibold text-slate-600">ช่วงพัก</p><div class="mt-2 space-y-2">${ts.breaks.map((b, bi) => `<div class="flex flex-wrap items-center gap-2 text-xs text-slate-600">หลังคาบ<input data-break="${bi}" data-bk="after" type="number" min="1" max="${ts.periods - 1}" value="${b.after}" class="${selSm} w-16">ยาว<input data-break="${bi}" data-bk="min" type="number" min="5" max="90" value="${b.min}" class="${selSm} w-16">นาที<input data-break="${bi}" data-bk="name" value="${esc(b.name)}" class="${selSm} w-36"><button data-break-remove="${bi}" type="button" class="font-semibold text-rose-600">ลบ</button></div>`).join('')}<button data-break-add type="button" class="text-xs font-semibold text-blue-700">+ เพิ่มช่วงพัก</button></div></div>
+        <p class="mt-3 text-xs text-slate-500">เลิกเรียน ${TT.fmt(TT.dayEnd(ts))} (คำนวณอัตโนมัติ) · ${ts.days.length * ts.periods} ช่องต่อสัปดาห์</p>
+      </div>`).join('')}<button data-ts-add type="button" class="${btn2}">+ เพิ่มช่วงชั้น</button></div>`;
+      const bind = (root) => {
+        root.querySelectorAll('[data-ts]').forEach((card) => {
+          const ts = list[Number(card.dataset.ts)];
+          card.querySelectorAll('[data-k]').forEach((el) => { el.onchange = () => { const k = el.dataset.k; if (k === 'homeroom') ts.homeroom = Number(el.value) ? { min: Number(el.value), name: 'เข้าแถว · โฮมรูม' } : null; else ts[k] = ['periodMin', 'periods'].includes(k) ? Number(el.value) : el.value; onChange(); }; });
+          card.querySelectorAll('[data-level]').forEach((el) => { el.onchange = () => { const l = Number(el.dataset.level); ts.levels = el.checked ? [...ts.levels, l].sort() : ts.levels.filter((x) => x !== l); onChange(); }; });
+          card.querySelectorAll('[data-day]').forEach((el) => { el.onchange = () => { const d = Number(el.dataset.day); ts.days = el.checked ? [...ts.days, d].sort() : ts.days.filter((x) => x !== d); onChange(); }; });
+          card.querySelectorAll('[data-break]').forEach((el) => { el.onchange = () => { const b = ts.breaks[Number(el.dataset.break)]; b[el.dataset.bk] = el.dataset.bk === 'name' ? el.value : Number(el.value); onChange(); }; });
+          card.querySelectorAll('[data-break-remove]').forEach((el) => { el.onclick = () => { ts.breaks.splice(Number(el.dataset.breakRemove), 1); onChange(); }; });
+          card.querySelector('[data-break-add]').onclick = () => { ts.breaks.push({ after: Math.min(2, ts.periods - 1), min: 10, name: 'พักเบรก' }); onChange(); };
+        });
+        root.querySelectorAll('[data-ts-remove]').forEach((el) => { el.onclick = () => { list.splice(Number(el.dataset.tsRemove), 1); onChange(); }; });
+        root.querySelector('[data-ts-add]').onclick = () => { list.push({ id: TT.newId('ts'), name: 'ช่วงชั้นใหม่', levels: [], days: [0, 1, 2, 3, 4], start: '08:30', periodMin: 50, periods: 8, breaks: [{ after: 4, min: 50, name: 'พักกลางวัน' }], homeroom: { min: 30, name: 'เข้าแถว · โฮมรูม' } }); onChange(); };
+      };
+      return { html, bind };
+    }
+    function tsValid(list) {
+      const missing = [1, 2, 3, 4, 5, 6].filter((l) => !list.some((ts) => ts.levels.includes(l)));
+      const empty = list.filter((ts) => !ts.levels.length || !ts.days.length);
+      return missing.length ? `ระดับชั้น ${missing.map((l) => `ม.${l}`).join(', ')} ยังไม่อยู่ในช่วงชั้นใด` : empty.length ? `ช่วงชั้น "${empty[0].name}" ยังไม่มีระดับชั้นหรือวันเรียน` : '';
+    }
+    function wizStep2() {
+      const m = state.modal; wizEnsureSettings();
+      const ed = tsEditor(m.timeStructures, wizStep2);
+      const err = tsValid(m.timeStructures);
+      $('modalBody').innerHTML = `<div class="space-y-5"><p class="text-sm text-slate-500">กำหนดวันเรียน เวลาเริ่ม ความยาวคาบ จำนวนคาบต่อวัน และช่วงพัก แยกตามช่วงชั้น (ม.ต้น และ ม.ปลายพักไม่พร้อมกันได้) ระบบตรวจครูสอนซ้อนจากเวลาจริง</p>${tsPreview(m.timeStructures.filter((ts) => ts.levels.length))}${err ? `<p class="rounded-xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">${esc(err)}</p>` : ''}${ed.html}</div>`;
+      ed.bind($('modalBody'));
+    }
+    function activityEditor(list, tsList, onChange) {
+      const maxP = Math.max(...tsList.map((t) => t.periods));
+      const html = `<div class="space-y-3">${list.map((a, i) => `<div class="rounded-2xl border border-slate-200 p-4" data-act-row="${i}"><div class="grid gap-3 md:grid-cols-[1.3fr_1fr_1fr]">
+          <label class="block text-xs font-semibold text-slate-600">ชื่อกิจกรรม<input data-a="name" value="${esc(a.name)}" class="${selSm} mt-1 w-full"></label>
+          <label class="block text-xs font-semibold text-slate-600">ขอบเขต<select data-a="scopeKey" class="${selSm} mt-1 w-full"><option value="school" ${a.scope === 'school' ? 'selected' : ''}>ทั้งโรงเรียน</option>${tsList.map((ts) => `<option value="stage:${ts.id}" ${a.scope === 'stage' && a.stageId === ts.id ? 'selected' : ''}>ช่วงชั้น ${esc(ts.name)}</option>`).join('')}${[1, 2, 3, 4, 5, 6].map((l) => `<option value="level:${l}" ${a.scope === 'level' && Number(a.level) === l ? 'selected' : ''}>ระดับชั้น ม.${l}</option>`).join('')}</select></label>
+          <label class="block text-xs font-semibold text-slate-600">วัน<select data-a="day" class="${selSm} mt-1 w-full">${[0, 1, 2, 3, 4, 5].map((d) => `<option value="${d}" ${a.day === d ? 'selected' : ''}>${TT.DAYS[d].name}</option>`).join('')}</select></label></div>
+        <div class="mt-3 flex flex-wrap items-center gap-2 text-xs text-slate-600"><span class="font-semibold">คาบที่:</span>${Array.from({ length: maxP }, (_, k) => k + 1).map((p) => `<label class="flex items-center gap-1 rounded-lg border px-2 py-1 ${a.periods.includes(p) ? 'border-blue-300 bg-blue-50 text-blue-700' : 'border-slate-200'}"><input data-period="${p}" type="checkbox" ${a.periods.includes(p) ? 'checked' : ''} class="h-3.5 w-3.5 rounded">${p}</label>`).join('')}<span class="ml-1 text-slate-400">(เลขคาบตามโครงสร้างเวลาของแต่ละห้อง)</span></div>
+        <div class="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-600"><span class="font-semibold">ผู้ดูแล:</span>${[['advisor', 'ครูประจำชั้น'], ['all', 'ครูทุกคน'], ['teachers', 'ครูที่ระบุ'], ['none', 'ไม่ใช้ครู']].map(([k, l]) => `<label class="flex items-center gap-1"><input data-staff="${k}" type="radio" name="staff${i}" ${a.staff === k ? 'checked' : ''} class="h-3.5 w-3.5">${l}</label>`).join('')}
+          ${a.staff === 'teachers' ? `<select data-a="teacherGroup" class="${selSm}"><option value="">เลือกครูทั้งกลุ่มสาระ…</option>${Object.entries(TT.GROUPS).filter(([k]) => k !== 'ก').map(([k, g]) => `<option value="${k}">${g.name}</option>`).join('')}</select><span class="text-slate-500">${a.teacherIds.length} คน</span>` : ''}
+          <label class="ml-auto flex items-center gap-1"><input data-a="lockClasses" type="checkbox" ${a.lockClasses !== false ? 'checked' : ''} class="h-3.5 w-3.5 rounded">ล็อกห้องเรียน (ห้ามจัดคาบอื่นทับ)</label><button data-act-remove="${i}" type="button" class="font-semibold text-rose-600">ลบ</button></div>
+      </div>`).join('')}<button data-act-add type="button" class="${btn2}">+ เพิ่มกิจกรรมล็อกเวลา</button></div>`;
+      const bind = (root) => {
+        root.querySelectorAll('[data-act-row]').forEach((row) => {
+          const a = list[Number(row.dataset.actRow)];
+          row.querySelectorAll('[data-a]').forEach((el) => { el.onchange = () => {
+            const k = el.dataset.a;
+            if (k === 'scopeKey') { const [sc, val] = el.value.split(':'); a.scope = sc; a.stageId = sc === 'stage' ? val : undefined; a.level = sc === 'level' ? Number(val) : undefined; }
+            else if (k === 'day') a.day = Number(el.value);
+            else if (k === 'lockClasses') a.lockClasses = el.checked;
+            else if (k === 'teacherGroup') a.teacherIds = db().external.teachers.filter((t) => t.group === el.value).map((t) => t.id);
+            else a[k] = el.value;
+            onChange();
+          }; });
+          row.querySelectorAll('[data-period]').forEach((el) => { el.onchange = () => { const p = Number(el.dataset.period); a.periods = el.checked ? [...a.periods, p].sort((x, y) => x - y) : a.periods.filter((x) => x !== p); onChange(); }; });
+          row.querySelectorAll('[data-staff]').forEach((el) => { el.onchange = () => { a.staff = el.dataset.staff; onChange(); }; });
+        });
+        root.querySelectorAll('[data-act-remove]').forEach((el) => { el.onclick = () => { list.splice(Number(el.dataset.actRemove), 1); onChange(); }; });
+        root.querySelector('[data-act-add]').onclick = () => { list.push({ id: TT.newId('A'), name: 'กิจกรรมใหม่', scope: 'school', day: 0, periods: [1], staff: 'advisor', teacherIds: [], lockClasses: true }); onChange(); };
+      };
+      return { html, bind };
+    }
+    function wizStep3() {
+      const m = state.modal; wizEnsureSettings();
+      const ed = activityEditor(m.activities, m.timeStructures, wizStep3);
+      $('modalBody').innerHTML = `<div class="space-y-4"><p class="text-sm text-slate-500">กิจกรรมที่ทุกห้อง ช่วงชั้น หรือระดับชั้นทำพร้อมกัน เช่น ชุมนุม ลูกเสือ แนะแนว ประชุมครู ระบบจะไม่จัดคาบอื่นทับ และนับครูผู้ดูแลว่าไม่ว่าง · เข้าแถว/โฮมรูมกำหนดในโครงสร้างเวลาแล้ว</p>${ed.html}</div>`;
+      ed.bind($('modalBody'));
+    }
+    function wizStep4() {
+      const m = state.modal;
+      ensureTerm(m.term);
+      if (!m.deadline) { const start = db().terms[m.term].start; const d = new Date(`${start}T00:00:00`); d.setDate(d.getDate() - 30); m.deadline = d.toISOString().slice(0, 10); }
+      const all = db().unavailability.filter((u) => u.term === m.term);
+      $('modalBody').innerHTML = `<div class="space-y-5">
+        <label class="block max-w-sm"><span class="mb-2 block text-sm font-semibold text-slate-700">วันปิดรับเวลาไม่ว่าง</span><input data-w="deadline" type="date" value="${m.deadline}" class="${sel}"></label>
+        <div class="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm leading-6 text-blue-900">ครูกรอกเวลาไม่ว่าง (เฉพาะภารกิจในโรงเรียน) ได้ที่หน้าโปรไฟล์จนถึงวันนี้ แล้ว admin อนุมัติที่หน้าคำขออนุมัติ หลังวันปิดรับครูต้องยื่นคำร้องขอเปลี่ยนการจัดแทน · ระบบจะแจ้งครูทุกคนที่มีการมอบหมายสอนเมื่อสร้างฉบับร่าง · เปิดภาคเรียน ${TT.formatDate(db().terms[m.term].start)} ตารางสอนต้องเสร็จก่อนวันนั้น</div>
+        <p class="text-sm text-slate-500">เวลาไม่ว่างของ${TT.termLabel(m.term)} ตอนนี้: อนุมัติ ${all.filter((u) => u.status === 'approved').length} · รออนุมัติ ${all.filter((u) => u.status === 'pending').length} · ไม่อนุมัติ ${all.filter((u) => u.status === 'rejected').length}</p>
+      </div>`;
+      $('modalBody').querySelector('[data-w="deadline"]').onchange = (e) => { m.deadline = e.target.value; };
+    }
+    function wizTempVersion() {
+      const m = state.modal; wizEnsureSettings();
+      const src = wizSource();
+      return { id: 'TMP', term: m.term, name: m.name, status: 'draft', timeStructures: m.timeStructures, activities: m.activities, conditions: TT.clone((src || baseVersion()).conditions), entries: Object.fromEntries(db().external.classes.map((c) => [c.id, {}])), appliedRequests: [] };
+    }
+    function wizStep5() {
+      const m = state.modal;
+      ensureTerm(m.term);
+      if (!db().assignments[m.term]) db().assignments[m.term] = TT.clone(db().assignments[Object.keys(db().assignments).find((t) => TT.termNo(t) === TT.termNo(m.term)) || '2570-1']);
+      const prev = db().terms[m.term].unavailDeadline; db().terms[m.term].unavailDeadline = m.deadline;
+      const r = TT.readiness(wizTempVersion());
+      db().terms[m.term].unavailDeadline = prev;
+      $('modalBody').innerHTML = `<div class="space-y-4">
+        <div class="flex gap-3 rounded-2xl border ${r.fails ? 'border-amber-200 bg-amber-50' : 'border-emerald-100 bg-emerald-50'} p-4">${icon(r.fails ? 'warn' : 'check', `h-5 w-5 shrink-0 ${r.fails ? 'text-amber-600' : 'text-emerald-600'}`)}<p class="text-sm ${r.fails ? 'text-amber-900' : 'text-emerald-900'}">${r.fails ? `มี ${r.fails} รายการไม่ผ่าน สร้างฉบับร่างได้และจัดเองได้ แต่จะจัดอัตโนมัติไม่ได้จนกว่าจะแก้` : 'ข้อมูลพร้อม สร้างฉบับร่างแล้วจัดได้ทุกวิธี'}</p></div>
+        ${readinessList(r)}
+        <div class="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600"><p class="font-semibold text-slate-800">สรุป</p><p class="mt-1">${TT.termLabel(m.term)} · "${esc(m.name)}" · ${m.method === 'copy' ? `คัดลอกจาก "${esc(wizSource()?.name)}"` : 'สร้างใหม่ทั้งหมด'} · ${m.timeStructures.length} ช่วงชั้น · กิจกรรมล็อกเวลา ${m.activities.length} รายการ · ปิดรับเวลาไม่ว่าง ${TT.formatDate(m.deadline)}</p></div>
+      </div>`;
+    }
+    function ensureTerm(term) {
+      if (db().terms[term]) return;
+      const [y, t] = term.split('-').map(Number);
+      const startYear = y - 543 + (t === 1 ? 1 : 0);
+      db().terms[term] = { start: t === 1 ? `${startYear}-05-16` : `${startYear}-11-01`, end: t === 1 ? `${startYear}-09-30` : `${startYear + 1}-03-20`, unavailDeadline: '' };
+    }
+    function wizNext(dir) {
+      const m = state.modal;
+      if (dir > 0 && m.step === 0 && !m.name.trim()) { TT.toast('กรุณาตั้งชื่อฉบับร่าง', '', 'error'); return; }
+      if (dir > 0 && m.step === 0) wizEnsureSettings();
+      if (dir > 0 && m.step === 1) { const err = tsValid(m.timeStructures); if (err) { TT.toast('โครงสร้างเวลายังไม่ครบ', err, 'error'); return; } }
+      m.step = Math.max(0, Math.min(WIZ_STEPS.length - 1, m.step + dir));
+      renderWizard();
+    }
+    function wizCreate() {
+      const m = state.modal;
+      ensureTerm(m.term);
+      db().terms[m.term].unavailDeadline = m.deadline;
+      let v; let dropped = [];
+      if (m.method === 'copy') {
+        const res = TT.copyVersion(wizSource(), { term: m.term, name: m.name.trim() });
+        v = res.version; dropped = res.dropped;
+        v.timeStructures = m.timeStructures; v.activities = m.activities;
+        removeOutside(v).forEach((text) => dropped.push({ text: `${text} — นอกโครงสร้างเวลาใหม่` }));
+      } else {
+        v = TT.createBlankVersion({ term: m.term, name: m.name.trim(), timeStructures: m.timeStructures, activities: m.activities, conditions: TT.clone(baseVersion().conditions) });
+      }
+      if (TT.unavailabilityOpen(m.term)) db().external.teachers.filter((t) => TT.loadOfTeacher(m.term, t.id).length).forEach((t) => TT.notify(t.id, `เปิดรับเวลาไม่ว่าง ${TT.termLabel(m.term)}`, `กรอกได้ถึง ${TT.formatDate(m.deadline)}`, 'teacher-profile.html'));
+      state.term = m.term; state.versionId = v.id; state.tab = 'teacher';
+      history.replaceState(null, '', `#version=${v.id}`);
+      closeModal();
+      TT.save();
+      if (dropped.length) showDropped(dropped); else TT.toast('สร้างฉบับร่างแล้ว', `"${v.name}" · ${TT.termLabel(v.term)}`);
+    }
+    function removeOutside(v) {
+      const removed = [];
+      Object.entries(v.entries).forEach(([cid, slots]) => Object.keys(slots).forEach((slot) => {
+        const ts = TT.tsOfClass(v, cid); const [d, p] = TT.parseSlot(slot);
+        if (!ts || !ts.days.includes(d) || p > ts.periods || TT.classActivityAt(v, cid, slot)) { removed.push(`${TT.className(cid)} ${TT.slotLabel(slot)} ${slots[slot].code}`); delete slots[slot]; }
+      }));
+      return removed;
+    }
+    function showDropped(list) {
+      openModal({ eyebrow: 'คัดลอกตารางสอน', title: 'สร้างฉบับร่างแล้ว', subtitle: `ตัดคาบที่ไม่ตรงกับภาคเรียนปลายทาง ${list.length} คาบ`, width: 'max-w-2xl' });
+      $('modalBody').innerHTML = `<div class="space-y-1.5">${list.map((d) => `<p class="rounded-xl bg-slate-50 px-3 py-2 text-sm text-slate-700">${esc(d.text)}</p>`).join('')}</div><p class="mt-3 text-xs text-slate-500">วิชาเหล่านี้จะอยู่ในรายการรอจัดของครูผู้สอน</p>`;
+      $('modalFooter').innerHTML = `<button data-close-modal type="button" class="${btnP}">รับทราบ</button>`;
+    }
+
+    /* ------------------------------------------------------------------ settings of an existing draft */
+    function openSettings() {
+      const v = ver();
+      state.modal = { kind: 'settings', tab: 'time', timeStructures: TT.clone(v.timeStructures), activities: TT.clone(v.activities), deadline: db().terms[v.term].unavailDeadline };
+      renderSettings();
+    }
+    function renderSettings() {
+      const m = state.modal; const v = ver();
+      openModal({ eyebrow: v.name, title: 'โครงสร้างเวลาและกิจกรรมล็อกเวลา', subtitle: 'แก้ได้เฉพาะฉบับร่าง · คาบที่อยู่นอกโครงสร้างใหม่จะกลับไปอยู่ในรายการรอจัด', width: 'max-w-5xl', steps: `<div class="flex gap-2">${[['time', 'โครงสร้างเวลา'], ['act', 'กิจกรรมล็อกเวลา'], ['deadline', 'วันปิดรับเวลาไม่ว่าง']].map(([k, l]) => `<button data-set-tab="${k}" type="button" class="rounded-xl px-3 py-1.5 text-sm font-semibold ${m.tab === k ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}">${l}</button>`).join('')}</div>` });
+      if (m.tab === 'time') { const ed = tsEditor(m.timeStructures, renderSettings); const err = tsValid(m.timeStructures); $('modalBody').innerHTML = `<div class="space-y-5">${tsPreview(m.timeStructures.filter((ts) => ts.levels.length))}${err ? `<p class="rounded-xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">${esc(err)}</p>` : ''}${ed.html}</div>`; ed.bind($('modalBody')); }
+      else if (m.tab === 'act') { const ed = activityEditor(m.activities, m.timeStructures, renderSettings); $('modalBody').innerHTML = ed.html; ed.bind($('modalBody')); }
+      else { $('modalBody').innerHTML = `<label class="block max-w-sm"><span class="mb-2 block text-sm font-semibold text-slate-700">วันปิดรับเวลาไม่ว่าง (${TT.termLabel(v.term)})</span><input id="setDeadline" type="date" value="${m.deadline}" class="${sel}"></label>`; $('setDeadline').onchange = (e) => { m.deadline = e.target.value; }; }
+      $('modalSteps').querySelectorAll('[data-set-tab]').forEach((b) => { b.onclick = () => { m.tab = b.dataset.setTab; renderSettings(); }; });
+      $('modalFooter').innerHTML = `<button data-close-modal type="button" class="${btnG}">ยกเลิก</button><button id="saveSettings" type="button" class="${btnP}">บันทึก</button>`;
+      $('saveSettings').onclick = async () => {
+        const err = tsValid(m.timeStructures);
+        if (err) { TT.toast('โครงสร้างเวลายังไม่ครบ', err, 'error'); return; }
+        const preview = { ...v, entries: TT.clone(v.entries), timeStructures: m.timeStructures, activities: m.activities };
+        const removed = removeOutside(preview);
+        const snap = { ts: m.timeStructures, act: m.activities, deadline: m.deadline };
+        if (removed.length && !(await TT.confirm({ title: `${removed.length} คาบจะกลับไปอยู่ในรายการรอจัด`, message: `คาบเหล่านี้อยู่นอกโครงสร้างเวลาใหม่หรือทับกิจกรรมล็อกเวลา<br><span class="text-xs">${esc(removed.slice(0, 8).join(' · '))}${removed.length > 8 ? ' …' : ''}</span>`, okText: 'บันทึกและนำคาบออก', tone: 'primary' }))) return;
+        closeModal();
+        db().terms[v.term].unavailDeadline = snap.deadline;
+        commit('ปรับโครงสร้างเวลา/กิจกรรม', `${snap.ts.map((ts) => `${ts.name} ${ts.periods} คาบ × ${ts.periodMin} นาที`).join(', ')}${removed.length ? ` · นำคาบออก ${removed.length}` : ''}`, (vv) => { vv.timeStructures = snap.ts; vv.activities = snap.act; vv.entries = preview.entries; });
+        TT.toast('บันทึกโครงสร้างเวลาแล้ว', removed.length ? `${removed.length} คาบกลับไปอยู่ในรายการรอจัด` : '');
+      };
+    }
+
+    /* ------------------------------------------------------------------ conditions */
+    function openConditions() {
+      state.modal = { kind: 'conditions', tab: 'teacher', draft: TT.clone(ver().conditions), level: state.level, teacherId: state.teacherId, roomId: 'COM1' };
+      renderConditions();
+    }
+    function renderConditions() {
+      const m = state.modal; const v = ver(); const c = m.draft;
+      const proxy = { conditions: c };
+      openModal({ eyebrow: v.name, title: 'เงื่อนไขการจัด', subtitle: 'ใช้กับ "จัดอัตโนมัติตามเงื่อนไข" และแสดงเป็นคำเตือนเมื่อจัดเอง · เงื่อนไขมาตรฐานบังคับเสมอ', width: 'max-w-5xl', steps: `<div class="flex flex-wrap gap-2">${[['teacher', 'ครู'], ['subject', 'รายวิชา'], ['room', 'ห้องเรียน'], ['std', 'เงื่อนไขมาตรฐาน']].map(([k, l]) => `<button data-c-tab="${k}" type="button" class="rounded-xl px-3 py-1.5 text-sm font-semibold ${m.tab === k ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}">${l}</button>`).join('')}</div>` });
+      const num = (attr, val, min, max) => `<input ${attr} type="number" min="${min}" max="${max}" value="${val}" class="${selSm} w-20 text-center">`;
+      if (m.tab === 'teacher') {
+        const tc = { ...TT.teacherCond(proxy, m.teacherId) };
+        const un = db().unavailability.filter((u) => u.term === v.term && u.teacherId === m.teacherId);
+        $('modalBody').innerHTML = `<div class="space-y-6">
+          <div class="rounded-2xl border border-slate-200 p-4"><p class="text-sm font-semibold text-slate-800">ค่าเริ่มต้นของครูทุกคน (ข้อบังคับ)</p><div class="mt-3 flex flex-wrap gap-5 text-sm text-slate-600"><label class="flex items-center gap-2">คาบสูงสุดต่อวัน ${num('data-def="teacherMaxPerDay"', c.defaults.teacherMaxPerDay, 1, 8)}</label><label class="flex items-center gap-2">คาบติดกันสูงสุด ${num('data-def="teacherMaxConsecutive"', c.defaults.teacherMaxConsecutive, 1, 8)}</label><label class="flex items-center gap-2">คาบสูงสุดต่อสัปดาห์ ${num('data-def="teacherMaxPerWeek"', c.defaults.teacherMaxPerWeek, 1, 40)}</label></div></div>
+          <div class="rounded-2xl border border-slate-200 p-4"><div class="flex flex-wrap items-center gap-3"><p class="text-sm font-semibold text-slate-800">กำหนดเฉพาะครู</p><select id="cTeacher" class="${selSm}">${db().external.teachers.map((t) => `<option value="${t.id}" ${t.id === m.teacherId ? 'selected' : ''}>${esc(t.name)}${c.teacher[t.id] ? ' ●' : ''}</option>`).join('')}</select></div>
+            <div class="mt-3 flex flex-wrap gap-5 text-sm text-slate-600"><label class="flex items-center gap-2">คาบสูงสุดต่อวัน ${num('data-tc="maxPerDay"', tc.maxPerDay, 1, 8)}</label><label class="flex items-center gap-2">คาบติดกันสูงสุด ${num('data-tc="maxConsecutive"', tc.maxConsecutive, 1, 8)}</label><label class="flex items-center gap-2">คาบสูงสุดต่อสัปดาห์ ${num('data-tc="maxPerWeek"', tc.maxPerWeek, 1, 40)}</label>${c.teacher[m.teacherId] ? '<button id="cTeacherReset" type="button" class="text-xs font-semibold text-rose-600">ใช้ค่าเริ่มต้น</button>' : ''}</div>
+            <p class="mt-4 text-sm font-semibold text-slate-800">เวลาไม่ว่างของครู (${TT.termLabel(v.term)})</p><div class="mt-2 space-y-1.5">${un.length ? un.map((u) => `<p class="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-700">${TT.DAYS[u.day].name} ${u.start}–${u.end} · ${esc(u.reason)} · <span class="font-semibold ${{ approved: 'text-emerald-700', pending: 'text-amber-700', rejected: 'text-rose-700' }[u.status]}">${{ approved: 'อนุมัติแล้ว (ข้อบังคับ)', pending: 'รออนุมัติ (ยังไม่ใช้)', rejected: 'ไม่อนุมัติ' }[u.status]}</span></p>`).join('') : '<p class="text-xs text-slate-400">ไม่มี</p>'}<a href="timetable-approvals.html#unavailability" class="inline-block text-xs font-semibold text-blue-700">จัดการที่หน้าคำขออนุมัติ →</a></div></div></div>`;
+        $('modalBody').querySelectorAll('[data-def]').forEach((el) => { el.onchange = () => { c.defaults[el.dataset.def] = Number(el.value); }; });
+        $('modalBody').querySelectorAll('[data-tc]').forEach((el) => { el.onchange = () => { c.teacher[m.teacherId] = { ...(c.teacher[m.teacherId] || {}), [el.dataset.tc]: Number(el.value) }; }; });
+        $('cTeacher').onchange = (e) => { m.teacherId = e.target.value; renderConditions(); };
+        if ($('cTeacherReset')) $('cTeacherReset').onclick = () => { delete c.teacher[m.teacherId]; renderConditions(); };
+      } else if (m.tab === 'subject') {
+        const codes = [...new Set(TT.classesOfLevel(m.level).flatMap((cl) => TT.loadOfClass(v.term, cl.id).map((l) => l.code)))];
+        const ts = TT.stageOfLevel(v, m.level);
+        $('modalBody').innerHTML = `<div class="mb-3 flex flex-wrap items-center gap-3"><select id="cLevel" class="${selSm}">${[1, 2, 3, 4, 5, 6].map((l) => `<option value="${l}" ${l === m.level ? 'selected' : ''}>ม.${l}</option>`).join('')}</select><p class="text-xs text-slate-500">คาบต่อสัปดาห์มาจากหน้าจัดการรายวิชา · "ควรเรียน" และ "ความสำคัญ" เป็นข้อพึงประสงค์ ที่เหลือเป็นข้อบังคับ</p></div>
+          <div class="overflow-x-auto rounded-2xl border border-slate-200 tt-scroll"><table class="w-full min-w-[900px] text-sm"><thead class="bg-slate-50 text-xs font-semibold text-slate-500"><tr><th class="px-3 py-3 text-left">รายวิชา</th><th class="px-2 py-3 text-center">คาบ/สัปดาห์</th><th class="px-2 py-3 text-center">สูงสุด/วัน</th><th class="px-2 py-3 text-center">คาบคู่</th><th class="px-2 py-3 text-left">ห้องเฉพาะ</th><th class="px-2 py-3 text-left">ควรเรียน</th><th class="px-2 py-3 text-left">ความสำคัญ</th><th class="px-2 py-3 text-left">ห้ามคาบที่</th></tr></thead><tbody class="divide-y divide-slate-100">${codes.map((code) => { const s = TT.subject(code); const sc = TT.subjectCond(proxy, code); return `<tr data-sub="${code}"><td class="px-3 py-2"><p class="font-semibold text-slate-800">${code}</p><p class="text-xs text-slate-500">${esc(s.name)}</p></td><td class="px-2 py-2 text-center font-semibold text-slate-700">${s.hours}</td><td class="px-2 py-2 text-center"><select data-sk="maxPerDay" class="${selSm}">${[1, 2].map((n) => `<option ${sc.maxPerDay === n ? 'selected' : ''}>${n}</option>`).join('')}</select></td><td class="px-2 py-2 text-center"><input data-sk="double" type="checkbox" ${sc.double ? 'checked' : ''} class="h-4 w-4 rounded"></td><td class="px-2 py-2"><select data-sk="roomType" class="${selSm}"><option value="">ห้องประจำชั้น</option>${Object.entries(TT.ROOM_TYPES).filter(([k]) => k !== 'regular').map(([k, n]) => `<option value="${k}" ${sc.roomType === k ? 'selected' : ''}>${n}</option>`).join('')}</select></td><td class="px-2 py-2"><select data-sk="prefer" class="${selSm}"><option value="">ไม่ระบุ</option><option value="morning" ${sc.prefer === 'morning' ? 'selected' : ''}>ช่วงเช้า</option><option value="afternoon" ${sc.prefer === 'afternoon' ? 'selected' : ''}>ช่วงบ่าย</option></select></td><td class="px-2 py-2"><select data-sk="priority" class="${selSm}">${[[1, 'สูง'], [2, 'ปกติ'], [3, 'ต่ำ']].map(([n, l]) => `<option value="${n}" ${sc.priority === n ? 'selected' : ''}>${l}</option>`).join('')}</select></td><td class="px-2 py-2"><div class="flex gap-1">${TT.periodTimes(ts).map((p) => `<label class="flex flex-col items-center text-[10px] text-slate-500"><input data-forbid="${p.no}" type="checkbox" ${sc.forbidden.some((f) => f.endsWith(`-${p.no}`)) ? 'checked' : ''} class="h-3.5 w-3.5 rounded">${p.no}</label>`).join('')}</div></td></tr>`; }).join('')}</tbody></table></div>`;
+        $('cLevel').onchange = (e) => { m.level = Number(e.target.value); renderConditions(); };
+        $('modalBody').querySelectorAll('[data-sub]').forEach((row) => {
+          const code = row.dataset.sub; const cur = () => (c.subject[code] = c.subject[code] || {});
+          row.querySelectorAll('[data-sk]').forEach((el) => { el.onchange = () => { const k = el.dataset.sk; cur()[k] = k === 'double' ? el.checked : ['maxPerDay', 'priority'].includes(k) ? Number(el.value) : (el.value || null); }; });
+          row.querySelectorAll('[data-forbid]').forEach((el) => { el.onchange = () => { const p = Number(el.dataset.forbid); const list = new Set(cur().forbidden || TT.subjectCond(proxy, code).forbidden); [0, 1, 2, 3, 4, 5].forEach((d) => (el.checked ? list.add(`${d}-${p}`) : list.delete(`${d}-${p}`))); cur().forbidden = [...list]; }; });
+        });
+      } else if (m.tab === 'room') {
+        c.room[m.roomId] = c.room[m.roomId] || { unavailable: [] };
+        const rc = c.room[m.roomId];
+        const r = TT.room(m.roomId);
+        $('modalBody').innerHTML = `<div class="space-y-4"><div class="flex flex-wrap items-center gap-3"><select id="cRoom" class="${selSm}">${Object.entries(TT.ROOM_TYPES).map(([k, n]) => `<optgroup label="${n}">${db().external.rooms.filter((x) => x.type === k).map((x) => `<option value="${x.id}" ${x.id === m.roomId ? 'selected' : ''}>${esc(x.name)}${c.room[x.id]?.unavailable?.length ? ' ●' : ''}</option>`).join('')}</optgroup>`).join('')}</select><span class="text-xs text-slate-500">${TT.ROOM_TYPES[r.type]} · ความจุ ${r.cap} คน · ใช้พร้อมกันได้ ${r.maxClasses} ห้อง (ข้อมูลอาคารสถานที่)</span></div>
+          <p class="text-sm font-semibold text-slate-800">ช่วงเวลาที่ห้องไม่พร้อมใช้งาน</p>${rc.unavailable.map((u, i) => `<div class="flex flex-wrap items-center gap-2 text-sm" data-ru="${i}"><select data-rk="day" class="${selSm}">${[0, 1, 2, 3, 4].map((d) => `<option value="${d}" ${u.day === d ? 'selected' : ''}>${TT.DAYS[d].name}</option>`).join('')}</select><input data-rk="start" type="time" value="${u.start}" class="${selSm}">–<input data-rk="end" type="time" value="${u.end}" class="${selSm}"><input data-rk="note" value="${esc(u.note || '')}" placeholder="เหตุผล" class="${selSm} w-56"><button data-ru-remove="${i}" type="button" class="text-xs font-semibold text-rose-600">ลบ</button></div>`).join('')}<button id="ruAdd" type="button" class="${btn2}">+ เพิ่มช่วงเวลา</button></div>`;
+        $('cRoom').onchange = (e) => { m.roomId = e.target.value; renderConditions(); };
+        $('modalBody').querySelectorAll('[data-ru]').forEach((row) => row.querySelectorAll('[data-rk]').forEach((el) => { el.onchange = () => { const u = rc.unavailable[Number(row.dataset.ru)]; u[el.dataset.rk] = el.dataset.rk === 'day' ? Number(el.value) : el.value; }; }));
+        $('modalBody').querySelectorAll('[data-ru-remove]').forEach((el) => { el.onclick = () => { rc.unavailable.splice(Number(el.dataset.ruRemove), 1); renderConditions(); }; });
+        $('ruAdd').onclick = () => { rc.unavailable.push({ day: 0, start: '08:30', end: '10:10', note: '' }); renderConditions(); };
+      } else {
+        $('modalBody').innerHTML = `<div class="space-y-3 text-sm text-slate-600"><p>เงื่อนไขมาตรฐาน ใช้กับทุกวิธีจัด และเป็นเกณฑ์ของ Conflict (แก้ไม่ได้)</p><ol class="list-decimal space-y-1.5 pl-5">${['ครูไม่สอนซ้อน (ตัดสินจากเวลาจริงที่ทับกัน)', 'ห้องเรียนไม่ใช้ซ้อนเกินจำนวนที่ห้องรองรับ', 'ห้องนักเรียนมีวิชาเดียวต่อคาบ', 'ไม่เกินจำนวนคาบต่อวันตามโครงสร้างเวลา', 'ไม่จัดทับกิจกรรมล็อกเวลา และครูผู้ดูแลกิจกรรมไม่ว่างในช่วงนั้น', 'คาบต่อสัปดาห์ของแต่ละวิชาไม่เกินหลักสูตร', 'วิชาเดียวกันไม่เกิน 2 คาบต่อวัน'].map((x) => `<li>${x}</li>`).join('')}</ol><p class="rounded-xl bg-slate-50 p-3">คาบที่ตรงกับเวลาไม่ว่างของครูที่อนุมัติแล้วถือเป็น Conflict เช่นกัน</p></div>`;
+      }
+      $('modalSteps').querySelectorAll('[data-c-tab]').forEach((b) => { b.onclick = () => { m.tab = b.dataset.cTab; renderConditions(); }; });
+      $('modalFooter').innerHTML = `<button data-close-modal type="button" class="${btnG}">ยกเลิก</button><button id="saveConditions" type="button" class="${btnP}">บันทึกเงื่อนไข</button>`;
+      $('saveConditions').onclick = () => { const draft = m.draft; closeModal(); commit('กำหนดเงื่อนไข', 'ปรับเงื่อนไขครู / รายวิชา / ห้องเรียน', (vv) => { vv.conditions = draft; }); TT.toast('บันทึกเงื่อนไขแล้ว', 'ผลตรวจ Conflict และคำเตือนอัปเดตแล้ว'); };
+    }
+
+    /* ------------------------------------------------------------------ auto scheduling */
+    function openAuto(scope = 'all') { state.modal = { kind: 'auto', mode: 'smart', scope, keep: true, result: null, seed: 101 }; renderAuto(); }
+    function autoTeacherIds(m) { const t = TT.teacher(state.teacherId); return m.scope === 'teacher' ? [t.id] : m.scope === 'group' ? db().external.teachers.filter((x) => x.group === t.group).map((x) => x.id) : null; }
+    function renderAuto() {
+      const m = state.modal; const v = ver(); const t = TT.teacher(state.teacherId);
+      openModal({ eyebrow: v.name, title: 'จัดอัตโนมัติ', subtitle: 'ผลลัพธ์จะแสดงให้ตรวจก่อนนำไปใช้จริง', width: 'max-w-4xl' });
+      if (m.result) { renderAutoResult(); return; }
+      const ready = TT.readiness(v);
+      const open = TT.unavailabilityOpen(v.term);
+      $('modalBody').innerHTML = `<div class="space-y-6">
+        ${!ready.canAuto ? `<div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900"><p class="font-semibold">การตรวจความพร้อมไม่ผ่าน ${ready.fails} รายการ — จัดอัตโนมัติไม่ได้</p><ul class="mt-2 list-disc space-y-1 pl-5">${ready.items.filter((i) => i.status === 'fail').map((i) => `<li>${esc(i.title)}: ${esc(i.detail)}</li>`).join('')}</ul><p class="mt-2 text-xs">แก้ข้อมูลที่ต้นทางแล้วกด "ตรวจใหม่" ในการ์ดการตรวจความพร้อม · ระหว่างนี้จัดเองได้</p></div>` : ''}
+        ${open ? `<div class="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">${icon('warn', 'h-5 w-5 shrink-0')}<span>ยังไม่ถึงวันปิดรับเวลาไม่ว่าง (${TT.formatDate(db().terms[v.term].unavailDeadline)}) ครูอาจกรอกเวลาไม่ว่างเพิ่มอีก ซึ่งจะกลายเป็น Conflict ภายหลัง</span></div>` : ''}
+        <div><p class="font-semibold text-slate-900">1. วิธีจัด</p><div class="mt-3 grid gap-3 md:grid-cols-2">
+          <label class="flex cursor-pointer gap-3 rounded-2xl border p-4 ${m.mode === 'smart' ? 'border-blue-500 bg-blue-50/60 ring-1 ring-blue-500' : 'border-slate-200'}"><input type="radio" name="autoMode" value="smart" ${m.mode === 'smart' ? 'checked' : ''} class="mt-1 h-4 w-4"><span><span class="block font-semibold text-slate-900">จัดอัตโนมัติตามเงื่อนไข</span><span class="mt-1 block text-sm leading-6 text-slate-500">เงื่อนไขมาตรฐาน + เวลาไม่ว่างของครู + เงื่อนไขที่ admin กำหนด (คาบต่อวัน คาบติดกัน คาบคู่ ห้องเฉพาะ เวลาที่ห้าม) และพยายามทำตามข้อพึงประสงค์</span><button data-act="conditions" type="button" class="mt-2 text-xs font-semibold text-blue-700 underline">ดู / แก้เงื่อนไข</button></span></label>
+          <label class="flex cursor-pointer gap-3 rounded-2xl border p-4 ${m.mode === 'standard' ? 'border-blue-500 bg-blue-50/60 ring-1 ring-blue-500' : 'border-slate-200'}"><input type="radio" name="autoMode" value="standard" ${m.mode === 'standard' ? 'checked' : ''} class="mt-1 h-4 w-4"><span><span class="block font-semibold text-slate-900">จัดอัตโนมัติมาตรฐาน</span><span class="mt-1 block text-sm leading-6 text-slate-500">ใช้เฉพาะเงื่อนไขมาตรฐาน 7 ข้อ ไม่สนเงื่อนไขที่กำหนดเพิ่มหรือเวลาไม่ว่าง ใช้ห้องประจำชั้นทั้งหมด จัดเร็วแล้วค่อยปรับเอง</span></span></label>
+        </div></div>
+        <div class="grid gap-6 md:grid-cols-2">
+          <div><p class="font-semibold text-slate-900">2. ขอบเขต</p><div class="mt-3 space-y-2">${[['teacher', `เฉพาะ${t.name}`], ['group', `ครูกลุ่มสาระ${TT.GROUPS[t.group].name}`], ['all', `ครูทุกคน (${db().external.teachers.length} คน)`]].map(([k, l]) => `<label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 p-3 hover:bg-slate-50"><input type="radio" name="autoScope" value="${k}" ${m.scope === k ? 'checked' : ''} class="h-4 w-4"><span class="text-sm font-semibold text-slate-800">${esc(l)}</span></label>`).join('')}</div></div>
+          <div><p class="font-semibold text-slate-900">3. คาบที่จัดไว้แล้ว</p><div class="mt-3 space-y-2"><label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-3 hover:bg-slate-50"><input type="radio" name="autoKeep" value="keep" ${m.keep ? 'checked' : ''} class="mt-1 h-4 w-4"><span class="text-sm font-semibold text-slate-800">เก็บไว้ จัดเฉพาะรายการรอจัด</span></label><label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-3 hover:bg-slate-50"><input type="radio" name="autoKeep" value="reset" ${!m.keep ? 'checked' : ''} class="mt-1 h-4 w-4"><span><span class="block text-sm font-semibold text-slate-800">ล้างแล้วจัดใหม่</span><span class="block text-xs text-slate-500">เฉพาะคาบของครูในขอบเขต ยกเว้นคาบที่ล็อก</span></span></label></div></div>
+        </div></div>`;
+      $('modalBody').querySelectorAll('input[name="autoMode"]').forEach((el) => { el.onchange = () => { m.mode = el.value; renderAuto(); }; });
+      $('modalBody').querySelectorAll('input[name="autoScope"]').forEach((el) => { el.onchange = () => { m.scope = el.value; }; });
+      $('modalBody').querySelectorAll('input[name="autoKeep"]').forEach((el) => { el.onchange = () => { m.keep = el.value === 'keep'; }; });
+      $('modalFooter').innerHTML = `<button data-close-modal type="button" class="${btnG}">ยกเลิก</button><button id="runAuto" type="button" ${ready.canAuto ? '' : 'disabled'} class="${btnP}">เริ่มจัด</button>`;
+      $('runAuto').onclick = () => {
+        $('runAuto').disabled = true; $('runAuto').innerHTML = '<svg class="spin h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M12 3a9 9 0 1 0 9 9" stroke-linecap="round"/></svg>กำลังจัด…';
+        setTimeout(() => { m.seed += 7; m.result = TT.autoSchedule(v, { mode: m.mode, teacherIds: autoTeacherIds(m), keep: m.keep, seed: m.seed }); renderAuto(); }, 60);
+      };
+    }
+    function renderAutoResult() {
+      const m = state.modal; const v = ver(); const res = m.result;
+      const pv = { ...v, entries: res.entries };
+      const after = TT.computeIssues(pv);
+      const tids = autoTeacherIds(m) || db().external.teachers.map((t) => t.id);
+      const rows = tids.map((tid) => ({ tid, before: TT.teacherProgress(v, tid), after: TT.teacherProgress(pv, tid) })).filter((x) => x.after.required);
+      const unplacedN = res.unplaced.reduce((a, u) => a + u.count, 0);
+      const box = (l, val, h, tone) => `<div class="rounded-2xl border border-slate-200 p-4"><p class="text-xs font-semibold text-slate-500">${l}</p><p class="mt-1 text-2xl font-semibold ${tone}">${val}</p><p class="text-xs text-slate-400">${h}</p></div>`;
+      $('modalBody').innerHTML = `<div class="space-y-5">
+        <div class="flex gap-3 rounded-2xl border ${unplacedN || after.errorCells ? 'border-amber-200 bg-amber-50' : 'border-emerald-100 bg-emerald-50'} p-4">${icon(unplacedN || after.errorCells ? 'warn' : 'check', 'h-6 w-6 shrink-0')}<div><p class="font-semibold text-slate-900">${m.mode === 'smart' ? 'จัดอัตโนมัติตามเงื่อนไข' : 'จัดอัตโนมัติมาตรฐาน'} เสร็จแล้ว (ยังไม่บันทึก)</p><p class="text-sm text-slate-600">กด "ใช้ผลลัพธ์นี้" เพื่อบันทึกลงฉบับร่าง หรือ "สุ่มใหม่" เพื่อลองอีกแบบ</p></div></div>
+        <div class="grid gap-3 sm:grid-cols-4">${box('จัดเพิ่มรอบนี้', res.placed, 'คาบ', 'text-blue-600')}${box('จัดไม่ได้', unplacedN, 'คาบ (อยู่ในรายการรอจัด)', unplacedN ? 'text-amber-600' : 'text-emerald-600')}${box('Conflict หลังจัด', after.errorCells, 'ทั้งฉบับ', after.errorCells ? 'text-rose-600' : 'text-emerald-600')}${box('คำเตือนหลังจัด', after.warnCells, 'ทั้งฉบับ', 'text-slate-900')}</div>
+        <div class="max-h-[280px] overflow-auto rounded-2xl border border-slate-200 tt-scroll"><table class="w-full text-sm"><thead class="sticky top-0 bg-slate-50 text-xs font-semibold text-slate-500"><tr><th class="px-4 py-2.5 text-left">ครู</th><th class="px-4 py-2.5 text-left">ก่อน</th><th class="px-4 py-2.5 text-left">หลัง</th><th class="px-4 py-2.5 text-left"></th></tr></thead><tbody class="divide-y divide-slate-100">${rows.map((x) => `<tr><td class="px-4 py-2 font-semibold text-slate-800">${esc(TT.teacherName(x.tid))}</td><td class="px-4 py-2 text-slate-500">${x.before.placed}/${x.before.required}</td><td class="px-4 py-2 font-semibold">${x.after.placed}/${x.after.required}</td><td class="px-4 py-2"><div class="h-2 w-32 overflow-hidden rounded-full bg-slate-100"><div class="h-full ${x.after.pct === 100 ? 'bg-emerald-500' : 'bg-blue-600'}" style="width:${x.after.pct}%"></div></div></td></tr>`).join('')}</tbody></table></div>
+        ${res.unplaced.length ? `<div><p class="text-sm font-semibold text-slate-800">จัดไม่ได้และสาเหตุ</p><div class="mt-2 max-h-[220px] space-y-1.5 overflow-y-auto pr-1 tt-scroll">${res.unplaced.map((u) => `<div class="flex items-start justify-between gap-3 rounded-xl bg-amber-50/70 px-3 py-2 text-sm"><span><span class="font-semibold text-slate-800">${TT.className(u.classId)} · ${u.code} ${esc(TT.subject(u.code)?.name)}</span><span class="block text-xs text-amber-800">${esc(u.reason)}</span></span><span class="shrink-0 text-xs font-bold text-slate-600">${u.count} คาบ</span></div>`).join('')}</div></div>` : ''}
+      </div>`;
+      $('modalFooter').innerHTML = `<button id="autoBack" type="button" class="${btnG}">ปรับตัวเลือก</button><button id="autoReroll" type="button" class="${btn2}">สุ่มใหม่</button><button id="autoApply" type="button" class="${btnP}">ใช้ผลลัพธ์นี้</button>`;
+      $('autoBack').onclick = () => { m.result = null; renderAuto(); };
+      $('autoReroll').onclick = () => { m.seed += 13; m.result = TT.autoSchedule(v, { mode: m.mode, teacherIds: autoTeacherIds(m), keep: m.keep, seed: m.seed }); renderAuto(); };
+      $('autoApply').onclick = () => {
+        const label = m.scope === 'teacher' ? TT.teacherName(state.teacherId) : m.scope === 'group' ? `กลุ่มสาระ${TT.GROUPS[TT.teacher(state.teacherId).group].name}` : 'ครูทุกคน';
+        const entries = res.entries; const mode = m.mode;
+        closeModal();
+        commit('จัดตารางอัตโนมัติ', `${mode === 'smart' ? 'ตามเงื่อนไข' : 'มาตรฐาน'} · ${label} · จัดเพิ่ม ${res.placed} คาบ${unplacedN ? ` · จัดไม่ได้ ${unplacedN}` : ''}`, (vv) => { vv.entries = entries; });
+        TT.toast('บันทึกผลการจัดอัตโนมัติแล้ว', `จัดเพิ่ม ${res.placed} คาบ`);
+      };
+    }
+
+    /* ------------------------------------------------------------------ import Excel */
+    function openImport(teacherOnly = null) {
+      state.modal = { kind: 'import', rows: null, fileName: '', mode: 'replace', selected: teacherOnly ? new Set([teacherOnly]) : null, teacherOnly };
+      renderImport();
+    }
+    function renderImport() {
+      const m = state.modal; const v = ver();
+      openModal({ eyebrow: v.name, title: 'นำเข้า Excel', subtitle: m.teacherOnly ? `จากตารางสอนของ${TT.teacherName(m.teacherOnly)} · ไฟล์มีหลายครูได้ เลือกครูที่จะนำเข้า` : 'ไฟล์มีคาบของครูหลายคนได้ เลือกครูที่จะนำเข้า', width: 'max-w-5xl' });
+      if (!m.rows) {
+        $('modalBody').innerHTML = `<div class="space-y-5">
+          <label id="dropZone" class="drop-zone flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center transition hover:border-blue-300"><span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm">${icon('upload', 'h-7 w-7')}</span><span class="mt-4 font-semibold text-slate-900">ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์</span><span class="mt-1 text-sm text-slate-500">รองรับ .xlsx และ .csv ตามไฟล์ต้นแบบ</span><input id="importFile" type="file" accept=".xlsx,.xls,.csv" class="hidden"></label>
+          <div class="grid gap-4 md:grid-cols-2"><div class="rounded-2xl border border-slate-200 p-4 text-sm leading-6 text-slate-600"><p class="font-semibold text-slate-800">กติกาการนำเข้า (เหมือนการจัดเอง)</p><ol class="mt-2 list-decimal space-y-1 pl-5"><li>คอลัมน์: ${TT.IMPORT_HEADERS.join(', ')}</li><li>ไม่ระบุรหัสครู ระบบใช้ครูจากการมอบหมายสอน · ไม่ระบุห้อง ใช้ห้องตามประเภทวิชา</li><li>ขัดเงื่อนไข → นำเข้าได้แต่เป็น Conflict · ห้องมีคาบอยู่แล้วหรือทับกิจกรรมล็อกเวลา → ข้าม</li></ol></div>
+          <div class="flex flex-col justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4"><p class="text-sm text-blue-900">ดาวน์โหลดไฟล์ต้นแบบ หรือทดลองด้วยข้อมูลตัวอย่างที่มีทั้งแถวถูกต้อง แถวที่เป็น Conflict และแถวที่ผิด</p><div class="flex flex-wrap gap-2"><button id="dlTemplate" type="button" class="${btn2}">${icon('download')}ไฟล์ต้นแบบ .xlsx</button><button id="sampleImport" type="button" class="${btnP} !py-2">ลองด้วยข้อมูลตัวอย่าง</button></div></div></div></div>`;
+        $('modalFooter').innerHTML = `<button data-close-modal type="button" class="${btnG}">ปิด</button>`;
+        const dz = $('dropZone');
+        $('importFile').onchange = (e) => readImportFile(e.target.files[0]);
+        dz.ondragover = (e) => { e.preventDefault(); dz.classList.add('is-ready'); };
+        dz.ondragleave = () => dz.classList.remove('is-ready');
+        dz.ondrop = (e) => { e.preventDefault(); dz.classList.remove('is-ready'); readImportFile(e.dataTransfer.files[0]); };
+        $('dlTemplate').onclick = downloadTemplate;
+        $('sampleImport').onclick = () => { m.rows = sampleImportRows(); m.fileName = 'ตารางสอน_ตัวอย่าง.xlsx'; renderImport(); };
+        return;
+      }
+      const all = TT.validateImport(v, m.rows, { mode: m.mode });
+      const keys = all.teacherKeys;
+      if (!m.selected) m.selected = new Set(keys.flatMap((k) => k.split('+')));
+      const res = TT.validateImport(v, m.rows, { mode: m.mode, teacherIds: [...m.selected] });
+      const groups = {};
+      res.rows.forEach((r) => { const k = r.teacherKey || '(อ่านไม่ได้)'; (groups[k] = groups[k] || []).push(r); });
+      const stat = (list, s) => list.filter((r) => r.status === s).length;
+      const statusBadge = { ok: ['ถูกต้อง', 'text-emerald-700'], warn: ['นำเข้า · คำเตือน', 'text-amber-700'], conflict: ['นำเข้า · Conflict', 'text-rose-700'], error: ['ข้าม', 'text-slate-500'], skip: ['ไม่ได้เลือกครู', 'text-slate-400'] };
+      const importable = res.rows.filter((r) => ['ok', 'warn', 'conflict'].includes(r.status)).length;
+      $('modalBody').innerHTML = `<div class="space-y-4">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p class="font-semibold text-slate-900">${esc(m.fileName)}</p><p class="text-sm text-slate-500">${m.rows.length} แถว · ${keys.length} กลุ่มครู</p></div><div class="flex gap-2 text-xs font-semibold"><span class="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">ถูกต้อง ${stat(res.rows, 'ok') + stat(res.rows, 'warn')}</span><span class="rounded-full bg-rose-50 px-3 py-1 text-rose-700">Conflict ${stat(res.rows, 'conflict')}</span><span class="rounded-full bg-slate-100 px-3 py-1 text-slate-600">ข้าม ${stat(res.rows, 'error')}</span></div></div>
+        <div class="grid gap-2 sm:grid-cols-2"><label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-3"><input type="radio" name="impMode" value="replace" ${m.mode === 'replace' ? 'checked' : ''} class="mt-1 h-4 w-4"><span><span class="block text-sm font-semibold text-slate-800">แทนที่</span><span class="block text-xs text-slate-500">ล้างคาบเดิมของครูที่เลือก (ยกเว้นคาบที่ล็อก) แล้วนำเข้า</span></span></label><label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-3"><input type="radio" name="impMode" value="merge" ${m.mode === 'merge' ? 'checked' : ''} class="mt-1 h-4 w-4"><span><span class="block text-sm font-semibold text-slate-800">เติมเฉพาะช่องว่าง</span><span class="block text-xs text-slate-500">แถวที่ห้องมีคาบอยู่แล้วจะถูกข้าม</span></span></label></div>
+        <div class="space-y-3">${Object.entries(groups).map(([k, list]) => { const ids = k.includes('(') ? [] : k.split('+'); const checked = ids.length && ids.some((t) => m.selected.has(t)); return `<details ${checked ? 'open' : ''} class="rounded-2xl border border-slate-200"><summary class="flex cursor-pointer flex-wrap items-center gap-3 px-4 py-3">${ids.length ? `<input data-imp-teacher="${k}" type="checkbox" ${checked ? 'checked' : ''} class="h-4 w-4 rounded">` : ''}<span class="font-semibold text-slate-800">${ids.length ? esc(TT.teachersLabel(ids)) : 'แถวที่อ่านครู/ห้อง/วิชาไม่ได้'}</span><span class="text-xs text-slate-500">${list.length} แถว · ถูกต้อง ${stat(list, 'ok') + stat(list, 'warn')} · Conflict ${stat(list, 'conflict')} · ข้าม ${stat(list, 'error')}</span></summary>
+          <div class="overflow-x-auto border-t border-slate-100 tt-scroll"><table class="w-full min-w-[760px] text-sm"><thead class="bg-slate-50 text-xs text-slate-500"><tr><th class="px-3 py-2 text-left">#</th>${TT.IMPORT_HEADERS.map((h) => `<th class="px-3 py-2 text-left">${h}</th>`).join('')}<th class="px-3 py-2 text-left">ผลตรวจ</th></tr></thead><tbody class="divide-y divide-slate-100">${list.map((r) => `<tr class="${r.status === 'conflict' ? 'bg-rose-50/40' : r.status === 'error' ? 'bg-slate-50' : ''}"><td class="px-3 py-1.5 text-slate-400">${r.n}</td>${TT.IMPORT_HEADERS.map((_, i) => `<td class="px-3 py-1.5 text-slate-700">${esc(r.raw[i] ?? '')}</td>`).join('')}<td class="px-3 py-1.5"><span class="text-xs font-semibold ${statusBadge[r.status][1]}">${statusBadge[r.status][0]}</span>${r.msgs.length ? `<p class="text-[11px] text-slate-500">${esc(r.msgs.join(' · '))}</p>` : ''}</td></tr>`).join('')}</tbody></table></div></details>`; }).join('')}</div></div>`;
+      $('modalBody').querySelectorAll('input[name="impMode"]').forEach((el) => { el.onchange = () => { m.mode = el.value; renderImport(); }; });
+      $('modalBody').querySelectorAll('[data-imp-teacher]').forEach((el) => { el.onclick = (e) => e.stopPropagation(); el.onchange = () => { el.dataset.impTeacher.split('+').forEach((t) => (el.checked ? m.selected.add(t) : m.selected.delete(t))); renderImport(); }; });
+      $('modalFooter').innerHTML = `<button id="impBack" type="button" class="${btnG}">เลือกไฟล์ใหม่</button><button id="impConfirm" type="button" ${importable ? '' : 'disabled'} class="${btnP}">นำเข้า ${importable} คาบ</button>`;
+      $('impBack').onclick = () => { m.rows = null; m.selected = m.teacherOnly ? new Set([m.teacherOnly]) : null; renderImport(); };
+      $('impConfirm').onclick = () => {
+        const entries = res.work.entries; const name = m.fileName; const n = importable; const who = TT.teachersLabel([...m.selected]);
+        closeModal();
+        commit('นำเข้า Excel', `${name} · ${n} คาบ · ${who}`, (vv) => { vv.entries = entries; });
+        TT.toast('นำเข้าแล้ว', `${n} คาบ · แถวที่เป็น Conflict ให้ตรวจในรายงาน`);
+      };
+    }
+    function readImportFile(file) {
+      if (!file) return;
+      const ext = file.name.split('.').pop().toLowerCase();
+      if (!['xlsx', 'xls', 'csv'].includes(ext)) { TT.toast('รองรับเฉพาะ Excel (.xlsx, .csv)', 'ไม่รองรับการนำเข้า PDF', 'error'); return; }
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const wb = XLSX.read(reader.result, { type: 'array' });
+          const sheet = wb.Sheets[wb.SheetNames.find((n) => n.includes('นำเข้า')) || wb.SheetNames[0]];
+          const aoa = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '' });
+          const h = aoa.findIndex((r) => r.map(String).some((x) => x.trim() === 'ห้อง') && r.map(String).some((x) => x.trim() === 'วัน'));
+          if (h < 0) { TT.toast('รูปแบบไฟล์ไม่ตรงไฟล์ต้นแบบ', 'ไม่พบหัวคอลัมน์ "ห้อง" และ "วัน"', 'error'); return; }
+          const header = aoa[h].map((x) => String(x).trim());
+          const col = (names) => header.findIndex((x) => names.includes(x));
+          const map = [col(['ห้อง']), col(['วัน']), col(['คาบ']), col(['รหัสวิชา']), col(['รหัสครู', 'ครู']), col(['ห้องเรียน', 'สถานที่'])];
+          const rows = aoa.slice(h + 1).filter((r) => r.some((x) => String(x).trim())).map((r) => map.map((i) => (i >= 0 ? r[i] : '')));
+          state.modal.rows = rows; state.modal.fileName = file.name; renderImport();
+        } catch (err) { TT.toast('อ่านไฟล์ไม่สำเร็จ', String(err.message || err), 'error'); }
+      };
+      reader.readAsArrayBuffer(file);
+    }
+    function sampleImportRows() {
+      const v = ver(); const tid = state.modal.teacherOnly || state.teacherId;
+      const others = db().external.teachers.filter((t) => t.id !== tid && TT.teacherProgress(v, t.id).remaining.length).slice(0, 1).map((t) => t.id);
+      const proposal = TT.autoSchedule(v, { mode: 'smart', teacherIds: [tid, ...others], keep: true, seed: 77 }).entries;
+      const rows = [];
+      Object.entries(proposal).forEach(([cid, slots]) => Object.entries(slots).forEach(([slot, e]) => { if (!v.entries[cid][slot] && rows.length < 18) { const [d, p] = TT.parseSlot(slot); rows.push([TT.className(cid), TT.DAYS[d].name, p, e.code, e.teachers.join(','), e.room]); } }));
+      const anyLoad = TT.loadOfTeacher(v.term, tid)[0];
+      if (anyLoad) {
+        const cn = TT.className(anyLoad.classId);
+        rows.push([cn, 'เสาร์', 2, anyLoad.code, tid, '']);
+        rows.push([cn, 'จันทร์', 9, anyLoad.code, tid, '']);
+        rows.push([cn, 'อังคาร', 3, 'ค99999', tid, '']);
+        rows.push([cn, 'พุธ', 8, anyLoad.code, tid, '']);
+        rows.push([cn, 'พฤหัสบดี', 2, anyLoad.code, 'T999', '']);
+        const busy = TT.teacherBlocks(v, tid).find((b) => b.cid !== anyLoad.classId);
+        if (busy) { const ts = TT.tsOfClass(v, anyLoad.classId); const near = TT.periodTimes(ts).find((p) => p.start < busy.end && busy.start < p.end); if (near && !v.entries[anyLoad.classId][`${busy.day}-${near.no}`]) rows.push([cn, TT.DAYS[busy.day].name, near.no, anyLoad.code, tid, '']); }
+      }
+      rows.push(['ม.7/1', 'จันทร์', 1, 'ท21101', 't01', '']);
+      return rows;
+    }
+    function downloadTemplate() {
+      const wb = XLSX.utils.book_new();
+      const v = ver();
+      const a = TT.loadOfClass(v.term, '1-1')[0]; const b = TT.loadOfClass(v.term, '4-1')[2];
+      const ws = XLSX.utils.aoa_to_sheet([TT.IMPORT_HEADERS, ['ม.1/1', 'จันทร์', 1, a.code, a.teachers.join(','), ''], ['ม.4/1', 'อังคาร', 3, b.code, '', 'LAB1']]);
+      ws['!cols'] = [10, 10, 6, 12, 14, 12].map((w) => ({ wch: w }));
+      XLSX.utils.book_append_sheet(wb, ws, 'นำเข้า');
+      const ref = [['ประเภท', 'รหัส', 'ชื่อ'], ...db().external.teachers.map((t) => ['ครู', t.id, t.name]), ...db().external.rooms.map((r) => ['ห้อง', r.id, r.name])];
+      XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(ref), 'รหัสอ้างอิง');
+      XLSX.writeFile(wb, 'แบบฟอร์มนำเข้าตารางสอน.xlsx');
+    }
+
+    /* ------------------------------------------------------------------ export */
+    function openExport() {
+      const v = ver();
+      state.modal = { kind: 'export', fmt: 'xlsx', scope: state.tab === 'class' ? 'class' : state.tab === 'room' ? 'room' : 'teacher' };
+      const m = state.modal;
+      const draw = () => {
+        openModal({ eyebrow: v.name, title: 'ส่งออกตารางสอน', subtitle: v.status === 'draft' ? 'ฉบับร่างจะมีลายน้ำ "ฉบับร่าง"' : TT.VERSION_STATUS[v.status].label, width: 'max-w-2xl' });
+        const opts = [['teacher', `ตารางสอน ${TT.teacherName(state.teacherId)}`], ['teachers', 'ตารางสอนครูทุกคน (หน้าละคน)'], ['class', `ตารางเรียน ${TT.className(state.classId)}`], ['level', `ตารางเรียนทุกห้อง ม.${state.level}`], ['room', `ตารางการใช้ห้อง ${TT.roomShort(state.roomId)}`], ['raw', 'ข้อมูลดิบทั้งฉบับ (นำเข้ากลับได้ · Excel เท่านั้น)']];
+        $('modalBody').innerHTML = `<div class="space-y-5"><div class="grid grid-cols-2 gap-3">${[['xlsx', 'Excel', 'แยกชีต'], ['pdf', 'PDF', 'A4 แนวนอน พร้อมพิมพ์']].map(([k, l, h]) => `<label class="flex cursor-pointer items-center gap-3 rounded-2xl border p-4 ${m.fmt === k ? 'border-blue-500 bg-blue-50/60' : 'border-slate-200'}"><input type="radio" name="expFmt" value="${k}" ${m.fmt === k ? 'checked' : ''} class="h-4 w-4"><span><span class="block font-semibold text-slate-900">${l}</span><span class="block text-xs text-slate-500">${h}</span></span></label>`).join('')}</div>
+          <div class="space-y-2">${opts.map(([k, l]) => `<label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 p-3 hover:bg-slate-50 ${k === 'raw' && m.fmt === 'pdf' ? 'opacity-40' : ''}"><input type="radio" name="expScope" value="${k}" ${m.scope === k ? 'checked' : ''} ${k === 'raw' && m.fmt === 'pdf' ? 'disabled' : ''} class="h-4 w-4"><span class="text-sm font-semibold text-slate-800">${esc(l)}</span></label>`).join('')}</div></div>`;
+        $('modalBody').querySelectorAll('input[name="expFmt"]').forEach((el) => { el.onchange = () => { m.fmt = el.value; if (m.fmt === 'pdf' && m.scope === 'raw') m.scope = 'teacher'; draw(); }; });
+        $('modalBody').querySelectorAll('input[name="expScope"]').forEach((el) => { el.onchange = () => { m.scope = el.value; }; });
+        $('modalFooter').innerHTML = `<button data-close-modal type="button" class="${btnG}">ยกเลิก</button><button id="doExport" type="button" class="${btnP}">ส่งออก</button>`;
+        $('doExport').onclick = () => {
+          const wm = v.status === 'draft' ? 'ฉบับร่าง' : '';
+          const file = `ตารางสอน_${v.term}_${m.scope}`;
+          if (m.scope === 'raw') {
+            const rows = [];
+            Object.entries(v.entries).forEach(([cid, slots]) => Object.entries(slots).forEach(([slot, e]) => { const [d, p] = TT.parseSlot(slot); rows.push([TT.className(cid), TT.DAYS[d].name, p, e.code, e.teachers.join(','), e.room]); }));
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet([TT.IMPORT_HEADERS, ...rows]), 'นำเข้า'); XLSX.writeFile(wb, `${file}.xlsx`);
+          } else {
+            const sheets = m.scope === 'teacher' ? [TT.teacherSheet(v, state.teacherId)] : m.scope === 'teachers' ? db().external.teachers.filter((t) => TT.teacherBlocks(v, t.id).length).map((t) => TT.teacherSheet(v, t.id)) : m.scope === 'class' ? [TT.classSheet(v, state.classId)] : m.scope === 'level' ? TT.classesOfLevel(state.level).map((c) => TT.classSheet(v, c.id)) : [TT.roomSheet(v, state.roomId)];
+            if (m.fmt === 'xlsx') TT.exportXlsx(`${file}.xlsx`, sheets, { watermark: wm }); else TT.printSheets(sheets, { watermark: wm });
+          }
+          const fmt = m.fmt;
+          closeModal();
+          if (fmt === 'xlsx') TT.toast('ส่งออก Excel แล้ว', `${file}.xlsx`);
+        };
+      };
+      draw();
+    }
+
+    /* ------------------------------------------------------------------ version actions */
+    async function publishVersion() {
+      const v = ver(); const iss = TT.computeIssues(v); const prog = TT.versionProgress(v);
+      if (iss.errorCells) {
+        const go = await TT.confirm({ title: 'ยังเผยแพร่ไม่ได้', message: `มี Conflict ${iss.errorCells} คาบ ต้องแก้ให้เป็น 0 ก่อนเผยแพร่`, okText: 'ดูรายงาน Conflict', tone: 'primary' });
+        if (go) { state.tab = 'report'; render(); }
+        return;
+      }
+      const prev = TT.publishedOf(v.term);
+      const pending = prog.required - prog.placed;
+      const ok = await TT.confirm({ title: `เผยแพร่ "${v.name}"?`, message: `ครูจะเห็นตารางนี้ทันทีและฉบับนี้จะแก้ไขไม่ได้อีก${prev ? `<br>"${esc(prev.name)}" จะกลายเป็นฉบับเก่า` : ''}${pending ? `<br><span class="font-semibold text-amber-700">ยังมีรายการรอจัด ${pending} คาบ</span>` : ''}${iss.warnCells ? `<br><span class="text-amber-700">คำเตือน ${iss.warnCells} คาบ</span>` : ''}`, okText: 'เผยแพร่', tone: 'success', requireText: 'เผยแพร่' });
+      if (!ok) return;
+      TT.publish(v);
+      TT.save();
+      TT.toast('เผยแพร่แล้ว', `${v.name} · แจ้งครูแล้ว`);
+    }
+    async function deleteVersion(id) {
+      const v = TT.version(id);
+      if (!(await TT.confirm({ title: `ลบฉบับร่าง "${v.name}"?`, message: 'ลบแล้วกู้คืนไม่ได้', okText: 'ลบฉบับร่าง' }))) return;
+      db().versions = db().versions.filter((x) => x.id !== id);
+      TT.logHistory(v.term, null, 'ลบฉบับร่าง', `"${v.name}"`);
+      if (state.versionId === id) state.versionId = null;
+      TT.save();
+    }
+    function renameVersion(id) {
+      const v = TT.version(id);
+      const name = prompt('ชื่อฉบับร่าง', v.name);
+      if (!name || !name.trim()) return;
+      TT.logHistory(v.term, v.id, 'เปลี่ยนชื่อ', `"${v.name}" → "${name.trim()}"`);
+      v.name = name.trim(); TT.save();
+    }
+    async function clearAll() {
+      const v = ver();
+      const list = Object.entries(v.entries).flatMap(([cid, slots]) => Object.entries(slots).filter(([, e]) => !e.locked).map(([slot]) => [cid, slot]));
+      const locked = Object.values(v.entries).reduce((a, slots) => a + Object.values(slots).filter((e) => e.locked).length, 0);
+      if (!list.length) { TT.toast('ไม่มีคาบให้ล้าง', 'เหลือเฉพาะคาบที่ล็อก', 'info'); return; }
+      if (!(await TT.confirm({ title: `ล้างตารางทั้งฉบับ "${v.name}"?`, message: `นำ ${list.length} คาบของครูทุกคนกลับไปที่รายการรอจัด${locked ? ` · คาบที่ล็อก ${locked} คาบจะยังอยู่` : ''} · ย้อนกลับได้ด้วยปุ่ม "ย้อนกลับ"`, okText: 'ล้างทั้งฉบับ', requireText: 'ล้างทั้งหมด' }))) return;
+      commit('ล้างตารางทั้งฉบับ', `${v.name} · ${list.length} คาบ`, (vv) => { list.forEach(([cid, slot]) => delete vv.entries[cid][slot]); });
+      TT.toast('ล้างตารางทั้งฉบับแล้ว', `${list.length} คาบกลับไปอยู่ในรายการรอจัด`);
+    }
+    async function clearTeacher() {
+      const v = ver(); const tid = state.teacherId;
+      const list = TT.teacherBlocks(v, tid).filter((b) => !b.entry.locked);
+      if (!list.length) { TT.toast('ไม่มีคาบให้ล้าง', 'เหลือเฉพาะคาบที่ล็อก', 'info'); return; }
+      if (!(await TT.confirm({ title: `ล้างตารางสอน ${TT.teacherName(tid)}?`, message: `นำ ${list.length} คาบ (ไม่รวมคาบที่ล็อก) กลับไปที่รายการรอจัด · ย้อนกลับได้`, okText: 'ล้างตาราง' }))) return;
+      commit('ล้างตารางครู', `${TT.teacherName(tid)} · ${list.length} คาบ`, (vv) => { list.forEach((b) => delete vv.entries[b.cid][b.slot]); });
+    }
+    // Mock of "แก้ที่หน้าหลักสูตรแล้วกลับมาตรวจใหม่": rows whose "ไปแก้ไข" link was opened get a qualified teacher assigned.
+    function simulateFixes() {
+      const term = state.modal?.kind === 'wizard' ? state.modal.term : ver()?.term;
+      let fixed = 0;
+      (db().assignments[term] || []).forEach((a) => {
+        if (a.teachers.length) return;
+        const hit = [...state.simulatedFixes].some((k) => k.startsWith(`${TT.className(a.classId)} · ${a.code}`));
+        if (!hit) return;
+        const q = db().external.teachers.filter((t) => t.canTeach.includes(a.code)).sort((x, y) => TT.loadOfTeacher(term, x.id).length - TT.loadOfTeacher(term, y.id).length)[0];
+        if (q) { a.teachers = [q.id]; fixed++; }
+      });
+      state.simulatedFixes.clear();
+      if (fixed) { TT.logHistory(term, null, 'ตรวจใหม่', `การมอบหมายสอนจากหน้าจัดการหลักสูตรอัปเดต ${fixed} รายการ`); TT.save(); }
+      return fixed;
+    }
+
+    /* ------------------------------------------------------------------ events */
+    function bind() {
+      $('termSelect').onchange = (e) => { state.term = e.target.value; state.versionId = null; history.replaceState(null, '', location.pathname); render(); };
+      $('openWizardButton').onclick = () => openWizard();
+      document.addEventListener('click', (e) => {
+        const q = (s) => e.target.closest(s);
+        let el;
+        if (!q('#clearMenuWrap')) $('clearMenu')?.classList.add('hidden');
+        if ((el = q('[data-fix-link]'))) { state.simulatedFixes.add(el.dataset.fixLink); return; }
+        if (q('[data-close-modal]')) { closeModal(); return; }
+        if (q('[data-close-drawer]')) { closeDrawer(); return; }
+        if ((el = q('[data-wiz]'))) { const a = el.dataset.wiz; if (a === 'next') wizNext(1); else if (a === 'back') wizNext(-1); else wizCreate(); return; }
+        if ((el = q('[data-open-version]'))) { state.versionId = el.dataset.openVersion; history.replaceState(null, '', `#version=${state.versionId}`); render(); return; }
+        if ((el = q('[data-copy-version]'))) { openWizard({ copyFrom: el.dataset.copyVersion }); return; }
+        if ((el = q('[data-delete-version]'))) { deleteVersion(el.dataset.deleteVersion); return; }
+        if ((el = q('[data-rename-version]'))) { renameVersion(el.dataset.renameVersion); return; }
+        if ((el = q('[data-tab]'))) { state.tab = el.dataset.tab; render(); return; }
+        if ((el = q('[data-teacher]'))) { state.teacherId = el.dataset.teacher; render(); return; }
+        if ((el = q('[data-class]'))) { state.classId = el.dataset.class; render(); return; }
+        if ((el = q('[data-class-go]'))) { state.classId = el.dataset.classGo; state.tab = 'class'; render(); return; }
+        if ((el = q('[data-goto-teacher]'))) { state.teacherId = el.dataset.gotoTeacher; state.group = ''; state.search = ''; state.tab = 'teacher'; render(); window.scrollTo({ top: $('workspace').offsetTop, behavior: 'smooth' }); return; }
+        if ((el = q('[data-goto-room]'))) { state.roomId = el.dataset.gotoRoom; state.tab = 'room'; render(); return; }
+        if ((el = q('[data-goto-entry]'))) { const [cid, slot] = el.dataset.gotoEntry.split('|'); const e2 = ver().entries[cid][slot]; state.tab = 'teacher'; state.teacherId = e2?.teachers[0] || state.teacherId; state.group = ''; state.search = ''; render(); openEntry(cid, slot); return; }
+        if ((el = q('[data-view]'))) { const [cid, slot] = el.dataset.view.split('|'); openEntry(cid, slot, true); return; }
+        if ((el = q('[data-copy-rows]'))) { const r = TT.readiness(state.modal?.kind === 'wizard' ? wizTempVersion() : ver()).items.find((i) => i.id === el.dataset.copyRows); navigator.clipboard?.writeText(r.rows.map((x) => x.text).join('\n')).catch(() => {}); TT.toast('คัดลอกรายการแล้ว', `${r.rows.length} รายการ · ส่งต่อให้ทีมที่รับผิดชอบ`, 'info'); return; }
+        if ((el = q('#teacherTimeline [data-entry]'))) { const [cid, slot] = el.dataset.entry.split('|'); openEntry(cid, slot); return; }
+        if ((el = q('[data-row-add]')) && editable() && !q('.tt-zone')) {
+          const [lo, hi] = TT.versionRange(ver()); const rect = el.getBoundingClientRect();
+          openAdd(Number(el.dataset.day), Math.round(lo + (e.clientX - rect.left) / rect.width * (hi - lo))); return;
+        }
+        if ((el = q('[data-act]'))) {
+          const a = el.dataset.act;
+          if (a === 'wizard') openWizard();
+          else if (a === 'undo') undo();
+          else if (a === 'settings') openSettings();
+          else if (a === 'conditions') { e.preventDefault(); openConditions(); }
+          else if (a === 'import') openImport();
+          else if (a === 'import-teacher') openImport(state.teacherId);
+          else if (a === 'export') openExport();
+          else if (a === 'auto') openAuto('all');
+          else if (a === 'auto-teacher') openAuto('teacher');
+          else if (a === 'publish') publishVersion();
+          else if (a === 'clear-menu') { const m = $('clearMenu'); m.classList.toggle('hidden'); el.setAttribute('aria-expanded', String(!m.classList.contains('hidden'))); }
+          else if (a === 'clear-teacher') { $('clearMenu')?.classList.add('hidden'); clearTeacher(); }
+          else if (a === 'clear-all') { $('clearMenu')?.classList.add('hidden'); clearAll(); }
+          else if (a === 'toggle-readiness') { state.readinessOpen = !state.readinessOpen; render(); }
+          else if (a === 'recheck') { const n = simulateFixes(); if (state.modal?.kind === 'wizard') wizStep5(); else render(); TT.toast('ตรวจใหม่แล้ว', n ? `การมอบหมายสอนที่แก้แล้วจากหน้าจัดการหลักสูตร ${n} รายการ` : 'ข้อมูลเป็นปัจจุบัน', 'info'); }
+          else if (a === 'merge') { const v = ver(); state.undo[v.id] = state.undo[v.id] || []; state.undo[v.id].push({ snap: JSON.stringify(v.entries), action: 'นำการเปลี่ยนแปลงมารวม' }); const r = TT.mergeDivergence(v); TT.save(); TT.toast('นำการเปลี่ยนแปลงมารวมแล้ว', `รวม ${r.merged.length} รายการ${r.skipped.length ? ` · ข้าม ${r.skipped.length} (ช่องในฉบับร่างไม่ตรงกัน)` : ''}`); }
+        }
+      });
+      document.addEventListener('change', (e) => {
+        if (e.target.id === 'groupFilter') { state.group = e.target.value; render(); }
+        if (e.target.id === 'levelSelect') { state.level = Number(e.target.value); render(); }
+        if (e.target.id === 'roomSelect') { state.roomId = e.target.value; render(); }
+        if (e.target.id === 'highlightSelect') { state.highlight = e.target.value; render(); }
+      });
+      // ช่องค้นหาครู: พิมพ์เพื่อกรอง หรือเปิดรายการแล้วเลือก (combobox)
+      let comboActive = -1;
+      const comboMatches = () => {
+        const v = ver(); const q = state.search;
+        return db().external.teachers.filter((t) => (!state.group || t.group === state.group) && (TT.loadOfTeacher(v.term, t.id).length || TT.teacherBlocks(v, t.id).length) && (!q || t.name.includes(q) || t.id.includes(q) || TT.GROUPS[t.group].name.includes(q)))
+          .sort((a, b) => groupOrder.indexOf(a.group) - groupOrder.indexOf(b.group) || a.name.localeCompare(b.name, 'th'));
+      };
+      const groupOrder = Object.keys(TT.GROUPS);
+      const comboOpen = () => !$('teacherComboList')?.classList.contains('hidden');
+      function renderCombo(open = true) {
+        const box = $('teacherComboList'); const input = $('teacherSearch');
+        if (!box) return;
+        const v = ver(); const list = comboMatches();
+        comboActive = Math.min(comboActive, list.length - 1);
+        let lastGroup = null;
+        box.innerHTML = list.length ? list.map((t, i) => {
+          const p = TT.teacherProgress(v, t.id);
+          const head = t.group !== lastGroup ? `<p class="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">${TT.GROUPS[t.group].name}</p>` : '';
+          lastGroup = t.group;
+          return `${head}<button type="button" role="option" data-combo-pick="${t.id}" aria-selected="${t.id === state.teacherId}" class="flex w-full items-center gap-3 px-3 py-2 text-left text-sm transition ${i === comboActive ? 'bg-blue-50' : 'hover:bg-slate-50'} ${t.id === state.teacherId ? 'font-semibold text-blue-700' : 'text-slate-700'}"><span class="h-2 w-2 shrink-0 rounded-full ${TT.GROUPS[t.group].dot}"></span><span class="min-w-0 flex-1 truncate">${esc(t.name)}</span><span class="shrink-0 text-xs ${p.pct === 100 ? 'text-emerald-600' : 'text-slate-400'}">${p.pct}%</span>${t.id === state.teacherId ? icon('check', 'h-4 w-4 shrink-0 text-blue-600') : ''}</button>`;
+        }).join('') : '<p class="px-3 py-4 text-center text-sm text-slate-400">ไม่พบครูที่ตรงกับคำค้นหา</p>';
+        box.classList.toggle('hidden', !open);
+        input.setAttribute('aria-expanded', String(open));
+        // filter chips without a full re-render so the input keeps focus
+        const ids = new Set(list.map((t) => t.id));
+        document.querySelectorAll('#tabBody [data-teacher]').forEach((chip) => chip.classList.toggle('hidden', !ids.has(chip.dataset.teacher)));
+        if ($('teacherCount')) $('teacherCount').textContent = `${list.length} คน${state.search ? ` · ค้นหา "${state.search}"` : ' · ครูที่ได้รับการมอบหมายสอนในภาคเรียนนี้'}`;
+        box.querySelector('.bg-blue-50')?.scrollIntoView({ block: 'nearest' });
+      }
+      function pickTeacher(id) {
+        state.teacherId = id; state.search = ''; comboActive = -1;
+        render();
+        document.querySelector(`#tabBody [data-teacher="${id}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center', behavior: 'smooth' });
+      }
+      document.addEventListener('input', (e) => { if (e.target.id === 'teacherSearch') { state.search = e.target.value.trim(); comboActive = state.search ? 0 : -1; renderCombo(true); } });
+      document.addEventListener('focusin', (e) => { if (e.target.id === 'teacherSearch') renderCombo(true); });
+      document.addEventListener('keydown', (e) => {
+        if (e.target.id !== 'teacherSearch') return;
+        const list = comboMatches();
+        if (e.key === 'ArrowDown') { e.preventDefault(); comboActive = Math.min(list.length - 1, comboActive + 1); renderCombo(true); }
+        else if (e.key === 'ArrowUp') { e.preventDefault(); comboActive = Math.max(0, comboActive - 1); renderCombo(true); }
+        else if (e.key === 'Enter') { e.preventDefault(); const t = list[Math.max(0, comboActive)]; if (t) pickTeacher(t.id); }
+        else if (e.key === 'Escape') { e.stopImmediatePropagation(); renderCombo(false); }
+      });
+      document.addEventListener('mousedown', (e) => {
+        const pick = e.target.closest('[data-combo-pick]');
+        if (pick) { e.preventDefault(); pickTeacher(pick.dataset.comboPick); return; }
+        if (e.target.closest('#teacherComboToggle')) { e.preventDefault(); if (comboOpen()) renderCombo(false); else { $('teacherSearch').focus(); renderCombo(true); } return; }
+        if (e.target.closest('#teacherSearchClear')) { e.preventDefault(); state.search = ''; render(); $('teacherSearch')?.focus(); return; }
+        if (!e.target.closest('#teacherCombo') && comboOpen()) renderCombo(false);
+      });
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') { if (state.drawer) closeDrawer(); else if (state.modal) closeModal(); }
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'z' && !e.target.closest('input,select,textarea') && editable()) { e.preventDefault(); undo(); }
+      });
+      window.addEventListener('hashchange', () => { applyHash(); render(); });
+      bindDrag();
+      TT.onChange(render);
+    }
+
+    applyHash();
+    bind();
+    render();
+  </script>
+</body>
+</html>

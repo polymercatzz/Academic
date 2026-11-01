@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>รายงานการเข้าเรียน | ครูคณิตศาสตร์</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      // the report modules ship their own base styles; Tailwind's reset would override them
+      corePlugins: { preflight: false },
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#F7F9FC',
+            brand: '#2563eb',
+            ink: '#0f172a',
+            muted: '#64748b'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          fontSize: {
+            xs: ['1.15vh', { lineHeight: '1.55' }],
+            sm: ['1.35vh', { lineHeight: '1.6' }],
+            base: ['1.55vh', { lineHeight: '1.6' }],
+            lg: ['1.75vh', { lineHeight: '1.45' }],
+            xl: ['2vh', { lineHeight: '1.35' }],
+            '2xl': ['2.45vh', { lineHeight: '1.25' }],
+            '3xl': ['3vh', { lineHeight: '1.18' }],
+            '4xl': ['3.6vh', { lineHeight: '1.12' }],
+            '5xl': ['4.2vh', { lineHeight: '1.08' }]
+          },
+          boxShadow: {
+            soft: '0 12px 32px rgba(15, 23, 42, 0.06)'
+          }
+        }
+      }
+    };
+  </script>
+  <link rel="stylesheet" href="../assets/academic-report/css/styles.css" />
+  <style>
+    .teacher-page .attendance-report > .results-panel { order: 1; }
+    .teacher-page .attendance-report > .search-panel { order: 2; }
+    .teacher-page .attendance-report > .table-panel { order: 3; }
+
+    .teacher-profile-label {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 1.15vh;
+    }
+
+    .teacher-summary-grid {
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      margin-bottom: 0;
+    }
+
+    .teacher-filter-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .teacher-scope-lock {
+      color: var(--muted);
+      background: var(--surface-muted);
+    }
+
+    .teacher-risk-list {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      padding-top: 12px;
+    }
+
+    .teacher-follow-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding-top: 16px;
+      margin-top: 16px;
+      border-top: 1px solid var(--border-soft);
+    }
+
+    .teacher-follow-heading h3 { margin: 0; font-size: 1.35vh; }
+
+    .teacher-follow-heading span {
+      color: var(--muted);
+      font-size: 1.15vh;
+    }
+
+    .teacher-risk-item {
+      width: 100%;
+      min-width: 0;
+      padding: 12px;
+      color: var(--text);
+      text-align: left;
+      background: #fffaf1;
+      border: 1px solid #ead7b9;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+    }
+
+    .teacher-risk-item:hover,
+    .teacher-risk-item:focus-visible {
+      border-color: var(--warning);
+      background: #fff7e8;
+    }
+
+    .teacher-risk-item strong,
+    .teacher-risk-item span { display: block; }
+
+    .teacher-risk-item span {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 1.15vh;
+    }
+
+    .teacher-table-toolbar {
+      align-items: center;
+      padding: 16px 0;
+    }
+
+    .teacher-table-toolbar .table-toolbar-actions { align-items: center; }
+
+    .teacher-inline-field {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .teacher-inline-field label {
+      color: var(--muted);
+      font-size: 1.15vh;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .teacher-inline-field select { min-width: 142px; }
+
+    .teacher-attendance-wrap {
+      max-height: 620px;
+      overflow: auto;
+      border: 1px solid var(--border-soft);
+    }
+
+    .teacher-attendance-table {
+      width: max-content;
+      min-width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      font-size: 1.15vh;
+    }
+
+    .teacher-attendance-table th,
+    .teacher-attendance-table td {
+      min-width: 72px;
+      padding: 9px 10px;
+      text-align: center;
+      background: var(--surface);
+      border-right: 1px solid var(--border-soft);
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .teacher-attendance-table th {
+      position: sticky;
+      z-index: 3;
+      top: 0;
+      color: #344054;
+      background: #f5f7fa;
+      white-space: nowrap;
+    }
+
+    .teacher-attendance-table tbody tr:nth-child(even) td { background: #fbfcfe; }
+    .teacher-attendance-table tbody tr:hover td { background: #f6f9fc; }
+
+    .teacher-attendance-table tbody tr.is-highlighted td {
+      background: #fff3d9 !important;
+      box-shadow: inset 0 1px 0 #d7a955, inset 0 -1px 0 #d7a955;
+    }
+
+    .teacher-attendance-table .sticky-code,
+    .teacher-attendance-table .sticky-name {
+      position: sticky;
+      z-index: 4;
+      text-align: left;
+    }
+
+    .teacher-attendance-table .sticky-code {
+      left: 0;
+      min-width: 110px;
+      width: 110px;
+    }
+
+    .teacher-attendance-table .sticky-name {
+      left: 110px;
+      min-width: 210px;
+      width: 210px;
+      box-shadow: 1px 0 0 var(--border-soft);
+    }
+
+    .teacher-attendance-table td.sticky-code,
+    .teacher-attendance-table td.sticky-name { z-index: 2; }
+
+    .teacher-session-head strong,
+    .teacher-session-head span { display: block; }
+
+    .teacher-session-head span {
+      color: var(--muted);
+      font-size: 1.15vh;
+      font-weight: 500;
+    }
+
+    .teacher-status {
+      display: inline-grid;
+      place-items: center;
+      width: 30px;
+      height: 30px;
+      border: 1px solid var(--border-soft);
+      border-radius: var(--radius-sm);
+      font-weight: 700;
+    }
+
+    .teacher-status[data-status="present"] { color: var(--success); background: #f1f8f4; }
+    .teacher-status[data-status="late"] { color: var(--warning); background: #fff8ed; }
+    .teacher-status[data-status="absent"] { color: var(--danger); background: #fff3f2; }
+    .teacher-status[data-status="leave"] { color: #52677f; background: var(--primary-soft); }
+
+    .teacher-status-select {
+      min-width: 78px;
+      min-height: 34px;
+      padding: 5px 7px;
+      font-size: 1.15vh;
+    }
+
+    .teacher-rate {
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .teacher-rate.is-risk { color: var(--danger); }
+
+    .teacher-legend {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      padding: 10px 0 14px;
+      color: var(--muted);
+      font-size: 1.15vh;
+    }
+
+    .teacher-legend span { white-space: nowrap; }
+
+    .teacher-threshold-dialog {
+      width: min(440px, calc(100vw - 32px));
+      padding: 0;
+      color: var(--text);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      box-shadow: 0 18px 50px rgb(15 23 42 / 24%);
+    }
+
+    .teacher-threshold-dialog::backdrop { background: rgb(15 23 42 / 38%); }
+
+    .teacher-dialog-header,
+    .teacher-dialog-body,
+    .teacher-dialog-footer { padding: 18px 20px; }
+
+    .teacher-dialog-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-soft);
+    }
+
+    .teacher-dialog-header h2 { margin: 0; font-size: 1.75vh; }
+    .teacher-dialog-footer { display: flex; justify-content: flex-end; gap: 8px; border-top: 1px solid var(--border-soft); }
+
+    .teacher-number-input {
+      width: 100%;
+      min-height: 42px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+    }
+
+    @media (max-width: 980px) {
+      .teacher-summary-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+      .teacher-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .teacher-risk-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    @media (max-width: 720px) {
+      .teacher-summary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .teacher-filter-grid,
+      .teacher-risk-list { grid-template-columns: 1fr; }
+      .teacher-follow-heading { align-items: flex-start; flex-direction: column; }
+      .teacher-table-toolbar,
+      .teacher-table-toolbar .table-toolbar-actions,
+      .teacher-inline-field { align-items: stretch; flex-direction: column; }
+      .teacher-table-toolbar .btn,
+      .teacher-inline-field select { width: 100%; }
+      .teacher-dialog-footer { flex-direction: column; }
+      .teacher-dialog-footer .btn { width: 100%; }
+    }
+  </style>
+  <link rel="stylesheet" href="../assets/academic-report/css/type-scale.css?v=2" />
+  <link rel="stylesheet" href="../shared/layout-compat.css?v=2" />
+  <link rel="stylesheet" href="../assets/academic-report/css/theme.css?v=13" />
+</head>
+<body class="ar-themed relative min-h-screen overflow-x-hidden bg-canvas font-body text-ink">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden">
+    <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl"></div>
+    <div class="absolute right-0 top-20 h-80 w-80 rounded-full bg-sky-100/60 blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-100/50 blur-3xl"></div>
+  </div>
+  <div id="layoutSidebar"></div>
+
+  <div class="teacher-page relative lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="../shared/academic-layout.js?v=8"></script>
+    <script src="../assets/academic-report/js/scope-chip.js?v=3"></script>
+    <script>AcademicLayout.mount({ active: "teacher-attendance", title: "รายงานการเข้าเรียน", rightHtml: ScopeChip.html });</script>
+
+    <main class="app">
+      <section class="app-page is-active">
+        <header class="page-header" aria-labelledby="teacherAttendanceTitle">
+          <div class="page-heading">
+            <nav class="ar-breadcrumb" aria-label="breadcrumb"><a href="../timetable/my-timetable.html">หน้าหลัก</a><span>&gt;</span><span>งานของฉัน</span><span>&gt;</span><span class="ar-breadcrumb-current">รายงานการเข้าเรียน</span></nav>
+            <p class="eyebrow">ระบบรายงานสำหรับครูผู้สอน</p>
+            <h1 id="teacherAttendanceTitle">รายงานการเข้าเรียน</h1>
+            <p class="subtitle">ติดตามการมาเรียนของนักเรียนในรายวิชาที่คุณสอน</p>
+          </div>
+          <aside class="academic-card" aria-label="ข้อมูลผู้สอน">
+            <span class="meta-label">ครูผู้สอน</span>
+            <strong class="meta-value">ครูสมชาย ใจดี</strong>
+            <span class="teacher-profile-label">ค21101 · ภาคเรียนที่ 1/2569</span>
+          </aside>
+        </header>
+
+        <section class="attendance-report" aria-labelledby="teacherSummaryTitle">
+          <section class="results-panel" aria-labelledby="teacherSummaryTitle">
+            <div class="results-header">
+              <div>
+                <h2 class="section-title" id="teacherSummaryTitle">สรุปผลการเข้าเรียน</h2>
+                <p class="section-note" id="teacherSummaryScope">ค21101 คณิตศาสตร์พื้นฐาน · ม.1/1 · สิงหาคม 2569</p>
+              </div>
+              <div class="results-meta">
+                <span>คาบเรียน: <strong id="teacherSessionCount">0 คาบ</strong></span>
+                <span>เกณฑ์ติดตาม: <strong id="teacherThresholdMeta">ต่ำกว่า 80%</strong></span>
+              </div>
+            </div>
+
+            <div class="summary-grid teacher-summary-grid" aria-label="ตัวเลขสรุปผล">
+              <article class="metric metric-total"><p class="metric-label">นักเรียนทั้งหมด</p><p class="metric-value" id="teacherStudentCount">0 คน</p></article>
+              <article class="metric"><p class="metric-label">อัตราการเข้าเรียน</p><p class="metric-value" id="teacherAttendanceRate">0%</p></article>
+              <article class="metric metric-warning"><p class="metric-label">ขาดเรียน</p><p class="metric-value" id="teacherAbsentCount">0 คน</p></article>
+              <article class="metric"><p class="metric-label">มาสาย</p><p class="metric-value" id="teacherLateCount">0 คน</p></article>
+              <article class="metric"><p class="metric-label">การลา</p><p class="metric-value" id="teacherLeaveCount">0 คน</p></article>
+              <article class="metric metric-warning"><p class="metric-label">ต้องติดตาม</p><p class="metric-value" id="teacherRiskCount">0 คน</p></article>
+            </div>
+            <div class="teacher-follow-heading">
+              <h3>นักเรียนที่ต้องติดตาม</h3>
+              <span id="teacherRiskThresholdLabel">อัตราการเข้าเรียนต่ำกว่า 80%</span>
+            </div>
+            <div class="teacher-risk-list" id="teacherRiskList" aria-label="นักเรียนที่ต้องติดตาม"></div>
+          </section>
+
+          <section class="search-panel" aria-labelledby="teacherFilterTitle">
+            <div class="panel-heading"><h2 class="section-title" id="teacherFilterTitle">ขอบเขตรายงาน</h2></div>
+            <form class="filters-form" id="teacherAttendanceFilters" aria-label="ตัวกรองรายงานการเข้าเรียน">
+              <section class="search-block" aria-labelledby="teacherStudentGroupTitle">
+                <div class="search-block-header"><div><h3 class="search-block-title" id="teacherStudentGroupTitle">กลุ่มนักเรียน</h3></div></div>
+                <div class="teacher-filter-grid">
+                  <div class="field-group">
+                    <label class="field-label" for="teacherRoom">ห้องเรียน</label>
+                    <select id="teacherRoom"><option value="m1-1">ม.1/1</option><option value="m1-2">ม.1/2</option></select>
+                  </div>
+                  <div class="field-group">
+                    <label class="field-label" for="teacherSubject">รายวิชา</label>
+                    <select class="teacher-scope-lock" id="teacherSubject" disabled><option>ค21101 คณิตศาสตร์พื้นฐาน</option></select>
+                  </div>
+                </div>
+              </section>
+
+              <details class="time-adjustment">
+                <summary><span>ปรับช่วงเวลา</span><strong id="teacherTimeFilterSummary">รายภาคเรียน: ปี 2569 / ภาคเรียนที่ 1</strong></summary>
+                <section class="search-block search-block-accent time-adjustment-content" aria-labelledby="teacherTimeFilterTitle">
+                  <div class="search-block-header"><div><h3 class="search-block-title" id="teacherTimeFilterTitle">กำหนดช่วงเวลารายงาน</h3></div></div>
+                  <div class="time-filter-layout">
+                    <div class="field-group search-type-field">
+                      <label class="field-label" for="teacherPeriodType">รูปแบบช่วงเวลา</label>
+                      <select id="teacherPeriodType"><option value="monthly">รายเดือน</option><option value="semester" selected>รายภาคเรียน</option><option value="custom">ระบุช่วงเวลา</option></select>
+                    </div>
+                    <div class="time-variant-panel" aria-live="polite">
+                      <div class="field-group period-group" id="teacherSemesterGroup">
+                        <div><label class="field-label" for="teacherSemesterYear">ปีการศึกษา</label><select id="teacherSemesterYear"><option value="2569">2569</option></select></div>
+                        <div><label class="field-label" for="teacherSemesterTerm">ภาคเรียน</label><select id="teacherSemesterTerm"><option value="1">ภาคเรียนที่ 1</option></select></div>
+                      </div>
+                      <div class="field-group period-group hidden" id="teacherMonthlyGroup">
+                        <div><label class="field-label" for="teacherMonthlyYear">ปีการศึกษา</label><select id="teacherMonthlyYear"><option value="2026">2569</option></select></div>
+                        <div><label class="field-label" for="teacherMonthlyMonth">เดือน</label><select id="teacherMonthlyMonth"><option value="08">สิงหาคม</option><option value="07">กรกฎาคม</option></select></div>
+                      </div>
+                      <div class="field-group period-group hidden" id="teacherCustomGroup">
+                        <div><label class="field-label" for="teacherStartDate">วันที่เริ่มต้น</label><input id="teacherStartDate" type="date" value="2026-07-01" /></div>
+                        <div><label class="field-label" for="teacherEndDate">วันที่สิ้นสุด</label><input id="teacherEndDate" type="date" value="2026-08-31" /></div>
+                      </div>
+                    </div>
+                  </div>
+                </section>
+              </details>
+            </form>
+          </section>
+
+          <section class="table-panel" aria-labelledby="teacherTableTitle">
+            <div class="table-toolbar teacher-table-toolbar">
+              <div class="table-toolbar-copy">
+                <strong class="table-toolbar-title" id="teacherTableTitle">รายละเอียดการเข้าเรียนรายคาบ</strong>
+                <span class="table-toolbar-subtitle" id="teacherTableMeta">0 คน · 0 คาบ</span>
+              </div>
+              <div class="table-toolbar-actions">
+                <div class="teacher-inline-field">
+                  <label for="teacherStatusFilter">สถานะ</label>
+                  <select id="teacherStatusFilter"><option value="all">ทุกสถานะ</option><option value="present">มา</option><option value="late">สาย</option><option value="absent">ขาด</option><option value="leave">ลา</option></select>
+                </div>
+                <button class="btn btn-secondary" id="teacherThresholdBtn" type="button">ตั้งค่าเกณฑ์</button>
+                <button class="btn btn-secondary" id="teacherEditBtn" type="button">แก้ไขแบบกลุ่ม</button>
+                <button class="btn btn-primary" id="teacherSaveBtn" type="button" disabled>บันทึก</button>
+              </div>
+            </div>
+            <div class="teacher-legend" aria-label="คำอธิบายสถานะ"><span>ม = มา</span><span>ส = สาย</span><span>ข = ขาด</span><span>ล = ลา</span></div>
+            <div class="teacher-attendance-wrap">
+              <table class="teacher-attendance-table">
+                <thead id="teacherAttendanceThead"></thead>
+                <tbody id="teacherAttendanceTbody"></tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <dialog class="teacher-threshold-dialog" id="teacherThresholdDialog" aria-labelledby="teacherThresholdTitle">
+    <form method="dialog" id="teacherThresholdForm">
+      <header class="teacher-dialog-header"><h2 id="teacherThresholdTitle">ตั้งค่าเกณฑ์ติดตาม</h2><button class="icon-button" value="cancel" aria-label="ปิด">×</button></header>
+      <div class="teacher-dialog-body"><label class="field-label" for="teacherThresholdInput">อัตราการเข้าเรียนขั้นต่ำ (%)</label><input class="teacher-number-input" id="teacherThresholdInput" type="number" min="1" max="100" value="80" required /></div>
+      <footer class="teacher-dialog-footer"><button class="btn btn-secondary" value="cancel">ยกเลิก</button><button class="btn btn-primary" id="teacherThresholdApplyBtn" value="default">บันทึกเกณฑ์</button></footer>
+    </form>
+  </dialog>
+
+  <div class="toast" id="teacherToast" role="status" aria-live="polite"></div>
+
+  <script>
+    (() => {
+      const statusLabels = { present: "มา", late: "สาย", absent: "ขาด", leave: "ลา" };
+      const statusShort = { present: "ม", late: "ส", absent: "ข", leave: "ล" };
+      const studentsByRoom = {
+        "m1-1": [
+          ["66001", "กานต์ธิดา สุขผล"], ["66002", "ธนกฤต แซ่ตั้ง"], ["66003", "ปวีณ์นุช อินทรา"],
+          ["66004", "ภูริณัฐ ขยันดี"], ["66005", "ณิชกานต์ พูลทรัพย์"], ["66006", "ศุภวิชญ์ เจริญผล"],
+          ["66007", "ชญานิน แสงแก้ว"], ["66008", "ภัทรดนัย วงศ์ดี"], ["66009", "พิมพ์ชนก แสงแก้ว"],
+          ["66010", "ชนนท์ มีสุข"], ["66011", "ณัฐณิชา วัฒนะ"], ["66012", "ปุณณภพ เกียรติไพบูลย์"],
+          ["66013", "รินรดา ชูศรี"], ["66014", "อัครวินท์ คงมั่น"]
+        ],
+        "m1-2": [
+          ["66101", "กมลชนก พรหมมา"], ["66102", "พีรพัฒน์ วงศ์ดี"], ["66103", "ปวริศา ศรีสวัสดิ์"],
+          ["66104", "ชยพล แสงทอง"], ["66105", "วริศรา นาคงาม"], ["66106", "ณัฐดนัย เกิดผล"],
+          ["66107", "มนัสวี ใจมั่น"], ["66108", "ธนภัทร ทองดี"], ["66109", "เขมิกา แก้วใส"],
+          ["66110", "ธนโชติ บุญส่ง"], ["66111", "ชุติมา วงศ์สวัสดิ์"], ["66112", "กฤตภาส สายใจ"],
+          ["66113", "ศศิธร นิ่มนวล"], ["66114", "วชิรวิทย์ พูลเพิ่ม"]
+        ]
+      };
+      const sessionDates = ["2026-07-07", "2026-07-14", "2026-07-21", "2026-07-28", "2026-08-03", "2026-08-04", "2026-08-10", "2026-08-11"];
+      const state = { threshold: 80, editing: false, attendance: new Map() };
+      const els = {
+        room: document.getElementById("teacherRoom"), periodType: document.getElementById("teacherPeriodType"), monthlyYear: document.getElementById("teacherMonthlyYear"), monthlyMonth: document.getElementById("teacherMonthlyMonth"),
+        semesterGroup: document.getElementById("teacherSemesterGroup"), monthlyGroup: document.getElementById("teacherMonthlyGroup"), customGroup: document.getElementById("teacherCustomGroup"), timeFilterSummary: document.getElementById("teacherTimeFilterSummary"),
+        startDate: document.getElementById("teacherStartDate"), endDate: document.getElementById("teacherEndDate"), statusFilter: document.getElementById("teacherStatusFilter"),
+        thead: document.getElementById("teacherAttendanceThead"), tbody: document.getElementById("teacherAttendanceTbody"), summaryScope: document.getElementById("teacherSummaryScope"),
+        sessionCount: document.getElementById("teacherSessionCount"), studentCount: document.getElementById("teacherStudentCount"), attendanceRate: document.getElementById("teacherAttendanceRate"),
+        absentCount: document.getElementById("teacherAbsentCount"), lateCount: document.getElementById("teacherLateCount"), leaveCount: document.getElementById("teacherLeaveCount"),
+        riskCount: document.getElementById("teacherRiskCount"), riskList: document.getElementById("teacherRiskList"), riskThresholdLabel: document.getElementById("teacherRiskThresholdLabel"), tableMeta: document.getElementById("teacherTableMeta"),
+        editBtn: document.getElementById("teacherEditBtn"), saveBtn: document.getElementById("teacherSaveBtn"), thresholdBtn: document.getElementById("teacherThresholdBtn"),
+        thresholdDialog: document.getElementById("teacherThresholdDialog"), thresholdForm: document.getElementById("teacherThresholdForm"), thresholdInput: document.getElementById("teacherThresholdInput"),
+        thresholdMeta: document.getElementById("teacherThresholdMeta"), toast: document.getElementById("teacherToast")
+      };
+
+      function seedAttendance() {
+        Object.entries(studentsByRoom).forEach(([roomId, students]) => {
+          sessionDates.forEach((date, sessionIndex) => students.forEach(([code], studentIndex) => {
+            let status = "present";
+            if (studentIndex === 3 && sessionIndex >= 2 && sessionIndex % 2 === 0) status = "absent";
+            else if (studentIndex === 5 && sessionIndex % 3 === 1) status = "late";
+            else if (studentIndex === 6 && sessionIndex % 4 === 0) status = "leave";
+            else if (studentIndex === 7 && roomId === "m1-2" && sessionIndex > 4) status = "absent";
+            state.attendance.set(`${roomId}|${code}|${date}`, status);
+          }));
+        });
+      }
+
+      function formatDate(dateValue) {
+        return new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "short" }).format(new Date(`${dateValue}T00:00:00`));
+      }
+
+      function getSessions() {
+        if (els.periodType.value === "monthly") return sessionDates.filter(date => date.startsWith(`${els.monthlyYear.value}-${els.monthlyMonth.value}`));
+        if (els.periodType.value === "custom") return sessionDates.filter(date => date >= els.startDate.value && date <= els.endDate.value);
+        return [...sessionDates];
+      }
+
+      function getRows() {
+        const sessions = getSessions();
+        return studentsByRoom[els.room.value].map(([code, name]) => {
+          const statuses = sessions.map(date => state.attendance.get(`${els.room.value}|${code}|${date}`));
+          const absent = statuses.filter(status => status === "absent").length;
+          const late = statuses.filter(status => status === "late").length;
+          const leave = statuses.filter(status => status === "leave").length;
+          const rate = statuses.length ? Math.round(((statuses.length - absent) / statuses.length) * 100) : 0;
+          return { code, name, statuses, absent, late, leave, rate };
+        });
+      }
+
+      function visibleRows(rows) {
+        if (els.statusFilter.value === "all") return rows;
+        return rows.filter(row => row.statuses.includes(els.statusFilter.value));
+      }
+
+      function renderTable() {
+        const sessions = getSessions();
+        const rows = visibleRows(getRows());
+        els.thead.innerHTML = `<tr><th class="sticky-code">รหัสนักเรียน</th><th class="sticky-name">ชื่อ-สกุล</th>${sessions.map((date, index) => `<th><span class="teacher-session-head"><strong>${formatDate(date)}</strong><span>คาบ ${index % 2 ? 4 : 2}</span></span></th>`).join("")}<th>ขาด</th><th>สาย</th><th>ลา</th><th>% เข้าเรียน</th></tr>`;
+        els.tbody.innerHTML = rows.length ? rows.map(row => `<tr id="teacher-student-${row.code}" data-student="${row.code}" tabindex="-1"><td class="sticky-code">${row.code}</td><td class="sticky-name">${row.name}</td>${row.statuses.map((status, index) => `<td>${state.editing ? `<select class="teacher-status-select" data-session="${sessions[index]}">${Object.entries(statusLabels).map(([value, label]) => `<option value="${value}"${value === status ? " selected" : ""}>${label}</option>`).join("")}</select>` : `<span class="teacher-status" data-status="${status}" title="${statusLabels[status]}">${statusShort[status]}</span>`}</td>`).join("")}<td>${row.absent}</td><td>${row.late}</td><td>${row.leave}</td><td><span class="teacher-rate${row.rate < state.threshold ? " is-risk" : ""}">${row.rate}%</span></td></tr>`).join("") : `<tr><td colspan="${sessions.length + 6}"><div class="empty-state">ไม่มีนักเรียนที่ตรงกับสถานะที่เลือก</div></td></tr>`;
+        els.tableMeta.textContent = `${rows.length} คน · ${sessions.length} คาบ`;
+      }
+
+      function renderSummary() {
+        const rows = getRows();
+        const sessions = getSessions();
+        const average = rows.length ? Math.round(rows.reduce((sum, row) => sum + row.rate, 0) / rows.length) : 0;
+        const riskRows = rows.filter(row => row.rate < state.threshold);
+        els.studentCount.textContent = `${rows.length} คน`;
+        els.attendanceRate.textContent = `${average}%`;
+        els.absentCount.textContent = `${rows.filter(row => row.absent).length} คน`;
+        els.lateCount.textContent = `${rows.filter(row => row.late).length} คน`;
+        els.leaveCount.textContent = `${rows.filter(row => row.leave).length} คน`;
+        els.riskCount.textContent = `${riskRows.length} คน`;
+        els.sessionCount.textContent = `${sessions.length} คาบ`;
+        els.thresholdMeta.textContent = `ต่ำกว่า ${state.threshold}%`;
+        els.riskThresholdLabel.textContent = `อัตราการเข้าเรียนต่ำกว่า ${state.threshold}%`;
+        const roomLabel = els.room.options[els.room.selectedIndex].text;
+        const periodLabel = els.periodType.value === "monthly" ? `${els.monthlyMonth.options[els.monthlyMonth.selectedIndex].text} 2569` : els.periodType.value === "semester" ? "ภาคเรียนที่ 1/2569" : `${formatDate(els.startDate.value)} - ${formatDate(els.endDate.value)}`;
+        els.summaryScope.textContent = `ค21101 คณิตศาสตร์พื้นฐาน · ${roomLabel} · ${periodLabel}`;
+        els.riskList.innerHTML = riskRows.length ? riskRows.slice(0, 6).map(row => `<button class="teacher-risk-item" type="button" data-student-target="${row.code}"><strong>${row.name}</strong><span>${row.code} · เข้าเรียน ${row.rate}% · ขาด ${row.absent} คาบ</span></button>`).join("") : `<div class="empty-state">ไม่มีนักเรียนต่ำกว่าเกณฑ์ ${state.threshold}%</div>`;
+      }
+
+      function render() { renderSummary(); renderTable(); }
+
+      function syncPeriodFields() {
+        const type = els.periodType.value;
+        els.semesterGroup.classList.toggle("hidden", type !== "semester");
+        els.monthlyGroup.classList.toggle("hidden", type !== "monthly");
+        els.customGroup.classList.toggle("hidden", type !== "custom");
+        els.timeFilterSummary.textContent = type === "monthly"
+          ? `รายเดือน: ${els.monthlyMonth.options[els.monthlyMonth.selectedIndex].text} 2569`
+          : type === "semester" ? "รายภาคเรียน: ปี 2569 / ภาคเรียนที่ 1"
+          : `${formatDate(els.startDate.value)} - ${formatDate(els.endDate.value)}`;
+        render();
+      }
+
+      function jumpToStudent(event) {
+        const button = event.target.closest("[data-student-target]");
+        if (!button) return;
+        els.statusFilter.value = "all";
+        renderTable();
+        const row = document.getElementById(`teacher-student-${button.dataset.studentTarget}`);
+        if (!row) return;
+        row.scrollIntoView({ behavior: "smooth", block: "center", inline: "nearest" });
+        row.focus({ preventScroll: true });
+        row.classList.add("is-highlighted");
+        window.clearTimeout(jumpToStudent.timer);
+        jumpToStudent.timer = window.setTimeout(() => row.classList.remove("is-highlighted"), 2200);
+      }
+
+      function showToast(message) {
+        els.toast.className = "toast is-visible";
+        els.toast.innerHTML = `<strong>สำเร็จ</strong><span>${message}</span>`;
+        clearTimeout(showToast.timer);
+        showToast.timer = setTimeout(() => els.toast.classList.remove("is-visible"), 2200);
+      }
+
+      function toggleEdit() {
+        state.editing = !state.editing;
+        els.editBtn.classList.toggle("is-active", state.editing);
+        els.editBtn.textContent = state.editing ? "ยกเลิกการแก้ไข" : "แก้ไขแบบกลุ่ม";
+        els.saveBtn.disabled = !state.editing;
+        renderTable();
+      }
+
+      function saveChanges() {
+        els.tbody.querySelectorAll("tr[data-student]").forEach(row => row.querySelectorAll("[data-session]").forEach(select => {
+          state.attendance.set(`${els.room.value}|${row.dataset.student}|${select.dataset.session}`, select.value);
+        }));
+        state.editing = false;
+        els.editBtn.classList.remove("is-active");
+        els.editBtn.textContent = "แก้ไขแบบกลุ่ม";
+        els.saveBtn.disabled = true;
+        render();
+        showToast("บันทึกสถานะการเข้าเรียนแล้ว");
+      }
+
+      els.room.addEventListener("change", render);
+      [els.monthlyYear, els.monthlyMonth, els.startDate, els.endDate].forEach(control => control.addEventListener("change", syncPeriodFields));
+      els.periodType.addEventListener("change", syncPeriodFields);
+      els.statusFilter.addEventListener("change", renderTable);
+      els.riskList.addEventListener("click", jumpToStudent);
+      els.editBtn.addEventListener("click", toggleEdit);
+      els.saveBtn.addEventListener("click", saveChanges);
+      els.thresholdBtn.addEventListener("click", () => { els.thresholdInput.value = state.threshold; els.thresholdDialog.showModal(); });
+      els.thresholdForm.addEventListener("submit", event => {
+        if (event.submitter?.value === "cancel") return;
+        const value = Number(els.thresholdInput.value);
+        if (value < 1 || value > 100) { event.preventDefault(); return; }
+        state.threshold = Math.round(value);
+        render();
+        showToast(`ปรับเกณฑ์ติดตามเป็น ${state.threshold}% แล้ว`);
+      });
+
+      seedAttendance();
+      syncPeriodFields();
+    })();
+  </script>
+  <script>ScopeChip.follow(document.querySelector(".academic-card"));</script>
+</body>
+</html>

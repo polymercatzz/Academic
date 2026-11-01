@@ -1,0 +1,1016 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายงานสรุปผลการเรียนรู้</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#f7f8fc',
+            surface: '#ffffff',
+            surfaceSoft: '#f2f5fb',
+            line: '#d9e2ef',
+            ink: '#1e293b',
+            muted: '#64748b',
+            brand: '#2563eb',
+            brandSoft: '#eaf2ff',
+            success: '#1f9d68',
+            warning: '#d97706'
+          },
+          boxShadow: {
+            panel: '0 18px 50px rgba(15, 23, 42, 0.08)'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          fontSize: {
+            xs: ['1.15vh', { lineHeight: '1.55' }],
+            sm: ['1.35vh', { lineHeight: '1.6' }],
+            base: ['1.55vh', { lineHeight: '1.6' }],
+            lg: ['1.75vh', { lineHeight: '1.45' }],
+            xl: ['2vh', { lineHeight: '1.35' }],
+            '2xl': ['2.45vh', { lineHeight: '1.25' }],
+            '3xl': ['3vh', { lineHeight: '1.18' }],
+            '4xl': ['3.6vh', { lineHeight: '1.12' }],
+            '5xl': ['4.2vh', { lineHeight: '1.08' }]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="relative min-h-screen overflow-x-hidden bg-[#F7F9FC] font-body text-ink">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden">
+    <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl"></div>
+    <div class="absolute right-0 top-20 h-80 w-80 rounded-full bg-sky-100/60 blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-100/50 blur-3xl"></div>
+  </div>
+
+  <div id="layoutSidebar"></div>
+
+  <div class="relative lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="../shared/academic-layout.js?v=8"></script>
+    <script>AcademicLayout.mount({"active":"student-results","title":"รายงานสรุปผลการเรียนรู้"});</script>
+    <div class="hidden" aria-hidden="true"><p id="selectedSubjectLabel">ยังไม่ได้เลือกวิชา</p><p id="selectedSubjectHint">คลิกแถวในตารางเพื่อเตรียมส่งออกใบปะหน้า</p></div>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8">
+      <div class="space-y-6">
+        <section class="mb-6">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
+                <a href="overview.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">หน้าหลัก</a>
+                <span class="text-slate-300">></span>
+                <span>รายงานวิชาการ</span>
+                <span class="text-slate-300">></span>
+                <span class="font-medium text-slate-800">รายงานสรุปผลการเรียนรู้</span>
+              </nav>
+              <h1 class="text-3xl font-semibold tracking-tight text-slate-900 lg:text-4xl">รายงานสรุปผลการเรียนรู้</h1>
+              <p class="mt-3 max-w-4xl text-sm leading-6 text-slate-500">ดูภาพรวมผลการเรียนของแต่ละรายวิชา พร้อมวิเคราะห์คุณภาพผลสัมฤทธิ์ของนักเรียน</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ตัวกรองการค้นหา</p>
+              <h2 class="mt-2 text-xl font-semibold text-slate-900">เลือกเงื่อนไขก่อนแสดงผลลัพธ์</h2>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <button id="resetButton" type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">ล้างค่า</button>
+              <button id="searchButton" type="button" class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">ค้นหา</button>
+            </div>
+          </div>
+
+          <form id="filterForm" class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">ปีการศึกษา</span>
+              <select id="year" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
+                <option value="2568">2568</option>
+                <option value="2567">2567</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">ภาคเรียน</span>
+              <select id="term" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
+                <option value="ทั้งหมด">ทั้งหมด</option>
+                <option value="1">1</option>
+                <option value="2">2</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">ระดับชั้น</span>
+              <select id="grade" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
+                <option value="ม.1">ม.1</option>
+                <option value="ม.2">ม.2</option>
+                <option value="ม.3">ม.3</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">รายวิชา</span>
+              <select id="subject" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
+                <option value="ทั้งหมด">ทั้งหมด</option>
+              </select>
+            </label>
+          </form>
+
+          <div class="mt-4">
+            <button id="advancedToggle" type="button" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100" aria-expanded="false">
+              ตัวกรองเพิ่มเติม
+              <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="m7 10 5 5 5-5H7Z"/></svg>
+            </button>
+            <div id="advancedFilters" class="mt-4 hidden rounded-3xl border border-slate-200 bg-[#F7F9FC] p-4">
+              <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <label class="block"><span class="mb-2 block text-sm font-medium text-slate-700">ครูผู้สอน</span><select id="teacherFilter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"><option>ทั้งหมด</option></select></label>
+                <label class="block"><span class="mb-2 block text-sm font-medium text-slate-700">ขอบเขตข้อมูล</span><select id="classroomFilter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"><option>ทั้งหมด</option></select></label>
+                <label class="block"><span class="mb-2 block text-sm font-medium text-slate-700">หลักสูตร</span><select id="curriculumFilter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"><option>ทั้งหมด</option></select></label>
+                <label class="block"><span class="mb-2 block text-sm font-medium text-slate-700">กลุ่มสาระ</span><select id="departmentFilter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"><option>ทั้งหมด</option></select></label>
+              </div>
+            </div>
+          </div>
+
+          <div id="activeFilterChips" class="mt-4 flex flex-wrap gap-2"></div>
+        </section>
+
+        <section class="grid gap-4 md:grid-cols-2 xl:grid-cols-4" id="heroSummaryCards"></section>
+        <section id="searchSummaryCards" class="hidden"></section>
+
+        <section class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+          <div class="border-b border-slate-200 p-5 lg:p-6">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+              <div>
+                <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ผลลัพธ์การค้นหา</p>
+                <h3 class="mt-2 text-xl font-semibold text-slate-900">สรุปผลการเรียนรายวิชา</h3>
+                <p class="mt-2 text-sm leading-6 text-slate-500">สรุปผลสัมฤทธิ์รายวิชาเพื่อประกอบการตัดสินใจ</p>
+              </div>
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
+                <label class="relative block">
+                  <span class="sr-only">ค้นหาในตาราง</span>
+                  <span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4a6 6 0 1 0 3.8 10.6l4.3 4.3 1.4-1.4-4.3-4.3A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg></span>
+                  <input id="tableSearch" type="text" placeholder="ค้นหารหัสวิชา หรือชื่อวิชา..." class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 sm:w-80">
+                </label>
+                <select id="tableFilter" class="sr-only" aria-hidden="true">
+                  <option value="ทั้งหมด">ทั้งหมด</option>
+                  <option value="ผ่านสูง">ได้ 3 ขึ้นไปมากกว่า 50%</option>
+                  <option value="เสี่ยง">ได้ 3 ขึ้นไปไม่เกิน 50%</option>
+                  <option value="นักเรียนมาก">จำนวนนักเรียนตั้งแต่ 80 คน</option>
+                  <option value="ผ่านเกณฑ์">ผ่านเกณฑ์</option>
+                  <option value="ผ่านกลาง">ผ่านกลาง</option>
+                  <option value="เสี่ยงปานกลาง">เสี่ยงปานกลาง</option>
+                  <option value="เสี่ยงสูง">เสี่ยงสูง</option>
+                </select>
+                <select id="tableSort" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
+                  <option value="default">เรียง: ค่าเริ่มต้น</option>
+                  <option value="passRateDesc">อัตราผ่านเกณฑ์ มากไปน้อย</option>
+                  <option value="passRateAsc">อัตราผ่านเกณฑ์ น้อยไปมาก</option>
+                  <option value="studentsDesc">จำนวนนักเรียน มากไปน้อย</option>
+                  <option value="studentsAsc">จำนวนนักเรียน น้อยไปมาก</option>
+                  <option value="subjectAsc">รายวิชา ก-ฮ</option>
+                </select>
+                <div class="relative">
+                  <button id="exportDropdownButton" type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 sm:w-auto" aria-expanded="false">ส่งออก <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="m7 10 5 5 5-5H7Z"/></svg></button>
+                  <div id="exportDropdown" class="absolute right-0 top-full z-20 mt-2 hidden w-52 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-lg">
+                    <button id="exportExcelButton" type="button" class="block w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-50">ส่งออก Excel</button>
+                    <button id="exportCoverButton" type="button" class="block w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-50">ส่งออก PDF</button>
+                    <button id="previewReportButton" type="button" class="block w-full px-4 py-3 text-left text-sm text-slate-700 hover:bg-slate-50">ดูตัวอย่างรายงาน</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="quickFilterChips" class="mt-4 flex flex-wrap gap-2"></div>
+          </div>
+
+          <div class="px-4 pb-4 pt-4 lg:px-6 lg:pb-6 lg:pt-6">
+            <div class="hidden overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm lg:block">
+              <div class="overflow-auto">
+                <table class="min-w-[1320px] w-full border-collapse text-sm">
+                  <thead class="sticky top-0 z-10 bg-[#F5F7FA]">
+                    <tr class="border-b border-slate-200 text-slate-600">
+                      <th class="px-5 py-5 text-left font-semibold">รายวิชา</th>
+                      <th class="px-5 py-5 text-center font-semibold">นักเรียน</th>
+                      <th class="px-3 py-5 text-center font-semibold">4</th>
+                      <th class="px-3 py-5 text-center font-semibold">3.5</th>
+                      <th class="px-3 py-5 text-center font-semibold">3</th>
+                      <th class="px-3 py-5 text-center font-semibold">2.5</th>
+                      <th class="px-3 py-5 text-center font-semibold">2</th>
+                      <th class="px-3 py-5 text-center font-semibold">1.5</th>
+                      <th class="px-3 py-5 text-center font-semibold">1</th>
+                      <th class="px-3 py-5 text-center font-semibold">0</th>
+                      <th class="px-5 py-5 text-left font-semibold">อัตราผ่านเกณฑ์ (≥3)</th>
+                      <th class="px-5 py-5 text-center font-semibold">แนวโน้ม</th>
+                      <th class="px-5 py-5 text-center font-semibold">จัดการ</th>
+                    </tr>
+                  </thead>
+                  <tbody id="resultTable" class="divide-y divide-slate-200 bg-white"></tbody>
+                </table>
+              </div>
+            </div>
+            <div id="mobileResultCards" class="grid gap-3 lg:hidden"></div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="coverModal" class="fixed inset-0 z-50 hidden bg-slate-950/65 p-4">
+    <div class="mx-auto flex min-h-full max-w-5xl items-center justify-center">
+      <div class="w-full overflow-hidden rounded-[2rem] bg-canvas shadow-2xl">
+        <div class="flex items-center justify-between border-b border-slate-200 px-5 py-4">
+          <div class="flex items-center gap-3">
+            <div>
+              <p class="text-sm text-slate-500">ตัวอย่างก่อนส่งออก</p>
+              <h3 class="text-lg font-medium text-slate-900">ใบปะหน้ารายวิชา</h3>
+            </div>
+            <button id="downloadCoverButton" class="rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">
+              ดาวน์โหลด
+            </button>
+          </div>
+          <button id="closeModal" class="rounded-full border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700">ปิด</button>
+        </div>
+
+        <div class="max-h-[85vh] overflow-auto bg-canvas p-6 lg:p-10">
+          <div class="mx-auto max-w-4xl bg-white p-8 text-slate-700 lg:p-12">
+            <div class="text-center">
+              <div class="mx-auto flex h-28 w-28 items-center justify-center rounded-full border-2 border-slate-300 bg-white text-4xl">🐘</div>
+              <h4 class="mt-8 text-[2.7vh] font-semibold leading-snug text-slate-900">แบบบันทึกผลการพัฒนาคุณภาพผู้เรียน<br>โรงเรียนเทศบาลนครปากพูน</h4>
+            </div>
+
+            <div class="mt-14 grid gap-6 text-lg lg:grid-cols-[1fr_auto_1fr_auto_1fr]">
+              <div class="font-semibold text-slate-800">ปีการศึกษา</div>
+              <div id="modalYear" class="text-slate-700">รายปี / 2568</div>
+              <div></div>
+              <div class="font-semibold text-slate-800">ชั้นปี</div>
+              <div id="modalGrade" class="text-slate-700">ม.1</div>
+            </div>
+
+            <div class="mt-8 grid gap-6 text-lg lg:grid-cols-[1fr_4fr]">
+              <div class="font-semibold text-slate-800">วิชา</div>
+              <div id="modalSubject" class="text-slate-700">ท21101 ภาษาไทย</div>
+            </div>
+
+            <div class="mt-12 overflow-hidden border border-slate-400">
+              <table class="w-full text-center text-base lg:text-lg">
+                <thead>
+                  <tr class="border-b border-slate-400">
+                    <th rowspan="2" class="border-r border-slate-400 px-3 py-5">จำนวน<br>นักเรียน</th>
+                    <th colspan="8" class="border-r border-slate-400 px-3 py-5">ระดับผลการเรียน</th>
+                    <th colspan="6" class="px-3 py-5">ผลการประเมิน</th>
+                  </tr>
+                  <tr class="border-b border-slate-400">
+                    <th class="border-r border-slate-400 px-3 py-4">4</th>
+                    <th class="border-r border-slate-400 px-3 py-4">3.5</th>
+                    <th class="border-r border-slate-400 px-3 py-4">3</th>
+                    <th class="border-r border-slate-400 px-3 py-4">2.5</th>
+                    <th class="border-r border-slate-400 px-3 py-4">2</th>
+                    <th class="border-r border-slate-400 px-3 py-4">1.5</th>
+                    <th class="border-r border-slate-400 px-3 py-4">1</th>
+                    <th class="border-r border-slate-400 px-3 py-4">0</th>
+                    <th class="border-r border-slate-400 px-3 py-4">ร</th>
+                    <th class="border-r border-slate-400 px-3 py-4">มส</th>
+                    <th class="border-r border-slate-400 px-3 py-4">มก</th>
+                    <th class="border-r border-slate-400 px-3 py-4">ผ</th>
+                    <th class="border-r border-slate-400 px-3 py-4">มผ</th>
+                    <th class="px-3 py-4">อื่นๆ</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="border-b border-slate-400">
+                    <td id="modalStudents" class="border-r border-slate-400 px-3 py-5">84</td>
+                    <td id="modalG4" class="border-r border-slate-400 px-3 py-5">1</td>
+                    <td id="modalG35" class="border-r border-slate-400 px-3 py-5">3</td>
+                    <td id="modalG3" class="border-r border-slate-400 px-3 py-5">14</td>
+                    <td id="modalG25" class="border-r border-slate-400 px-3 py-5">20</td>
+                    <td id="modalG2" class="border-r border-slate-400 px-3 py-5">29</td>
+                    <td id="modalG15" class="border-r border-slate-400 px-3 py-5">1</td>
+                    <td id="modalG1" class="border-r border-slate-400 px-3 py-5">12</td>
+                    <td id="modalG0" class="border-r border-slate-400 px-3 py-5">4</td>
+                    <td class="border-r border-slate-400 px-3 py-5">-</td>
+                    <td class="border-r border-slate-400 px-3 py-5">-</td>
+                    <td class="border-r border-slate-400 px-3 py-5">-</td>
+                    <td class="border-r border-slate-400 px-3 py-5">-</td>
+                    <td class="border-r border-slate-400 px-3 py-5">-</td>
+                    <td class="px-3 py-5">-</td>
+                  </tr>
+                  <tr>
+                    <td class="border-r border-slate-400 px-3 py-5">ร้อยละ</td>
+                    <td id="modalP4" class="border-r border-slate-400 px-3 py-5">1.19</td>
+                    <td id="modalP35" class="border-r border-slate-400 px-3 py-5">3.57</td>
+                    <td id="modalP3" class="border-r border-slate-400 px-3 py-5">16.67</td>
+                    <td id="modalP25" class="border-r border-slate-400 px-3 py-5">23.81</td>
+                    <td id="modalP2" class="border-r border-slate-400 px-3 py-5">34.52</td>
+                    <td id="modalP15" class="border-r border-slate-400 px-3 py-5">1.19</td>
+                    <td id="modalP1" class="border-r border-slate-400 px-3 py-5">14.29</td>
+                    <td id="modalP0" class="border-r border-slate-400 px-3 py-5">4.76</td>
+                    <td class="border-r border-slate-400 px-3 py-5">-</td>
+                    <td class="border-r border-slate-400 px-3 py-5">-</td>
+                    <td class="border-r border-slate-400 px-3 py-5">-</td>
+                    <td class="border-r border-slate-400 px-3 py-5">-</td>
+                    <td class="border-r border-slate-400 px-3 py-5">-</td>
+                    <td class="px-3 py-5">-</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div class="mt-20 text-lg font-semibold text-slate-800">การอนุมัติผลการเรียน</div>
+
+            <div class="mt-16 grid gap-12 lg:grid-cols-2">
+              <div class="text-center">
+                <div class="text-xl text-slate-800">ลงชื่อ ....................................................</div>
+                <div class="mx-auto mt-4 max-w-md py-3 text-lg text-slate-700">( .................................................... )</div>
+                <div class="mt-2 text-lg text-slate-800">หัวหน้ากลุ่มสาระการเรียนรู้</div>
+              </div>
+              <div class="text-center">
+                <div class="text-xl text-slate-800">ลงชื่อ ....................................................</div>
+                <div class="mx-auto mt-4 max-w-md py-3 text-lg text-slate-700">( .................................................... )</div>
+                <div class="mt-2 text-lg text-slate-800">รองผู้อำนวยการฝ่ายวิชาการ</div>
+              </div>
+            </div>
+
+            <div class="mt-16 grid gap-12 lg:grid-cols-[1fr_auto]">
+              <div class="text-center">
+                <div class="text-xl text-slate-800">ลงชื่อ ....................................................</div>
+                <div class="mx-auto mt-4 max-w-md py-3 text-lg text-slate-700">( นางสิริขิต อ้นสีละ )</div>
+                <div class="mt-2 text-lg text-slate-800">ครูวัดผล/นายทะเบียน</div>
+              </div>
+              <div class="text-center">
+                <div class="mt-16 text-4xl text-[#7358a9]">~</div>
+                <div class="mt-2 text-xl text-slate-800">( นายชินกรวี วัชโรทัย )</div>
+                <div class="mt-2 text-lg text-slate-800">ผู้อำนวยการโรงเรียน</div>
+              </div>
+            </div>
+
+            <div class="mt-20 flex flex-wrap items-center justify-end gap-3 text-xl text-slate-800">
+              <span>วันที่</span>
+              <span class="inline-block h-12 w-24 border-b border-slate-500"></span>
+              <span>เดือน</span>
+              <span class="inline-block h-12 w-36 border-b border-slate-500"></span>
+              <span>พ.ศ.</span>
+              <span class="inline-block h-12 w-32 border-b border-slate-500"></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const subjectData = [
+      { code: 'ท21101', subject: 'ภาษาไทย', students: 84, grades: { g0: 4, g1: 12, g15: 1, g2: 29, g25: 20, g3: 14, g35: 3, g4: 1 } },
+      { code: 'ท21102', subject: 'ภาษาไทย', students: 84, grades: { g0: 1, g1: 7, g15: 14, g2: 15, g25: 11, g3: 16, g35: 17, g4: 3 } },
+      { code: 'ค21101', subject: 'คณิตศาสตร์', students: 84, grades: { g0: 4, g1: 2, g15: 5, g2: 4, g25: 13, g3: 17, g35: 15, g4: 24 } },
+      { code: 'ค21102', subject: 'คณิตศาสตร์', students: 84, grades: { g0: 1, g1: 4, g15: 2, g2: 5, g25: 5, g3: 13, g35: 19, g4: 35 } },
+      { code: 'ว21101', subject: 'วิทยาศาสตร์', students: 84, grades: { g0: 4, g1: 4, g15: 3, g2: 14, g25: 14, g3: 15, g35: 21, g4: 9 } },
+      { code: 'ว21102', subject: 'วิทยาศาสตร์', students: 84, grades: { g0: 1, g1: 6, g15: 7, g2: 9, g25: 20, g3: 16, g35: 10, g4: 15 } },
+      { code: 'ว21103', subject: 'เทคโนโลยี 1 (วิทยาการคำนวณ)', students: 84, grades: { g0: 4, g1: 0, g15: 0, g2: 0, g25: 9, g3: 10, g35: 20, g4: 41 } },
+      { code: 'ว21104', subject: 'เทคโนโลยี 2 (การออกแบบ)', students: 84, grades: { g0: 1, g1: 0, g15: 1, g2: 1, g25: 11, g3: 12, g35: 12, g4: 46 } },
+      { code: 'ส21101', subject: 'สังคมศึกษา', students: 84, grades: { g0: 4, g1: 3, g15: 5, g2: 17, g25: 34, g3: 17, g35: 4, g4: 0 } },
+      { code: 'ส21102', subject: 'ประวัติศาสตร์', students: 84, grades: { g0: 10, g1: 5, g15: 3, g2: 12, g25: 9, g3: 15, g35: 11, g4: 19 } },
+      { code: 'ส21103', subject: 'สังคมศึกษา', students: 84, grades: { g0: 1, g1: 1, g15: 8, g2: 19, g25: 25, g3: 26, g35: 4, g4: 0 } },
+      { code: 'ส21104', subject: 'ประวัติศาสตร์', students: 84, grades: { g0: 1, g1: 13, g15: 9, g2: 3, g25: 9, g3: 17, g35: 15, g4: 17 } },
+      { code: 'พ21101', subject: 'สุขศึกษา', students: 84, grades: { g0: 8, g1: 5, g15: 3, g2: 7, g25: 10, g3: 16, g35: 25, g4: 10 } },
+      { code: 'พ21102', subject: 'พลศึกษา (ประสบการณ์)', students: 84, grades: { g0: 4, g1: 0, g15: 1, g2: 0, g25: 2, g3: 20, g35: 26, g4: 31 } },
+      { code: 'พ21103', subject: 'สุขศึกษา', students: 84, grades: { g0: 3, g1: 2, g15: 5, g2: 9, g25: 13, g3: 9, g35: 13, g4: 30 } },
+      { code: 'พ21104', subject: 'พลศึกษา(ประเภททีม)', students: 84, grades: { g0: 1, g1: 0, g15: 1, g2: 0, g25: 1, g3: 13, g35: 27, g4: 41 } },
+      { code: 'ศ21101', subject: 'ศิลปะ', students: 84, grades: { g0: 6, g1: 2, g15: 2, g2: 12, g25: 10, g3: 24, g35: 8, g4: 20 } },
+      { code: 'ศ21102', subject: 'ดนตรี-นาฏศิลป์', students: 84, grades: { g0: 4, g1: 1, g15: 6, g2: 63, g25: 10, g3: 0, g35: 0, g4: 0 } },
+      { code: 'ศ21103', subject: 'ศิลปะ', students: 84, grades: { g0: 4, g1: 1, g15: 4, g2: 11, g25: 19, g3: 20, g35: 11, g4: 14 } },
+      { code: 'ศ21104', subject: 'ดนตรี-นาฏศิลป์', students: 84, grades: { g0: 1, g1: 1, g15: 0, g2: 1, g25: 3, g3: 3, g35: 35, g4: 40 } },
+      { code: 'ง21101', subject: 'การงานอาชีพ', students: 84, grades: { g0: 4, g1: 1, g15: 12, g2: 59, g25: 8, g3: 0, g35: 0, g4: 0 } },
+      { code: 'ง21102', subject: 'การงานอาชีพ', students: 84, grades: { g0: 1, g1: 0, g15: 1, g2: 2, g25: 0, g3: 3, g35: 16, g4: 61 } },
+      { code: 'อ21101', subject: 'ภาษาอังกฤษพื้นฐาน', students: 84, grades: { g0: 4, g1: 14, g15: 10, g2: 12, g25: 15, g3: 12, g35: 7, g4: 10 } },
+      { code: 'อ21102', subject: 'ภาษาอังกฤษพื้นฐาน', students: 84, grades: { g0: 1, g1: 11, g15: 10, g2: 11, g25: 17, g3: 12, g35: 12, g4: 10 } },
+      { code: 'ค21201', subject: 'คณิตศาสตร์ปรับพื้นฐาน 1', students: 32, grades: { g0: 3, g1: 0, g15: 0, g2: 1, g25: 0, g3: 6, g35: 9, g4: 13 } },
+      { code: 'ค21202', subject: 'คณิตศาสตร์ปรับพื้นฐาน 2', students: 32, grades: { g0: 0, g1: 0, g15: 0, g2: 1, g25: 6, g3: 10, g35: 8, g4: 7 } },
+      { code: 'ว20201', subject: 'พืชสมุนไพรเพื่อชีวิต', students: 32, grades: { g0: 3, g1: 0, g15: 0, g2: 0, g25: 0, g3: 3, g35: 13, g4: 13 } },
+      { code: 'ว20205', subject: 'พืชเพื่อการคุ้มครอง', students: 32, grades: { g0: 0, g1: 0, g15: 1, g2: 0, g25: 6, g3: 7, g35: 13, g4: 5 } },
+      { code: 'ว21201', subject: 'หุ่นยนต์ 1', students: 52, grades: { g0: 4, g1: 0, g15: 0, g2: 2, g25: 11, g3: 7, g35: 1, g4: 27 } },
+      { code: 'ว21202', subject: 'หุ่นยนต์ 2', students: 52, grades: { g0: 1, g1: 0, g15: 1, g2: 1, g25: 10, g3: 10, g35: 10, g4: 19 } },
+      { code: 'ส21201', subject: 'หน้าที่พลเมือง 1', students: 84, grades: { g0: 6, g1: 0, g15: 0, g2: 2, g25: 0, g3: 28, g35: 21, g4: 27 } },
+      { code: 'ส21202', subject: 'หน้าที่พลเมือง 2', students: 84, grades: { g0: 4, g1: 1, g15: 0, g2: 2, g25: 2, g3: 23, g35: 12, g4: 40 } },
+      { code: 'ศ21205', subject: 'ศิลปะเพิ่มเติม 1', students: 52, grades: { g0: 3, g1: 1, g15: 1, g2: 15, g25: 8, g3: 10, g35: 4, g4: 10 } },
+      { code: 'ศ21206', subject: 'ศิลปะเพิ่มเติม 2', students: 84, grades: { g0: 36, g1: 1, g15: 1, g2: 15, g25: 9, g3: 14, g35: 3, g4: 5 } },
+      { code: 'ง21201', subject: 'งานเกษตร 1', students: 84, grades: { g0: 6, g1: 0, g15: 1, g2: 2, g25: 6, g3: 16, g35: 24, g4: 29 } },
+      { code: 'ง21202', subject: 'งานเกษตร 2', students: 84, grades: { g0: 1, g1: 1, g15: 0, g2: 0, g25: 4, g3: 8, g35: 20, g4: 50 } },
+      { code: 'ก21901', subject: 'กิจกรรมแนะแนว', students: 84, grades: { g0: 2, g1: 3, g15: 4, g2: 10, g25: 12, g3: 18, g35: 16, g4: 19 } },
+      { code: 'ก21902', subject: 'กิจกรรมลูกเสือ-เนตรนารี', students: 84, grades: { g0: 1, g1: 2, g15: 3, g2: 8, g25: 14, g3: 19, g35: 18, g4: 19 } },
+      { code: 'ก21903', subject: 'กิจกรรมชุมนุม', students: 84, grades: { g0: 0, g1: 2, g15: 5, g2: 11, g25: 15, g3: 20, g35: 16, g4: 15 } },
+      { code: 'ก21904', subject: 'กิจกรรมเพื่อสังคมและสาธารณประโยชน์', students: 84, grades: { g0: 1, g1: 1, g15: 2, g2: 9, g25: 13, g3: 18, g35: 20, g4: 20 } },
+      { code: 'ก21905', subject: 'กิจกรรมแนะแนว', students: 84, grades: { g0: 3, g1: 4, g15: 4, g2: 12, g25: 14, g3: 17, g35: 14, g4: 16 } },
+      { code: 'ก21906', subject: 'กิจกรรมลูกเสือ-เนตรนารี', students: 84, grades: { g0: 2, g1: 3, g15: 3, g2: 10, g25: 15, g3: 16, g35: 17, g4: 18 } },
+      { code: 'ก21907', subject: 'กิจกรรมชุมนุม', students: 84, grades: { g0: 1, g1: 2, g15: 4, g2: 13, g25: 16, g3: 17, g35: 15, g4: 16 } },
+      { code: 'ก21908', subject: 'กิจกรรมเพื่อสังคมและสาธารณประโยชน์', students: 84, grades: { g0: 0, g1: 3, g15: 4, g2: 9, g25: 14, g3: 19, g35: 17, g4: 18 } }
+    ].map((item, index) => {
+      const mockTrends = [5.4, -2.8, 8.7, 0, 3.2, -6.1, 4.5, 1.8, -3.9, 7.2, 0, -1.4];
+      const mockTeachers = ['ครูสมชาย ใจดี', 'ครูพิมพ์ชนก ศรีสุข', 'ครูอนุชา วงศ์ดี', 'ครูสุภาวดี แก้วใส', 'ครูมาลี พัฒนกิจ', 'ครูวรพล แสงทอง'];
+      const mockClassroomScopes = ['รวมทุกห้อง', 'ม.1/1-ม.1/2', 'ม.1/3-ม.1/4', 'โครงการพิเศษ'];
+      const mockCurriculums = ['หลักสูตรแกนกลาง', 'ห้องเรียนพิเศษ', 'หลักสูตรเข้มวิทย์-คณิต'];
+      const departmentMap = [
+        { prefixes: ['ท'], department: 'ภาษาไทย' },
+        { prefixes: ['ค'], department: 'คณิตศาสตร์' },
+        { prefixes: ['ว'], department: 'วิทยาศาสตร์และเทคโนโลยี' },
+        { prefixes: ['ส'], department: 'สังคมศึกษา' },
+        { prefixes: ['พ'], department: 'สุขศึกษาและพลศึกษา' },
+        { prefixes: ['ศ'], department: 'ศิลปะ' },
+        { prefixes: ['ง'], department: 'การงานอาชีพ' },
+        { prefixes: ['อ'], department: 'ภาษาต่างประเทศ' },
+        { prefixes: ['ก'], department: 'กิจกรรมพัฒนาผู้เรียน' }
+      ];
+      const department = departmentMap.find((entry) => entry.prefixes.some((prefix) => item.code.startsWith(prefix)))?.department || 'อื่นๆ';
+      const pass3Up = item.grades.g3 + item.grades.g35 + item.grades.g4;
+      return {
+        ...item,
+        id: index + 1,
+        year: '2568',
+        grade: 'ม.1',
+        term: index < 22 ? '1' : '2',
+        teacher: mockTeachers[index % mockTeachers.length],
+        classroomScope: mockClassroomScopes[index % mockClassroomScopes.length],
+        curriculum: mockCurriculums[index % mockCurriculums.length],
+        department,
+        trend: mockTrends[index % mockTrends.length],
+        pass3Up,
+        passRate: Number(((pass3Up / item.students) * 100).toFixed(2))
+      };
+    });
+
+    try {
+      const serializedSubjectData = JSON.stringify(subjectData);
+      sessionStorage.setItem('studentResultsData', serializedSubjectData);
+      localStorage.setItem('studentResultsData', serializedSubjectData);
+    } catch (error) {
+      console.warn('Unable to persist student results data for detail page.', error);
+    }
+
+    const state = {
+      filtered: [...subjectData],
+      selectedId: null,
+      tableSearch: '',
+      tableFilter: 'ทั้งหมด',
+      tableSort: 'default'
+    };
+
+    const els = {
+      subject: document.getElementById('subject'),
+      resultTable: document.getElementById('resultTable'),
+      mobileResultCards: document.getElementById('mobileResultCards'),
+      heroSummaryCards: document.getElementById('heroSummaryCards'),
+      searchSummaryCards: document.getElementById('searchSummaryCards'),
+      activeFilterChips: document.getElementById('activeFilterChips'),
+      quickFilterChips: document.getElementById('quickFilterChips'),
+      advancedToggle: document.getElementById('advancedToggle'),
+      advancedFilters: document.getElementById('advancedFilters'),
+      exportDropdownButton: document.getElementById('exportDropdownButton'),
+      exportDropdown: document.getElementById('exportDropdown'),
+      selectedSubjectLabel: document.getElementById('selectedSubjectLabel'),
+      selectedSubjectHint: document.getElementById('selectedSubjectHint'),
+      modal: document.getElementById('coverModal'),
+      modalYear: document.getElementById('modalYear'),
+      modalGrade: document.getElementById('modalGrade'),
+      modalSubject: document.getElementById('modalSubject'),
+      modalStudents: document.getElementById('modalStudents'),
+      modalG4: document.getElementById('modalG4'),
+      modalG35: document.getElementById('modalG35'),
+      modalG3: document.getElementById('modalG3'),
+      modalG25: document.getElementById('modalG25'),
+      modalG2: document.getElementById('modalG2'),
+      modalG15: document.getElementById('modalG15'),
+      modalG1: document.getElementById('modalG1'),
+      modalG0: document.getElementById('modalG0'),
+      modalP4: document.getElementById('modalP4'),
+      modalP35: document.getElementById('modalP35'),
+      modalP3: document.getElementById('modalP3'),
+      modalP25: document.getElementById('modalP25'),
+      modalP2: document.getElementById('modalP2'),
+      modalP15: document.getElementById('modalP15'),
+      modalP1: document.getElementById('modalP1'),
+      modalP0: document.getElementById('modalP0')
+    };
+
+    const quickFilters = [
+      { value: 'ทั้งหมด', label: 'ทั้งหมด', predicate: () => true },
+      { value: 'ผ่านเกณฑ์', label: 'ผ่านเกณฑ์ (≥3)', predicate: (item) => getAverageGpa(item) >= 3 },
+      { value: 'ผ่านกลาง', label: 'ผ่านเกณฑ์ (3–3.49)', predicate: (item) => getAverageGpa(item) >= 3 && getAverageGpa(item) < 3.5 },
+      { value: 'เสี่ยงปานกลาง', label: 'เสี่ยงปานกลาง (2–2.99)', predicate: (item) => getAverageGpa(item) >= 2 && getAverageGpa(item) < 3 },
+      { value: 'เสี่ยงสูง', label: 'เสี่ยงสูง (<2)', predicate: (item) => getAverageGpa(item) < 2 }
+    ];
+
+    function getAverageGpa(item) {
+      const qualityPoints =
+        (item.grades.g1 * 1) +
+        (item.grades.g15 * 1.5) +
+        (item.grades.g2 * 2) +
+        (item.grades.g25 * 2.5) +
+        (item.grades.g3 * 3) +
+        (item.grades.g35 * 3.5) +
+        (item.grades.g4 * 4);
+      return item.students ? qualityPoints / item.students : 0;
+    }
+
+    function getBelow3(item) {
+      return item.students - item.pass3Up;
+    }
+
+    function getTeacherName(item) {
+      return item.teacher || 'ครูผู้สอน';
+    }
+
+    function getSubjectScope(item) {
+      return `ระดับชั้น ${item.grade} • ${item.classroomScope || 'รวมทุกห้อง'}`;
+    }
+
+    function getTrendValue(item) {
+      return Number(item.trend || 0);
+    }
+
+    function getTrendHtml(item) {
+      const trend = getTrendValue(item);
+      if (trend > 0) return `<span class="inline-flex items-center rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">▲ +${trend}%</span>`;
+      if (trend < 0) return `<span class="inline-flex items-center rounded-full bg-rose-50 px-3 py-1 text-xs font-semibold text-rose-700">▼ ${trend}%</span>`;
+      return '<span class="inline-flex items-center rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-500">▬ 0%</span>';
+    }
+
+    function getPassRateTone(item) {
+      if (item.passRate < 30) return { bar: 'bg-rose-500', text: 'text-rose-700', bg: 'bg-rose-50' };
+      if (item.passRate < 50) return { bar: 'bg-amber-500', text: 'text-amber-700', bg: 'bg-amber-50' };
+      return { bar: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' };
+    }
+
+    function buildDetailUrl(item) {
+      const params = new URLSearchParams({
+        subject: item.subject,
+        code: item.code,
+        year: item.year,
+        semester: item.term,
+        grade: item.grade
+      });
+      return `student-results-detail.html?${params.toString()}`;
+    }
+
+    function fillSubjectOptions() {
+      const uniqueSubjects = [...new Set(subjectData.map((item) => item.subject))];
+      els.subject.innerHTML = '<option value="ทั้งหมด">ทั้งหมด</option>' +
+        uniqueSubjects.map((subject) => `<option value="${subject}">${subject}</option>`).join('');
+    }
+
+    function fillAdvancedFilterOptions() {
+      const filterMap = [
+        { id: 'teacherFilter', values: subjectData.map((item) => item.teacher) },
+        { id: 'classroomFilter', values: subjectData.map((item) => item.classroomScope) },
+        { id: 'curriculumFilter', values: subjectData.map((item) => item.curriculum) },
+        { id: 'departmentFilter', values: subjectData.map((item) => item.department) }
+      ];
+      filterMap.forEach((filter) => {
+        const uniqueValues = [...new Set(filter.values)].filter(Boolean);
+        document.getElementById(filter.id).innerHTML = '<option value="ทั้งหมด">ทั้งหมด</option>' +
+          uniqueValues.map((value) => `<option value="${value}">${value}</option>`).join('');
+      });
+    }
+
+    function getFilters() {
+      return {
+        year: document.getElementById('year').value,
+        term: document.getElementById('term').value,
+        grade: document.getElementById('grade').value,
+        subject: document.getElementById('subject').value,
+        teacher: document.getElementById('teacherFilter').value,
+        classroomScope: document.getElementById('classroomFilter').value,
+        curriculum: document.getElementById('curriculumFilter').value,
+        department: document.getElementById('departmentFilter').value
+      };
+    }
+
+    function filterData() {
+      const filters = getFilters();
+      state.filtered = subjectData.filter((item) => {
+        const matchTerm = filters.term === 'ทั้งหมด' || item.term === filters.term;
+        const matchSubject = filters.subject === 'ทั้งหมด' || item.subject === filters.subject;
+        const matchTeacher = filters.teacher === 'ทั้งหมด' || item.teacher === filters.teacher;
+        const matchClassroom = filters.classroomScope === 'ทั้งหมด' || item.classroomScope === filters.classroomScope;
+        const matchCurriculum = filters.curriculum === 'ทั้งหมด' || item.curriculum === filters.curriculum;
+        const matchDepartment = filters.department === 'ทั้งหมด' || item.department === filters.department;
+        return item.year === filters.year && item.grade === filters.grade && matchTerm && matchSubject && matchTeacher && matchClassroom && matchCurriculum && matchDepartment;
+      });
+
+      if (!state.filtered.some((item) => item.id === state.selectedId)) {
+        state.selectedId = null;
+      }
+    }
+
+    function getProcessedTableData() {
+      let rows = [...state.filtered];
+
+      if (state.tableSearch) {
+        const keyword = state.tableSearch.toLowerCase();
+        rows = rows.filter((item) => {
+          const text = `${item.code} ${item.subject} ${item.term} ${item.grade}`.toLowerCase();
+          return text.includes(keyword);
+        });
+      }
+
+      if (state.tableFilter === 'ผ่านสูง') {
+        rows = rows.filter((item) => item.passRate > 50);
+      } else if (state.tableFilter === 'เสี่ยง') {
+        rows = rows.filter((item) => item.passRate <= 50);
+      } else if (state.tableFilter === 'นักเรียนมาก') {
+        rows = rows.filter((item) => item.students >= 80);
+      } else if (state.tableFilter === 'ผ่านเกณฑ์') {
+        rows = rows.filter((item) => getAverageGpa(item) >= 3);
+      } else if (state.tableFilter === 'ผ่านกลาง') {
+        rows = rows.filter((item) => getAverageGpa(item) >= 3 && getAverageGpa(item) < 3.5);
+      } else if (state.tableFilter === 'เสี่ยงปานกลาง') {
+        rows = rows.filter((item) => getAverageGpa(item) >= 2 && getAverageGpa(item) < 3);
+      } else if (state.tableFilter === 'เสี่ยงสูง') {
+        rows = rows.filter((item) => getAverageGpa(item) < 2);
+      }
+
+      if (state.tableSort === 'passRateDesc') {
+        rows.sort((a, b) => b.passRate - a.passRate);
+      } else if (state.tableSort === 'passRateAsc') {
+        rows.sort((a, b) => a.passRate - b.passRate);
+      } else if (state.tableSort === 'studentsDesc') {
+        rows.sort((a, b) => b.students - a.students);
+      } else if (state.tableSort === 'studentsAsc') {
+        rows.sort((a, b) => a.students - b.students);
+      } else if (state.tableSort === 'subjectAsc') {
+        rows.sort((a, b) => `${a.code} ${a.subject}`.localeCompare(`${b.code} ${b.subject}`, 'th'));
+      }
+
+      return rows;
+    }
+
+    function buildSummaryCards(data, mode) {
+      const totalSubjects = data.length;
+      const totalStudents = data.reduce((sum, item) => sum + item.students, 0);
+      const passSubjects = data.filter((item) => getAverageGpa(item) >= 3).length;
+      const riskSubjects = data.filter((item) => getAverageGpa(item) < 3).length;
+      const passPercent = totalSubjects ? Math.round((passSubjects / totalSubjects) * 100) : 0;
+      const riskPercent = totalSubjects ? Math.round((riskSubjects / totalSubjects) * 100) : 0;
+      const avgGpax = totalStudents
+        ? (
+            data.reduce((sum, item) => sum + (getAverageGpa(item) * item.students), 0) / totalStudents
+          ).toFixed(2)
+        : '0.00';
+
+      if (mode === 'hero') {
+        const cards = [
+          { label: 'รายวิชาทั้งหมด', value: `${totalSubjects} วิชา`, hint: 'จากเงื่อนไขที่เลือก', tone: 'text-blue-600', bg: 'bg-blue-50', icon: 'M5 4h14v16H5V4Zm3 4h8v2H8V8Zm0 4h8v2H8v-2Zm0 4h5v1H8v-1Z' },
+          { label: 'ผ่านเกณฑ์ (≥3)', value: `${passSubjects} วิชา`, hint: `${passPercent}%`, tone: 'text-emerald-600', bg: 'bg-emerald-50', icon: 'M9 16.2 4.8 12l-1.4 1.4L9 19 21 7l-1.4-1.4L9 16.2Z' },
+          { label: 'เสี่ยง (ต่ำกว่า 3)', value: `${riskSubjects} วิชา`, hint: `${riskPercent}%`, tone: 'text-amber-600', bg: 'bg-amber-50', icon: 'M12 2 2 20h20L12 2Zm1 14h-2v2h2v-2Zm0-7h-2v5h2V9Z' },
+          { label: 'ค่าเฉลี่ยผลการเรียน', value: avgGpax, hint: 'เกรดเฉลี่ยรายวิชา', tone: 'text-violet-600', bg: 'bg-violet-50', icon: 'M4 19h16v2H4v-2Zm2-2h3V9H6v8Zm5 0h3V4h-3v13Zm5 0h3v-6h-3v6Z' }
+        ];
+
+        els.heroSummaryCards.innerHTML = cards.map((card) => `
+          <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-sm font-medium text-slate-500">${card.label}</p>
+                <p class="mt-3 text-3xl font-bold text-slate-900">${card.value}</p>
+                <p class="mt-2 text-sm font-semibold ${card.tone}">${card.hint}</p>
+              </div>
+              <div class="flex h-12 w-12 items-center justify-center rounded-2xl ${card.bg} ${card.tone}">
+                <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="${card.icon}"/></svg>
+              </div>
+            </div>
+          </div>
+        `).join('');
+        return;
+      }
+
+      els.searchSummaryCards.innerHTML = '';
+    }
+
+    function renderSummary() {
+      buildSummaryCards(state.filtered, 'hero');
+      buildSummaryCards(state.filtered, 'search');
+    }
+
+    function renderSelectedSubject() {
+      const selected = subjectData.find((item) => item.id === state.selectedId);
+      if (!selected) {
+        els.selectedSubjectLabel.textContent = 'ยังไม่ได้เลือกวิชา';
+        els.selectedSubjectHint.textContent = 'คลิกแถวในตารางเพื่อเตรียมส่งออกใบปะหน้า';
+        return;
+      }
+
+      els.selectedSubjectLabel.textContent = `${selected.code} ${selected.subject}`;
+      els.selectedSubjectHint.textContent = `นักเรียน ${selected.students} คน • ได้ระดับ 3 ขึ้นไป ${selected.pass3Up} คน • ${selected.passRate}%`;
+    }
+
+    function renderTable() {
+      const tableRows = getProcessedTableData();
+
+      if (!tableRows.length) {
+        els.resultTable.innerHTML = '<tr><td colspan="13" class="px-5 py-12 text-center text-slate-500">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td></tr>';
+        els.mobileResultCards.innerHTML = '<div class="rounded-3xl border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div>';
+        return;
+      }
+
+      els.resultTable.innerHTML = tableRows.map((item) => {
+        const active = item.id === state.selectedId;
+        const tone = getPassRateTone(item);
+        return `
+          <tr data-id="${item.id}" class="group h-20 cursor-pointer transition ${active ? 'bg-blue-50' : 'bg-white hover:bg-slate-50'}">
+            <td class="px-5 py-5">
+              <p class="text-base font-bold ${active ? 'text-brand' : 'text-slate-900'}">${item.code}</p>
+              <p class="mt-1 text-sm text-slate-500">${item.subject}</p>
+              <p class="mt-1 text-xs text-slate-400">${getSubjectScope(item)} • ${getTeacherName(item)}</p>
+            </td>
+            <td class="px-5 py-5 text-center">
+              <p class="text-lg font-bold text-slate-900">${item.students}</p>
+              <p class="text-xs text-slate-400">นักเรียน</p>
+            </td>
+            <td class="px-3 py-5 text-center font-semibold text-emerald-700">${item.grades.g4}</td>
+            <td class="px-3 py-5 text-center font-semibold text-emerald-700">${item.grades.g35}</td>
+            <td class="px-3 py-5 text-center font-semibold text-emerald-700">${item.grades.g3}</td>
+            <td class="px-3 py-5 text-center font-semibold text-amber-700">${item.grades.g25}</td>
+            <td class="px-3 py-5 text-center font-semibold text-amber-700">${item.grades.g2}</td>
+            <td class="px-3 py-5 text-center font-semibold text-rose-700">${item.grades.g15}</td>
+            <td class="px-3 py-5 text-center font-semibold text-rose-700">${item.grades.g1}</td>
+            <td class="px-3 py-5 text-center font-semibold text-rose-700">${item.grades.g0}</td>
+            <td class="px-5 py-5">
+              <div class="flex items-center justify-between gap-3">
+                <span class="text-sm font-bold ${tone.text}">${item.passRate}%</span>
+                <span class="text-xs text-slate-400">${item.pass3Up}/${item.students}</span>
+              </div>
+              <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100">
+                <div class="h-full rounded-full ${tone.bar}" style="width: ${item.passRate}%"></div>
+              </div>
+            </td>
+            <td class="px-5 py-5 text-center">${getTrendHtml(item)}</td>
+            <td class="px-5 py-5">
+              <div class="flex items-center justify-center gap-2">
+                <button type="button" data-detail-id="${item.id}" class="rounded-xl bg-brand px-4 py-2 text-xs font-semibold text-white transition hover:bg-blue-700">ดูรายละเอียด</button>
+                <button type="button" data-cover-id="${item.id}" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 transition hover:bg-slate-50">...</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+
+      els.mobileResultCards.innerHTML = tableRows.map((item) => {
+        const tone = getPassRateTone(item);
+        const gradeCards = [
+          { label: '4', value: item.grades.g4, tone: 'text-emerald-700', bg: 'bg-emerald-50' },
+          { label: '3.5', value: item.grades.g35, tone: 'text-emerald-700', bg: 'bg-emerald-50' },
+          { label: '3', value: item.grades.g3, tone: 'text-emerald-700', bg: 'bg-emerald-50' },
+          { label: '2.5', value: item.grades.g25, tone: 'text-amber-700', bg: 'bg-amber-50' },
+          { label: '2', value: item.grades.g2, tone: 'text-amber-700', bg: 'bg-amber-50' },
+          { label: '1.5', value: item.grades.g15, tone: 'text-rose-700', bg: 'bg-rose-50' },
+          { label: '1', value: item.grades.g1, tone: 'text-rose-700', bg: 'bg-rose-50' },
+          { label: '0', value: item.grades.g0, tone: 'text-rose-700', bg: 'bg-rose-50' }
+        ];
+        return `
+          <article data-id="${item.id}" class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="text-base font-bold text-slate-900">${item.code}</p>
+                <p class="mt-1 text-sm text-slate-500">${item.subject}</p>
+                <p class="mt-1 text-xs text-slate-400">${getSubjectScope(item)} • ${getTeacherName(item)}</p>
+              </div>
+              ${getTrendHtml(item)}
+            </div>
+            <div class="mt-5 grid grid-cols-2 gap-3 text-center">
+              <div class="rounded-2xl bg-slate-50 p-3"><p class="text-lg font-bold text-slate-900">${item.students}</p><p class="text-xs text-slate-400">นักเรียน</p></div>
+              <div class="rounded-2xl ${tone.bg} p-3"><p class="text-lg font-bold ${tone.text}">${item.passRate}%</p><p class="text-xs text-slate-400">อัตราผ่านเกณฑ์</p></div>
+            </div>
+            <div class="mt-4 grid grid-cols-4 gap-2 text-center">
+              ${gradeCards.map((grade) => `
+                <div class="rounded-2xl ${grade.bg} p-2">
+                  <p class="text-xs font-semibold text-slate-400">เกรด ${grade.label}</p>
+                  <p class="mt-1 text-base font-bold ${grade.tone}">${grade.value}</p>
+                </div>
+              `).join('')}
+            </div>
+            <div class="mt-5">
+              <div class="flex justify-between text-sm"><span class="font-medium text-slate-500">อัตราผ่านเกณฑ์</span><span class="font-bold ${tone.text}">${item.passRate}%</span></div>
+              <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${tone.bar}" style="width: ${item.passRate}%"></div></div>
+            </div>
+            <div class="mt-5 flex gap-2">
+              <button type="button" data-detail-id="${item.id}" class="flex-1 rounded-xl bg-brand px-4 py-2.5 text-sm font-semibold text-white">ดูรายละเอียด</button>
+              <button type="button" data-cover-id="${item.id}" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600">...</button>
+            </div>
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderActiveFilterChips() {
+      const filters = getFilters();
+      const chips = [
+        { key: 'year', label: `ปีการศึกษา ${filters.year}` },
+        { key: 'term', label: filters.term === 'ทั้งหมด' ? 'ภาคเรียน ทั้งหมด' : `ภาคเรียน ${filters.term}` },
+        { key: 'grade', label: `ระดับชั้น ${filters.grade}` }
+      ];
+      if (filters.subject !== 'ทั้งหมด') chips.push({ key: 'subject', label: `รายวิชา ${filters.subject}` });
+      if (filters.teacher !== 'ทั้งหมด') chips.push({ key: 'teacherFilter', label: `ครูผู้สอน ${filters.teacher}` });
+      if (filters.classroomScope !== 'ทั้งหมด') chips.push({ key: 'classroomFilter', label: `ขอบเขต ${filters.classroomScope}` });
+      if (filters.curriculum !== 'ทั้งหมด') chips.push({ key: 'curriculumFilter', label: `หลักสูตร ${filters.curriculum}` });
+      if (filters.department !== 'ทั้งหมด') chips.push({ key: 'departmentFilter', label: `กลุ่มสาระ ${filters.department}` });
+      els.activeFilterChips.innerHTML = chips.map((chip) => `
+        <button type="button" data-clear-filter="${chip.key}" class="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
+          ${chip.label}<span aria-hidden="true">×</span>
+        </button>
+      `).join('') + '<button type="button" data-clear-filter="all" class="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-500 hover:bg-slate-50">ล้างทั้งหมด</button>';
+    }
+
+    function renderQuickFilterChips() {
+      els.quickFilterChips.innerHTML = quickFilters.map((filter) => {
+        const count = state.filtered.filter(filter.predicate).length;
+        const active = state.tableFilter === filter.value;
+        return `
+          <button type="button" data-quick-filter="${filter.value}" class="rounded-full border px-3 py-1.5 text-xs font-semibold transition ${active ? 'border-blue-200 bg-blue-600 text-white shadow-sm' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}">
+            ${filter.label} <span class="${active ? 'text-blue-100' : 'text-slate-400'}">${count}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function resetFilter(key) {
+      if (key === 'all') {
+        document.getElementById('year').value = '2568';
+        document.getElementById('term').value = 'ทั้งหมด';
+        document.getElementById('grade').value = 'ม.1';
+        document.getElementById('subject').value = 'ทั้งหมด';
+        document.getElementById('teacherFilter').value = 'ทั้งหมด';
+        document.getElementById('classroomFilter').value = 'ทั้งหมด';
+        document.getElementById('curriculumFilter').value = 'ทั้งหมด';
+        document.getElementById('departmentFilter').value = 'ทั้งหมด';
+        state.tableFilter = 'ทั้งหมด';
+        document.getElementById('tableFilter').value = 'ทั้งหมด';
+      } else if (key === 'term' || key === 'subject') {
+        document.getElementById(key).value = 'ทั้งหมด';
+      } else if (['teacherFilter', 'classroomFilter', 'curriculumFilter', 'departmentFilter'].includes(key)) {
+        document.getElementById(key).value = 'ทั้งหมด';
+      } else if (key === 'year') {
+        document.getElementById('year').value = '2568';
+      } else if (key === 'grade') {
+        document.getElementById('grade').value = 'ม.1';
+      }
+      refreshAll();
+    }
+
+    function openModal() {
+      const selected = subjectData.find((item) => item.id === state.selectedId);
+      if (!selected) {
+        alert('กรุณาเลือกวิชาจากตารางก่อนส่งออกใบปะหน้า');
+        return;
+      }
+
+      const total = selected.students;
+      const percentage = (value) => ((value / total) * 100).toFixed(2);
+
+      els.modalYear.textContent = `รายปี / ${selected.year}`;
+      els.modalGrade.textContent = selected.grade;
+      els.modalSubject.textContent = `${selected.code} ${selected.subject}`;
+      els.modalStudents.textContent = total;
+      els.modalG4.textContent = selected.grades.g4;
+      els.modalG35.textContent = selected.grades.g35;
+      els.modalG3.textContent = selected.grades.g3;
+      els.modalG25.textContent = selected.grades.g25;
+      els.modalG2.textContent = selected.grades.g2;
+      els.modalG15.textContent = selected.grades.g15;
+      els.modalG1.textContent = selected.grades.g1;
+      els.modalG0.textContent = selected.grades.g0;
+      els.modalP4.textContent = percentage(selected.grades.g4);
+      els.modalP35.textContent = percentage(selected.grades.g35);
+      els.modalP3.textContent = percentage(selected.grades.g3);
+      els.modalP25.textContent = percentage(selected.grades.g25);
+      els.modalP2.textContent = percentage(selected.grades.g2);
+      els.modalP15.textContent = percentage(selected.grades.g15);
+      els.modalP1.textContent = percentage(selected.grades.g1);
+      els.modalP0.textContent = percentage(selected.grades.g0);
+      els.modal.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closeModal() {
+      els.modal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    function refreshAll() {
+      filterData();
+      renderSummary();
+      renderSelectedSubject();
+      renderActiveFilterChips();
+      renderQuickFilterChips();
+      renderTable();
+    }
+
+    document.getElementById('searchButton').addEventListener('click', refreshAll);
+    document.getElementById('resetButton').addEventListener('click', () => resetFilter('all'));
+    ['year', 'term', 'grade', 'subject', 'teacherFilter', 'classroomFilter', 'curriculumFilter', 'departmentFilter'].forEach((id) => {
+      document.getElementById(id).addEventListener('change', refreshAll);
+    });
+    document.getElementById('tableSearch').addEventListener('input', (event) => {
+      state.tableSearch = event.target.value.trim();
+      renderTable();
+    });
+    document.getElementById('tableFilter').addEventListener('change', (event) => {
+      state.tableFilter = event.target.value;
+      renderTable();
+    });
+    document.getElementById('tableSort').addEventListener('change', (event) => {
+      state.tableSort = event.target.value;
+      renderTable();
+    });
+    els.advancedToggle.addEventListener('click', () => {
+      const hidden = els.advancedFilters.classList.toggle('hidden');
+      els.advancedToggle.setAttribute('aria-expanded', String(!hidden));
+    });
+    els.activeFilterChips.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-clear-filter]');
+      if (!button) return;
+      resetFilter(button.dataset.clearFilter);
+    });
+    els.quickFilterChips.addEventListener('click', (event) => {
+      const button = event.target.closest('[data-quick-filter]');
+      if (!button) return;
+      state.tableFilter = button.dataset.quickFilter;
+      document.getElementById('tableFilter').value = state.tableFilter;
+      renderQuickFilterChips();
+      renderTable();
+    });
+    els.exportDropdownButton.addEventListener('click', () => {
+      const hidden = els.exportDropdown.classList.toggle('hidden');
+      els.exportDropdownButton.setAttribute('aria-expanded', String(!hidden));
+    });
+    document.getElementById('exportExcelButton').addEventListener('click', () => {
+      els.exportDropdown.classList.add('hidden');
+      alert(`ส่งออก Excel ${state.filtered.length} รายการ`);
+    });
+    document.getElementById('exportCoverButton').addEventListener('click', () => {
+      els.exportDropdown.classList.add('hidden');
+      openModal();
+    });
+    document.getElementById('previewReportButton').addEventListener('click', () => {
+      els.exportDropdown.classList.add('hidden');
+      openModal();
+    });
+    document.getElementById('downloadCoverButton').addEventListener('click', () => {
+      const selected = subjectData.find((item) => item.id === state.selectedId);
+      const label = selected ? `${selected.code}-${selected.subject}` : 'ใบปะหน้า';
+      alert(`ดาวน์โหลด ${label}`);
+    });
+    document.getElementById('closeModal').addEventListener('click', closeModal);
+    document.getElementById('coverModal').addEventListener('click', (event) => {
+      if (event.target.id === 'coverModal') closeModal();
+    });
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') closeModal();
+    });
+    els.resultTable.addEventListener('click', (event) => {
+      const detailButton = event.target.closest('[data-detail-id]');
+      if (detailButton) {
+        const item = subjectData.find((row) => row.id === Number(detailButton.dataset.detailId));
+        if (item) window.location.href = buildDetailUrl(item);
+        return;
+      }
+      const coverButton = event.target.closest('[data-cover-id]');
+      if (coverButton) {
+        state.selectedId = Number(coverButton.dataset.coverId);
+        renderSelectedSubject();
+        renderTable();
+        openModal();
+        return;
+      }
+      const row = event.target.closest('tr[data-id]');
+      if (!row) return;
+      state.selectedId = Number(row.dataset.id);
+      renderSelectedSubject();
+      renderTable();
+    });
+    els.mobileResultCards.addEventListener('click', (event) => {
+      const detailButton = event.target.closest('[data-detail-id]');
+      if (detailButton) {
+        const item = subjectData.find((row) => row.id === Number(detailButton.dataset.detailId));
+        if (item) window.location.href = buildDetailUrl(item);
+        return;
+      }
+      const coverButton = event.target.closest('[data-cover-id]');
+      if (coverButton) {
+        state.selectedId = Number(coverButton.dataset.coverId);
+        renderSelectedSubject();
+        renderTable();
+        openModal();
+      }
+    });
+    document.addEventListener('click', (event) => {
+      if (!event.target.closest('#exportDropdownButton') && !event.target.closest('#exportDropdown')) {
+        els.exportDropdown.classList.add('hidden');
+      }
+    });
+
+    fillSubjectOptions();
+    fillAdvancedFilterOptions();
+    refreshAll();
+  </script>
+</body>
+</html>

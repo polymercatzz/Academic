@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>จัดการหลักสูตร | Academic Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#F7F9FC',
+            brand: '#2563eb',
+            ink: '#0f172a',
+            muted: '#64748b'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          boxShadow: {
+            soft: '0 12px 32px rgba(15, 23, 42, 0.06)',
+            modal: '0 24px 80px rgba(15, 23, 42, 0.18)'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .modal-backdrop { background: rgba(15, 23, 42, .46); backdrop-filter: blur(5px); }
+    .modal-panel { animation: modalIn .18s ease-out; }
+    @keyframes modalIn { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+    .toast-show { animation: toastIn .22s ease-out both; }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .view-in { animation: viewIn .2s ease-out; }
+    @keyframes viewIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .choice-card.is-selected { border-color: #2563eb; background: #eff6ff; box-shadow: inset 0 0 0 1px #2563eb; }
+    .choice-card .choice-check { opacity: 0; transform: scale(.7); transition: all .16s ease; }
+    .choice-card.is-selected .choice-check { opacity: 1; transform: scale(1); }
+    .room-chip.is-selected { border-color: #2563eb; background: #2563eb; color: #fff; }
+    .term-tab.is-active { border-color: #2563eb; background: #2563eb; color: #fff; box-shadow: 0 10px 24px rgba(37, 99, 235, .18); }
+    .term-tab.is-active .term-tab-meta { color: #dbeafe; }
+    .plan-item.is-active { border-color: #bfdbfe; background: #eff6ff; }
+    .plan-item.is-active .plan-item-name { color: #1d4ed8; }
+    .drop-zone.is-ready { border-color: #2563eb; background: #eff6ff; }
+  </style>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-canvas font-body text-ink">
+  <div id="layoutSidebar"></div>
+  <div class="lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="../shared/academic-layout.js?v=8"></script>
+    <script>AcademicLayout.mount({ active: 'curriculum-management', eyebrow: 'ภาพรวมหลักสูตร', title: 'จัดการหลักสูตร' });</script>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8">
+      <div class="mx-auto max-w-[1600px]">
+
+        <!-- หน้ารวมหลักสูตรทั้งหมด -->
+        <div id="listView" class="space-y-6">
+          <section class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
+                <a href="../reports/overview.html" class="font-medium text-slate-600 transition hover:text-brand">ภาพรวมงานวิชาการ</a>
+                <span class="text-slate-300">&gt;</span>
+                <span class="font-medium text-slate-800">จัดการหลักสูตร</span>
+              </nav>
+              <h1 class="text-3xl font-semibold tracking-tight text-slate-950 lg:text-4xl">จัดการหลักสูตร</h1>
+              <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-500">รวมหลักสูตรทุกปีการศึกษาไว้ในที่เดียว เปิดหลักสูตรเพื่อจัดแผนการเรียน รายวิชา และครูผู้สอนได้ในหน้าเดียว</p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <button data-action="open-import" type="button" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3 7 8h3v5h4V8h3l-5-5Zm-7 9h2v7h10v-7h2v9H5v-9Z"/></svg>
+                นำเข้า Excel
+              </button>
+              <button data-action="create-curriculum" type="button" class="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6v-2Z"/></svg>
+                สร้างหลักสูตร
+              </button>
+            </div>
+          </section>
+
+          <section id="listStats" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"></section>
+
+          <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+            <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+              <div>
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">ตัวกรองข้อมูล</p>
+                <h2 class="mt-2 text-xl font-semibold text-slate-950">ค้นหาหลักสูตร</h2>
+                <p class="mt-1 text-sm text-slate-500">พิมพ์คำค้นหาได้ทันที และเลือกหลายเงื่อนไขร่วมกันได้</p>
+              </div>
+              <button data-action="clear-list-filters" type="button" class="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 5V2L8 6l4 4V7c3.31 0 6 2.69 6 6 0 1.01-.25 1.96-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 13c0-4.42-3.58-8-8-8Zm-6 8c0-1.01.25-1.96.7-2.8L5.24 8.74A7.93 7.93 0 0 0 4 13c0 4.42 3.58 8 8 8v3l4-4-4-4v3c-3.31 0-6-2.69-6-6Z"/></svg>
+                ล้างตัวกรอง
+              </button>
+            </div>
+            <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-[1.5fr_1fr_1fr_1fr]">
+              <label class="block">
+                <span class="mb-2 block text-sm font-semibold text-slate-700">ค้นหาหลักสูตร</span>
+                <span class="relative block">
+                  <span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4a6 6 0 1 0 3.8 10.6l4.3 4.3 1.4-1.4-4.3-4.3A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg></span>
+                  <input id="listSearch" type="search" placeholder="ชื่อหลักสูตร หรือรหัสหลักสูตร" class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-11 pr-4 text-sm text-slate-800 outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                </span>
+              </label>
+              <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ปีการศึกษาที่เริ่มใช้</span><select id="listYear" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select></label>
+              <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ระดับการศึกษา</span><select id="listLevel" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"><option value="ทั้งหมด">ทุกระดับ</option><option>มัธยมศึกษาตอนต้น</option><option>มัธยมศึกษาตอนปลาย</option></select></label>
+              <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">สถานะ</span><select id="listStatus" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"><option value="ทั้งหมด">ทุกสถานะ</option><option>ฉบับร่าง</option><option>ใช้งานอยู่</option><option>ปิดใช้งาน</option></select></label>
+            </div>
+          </section>
+
+          <section>
+            <div class="mb-4 flex flex-wrap items-center gap-3">
+              <h2 class="text-xl font-semibold text-slate-950">หลักสูตรทั้งหมด</h2>
+              <span id="listCount" class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">0 หลักสูตร</span>
+            </div>
+            <div id="curriculumGrid" class="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3"></div>
+            <div id="listEmpty" class="hidden rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+              <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400"><svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3h9.59L19 7.41V21H5V3Zm2 2v14h10V8h-4V5H7Z"/></svg></div>
+              <h3 class="mt-4 text-base font-semibold text-slate-900">ไม่พบหลักสูตรที่ตรงกับเงื่อนไข</h3>
+              <p class="mt-1 text-sm text-slate-500">ลองเปลี่ยนคำค้นหาหรือล้างตัวกรอง</p>
+            </div>
+          </section>
+        </div>
+
+        <!-- หน้าหลักสูตร: แผนการเรียน รายวิชา ครูผู้สอน -->
+        <div id="workspaceView" class="hidden space-y-6">
+          <section class="flex flex-col gap-5 2xl:flex-row 2xl:items-end xl:justify-between">
+            <div class="min-w-0">
+              <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
+                <a href="../reports/overview.html" class="font-medium text-slate-600 transition hover:text-brand">ภาพรวมงานวิชาการ</a>
+                <span class="text-slate-300">&gt;</span>
+                <button data-action="back-to-list" type="button" class="font-medium text-slate-600 transition hover:text-brand">จัดการหลักสูตร</button>
+                <span class="text-slate-300">&gt;</span>
+                <span id="wsCrumb" class="font-medium text-slate-800"></span>
+              </nav>
+              <div class="flex flex-wrap items-center gap-3">
+                <h1 id="wsTitle" class="text-3xl font-semibold tracking-tight text-slate-950 lg:text-4xl"></h1>
+                <span id="wsStatus"></span>
+              </div>
+              <p id="wsMeta" class="mt-3 text-sm leading-6 text-slate-500"></p>
+            </div>
+            <div class="flex flex-wrap gap-3">
+              <button data-action="edit-curriculum" type="button" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z"/></svg>
+                แก้ไขข้อมูล
+              </button>
+              <button data-action="open-import" type="button" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 3 7 8h3v5h4V8h3l-5-5Zm-7 9h2v7h10v-7h2v9H5v-9Z"/></svg>
+                นำเข้า Excel
+              </button>
+              <button data-action="export-curriculum" type="button" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-100">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="m12 16 5-5h-3V4h-4v7H7l5 5Zm-7 2h14v2H5v-2Z"/></svg>
+                ส่งออก Excel
+              </button>
+              <button id="publishButton" data-action="publish" type="button" class="inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">
+                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9Z"/></svg>
+                ประกาศใช้หลักสูตร
+              </button>
+            </div>
+          </section>
+
+          <section id="wsStats" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"></section>
+
+          <div class="grid gap-6 xl:grid-cols-[300px_minmax(0,1fr)]">
+            <!-- รายการแผนการเรียน -->
+            <aside class="space-y-4 xl:sticky xl:top-24 xl:self-start">
+              <section class="rounded-3xl border border-slate-200 bg-white shadow-soft">
+                <div class="border-b border-slate-100 p-5">
+                  <div class="flex items-center justify-between gap-3">
+                    <div>
+                      <h2 class="text-lg font-semibold text-slate-950">แผนการเรียน</h2>
+                      <p id="planCount" class="text-sm text-slate-500">0 แผน</p>
+                    </div>
+                    <button data-action="add-plan" type="button" class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">
+                      <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6v-2Z"/></svg>
+                      เพิ่มแผน
+                    </button>
+                  </div>
+                  <span class="relative mt-4 block">
+                    <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-slate-400"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4a6 6 0 1 0 3.8 10.6l4.3 4.3 1.4-1.4-4.3-4.3A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg></span>
+                    <input id="planSearch" type="search" placeholder="ค้นหาแผน หรือห้องเรียน" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                  </span>
+                  <div id="gradeChips" class="mt-3 flex flex-wrap gap-2"></div>
+                </div>
+                <div id="planList" class="max-h-[60vh] space-y-4 overflow-y-auto p-4"></div>
+              </section>
+            </aside>
+
+            <!-- รายละเอียดแผน -->
+            <div id="planDetail" class="min-w-0 space-y-6"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal: สร้าง / แก้ไขหลักสูตร -->
+  <div id="curriculumModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="curriculumModalTitle">
+    <form id="curriculumForm" class="modal-panel flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-modal" novalidate>
+      <div class="flex items-start justify-between border-b border-slate-100 px-5 py-5 lg:px-7">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">หลักสูตรสถานศึกษา</p>
+          <h2 id="curriculumModalTitle" class="mt-1 text-xl font-semibold text-slate-950">สร้างหลักสูตร</h2>
+          <p class="mt-1 text-sm text-slate-500">สร้างใหม่ หรือคัดลอกจากหลักสูตรเดิมพร้อมแผนการเรียนและครูผู้สอนได้ในขั้นตอนเดียว</p>
+        </div>
+        <button data-close="curriculumModal" type="button" class="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg></button>
+      </div>
+      <div class="min-h-0 flex-1 space-y-6 overflow-y-auto px-5 py-6 lg:px-7">
+        <div id="methodSection">
+          <p class="mb-3 text-sm font-semibold text-slate-700">วิธีสร้างหลักสูตร</p>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <button data-method="copy" type="button" class="choice-card relative rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300">
+              <span class="choice-check absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="m9 16.17-3.88-3.88-1.41 1.42L9 19 21 7l-1.41-1.41L9 16.17Z"/></svg></span>
+              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z"/></svg></span>
+              <span class="mt-3 block text-sm font-semibold text-slate-900">คัดลอกจากหลักสูตรเดิม</span>
+              <span class="mt-1 block text-xs leading-5 text-slate-500">แนะนำ — ใช้โครงสร้างปีก่อนแล้วปรับเฉพาะส่วนที่เปลี่ยน</span>
+            </button>
+            <button data-method="blank" type="button" class="choice-card relative rounded-2xl border border-slate-200 bg-white p-4 text-left transition hover:border-blue-300">
+              <span class="choice-check absolute right-3 top-3 flex h-6 w-6 items-center justify-center rounded-full bg-blue-600 text-white"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="m9 16.17-3.88-3.88-1.41 1.42L9 19 21 7l-1.41-1.41L9 16.17Z"/></svg></span>
+              <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 11h-6V5h-2v6H5v2h6v6h2v-6h6v-2Z"/></svg></span>
+              <span class="mt-3 block text-sm font-semibold text-slate-900">สร้างหลักสูตรใหม่</span>
+              <span class="mt-1 block text-xs leading-5 text-slate-500">เริ่มจากหลักสูตรว่าง แล้วเพิ่มแผนการเรียนเอง</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="grid gap-5 md:grid-cols-2">
+          <label class="block md:col-span-2">
+            <span class="mb-2 block text-sm font-semibold text-slate-700">ชื่อหลักสูตร <span class="text-rose-500">*</span></span>
+            <input id="cName" type="text" required placeholder="เช่น หลักสูตรสถานศึกษา ระดับมัธยมศึกษาตอนต้น" class="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+            <span id="cNameError" class="mt-1.5 hidden text-xs font-medium text-rose-600">กรุณากรอกชื่อหลักสูตร</span>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm font-semibold text-slate-700">ปีการศึกษาที่เริ่มใช้</span>
+            <select id="cYear" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm font-semibold text-slate-700">ระดับการศึกษา</span>
+            <select id="cLevel" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"><option>มัธยมศึกษาตอนต้น</option><option>มัธยมศึกษาตอนปลาย</option></select>
+          </label>
+        </div>
+
+        <div id="copySection" class="space-y-4 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 lg:p-5">
+          <label class="block">
+            <span class="mb-2 block text-sm font-semibold text-slate-700">คัดลอกจากหลักสูตร</span>
+            <select id="cSource" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select>
+          </label>
+          <div>
+            <p class="mb-2 text-sm font-semibold text-slate-700">ข้อมูลที่ต้องการคัดลอก</p>
+            <div class="grid gap-2 sm:grid-cols-3">
+              <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm"><input id="copyPlans" type="checkbox" checked class="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600"><span><span class="block font-semibold text-slate-800">แผนการเรียน</span><span class="text-xs text-slate-500">ชื่อแผนและห้องเรียน</span></span></label>
+              <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm"><input id="copySubjects" type="checkbox" checked class="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600"><span><span class="block font-semibold text-slate-800">รายวิชาในแผน</span><span class="text-xs text-slate-500">ทั้ง 2 ภาคเรียน</span></span></label>
+              <label class="flex items-start gap-3 rounded-xl border border-slate-200 bg-white p-3 text-sm"><input id="copyTeachers" type="checkbox" checked class="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600"><span><span class="block font-semibold text-slate-800">ครูผู้สอน</span><span class="text-xs text-slate-500">ใช้ครูคนเดิมทุกวิชา</span></span></label>
+            </div>
+          </div>
+          <p id="copyPreview" class="rounded-xl bg-white px-4 py-3 text-sm text-slate-600"></p>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-3 border-t border-slate-100 px-5 py-4 lg:px-7">
+        <button data-close="curriculumModal" type="button" class="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100">ยกเลิก</button>
+        <button id="curriculumSubmit" type="submit" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">สร้างและเปิดหลักสูตร</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal: เพิ่ม / แก้ไขแผนการเรียน -->
+  <div id="planModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="planModalTitle">
+    <form id="planForm" class="modal-panel flex max-h-[94vh] w-full max-w-2xl flex-col overflow-hidden rounded-3xl bg-white shadow-modal" novalidate>
+      <div class="flex items-start justify-between border-b border-slate-100 px-5 py-5 lg:px-7">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">แผนการเรียน</p>
+          <h2 id="planModalTitle" class="mt-1 text-xl font-semibold text-slate-950">เพิ่มแผนการเรียน</h2>
+          <p class="mt-1 text-sm text-slate-500">กำหนดระดับชั้นและห้องเรียนที่ใช้แผนนี้</p>
+        </div>
+        <button data-close="planModal" type="button" class="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg></button>
+      </div>
+      <div class="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-6 lg:px-7">
+        <div class="grid gap-5 md:grid-cols-[1fr_160px]">
+          <label class="block">
+            <span class="mb-2 block text-sm font-semibold text-slate-700">ชื่อแผนการเรียน <span class="text-rose-500">*</span></span>
+            <input id="pName" type="text" placeholder="เช่น ห้องเรียนพิเศษวิทยาศาสตร์-คณิตศาสตร์" class="w-full rounded-2xl border border-slate-200 px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+            <span id="pNameError" class="mt-1.5 hidden text-xs font-medium text-rose-600">กรุณากรอกชื่อแผนการเรียน</span>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm font-semibold text-slate-700">ระดับชั้น</span>
+            <select id="pGrade" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select>
+          </label>
+        </div>
+        <div>
+          <div class="mb-2 flex items-center justify-between">
+            <span class="text-sm font-semibold text-slate-700">ห้องเรียนที่ใช้แผนนี้ <span class="text-rose-500">*</span></span>
+            <span id="roomHint" class="text-xs text-slate-500"></span>
+          </div>
+          <div id="roomChips" class="flex flex-wrap gap-2"></div>
+          <span id="roomError" class="mt-1.5 hidden text-xs font-medium text-rose-600">กรุณาเลือกอย่างน้อย 1 ห้องเรียน</span>
+        </div>
+        <div id="planTemplateSection">
+          <p class="mb-2 text-sm font-semibold text-slate-700">เริ่มต้นรายวิชา</p>
+          <div class="grid gap-2">
+            <label class="flex items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm transition has-[:checked]:border-blue-300 has-[:checked]:bg-blue-50/60"><input type="radio" name="planTemplate" value="core" checked class="mt-0.5 h-4 w-4 text-blue-600"><span><span class="block font-semibold text-slate-800">ใส่รายวิชาพื้นฐานและกิจกรรมของระดับชั้นให้อัตโนมัติ</span><span class="text-xs text-slate-500">ครบทั้ง 2 ภาคเรียน และกำหนดครูตามกลุ่มสาระที่มีภาระสอนน้อยที่สุด</span></span></label>
+            <label class="flex items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm transition has-[:checked]:border-blue-300 has-[:checked]:bg-blue-50/60"><input type="radio" name="planTemplate" value="copy" class="mt-0.5 h-4 w-4 text-blue-600"><span class="min-w-0 flex-1"><span class="block font-semibold text-slate-800">คัดลอกรายวิชาจากแผนอื่น</span><select id="pCopyFrom" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select></span></label>
+            <label class="flex items-start gap-3 rounded-xl border border-slate-200 p-3 text-sm transition has-[:checked]:border-blue-300 has-[:checked]:bg-blue-50/60"><input type="radio" name="planTemplate" value="empty" class="mt-0.5 h-4 w-4 text-blue-600"><span><span class="block font-semibold text-slate-800">แผนว่าง</span><span class="text-xs text-slate-500">เพิ่มรายวิชาเองภายหลัง</span></span></label>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-3 border-t border-slate-100 px-5 py-4 lg:px-7">
+        <button data-close="planModal" type="button" class="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100">ยกเลิก</button>
+        <button id="planSubmit" type="submit" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">บันทึกแผนการเรียน</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Modal: เพิ่มรายวิชาเข้าแผน -->
+  <div id="addSubjectModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="addSubjectTitle">
+    <div class="modal-panel flex max-h-[94vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-modal">
+      <div class="flex items-start justify-between border-b border-slate-100 px-5 py-5 lg:px-7">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">เพิ่มรายวิชา</p>
+          <h2 id="addSubjectTitle" class="mt-1 text-xl font-semibold text-slate-950">เพิ่มรายวิชาเข้าแผนการเรียน</h2>
+          <p id="addSubjectSubtitle" class="mt-1 text-sm text-slate-500"></p>
+        </div>
+        <button data-close="addSubjectModal" type="button" class="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg></button>
+      </div>
+      <div class="grid gap-3 border-b border-slate-100 px-5 py-4 md:grid-cols-[auto_1fr_220px] lg:px-7">
+        <div id="addTermSwitch" class="inline-flex rounded-2xl border border-slate-200 bg-slate-50 p-1"></div>
+        <span class="relative block">
+          <span class="pointer-events-none absolute inset-y-0 left-4 flex items-center text-slate-400"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4a6 6 0 1 0 3.8 10.6l4.3 4.3 1.4-1.4-4.3-4.3A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg></span>
+          <input id="addSearch" type="search" placeholder="รหัสวิชา หรือชื่อวิชา" class="w-full rounded-2xl border border-slate-200 py-3 pl-11 pr-4 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+        </span>
+        <select id="addGroup" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select>
+        <label class="flex items-center gap-2 text-sm text-slate-600 md:col-span-3"><input id="addShowAll" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-blue-600">แสดงรายวิชาของทุกระดับชั้นและทุกภาคเรียน</label>
+      </div>
+      <div id="addSubjectList" class="min-h-0 flex-1 divide-y divide-slate-100 overflow-y-auto"></div>
+      <div class="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-7">
+        <div class="space-y-1">
+          <p id="addSummary" class="text-sm font-semibold text-slate-700">ยังไม่ได้เลือกรายวิชา</p>
+          <label class="flex items-center gap-2 text-xs text-slate-500"><input id="addAutoTeacher" type="checkbox" checked class="h-4 w-4 rounded border-slate-300 text-blue-600">กำหนดครูที่มีภาระสอนน้อยที่สุดในกลุ่มสาระให้อัตโนมัติ</label>
+        </div>
+        <div class="flex items-center justify-end gap-3">
+          <button data-close="addSubjectModal" type="button" class="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100">ยกเลิก</button>
+          <button id="addSubmit" data-action="confirm-add-subjects" type="button" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300">เพิ่มรายวิชา</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: นำเข้า Excel -->
+  <div id="importModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="importTitle">
+    <div class="modal-panel flex max-h-[94vh] w-full max-w-3xl flex-col overflow-hidden rounded-3xl bg-white shadow-modal">
+      <div class="flex items-start justify-between border-b border-slate-100 px-5 py-5 lg:px-7">
+        <div>
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">นำเข้าข้อมูล</p>
+          <h2 id="importTitle" class="mt-1 text-xl font-semibold text-slate-950">นำเข้าแผนการเรียนจาก Excel</h2>
+          <p class="mt-1 text-sm text-slate-500">ใช้ไฟล์แม่แบบเพื่อนำเข้าแผนการเรียน รายวิชา และครูผู้สอนครั้งละหลายรายการ</p>
+        </div>
+        <button data-close="importModal" type="button" class="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg></button>
+      </div>
+      <div class="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-6 lg:px-7">
+        <div class="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4 sm:flex-row sm:items-center sm:justify-between">
+          <div class="text-sm"><p class="font-semibold text-slate-800">1. ดาวน์โหลดไฟล์แม่แบบ</p><p class="text-slate-500">คอลัมน์: แผนการเรียน, ระดับชั้น, ห้องเรียน, ภาคเรียน, รหัสวิชา, ครูผู้สอน</p></div>
+          <button data-action="download-template" type="button" class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="m12 16 5-5h-3V4h-4v7H7l5 5Zm-7 2h14v2H5v-2Z"/></svg>ดาวน์โหลดแม่แบบ</button>
+        </div>
+        <div>
+          <p class="mb-2 text-sm font-semibold text-slate-800">2. เลือกไฟล์ที่กรอกข้อมูลแล้ว</p>
+          <label id="dropZone" class="drop-zone flex cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-300 px-6 py-10 text-center transition hover:border-blue-400 hover:bg-blue-50/40">
+            <span class="flex h-12 w-12 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600"><svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3 7 8h3v5h4V8h3l-5-5Zm-7 9h2v7h10v-7h2v9H5v-9Z"/></svg></span>
+            <span id="dropZoneText" class="mt-3 text-sm font-semibold text-slate-800">ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์</span>
+            <span class="mt-1 text-xs text-slate-500">รองรับ .xlsx และ .csv</span>
+            <input id="importFile" type="file" accept=".xlsx,.xls,.csv" class="sr-only">
+          </label>
+        </div>
+        <div id="importPreview" class="hidden space-y-3">
+          <p class="text-sm font-semibold text-slate-800">3. ตรวจสอบก่อนนำเข้า</p>
+          <div class="grid gap-3 sm:grid-cols-3">
+            <div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4"><p class="text-2xl font-bold text-emerald-700">24</p><p class="text-xs font-semibold text-emerald-700">รายการพร้อมนำเข้า</p></div>
+            <div class="rounded-2xl border border-amber-100 bg-amber-50 p-4"><p class="text-2xl font-bold text-amber-700">2</p><p class="text-xs font-semibold text-amber-700">ไม่พบชื่อครูในระบบ (นำเข้าโดยเว้นว่าง)</p></div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 p-4"><p class="text-2xl font-bold text-slate-700">1</p><p class="text-xs font-semibold text-slate-600">รายวิชาซ้ำ (ข้าม)</p></div>
+          </div>
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-3 border-t border-slate-100 px-5 py-4 lg:px-7">
+        <button data-close="importModal" type="button" class="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100">ยกเลิก</button>
+        <button id="importSubmit" data-action="confirm-import" type="button" disabled class="rounded-xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 disabled:cursor-not-allowed disabled:bg-slate-300">นำเข้าข้อมูล</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: ครูผู้สอนของรายวิชา (หลายคน แยกตามห้อง) -->
+  <div id="teacherModal" class="modal-backdrop fixed inset-0 z-50 hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="teacherModalTitle">
+    <div class="modal-panel flex max-h-[94vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-modal">
+      <div class="flex items-start justify-between border-b border-slate-100 px-5 py-5 lg:px-7">
+        <div class="min-w-0">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">ครูผู้สอน</p>
+          <h2 id="teacherModalTitle" class="mt-1 text-xl font-semibold text-slate-950"></h2>
+          <p id="teacherModalSubtitle" class="mt-1 text-sm text-slate-500"></p>
+        </div>
+        <button data-close="teacherModal" type="button" class="rounded-xl p-2 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="ปิด"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg></button>
+      </div>
+      <div class="grid min-h-0 flex-1 overflow-y-auto lg:grid-cols-[minmax(0,1fr)_340px] lg:overflow-hidden">
+        <div class="space-y-5 p-5 lg:overflow-y-auto lg:p-7">
+          <div id="tmCoverage"></div>
+          <div>
+            <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <h3 class="text-sm font-semibold text-slate-800">ครูที่สอนวิชานี้ <span id="tmCount" class="ml-1 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600"></span></h3>
+              <button id="tmDistribute" data-action="tm-distribute" type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">แบ่งห้องให้ครูเท่า ๆ กัน</button>
+            </div>
+            <div id="tmSelected" class="space-y-3"></div>
+          </div>
+          <div id="tmOther"></div>
+        </div>
+        <div class="flex min-h-0 flex-col border-t border-slate-100 bg-slate-50/60 lg:border-l lg:border-t-0">
+          <div class="p-5 pb-3">
+            <h3 class="text-sm font-semibold text-slate-800">เพิ่มครูผู้สอน</h3>
+            <p class="mt-0.5 text-xs text-slate-500">เพิ่มได้หลายคน ครูที่เพิ่มจะได้ห้องที่ยังว่างให้อัตโนมัติ</p>
+            <span class="relative mt-3 block">
+              <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-slate-400"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4a6 6 0 1 0 3.8 10.6l4.3 4.3 1.4-1.4-4.3-4.3A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg></span>
+              <input id="tmSearch" type="search" placeholder="ค้นหาชื่อครู หรือกลุ่มสาระ" class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+            </span>
+          </div>
+          <div id="tmPicker" class="max-h-[40vh] min-h-0 flex-1 overflow-y-auto px-3 pb-4 lg:max-h-none"></div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-3 border-t border-slate-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between lg:px-7">
+        <p id="tmFooterNote" class="text-sm text-slate-500"></p>
+        <div class="flex items-center justify-end gap-3">
+          <button data-close="teacherModal" type="button" class="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-100">ยกเลิก</button>
+          <button data-action="tm-save" type="button" class="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">บันทึกครูผู้สอน</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: ยืนยัน -->
+  <div id="confirmModal" class="modal-backdrop fixed inset-0 z-[60] hidden items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="confirmTitle">
+    <div class="modal-panel w-full max-w-md rounded-3xl bg-white p-6 shadow-modal">
+      <div id="confirmIcon" class="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl"></div>
+      <h2 id="confirmTitle" class="mt-4 text-center text-lg font-semibold text-slate-950"></h2>
+      <div id="confirmMessage" class="mt-2 text-center text-sm leading-6 text-slate-500"></div>
+      <div class="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-center">
+        <button id="confirmCancel" data-close="confirmModal" type="button" class="rounded-xl border border-slate-200 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">ยกเลิก</button>
+        <button id="confirmOk" type="button" class="rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition"></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed bottom-5 right-5 z-[80] hidden max-w-sm rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-xl" role="status" aria-live="polite">
+    <div class="flex items-start gap-3">
+      <div id="toastIcon" class="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full"></div>
+      <div class="min-w-0 flex-1">
+        <p id="toastTitle" class="text-sm font-semibold text-slate-900"></p>
+        <p id="toastMessage" class="mt-0.5 text-sm text-slate-500"></p>
+      </div>
+      <button id="toastAction" type="button" class="hidden shrink-0 rounded-lg px-2 py-1 text-sm font-semibold text-blue-700 transition hover:bg-blue-50"></button>
+    </div>
+  </div>
+
+  <script>
+    /* ---------- ข้อมูลตั้งต้น ---------- */
+    const LEVEL_GRADES = { 'มัธยมศึกษาตอนต้น': ['ม.1', 'ม.2', 'ม.3'], 'มัธยมศึกษาตอนปลาย': ['ม.4', 'ม.5', 'ม.6'] };
+    const ROOMS_PER_GRADE = 8;
+    const HIGH_LOAD_HOURS = 24;
+    const STATUS_ORDER = { 'ฉบับร่าง': 0, 'ใช้งานอยู่': 1, 'ปิดใช้งาน': 2 };
+    const TYPE_ORDER = { 'พื้นฐาน': 0, 'เพิ่มเติม': 1, 'กิจกรรม': 2 };
+    const GROUPS = ['ภาษาไทย', 'คณิตศาสตร์', 'วิทยาศาสตร์และเทคโนโลยี', 'สังคมศึกษา ศาสนา และวัฒนธรรม', 'สุขศึกษาและพลศึกษา', 'ศิลปะ', 'การงานอาชีพ', 'ภาษาต่างประเทศ', 'กิจกรรมพัฒนาผู้เรียน'];
+
+    // tag ใช้เลือกรายวิชาตามรูปแบบแผน: core = พื้นฐาน, act = กิจกรรม, sci = วิทย์-คณิต, en/cn = ภาษา
+    const SUBJECT_BLUEPRINT = [
+      { letter: 'ท', name: 'ภาษาไทย', group: 0, type: 'พื้นฐาน', credits: 1.5, hours: 3, seq: 1, tag: 'core' },
+      { letter: 'ค', name: 'คณิตศาสตร์', group: 1, type: 'พื้นฐาน', credits: 1.5, hours: 3, seq: 1, tag: 'core' },
+      { letter: 'ว', name: 'วิทยาศาสตร์และเทคโนโลยี', group: 2, type: 'พื้นฐาน', credits: 1.5, hours: 3, seq: 1, tag: 'core' },
+      { letter: 'ว', name: 'วิทยาการคำนวณ', group: 2, type: 'พื้นฐาน', credits: 0.5, hours: 1, seq: 3, tag: 'core' },
+      { letter: 'ส', name: 'สังคมศึกษา', group: 3, type: 'พื้นฐาน', credits: 1.5, hours: 3, seq: 1, tag: 'core' },
+      { letter: 'ส', name: 'ประวัติศาสตร์', group: 3, type: 'พื้นฐาน', credits: 0.5, hours: 1, seq: 3, tag: 'core' },
+      { letter: 'พ', name: 'สุขศึกษาและพลศึกษา', group: 4, type: 'พื้นฐาน', credits: 1, hours: 2, seq: 1, tag: 'core' },
+      { letter: 'ศ', name: 'ศิลปะ', group: 5, type: 'พื้นฐาน', credits: 1, hours: 2, seq: 1, tag: 'core' },
+      { letter: 'ง', name: 'การงานอาชีพ', group: 6, type: 'พื้นฐาน', credits: 1, hours: 2, seq: 1, tag: 'core' },
+      { letter: 'อ', name: 'ภาษาอังกฤษ', group: 7, type: 'พื้นฐาน', credits: 1.5, hours: 3, seq: 1, tag: 'core' },
+      { letter: 'ค', name: 'คณิตศาสตร์เพิ่มเติม', group: 1, type: 'เพิ่มเติม', credits: 1.5, hours: 3, seq: 1, tag: 'sci' },
+      { letter: 'ว', name: 'วิทยาศาสตร์เพิ่มเติม', group: 2, type: 'เพิ่มเติม', credits: 1.5, hours: 3, seq: 1, tag: 'sci' },
+      { letter: 'ว', name: 'โครงงานวิทยาศาสตร์', group: 2, type: 'เพิ่มเติม', credits: 1, hours: 2, seq: 3, tag: 'sci' },
+      { letter: 'อ', name: 'ภาษาอังกฤษเพื่อการสื่อสาร', group: 7, type: 'เพิ่มเติม', credits: 1, hours: 2, seq: 1, tag: 'en' },
+      { letter: 'จ', name: 'ภาษาจีน', group: 7, type: 'เพิ่มเติม', credits: 1, hours: 2, seq: 1, tag: 'cn' },
+      { letter: 'ก', name: 'แนะแนว', group: 8, type: 'กิจกรรม', credits: 0, hours: 1, seq: 1, tag: 'act' },
+      { letter: 'ก', name: 'ชุมนุม', group: 8, type: 'กิจกรรม', credits: 0, hours: 1, seq: 3, tag: 'act' }
+    ];
+    const PLAN_TEMPLATES = { regular: ['core', 'act', 'en'], sci: ['core', 'act', 'sci'], lang: ['core', 'act', 'en', 'cn'] };
+
+    function buildCatalog() {
+      const list = [];
+      ['ม.1', 'ม.2', 'ม.3', 'ม.4', 'ม.5', 'ม.6'].forEach((grade) => {
+        const g = Number(grade.slice(2));
+        const levelDigit = g <= 3 ? '2' : '3';
+        const yearIndex = (g - 1) % 3;
+        ['1', '2'].forEach((term) => {
+          SUBJECT_BLUEPRINT.forEach((bp) => {
+            const typeDigit = bp.type === 'พื้นฐาน' ? '1' : bp.type === 'เพิ่มเติม' ? '2' : '9';
+            const code = `${bp.letter}${levelDigit}${yearIndex + 1}${typeDigit}${String(bp.seq + Number(term) - 1).padStart(2, '0')}`;
+            const name = bp.type === 'กิจกรรม' ? bp.name : `${bp.name} ${yearIndex * 2 + Number(term)}`;
+            list.push({ id: code, code, name, group: GROUPS[bp.group], type: bp.type, credits: bp.credits, hours: bp.hours, grade, term, tag: bp.tag });
+          });
+        });
+      });
+      return list;
+    }
+    const catalog = buildCatalog();
+    const subjectById = new Map(catalog.map((s) => [s.id, s]));
+
+    const teachers = [
+      { id: 't01', name: 'อ.ปาริฉัตร ทองดี', group: 'ภาษาไทย' },
+      { id: 't02', name: 'อ.วรรณา ใจงาม', group: 'ภาษาไทย' },
+      { id: 't03', name: 'อ.ชลธิชา วัฒนกุล', group: 'คณิตศาสตร์' },
+      { id: 't04', name: 'อ.กมลชนก พรหมมา', group: 'คณิตศาสตร์' },
+      { id: 't05', name: 'อ.อนุชา แสงทอง', group: 'คณิตศาสตร์' },
+      { id: 't06', name: 'อ.ปวีณา ศรีสุข', group: 'วิทยาศาสตร์และเทคโนโลยี' },
+      { id: 't07', name: 'อ.พิมพ์ชนก รุ่งเรือง', group: 'วิทยาศาสตร์และเทคโนโลยี' },
+      { id: 't08', name: 'อ.ณัฐพล มีสุข', group: 'วิทยาศาสตร์และเทคโนโลยี' },
+      { id: 't09', name: 'อ.มณฑิรา บุญมา', group: 'สังคมศึกษา ศาสนา และวัฒนธรรม' },
+      { id: 't10', name: 'อ.สมศักดิ์ ชัยวงศ์', group: 'สังคมศึกษา ศาสนา และวัฒนธรรม' },
+      { id: 't11', name: 'อ.ธนกฤต แก้วใส', group: 'สุขศึกษาและพลศึกษา' },
+      { id: 't12', name: 'อ.อรอุมา ศิลปชัย', group: 'ศิลปะ' },
+      { id: 't13', name: 'อ.ประเสริฐ ทำดี', group: 'การงานอาชีพ' },
+      { id: 't14', name: 'อ.จิราพร สายทอง', group: 'ภาษาต่างประเทศ' },
+      { id: 't15', name: 'อ.ศศิธร นาคสวัสดิ์', group: 'ภาษาต่างประเทศ' },
+      { id: 't16', name: 'อ.หลี่ ฮวา', group: 'ภาษาต่างประเทศ' },
+      { id: 't17', name: 'อ.สุนิสา ปัญญาดี', group: 'กิจกรรมพัฒนาผู้เรียน' },
+      { id: 't18', name: 'อ.กิตติพงษ์ ศรีเมือง', group: 'ภาษาไทย' },
+      { id: 't19', name: 'อ.รัชนี วงศ์ใหญ่', group: 'วิทยาศาสตร์และเทคโนโลยี' },
+      { id: 't20', name: 'อ.วีระ พลอยงาม', group: 'สังคมศึกษา ศาสนา และวัฒนธรรม' },
+      { id: 't21', name: 'อ.ดารุณี คำแสง', group: 'ภาษาต่างประเทศ' },
+      { id: 't22', name: 'อ.ชัยวัฒน์ บุญยืน', group: 'สุขศึกษาและพลศึกษา' },
+      { id: 't23', name: 'อ.นภัสสร ทองคำ', group: 'ศิลปะ' },
+      { id: 't24', name: 'อ.สมพร รักงาน', group: 'การงานอาชีพ' },
+      { id: 't25', name: 'อ.ภานุวัฒน์ เพชรรัตน์', group: 'คณิตศาสตร์' },
+      { id: 't26', name: 'อ.อัญชลี มณีวงศ์', group: 'กิจกรรมพัฒนาผู้เรียน' }
+    ];
+    const teacherById = new Map(teachers.map((t) => [t.id, t]));
+
+    let curricula = [
+      { id: 'CUR-2570-01', name: 'หลักสูตรสถานศึกษา ระดับมัธยมศึกษาตอนต้น', year: '2570', level: 'มัธยมศึกษาตอนต้น', status: 'ฉบับร่าง', updated: '30 ก.ย. 2569', editor: 'ครูสุนิสา' },
+      { id: 'CUR-2569-02', name: 'หลักสูตรสถานศึกษา ระดับมัธยมศึกษาตอนปลาย', year: '2569', level: 'มัธยมศึกษาตอนปลาย', status: 'ใช้งานอยู่', updated: '12 พ.ค. 2569', editor: 'ครูวราภรณ์' },
+      { id: 'CUR-2568-01', name: 'หลักสูตรสถานศึกษา ระดับมัธยมศึกษาตอนต้น', year: '2568', level: 'มัธยมศึกษาตอนต้น', status: 'ใช้งานอยู่', updated: '02 พ.ค. 2568', editor: 'ครูสุนิสา' },
+      { id: 'CUR-2566-01', name: 'หลักสูตรสถานศึกษา ระดับมัธยมศึกษาตอนต้น (ฉบับเดิม)', year: '2566', level: 'มัธยมศึกษาตอนต้น', status: 'ปิดใช้งาน', updated: '18 มี.ค. 2568', editor: 'ครูสุนิสา' }
+    ];
+    let plans = [];
+    let planSubjects = [];
+    let uid = 0;
+    const nextId = (prefix) => `${prefix}${++uid}`;
+
+    function seedPlan(curriculumId, grade, name, rooms, template, assignMode = 'all') {
+      const plan = { id: nextId('p'), curriculumId, grade, name, rooms: rooms.map((n) => `${grade}/${n}`) };
+      plans.push(plan);
+      const tags = PLAN_TEMPLATES[template];
+      catalog.filter((s) => s.grade === grade && tags.includes(s.tag)).forEach((subject, index) => {
+        const skip = assignMode === 'none' || (assignMode === 'partial' && index % 4 === 1);
+        planSubjects.push({ id: nextId('ps'), planId: plan.id, subjectId: subject.id, term: subject.term, teachers: [], open: !(template === 'lang' && subject.tag === 'act' && subject.name === 'ชุมนุม'), pendingAssign: !skip, dropLastRoom: assignMode === 'partial' && index % 4 === 2 });
+      });
+      return plan;
+    }
+    [
+      ['CUR-2570-01', 'ม.1', 'ห้องเรียนปกติ', [1, 2, 3, 4], 'regular', 'all'],
+      ['CUR-2570-01', 'ม.1', 'ห้องเรียนพิเศษวิทยาศาสตร์-คณิตศาสตร์', [5], 'sci', 'all'],
+      ['CUR-2570-01', 'ม.1', 'ห้องเรียนพิเศษภาษา', [6], 'lang', 'all'],
+      ['CUR-2570-01', 'ม.2', 'ห้องเรียนปกติ', [1, 2, 3, 4], 'regular', 'partial'],
+      ['CUR-2570-01', 'ม.2', 'ห้องเรียนพิเศษวิทยาศาสตร์-คณิตศาสตร์', [5], 'sci', 'all'],
+      ['CUR-2570-01', 'ม.3', 'ห้องเรียนปกติ', [1, 2, 3, 4], 'regular', 'all'],
+      ['CUR-2570-01', 'ม.3', 'ห้องเรียนพิเศษวิทยาศาสตร์-คณิตศาสตร์', [5], 'sci', 'none'],
+      ['CUR-2569-02', 'ม.4', 'แผนการเรียนวิทยาศาสตร์-คณิตศาสตร์', [1, 2, 3], 'sci', 'all'],
+      ['CUR-2569-02', 'ม.4', 'แผนการเรียนศิลป์-ภาษา', [4, 5], 'lang', 'all'],
+      ['CUR-2569-02', 'ม.5', 'แผนการเรียนวิทยาศาสตร์-คณิตศาสตร์', [1, 2, 3], 'sci', 'all'],
+      ['CUR-2569-02', 'ม.5', 'แผนการเรียนศิลป์-ภาษา', [4, 5], 'lang', 'all'],
+      ['CUR-2569-02', 'ม.6', 'แผนการเรียนวิทยาศาสตร์-คณิตศาสตร์', [1, 2, 3], 'sci', 'all'],
+      ['CUR-2569-02', 'ม.6', 'แผนการเรียนศิลป์-ภาษา', [4, 5], 'lang', 'all'],
+      ['CUR-2568-01', 'ม.1', 'ห้องเรียนปกติ', [1, 2, 3, 4], 'regular', 'all'],
+      ['CUR-2568-01', 'ม.1', 'ห้องเรียนพิเศษวิทยาศาสตร์-คณิตศาสตร์', [5], 'sci', 'all'],
+      ['CUR-2568-01', 'ม.2', 'ห้องเรียนปกติ', [1, 2, 3, 4, 5], 'regular', 'all'],
+      ['CUR-2568-01', 'ม.3', 'ห้องเรียนปกติ', [1, 2, 3, 4, 5], 'regular', 'all'],
+      ['CUR-2566-01', 'ม.1', 'ห้องเรียนปกติ', [1, 2, 3, 4, 5], 'regular', 'all'],
+      ['CUR-2566-01', 'ม.2', 'ห้องเรียนปกติ', [1, 2, 3, 4, 5], 'regular', 'all'],
+      ['CUR-2566-01', 'ม.3', 'ห้องเรียนปกติ', [1, 2, 3, 4, 5], 'regular', 'all']
+    ].forEach((row) => seedPlan(...row));
+
+    /* ---------- state และ helper ---------- */
+    const state = {
+      curriculumId: null, planId: null, term: '1', gradeFilter: 'ทั้งหมด',
+      rowSearch: '', rowGroup: 'ทั้งหมด', rowStatus: 'ทั้งหมด', selected: new Set(),
+      curriculumMode: 'create', method: 'copy', editingCurriculumId: null,
+      planMode: 'create', editingPlanId: null, planRooms: new Set(),
+      addTerm: '1', addSelected: new Set()
+    };
+    const $ = (id) => document.getElementById(id);
+    const escapeHTML = (value) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    const fmt = (n) => Number(n).toLocaleString('th-TH', { maximumFractionDigits: 1 });
+    const todayText = () => new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium' }).format(new Date());
+    const icon = (path, cls = 'h-4 w-4') => `<svg class="${cls}" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${path}"/></svg>`;
+    const ICONS = {
+      open: 'M8.59 16.59 13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41Z',
+      copy: 'M16 1H4a2 2 0 0 0-2 2v14h2V3h12V1Zm3 4H8a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2Zm0 16H8V7h11v14Z',
+      edit: 'M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25ZM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83Z',
+      trash: 'M6 19a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V7H6v12ZM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4Z',
+      download: 'm12 16 5-5h-3V4h-4v7H7l5 5Zm-7 2h14v2H5v-2Z',
+      swap: 'M7 7h11l-3-3 1.4-1.4L22 8l-5.6 5.4L15 12l3-3H7V7Zm10 10H6l3 3-1.4 1.4L2 16l5.6-5.4L9 12l-3 3h11v2Z',
+      plus: 'M19 11h-6V5h-2v6H5v2h6v6h2v-6h6v-2Z',
+      check: 'm9 16.17-3.88-3.88-1.41 1.42L9 19 21 7l-1.41-1.41L9 16.17Z',
+      warn: 'M1 21h22L12 2 1 21Zm12-3h-2v-2h2v2Zm0-4h-2v-4h2v4Z',
+      book: 'M5 3h9.59L19 7.41V21H5V3Zm2 2v14h10V8h-4V5H7Zm2 6h6v2H9v-2Zm0 4h6v2H9v-2Z',
+      layers: 'M12 2 1 7l11 5 9-4.09V17h2V7L12 2Zm-7 10.18v4L12 20l7-3.82v-4L12 16l-7-3.82Z',
+      users: 'M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13Zm8 0c-.29 0-.62.02-.97.05A4.2 4.2 0 0 1 17 16.5V19h6v-2.5c0-2.33-4.67-3.5-7-3.5Z',
+      wand: 'M7.5 5.6 10 7 8.6 4.5 10 2 7.5 3.4 5 2l1.4 2.5L5 7l2.5-1.4Zm12 9.8L17 14l1.4 2.5L17 19l2.5-1.4L22 19l-1.4-2.5L22 14l-2.5 1.4ZM22 2l-2.5 1.4L17 2l1.4 2.5L17 7l2.5-1.4L22 7l-1.4-2.5L22 2Zm-7.63 5.29a1 1 0 0 0-1.41 0L1.29 18.96a1 1 0 0 0 0 1.41l2.34 2.34a1 1 0 0 0 1.41 0L16.7 11.05a1 1 0 0 0 0-1.41l-2.33-2.35Z',
+      shield: 'M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm-2 15-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9Z'
+    };
+    const statusBadge = (status) => {
+      const tone = { 'ฉบับร่าง': 'bg-amber-50 text-amber-700 ring-amber-200', 'ใช้งานอยู่': 'bg-emerald-50 text-emerald-700 ring-emerald-200', 'ปิดใช้งาน': 'bg-slate-100 text-slate-500 ring-slate-200' }[status];
+      return `<span class="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${tone}"><span class="h-1.5 w-1.5 rounded-full bg-current"></span>${escapeHTML(status)}</span>`;
+    };
+    const typeBadge = (type) => {
+      const tone = { 'พื้นฐาน': 'bg-blue-50 text-blue-700', 'เพิ่มเติม': 'bg-violet-50 text-violet-700', 'กิจกรรม': 'bg-slate-100 text-slate-600' }[type];
+      return `<span class="whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${tone}">${type}</span>`;
+    };
+    const roomRange = (rooms) => {
+      if (!rooms.length) return '-';
+      const nums = rooms.map((r) => Number(r.split('/')[1])).sort((a, b) => a - b);
+      const grade = rooms[0].split('/')[0];
+      const contiguous = nums.every((n, i) => i === 0 || n === nums[i - 1] + 1);
+      if (nums.length > 2 && contiguous) return `${grade}/${nums[0]}–${grade}/${nums[nums.length - 1]}`;
+      return nums.map((n) => `${grade}/${n}`).join(', ');
+    };
+
+    const curriculumOf = (id) => curricula.find((c) => c.id === id);
+    const planOf = (id) => plans.find((p) => p.id === id);
+    const plansOf = (curriculumId) => plans.filter((p) => p.curriculumId === curriculumId).sort((a, b) => a.grade.localeCompare(b.grade, 'th') || a.name.localeCompare(b.name, 'th'));
+    const recordsOfPlan = (planId) => planSubjects.filter((r) => r.planId === planId);
+    const recordsOfCurriculum = (curriculumId) => { const ids = new Set(plansOf(curriculumId).map((p) => p.id)); return planSubjects.filter((r) => ids.has(r.planId)); };
+    // หนึ่งรายวิชาในแผนมีครูได้หลายคน แต่ละคนระบุห้องที่สอน: teachers = [{ id, rooms: ['ม.1/1', ...] }]
+    const roomNo = (room) => Number(room.split('/')[1]);
+    const sortRooms = (rooms) => [...new Set(rooms)].sort((a, b) => roomNo(a) - roomNo(b));
+    const teacherIdsOf = (r) => r.teachers.map((t) => t.id);
+    const uncoveredRooms = (r, list = r.teachers) => { const covered = new Set(list.flatMap((t) => t.rooms)); return planOf(r.planId).rooms.filter((room) => !covered.has(room)); };
+    const needsTeacher = (r) => r.open && uncoveredRooms(r).length > 0;
+    const distinctTeachers = (records) => new Set(records.flatMap(teacherIdsOf)).size;
+    const shortName = (t) => t.name.split(' ')[0];
+    const shortRooms = (rooms, plan) => (plan.rooms.length > 1 && rooms.length === plan.rooms.length ? 'ทุกห้อง' : `ห้อง ${rooms.map(roomNo).join(', ')}`);
+
+    // ภาระสอน (ชม./สัปดาห์) ของครูในหลักสูตรเดียวกัน = ชม. ของวิชา × จำนวนห้องที่ครูคนนั้นสอน
+    function teacherLoads(curriculumId, excludeRecordId) {
+      const loads = new Map(teachers.map((t) => [t.id, { '1': 0, '2': 0 }]));
+      recordsOfCurriculum(curriculumId).forEach((r) => {
+        if (!r.open || r.id === excludeRecordId) return;
+        const hours = subjectById.get(r.subjectId).hours;
+        r.teachers.forEach((t) => { loads.get(t.id)[r.term] += hours * t.rooms.length; });
+      });
+      return loads;
+    }
+
+    // เติมครูให้ห้องที่ยังไม่มีครู โดยเลือกครูในกลุ่มสาระที่มีภาระสอนน้อยที่สุดทีละห้อง
+    function autoAssign(records) {
+      if (!records.length) return 0;
+      const loads = teacherLoads(planOf(records[0].planId).curriculumId);
+      let count = 0;
+      records.forEach((r) => {
+        const missing = uncoveredRooms(r);
+        if (!r.open || !missing.length) return;
+        const subject = subjectById.get(r.subjectId);
+        const pool = teachers.filter((t) => t.group === subject.group);
+        if (!pool.length) return;
+        let last = null;
+        missing.forEach((room) => {
+          // ให้ครูคนเดิมสอนต่อเนื่องครั้งละ 2 ห้อง เพื่อไม่ให้วิชาเดียวกระจายครูมากเกินไป
+          const keep = last && last.rooms.length < 2 ? teacherById.get(last.id) : null;
+          const pick = keep || pool.slice().sort((a, b) => loads.get(a.id)[r.term] - loads.get(b.id)[r.term])[0];
+          let entry = r.teachers.find((t) => t.id === pick.id);
+          if (!entry) { entry = { id: pick.id, rooms: [] }; r.teachers.push(entry); }
+          entry.rooms = sortRooms([...entry.rooms, room]);
+          loads.get(pick.id)[r.term] += subject.hours;
+          last = entry;
+        });
+        count++;
+      });
+      return count;
+    }
+
+    // ปรับห้องของครูให้ตรงกับห้องของแผนหลังแก้ไขแผน: ครูคนเดียวสอนทุกห้อง, หลายคนตัดห้องที่ไม่มีแล้วออก
+    function syncPlanRooms(plan) {
+      recordsOfPlan(plan.id).forEach((r) => {
+        if (r.teachers.length === 1) { r.teachers[0].rooms = [...plan.rooms]; return; }
+        r.teachers.forEach((t) => { t.rooms = t.rooms.filter((room) => plan.rooms.includes(room)); });
+        r.teachers = r.teachers.filter((t) => t.rooms.length);
+      });
+    }
+    const cloneTeachers = (list) => list.map((t) => ({ id: t.id, rooms: [...t.rooms] }));
+
+    function snapshot() { return JSON.stringify({ curricula, plans, planSubjects }); }
+    function restore(json) { const data = JSON.parse(json); curricula = data.curricula; plans = data.plans; planSubjects = data.planSubjects; }
+    function touch() { const c = curriculumOf(state.curriculumId); if (c) { c.updated = todayText(); c.editor = 'ครูสุนิสา'; } }
+
+    // กำหนดครูตั้งต้นแบบกระจายภาระงานให้สมดุล (บางวิชาเว้นห้องสุดท้ายไว้เพื่อแสดงสถานะยังไม่ครบ)
+    curricula.forEach((c) => autoAssign(recordsOfCurriculum(c.id).filter((r) => r.pendingAssign)));
+    planSubjects.forEach((record) => {
+      if (record.dropLastRoom && record.teachers.length) {
+        const plan = planOf(record.planId);
+        const last = plan.rooms[plan.rooms.length - 1];
+        record.teachers.forEach((t) => { t.rooms = t.rooms.filter((room) => room !== last); });
+        record.teachers = record.teachers.filter((t) => t.rooms.length);
+      }
+      delete record.pendingAssign;
+      delete record.dropLastRoom;
+    });
+
+    /* ---------- toast / modal ---------- */
+    let toastTimer;
+    function showToast(title, message = '', { tone = 'success', undo } = {}) {
+      const tones = { success: ['bg-emerald-100 text-emerald-600', ICONS.check], warning: ['bg-amber-100 text-amber-600', ICONS.warn], info: ['bg-blue-100 text-blue-600', ICONS.shield] };
+      const [cls, path] = tones[tone] || tones.success;
+      $('toastIcon').className = `mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${cls}`;
+      $('toastIcon').innerHTML = icon(path);
+      $('toastTitle').textContent = title;
+      $('toastMessage').textContent = message;
+      const action = $('toastAction');
+      action.classList.toggle('hidden', !undo);
+      action.textContent = 'เลิกทำ';
+      action.onclick = undo ? () => { restore(undo); hideToast(); renderAll(); showToast('ยกเลิกการเปลี่ยนแปลงแล้ว', '', { tone: 'info' }); } : null;
+      const toast = $('toast');
+      toast.classList.remove('hidden', 'toast-show');
+      void toast.offsetWidth;
+      toast.classList.add('toast-show');
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(hideToast, undo ? 7000 : 3500);
+    }
+    function hideToast() { $('toast').classList.add('hidden'); }
+    function openModal(id) { const el = $(id); el.classList.remove('hidden'); el.classList.add('flex'); }
+    function closeModal(id) { const el = $(id); el.classList.add('hidden'); el.classList.remove('flex'); }
+    function confirmAction({ title, message, okLabel = 'ยืนยัน', tone = 'danger', onConfirm, cancelLabel = 'ยกเลิก', onCancel }) {
+      const tones = { danger: ['bg-rose-50 text-rose-600', ICONS.trash, 'bg-rose-600 hover:bg-rose-700'], warning: ['bg-amber-50 text-amber-600', ICONS.warn, 'bg-amber-600 hover:bg-amber-700'], primary: ['bg-blue-50 text-blue-600', ICONS.shield, 'bg-blue-600 hover:bg-blue-700'] };
+      const [iconCls, path, btnCls] = tones[tone];
+      $('confirmIcon').className = `mx-auto flex h-12 w-12 items-center justify-center rounded-2xl ${iconCls}`;
+      $('confirmIcon').innerHTML = icon(path, 'h-6 w-6');
+      $('confirmTitle').textContent = title;
+      $('confirmMessage').innerHTML = message;
+      $('confirmOk').className = `rounded-xl px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition ${btnCls}`;
+      $('confirmOk').textContent = okLabel;
+      $('confirmCancel').textContent = cancelLabel;
+      $('confirmOk').onclick = () => { closeModal('confirmModal'); onConfirm(); };
+      $('confirmCancel').onclick = onCancel ? () => { closeModal('confirmModal'); onCancel(); } : null;
+      openModal('confirmModal');
+    }
+
+    /* ---------- หน้ารวมหลักสูตร ---------- */
+    function renderListStats() {
+      const active = curricula.filter((c) => c.status === 'ใช้งานอยู่').length;
+      const drafts = curricula.filter((c) => c.status === 'ฉบับร่าง').length;
+      const planCount = plans.filter((p) => curriculumOf(p.curriculumId)?.status !== 'ปิดใช้งาน').length;
+      const missing = curricula.filter((c) => c.status !== 'ปิดใช้งาน').reduce((sum, c) => sum + recordsOfCurriculum(c.id).filter(needsTeacher).length, 0);
+      const cards = [
+        { title: 'หลักสูตรทั้งหมด', value: curricula.length, unit: 'หลักสูตร', text: `ใช้งานอยู่ ${active} · ฉบับร่าง ${drafts}`, tone: 'bg-blue-50 text-blue-600', icon: ICONS.book },
+        { title: 'แผนการเรียนที่เปิดใช้', value: planCount, unit: 'แผน', text: 'ในหลักสูตรที่ใช้งานและฉบับร่าง', tone: 'bg-violet-50 text-violet-600', icon: ICONS.layers },
+        { title: 'ครูผู้สอน', value: teachers.length, unit: 'คน', text: `ครบ ${GROUPS.length} กลุ่มสาระการเรียนรู้`, tone: 'bg-sky-50 text-sky-600', icon: ICONS.users },
+        { title: 'รายวิชาที่ยังไม่มีครู', value: missing, unit: 'รายวิชา', text: missing ? 'คลิกเพื่อไปกำหนดครูทันที' : 'กำหนดครูครบทุกรายวิชาแล้ว', tone: missing ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600', icon: missing ? ICONS.warn : ICONS.check, action: missing ? 'jump-missing' : '' }
+      ];
+      $('listStats').innerHTML = cards.map((card) => `
+        <${card.action ? `button type="button" data-action="${card.action}"` : 'div'} class="rounded-2xl border border-slate-200 bg-white p-5 text-left shadow-sm transition ${card.action ? 'hover:border-amber-200 hover:shadow-soft focus:outline-none focus:ring-4 focus:ring-amber-100' : ''}">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-slate-600">${card.title}</p>
+              <div class="mt-3 flex items-baseline gap-2"><span class="text-3xl font-bold text-slate-950">${fmt(card.value)}</span><span class="text-sm font-semibold text-slate-500">${card.unit}</span></div>
+              <p class="mt-2 text-sm ${card.action ? 'font-semibold text-amber-700' : 'text-slate-500'}">${card.text}${card.action ? ' →' : ''}</p>
+            </div>
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${card.tone}">${icon(card.icon, 'h-5 w-5')}</div>
+          </div>
+        </${card.action ? 'button' : 'div'}>`).join('');
+    }
+
+    function renderYearOptions() {
+      const years = [...new Set(curricula.map((c) => c.year))].sort().reverse();
+      const current = $('listYear').value || 'ทั้งหมด';
+      $('listYear').innerHTML = `<option value="ทั้งหมด">ทุกปีการศึกษา</option>${years.map((y) => `<option>${y}</option>`).join('')}`;
+      $('listYear').value = years.includes(current) ? current : 'ทั้งหมด';
+    }
+
+    function renderCurriculumGrid() {
+      const q = $('listSearch').value.trim().toLowerCase();
+      const year = $('listYear').value;
+      const level = $('listLevel').value;
+      const status = $('listStatus').value;
+      const rows = curricula
+        .filter((c) => (!q || `${c.id} ${c.name}`.toLowerCase().includes(q)) && (year === 'ทั้งหมด' || c.year === year) && (level === 'ทั้งหมด' || c.level === level) && (status === 'ทั้งหมด' || c.status === status))
+        .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || b.year.localeCompare(a.year));
+      $('listCount').textContent = `${rows.length} หลักสูตร`;
+      $('listEmpty').classList.toggle('hidden', rows.length > 0);
+      $('curriculumGrid').innerHTML = rows.map((c) => {
+        const cPlans = plansOf(c.id);
+        const records = recordsOfCurriculum(c.id);
+        const open = records.filter((r) => r.open);
+        const assigned = open.filter((r) => !needsTeacher(r)).length;
+        const pct = open.length ? Math.round((assigned / open.length) * 100) : 0;
+        const grades = LEVEL_GRADES[c.level].map((g) => `<span class="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">${g} · ${cPlans.filter((p) => p.grade === g).length} แผน</span>`).join('');
+        const muted = c.status === 'ปิดใช้งาน';
+        return `
+          <article class="flex flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition hover:border-blue-200 lg:p-6 ${muted ? 'opacity-75' : ''}">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2"><span class="font-mono text-xs font-semibold text-blue-700">${c.id}</span>${statusBadge(c.status)}</div>
+                <h3 class="mt-2 text-lg font-semibold leading-snug text-slate-950">${escapeHTML(c.name)}</h3>
+                <p class="mt-1 text-sm text-slate-500">เริ่มใช้ปีการศึกษา ${c.year} · ${c.level}</p>
+              </div>
+              <span class="shrink-0 rounded-2xl bg-blue-50 px-3 py-2 text-center"><span class="block text-[11px] font-semibold text-blue-600">ปีการศึกษา</span><span class="block text-lg font-bold text-blue-700">${c.year}</span></span>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2">${grades}</div>
+            <dl class="mt-5 grid grid-cols-3 gap-3 rounded-2xl bg-slate-50 p-4 text-center">
+              <div><dt class="text-xs text-slate-500">แผนการเรียน</dt><dd class="mt-1 text-lg font-bold text-slate-900">${cPlans.length}</dd></div>
+              <div><dt class="text-xs text-slate-500">รายวิชาในแผน</dt><dd class="mt-1 text-lg font-bold text-slate-900">${records.length}</dd></div>
+              <div><dt class="text-xs text-slate-500">ครูผู้สอน</dt><dd class="mt-1 text-lg font-bold text-slate-900">${distinctTeachers(records)}</dd></div>
+            </dl>
+            <div class="mt-4">
+              <div class="flex items-center justify-between text-xs"><span class="font-semibold text-slate-600">กำหนดครูผู้สอนแล้ว</span><span class="font-semibold ${pct === 100 ? 'text-emerald-600' : 'text-amber-600'}">${assigned}/${open.length} วิชา (${pct}%)</span></div>
+              <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${pct === 100 ? 'bg-emerald-500' : 'bg-amber-400'}" style="width:${pct}%"></div></div>
+            </div>
+            <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
+              <p class="text-xs text-slate-400">แก้ไขล่าสุด ${escapeHTML(c.updated)} · ${escapeHTML(c.editor)}</p>
+              <div class="flex items-center gap-1">
+                <button data-action="copy-curriculum" data-id="${c.id}" type="button" title="คัดลอกไปปีการศึกษาใหม่" aria-label="คัดลอกไปปีการศึกษาใหม่" class="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-blue-700">${icon(ICONS.copy)}</button>
+                <button data-action="export-curriculum" data-id="${c.id}" type="button" title="ส่งออก Excel" aria-label="ส่งออก Excel" class="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-emerald-700">${icon(ICONS.download)}</button>
+                <button data-action="delete-curriculum" data-id="${c.id}" type="button" title="ลบหลักสูตร" aria-label="ลบหลักสูตร" class="rounded-xl p-2 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600">${icon(ICONS.trash)}</button>
+                <button data-action="open-curriculum" data-id="${c.id}" type="button" class="ml-1 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">จัดการแผนการเรียน ${icon(ICONS.open)}</button>
+              </div>
+            </div>
+          </article>`;
+      }).join('');
+    }
+
+    function renderList() { renderListStats(); renderYearOptions(); renderCurriculumGrid(); }
+
+    /* ---------- หน้าหลักสูตร ---------- */
+    function openCurriculum(id, planId, opts = {}) {
+      const c = curriculumOf(id);
+      if (!c) return;
+      state.curriculumId = id;
+      const cPlans = plansOf(id);
+      state.planId = planId && planOf(planId) ? planId : cPlans[0]?.id || null;
+      state.gradeFilter = 'ทั้งหมด';
+      state.term = opts.term || '1';
+      state.rowStatus = opts.rowStatus || 'ทั้งหมด';
+      state.rowSearch = '';
+      state.rowGroup = 'ทั้งหมด';
+      state.selected.clear();
+      $('planSearch').value = '';
+      $('listView').classList.add('hidden');
+      $('workspaceView').classList.remove('hidden');
+      $('workspaceView').classList.remove('view-in'); void $('workspaceView').offsetWidth; $('workspaceView').classList.add('view-in');
+      renderWorkspace();
+      updateHash();
+      window.scrollTo({ top: 0 });
+    }
+    function backToList() {
+      state.curriculumId = null;
+      state.planId = null;
+      $('workspaceView').classList.add('hidden');
+      $('listView').classList.remove('hidden');
+      renderList();
+      updateHash();
+      window.scrollTo({ top: 0 });
+    }
+    function selectPlan(planId) {
+      state.planId = planId;
+      state.selected.clear();
+      state.rowSearch = '';
+      renderPlanList();
+      renderPlanDetail();
+      updateHash();
+      if (window.innerWidth < 1280) $('planDetail').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    function updateHash() {
+      const hash = state.curriculumId ? `#${state.curriculumId}${state.planId ? `/${state.planId}` : ''}` : ' ';
+      history.replaceState(null, '', hash === ' ' ? location.pathname : hash);
+    }
+
+    function renderWorkspace() {
+      const c = curriculumOf(state.curriculumId);
+      $('wsCrumb').textContent = `${c.id} · ปี ${c.year}`;
+      $('wsTitle').textContent = c.name;
+      $('wsStatus').innerHTML = statusBadge(c.status);
+      $('wsMeta').textContent = `${c.id} · เริ่มใช้ปีการศึกษา ${c.year} · ${c.level} · แก้ไขล่าสุด ${c.updated} โดย ${c.editor}`;
+      $('publishButton').classList.toggle('hidden', c.status !== 'ฉบับร่าง');
+      renderWsStats();
+      renderGradeChips();
+      renderPlanList();
+      renderPlanDetail();
+    }
+
+    function renderWsStats() {
+      const records = recordsOfCurriculum(state.curriculumId);
+      const open = records.filter((r) => r.open);
+      const missing = open.filter(needsTeacher).length;
+      const pct = open.length ? Math.round(((open.length - missing) / open.length) * 100) : 0;
+      const cPlans = plansOf(state.curriculumId);
+      const emptyPlans = cPlans.filter((p) => !recordsOfPlan(p.id).length).length;
+      const rooms = cPlans.reduce((sum, p) => sum + p.rooms.length, 0);
+      const loads = teacherLoads(state.curriculumId);
+      const overloaded = [...loads.values()].filter((l) => Math.max(l['1'], l['2']) > HIGH_LOAD_HOURS).length;
+      const teacherCount = distinctTeachers(records);
+      $('wsStats').innerHTML = `
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-start justify-between gap-4"><div><p class="text-sm font-semibold text-slate-600">แผนการเรียน</p><div class="mt-3 flex items-baseline gap-2"><span class="text-3xl font-bold text-slate-950">${cPlans.length}</span><span class="text-sm font-semibold text-slate-500">แผน</span></div><p class="mt-2 text-sm ${emptyPlans ? 'font-semibold text-amber-700' : 'text-slate-500'}">${emptyPlans ? `มี ${emptyPlans} แผนที่ยังไม่มีรายวิชา` : `ครอบคลุม ${rooms} ห้องเรียน`}</p></div><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">${icon(ICONS.layers, 'h-5 w-5')}</div></div>
+        </div>
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-start justify-between gap-4"><div><p class="text-sm font-semibold text-slate-600">รายวิชาในแผนทั้งหมด</p><div class="mt-3 flex items-baseline gap-2"><span class="text-3xl font-bold text-slate-950">${records.length}</span><span class="text-sm font-semibold text-slate-500">รายการ</span></div><p class="mt-2 text-sm text-slate-500">เปิดสอน ${open.length} · ปิดสอน ${records.length - open.length}</p></div><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">${icon(ICONS.book, 'h-5 w-5')}</div></div>
+        </div>
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-start justify-between gap-4"><div><p class="text-sm font-semibold text-slate-600">ครูผู้สอนในหลักสูตร</p><div class="mt-3 flex items-baseline gap-2"><span class="text-3xl font-bold text-slate-950">${teacherCount}</span><span class="text-sm font-semibold text-slate-500">คน</span></div><p class="mt-2 text-sm ${overloaded ? 'font-semibold text-rose-600' : 'text-slate-500'}">${overloaded ? `${overloaded} คนมีภาระสอนเกิน ${HIGH_LOAD_HOURS} ชม./สัปดาห์` : 'ภาระสอนอยู่ในเกณฑ์ทุกคน'}</p></div><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">${icon(ICONS.users, 'h-5 w-5')}</div></div>
+        </div>
+        <${missing ? 'button type="button" data-action="jump-missing-here"' : 'div'} class="rounded-2xl border ${missing ? 'border-amber-200 bg-amber-50/60 hover:shadow-soft focus:outline-none focus:ring-4 focus:ring-amber-100' : 'border-emerald-200 bg-emerald-50/60'} p-5 text-left shadow-sm transition">
+          <div class="flex items-start justify-between gap-4"><div class="min-w-0 flex-1"><p class="text-sm font-semibold text-slate-600">ความพร้อมของหลักสูตร</p><div class="mt-3 flex items-baseline gap-2"><span class="text-3xl font-bold ${missing ? 'text-amber-700' : 'text-emerald-700'}">${pct}%</span><span class="text-sm font-semibold text-slate-500">กำหนดครูแล้ว</span></div><div class="mt-3 h-2 overflow-hidden rounded-full bg-white"><div class="h-full rounded-full ${missing ? 'bg-amber-400' : 'bg-emerald-500'}" style="width:${pct}%"></div></div><p class="mt-2 text-sm font-semibold ${missing ? 'text-amber-700' : 'text-emerald-700'}">${missing ? `ยังไม่มีครู ${missing} วิชา — คลิกเพื่อไปกำหนด →` : 'พร้อมประกาศใช้'}</p></div><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${missing ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}">${icon(missing ? ICONS.warn : ICONS.check, 'h-5 w-5')}</div></div>
+        </${missing ? 'button' : 'div'}>`;
+    }
+
+    function renderGradeChips() {
+      const c = curriculumOf(state.curriculumId);
+      const options = ['ทั้งหมด', ...LEVEL_GRADES[c.level]];
+      $('gradeChips').innerHTML = options.map((g) => `<button data-action="grade-filter" data-grade="${g}" type="button" class="rounded-full border px-3 py-1.5 text-xs font-semibold transition ${state.gradeFilter === g ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-50'}">${g === 'ทั้งหมด' ? 'ทุกระดับชั้น' : g}</button>`).join('');
+    }
+
+    function renderPlanList() {
+      const c = curriculumOf(state.curriculumId);
+      const q = $('planSearch').value.trim().toLowerCase();
+      const all = plansOf(state.curriculumId);
+      const visible = all.filter((p) => (state.gradeFilter === 'ทั้งหมด' || p.grade === state.gradeFilter) && (!q || `${p.name} ${p.grade} ${p.rooms.join(' ')}`.toLowerCase().includes(q)));
+      $('planCount').textContent = `${all.length} แผน · ${all.reduce((s, p) => s + p.rooms.length, 0)} ห้องเรียน`;
+      const grades = LEVEL_GRADES[c.level].filter((g) => visible.some((p) => p.grade === g));
+      if (!visible.length) {
+        $('planList').innerHTML = `<div class="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center"><p class="text-sm font-semibold text-slate-700">${all.length ? 'ไม่พบแผนการเรียน' : 'ยังไม่มีแผนการเรียน'}</p><p class="mt-1 text-xs text-slate-500">${all.length ? 'ลองเปลี่ยนคำค้นหา' : 'กด “เพิ่มแผน” เพื่อเริ่มต้น'}</p></div>`;
+        return;
+      }
+      $('planList').innerHTML = grades.map((g) => `
+        <div>
+          <p class="mb-2 px-1 text-xs font-semibold uppercase tracking-[0.15em] text-slate-400">ชั้น${g.replace('ม.', 'มัธยมศึกษาปีที่ ')}</p>
+          <div class="space-y-2">
+            ${visible.filter((p) => p.grade === g).map((p) => {
+              const records = recordsOfPlan(p.id);
+              const missing = records.filter(needsTeacher).length;
+              const credits = records.reduce((s, r) => s + subjectById.get(r.subjectId).credits, 0);
+              const tag = !records.length
+                ? '<span class="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">ยังไม่มีวิชา</span>'
+                : missing
+                  ? `<span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700">ขาดครู ${missing}</span>`
+                  : `<span class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700">${icon(ICONS.check, 'h-3 w-3')}ครบ</span>`;
+              return `
+                <button data-action="select-plan" data-id="${p.id}" type="button" class="plan-item ${p.id === state.planId ? 'is-active' : ''} w-full rounded-2xl border border-slate-200 bg-white p-3.5 text-left transition hover:border-blue-200 hover:bg-slate-50">
+                  <div class="flex items-start justify-between gap-2">
+                    <span class="plan-item-name text-sm font-semibold leading-snug text-slate-900">${escapeHTML(p.name)}</span>
+                    ${tag}
+                  </div>
+                  <p class="mt-1.5 text-xs text-slate-500">${escapeHTML(roomRange(p.rooms))} · ${records.length} วิชา · ${fmt(credits)} นก.</p>
+                </button>`;
+            }).join('')}
+          </div>
+        </div>`).join('');
+    }
+
+    function filteredRows() {
+      const q = state.rowSearch.trim().toLowerCase();
+      return recordsOfPlan(state.planId)
+        .filter((r) => {
+          const s = subjectById.get(r.subjectId);
+          const names = r.teachers.map((t) => teacherById.get(t.id).name).join(' ');
+          if (state.term !== 'all' && r.term !== state.term) return false;
+          if (q && !`${s.code} ${s.name} ${names}`.toLowerCase().includes(q)) return false;
+          if (state.rowGroup !== 'ทั้งหมด' && s.group !== state.rowGroup) return false;
+          if (state.rowStatus === 'unassigned' && !needsTeacher(r)) return false;
+          if (state.rowStatus === 'assigned' && (!r.teachers.length || needsTeacher(r))) return false;
+          if (state.rowStatus === 'closed' && r.open) return false;
+          return true;
+        })
+        .sort((a, b) => {
+          const sa = subjectById.get(a.subjectId); const sb = subjectById.get(b.subjectId);
+          return a.term.localeCompare(b.term) || TYPE_ORDER[sa.type] - TYPE_ORDER[sb.type] || GROUPS.indexOf(sa.group) - GROUPS.indexOf(sb.group) || sa.code.localeCompare(sb.code, 'th');
+        });
+    }
+
+    function termSummary(planId, term) {
+      const records = recordsOfPlan(planId).filter((r) => (term === 'all' || r.term === term) && r.open);
+      const sum = (type) => records.filter((r) => subjectById.get(r.subjectId).type === type).reduce((s, r) => s + subjectById.get(r.subjectId).credits, 0);
+      return {
+        count: records.length,
+        basic: sum('พื้นฐาน'),
+        extra: sum('เพิ่มเติม'),
+        hours: records.reduce((s, r) => s + subjectById.get(r.subjectId).hours, 0),
+        missing: records.filter(needsTeacher).length
+      };
+    }
+
+    function renderPlanDetail() {
+      const plan = planOf(state.planId);
+      if (!plan) {
+        $('planDetail').innerHTML = `
+          <section class="rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-20 text-center">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">${icon(ICONS.layers, 'h-7 w-7')}</div>
+            <h3 class="mt-4 text-lg font-semibold text-slate-900">ยังไม่มีแผนการเรียนในหลักสูตรนี้</h3>
+            <p class="mt-1 text-sm text-slate-500">เพิ่มแผนการเรียนแรก ระบบจะใส่รายวิชาพื้นฐานและกำหนดครูให้อัตโนมัติ</p>
+            <button data-action="add-plan" type="button" class="mt-5 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700">${icon(ICONS.plus, 'h-5 w-5')}เพิ่มแผนการเรียน</button>
+          </section>`;
+        return;
+      }
+      const terms = [['1', 'ภาคเรียนที่ 1'], ['2', 'ภาคเรียนที่ 2'], ['all', 'ทั้งปีการศึกษา']];
+      const groupsInPlan = [...new Set(recordsOfPlan(plan.id).map((r) => subjectById.get(r.subjectId).group))];
+      $('planDetail').innerHTML = `
+        <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-soft">
+          <div class="flex flex-col gap-4 border-b border-slate-100 p-5 lg:flex-row lg:items-start lg:justify-between lg:p-6">
+            <div class="min-w-0">
+              <div class="flex flex-wrap items-center gap-2">
+                <span class="rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-bold text-white">${plan.grade}</span>
+                <h2 class="text-xl font-semibold text-slate-950">${escapeHTML(plan.name)}</h2>
+              </div>
+              <div class="mt-3 flex flex-wrap items-center gap-1.5">
+                <span class="mr-1 text-xs font-semibold text-slate-500">ห้องเรียน</span>
+                ${plan.rooms.map((r) => `<span class="rounded-lg border border-slate-200 bg-slate-50 px-2 py-0.5 text-xs font-semibold text-slate-700">${r}</span>`).join('')}
+              </div>
+            </div>
+            <div class="flex shrink-0 flex-wrap items-center gap-2">
+              <button data-action="edit-plan" type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">${icon(ICONS.edit)}แก้ไขแผน</button>
+              <button data-action="duplicate-plan" type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">${icon(ICONS.copy)}ทำสำเนา</button>
+              <button data-action="delete-plan" type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-rose-600 transition hover:border-rose-200 hover:bg-rose-50">${icon(ICONS.trash)}ลบแผน</button>
+            </div>
+          </div>
+
+          <div class="border-b border-slate-100 p-5 lg:px-6">
+            <div id="termTabs" class="grid gap-2 sm:grid-cols-3">
+              ${terms.map(([key, label]) => { const s = termSummary(plan.id, key); return `
+                <button data-action="set-term" data-term="${key}" type="button" class="term-tab ${state.term === key ? 'is-active' : ''} rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-blue-300">
+                  <span class="flex items-center justify-between gap-2"><span class="text-sm font-semibold">${label}</span>${s.missing ? `<span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">ขาดครู ${s.missing}</span>` : ''}</span>
+                  <span class="term-tab-meta mt-0.5 block text-xs text-slate-500">${s.count} วิชา · ${fmt(s.basic + s.extra)} หน่วยกิต · ${s.hours} ชม./สัปดาห์</span>
+                </button>`; }).join('')}
+            </div>
+            <div id="creditSummary" class="mt-4"></div>
+          </div>
+
+          <div class="flex flex-col gap-3 p-5 lg:flex-row lg:items-center lg:justify-between lg:px-6">
+            <div class="grid flex-1 gap-3 sm:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)_minmax(0,1fr)]">
+              <span class="relative block">
+                <span class="pointer-events-none absolute inset-y-0 left-3.5 flex items-center text-slate-400"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4a6 6 0 1 0 3.8 10.6l4.3 4.3 1.4-1.4-4.3-4.3A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg></span>
+                <input id="rowSearch" type="search" value="${escapeHTML(state.rowSearch)}" placeholder="ค้นหารหัสวิชา ชื่อวิชา หรือชื่อครู" class="w-full rounded-xl border border-slate-200 py-2.5 pl-10 pr-3 text-sm outline-none transition placeholder:text-slate-400 focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+              </span>
+              <select id="rowGroup" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                <option value="ทั้งหมด">ทุกกลุ่มสาระ</option>${groupsInPlan.map((g) => `<option ${state.rowGroup === g ? 'selected' : ''}>${g}</option>`).join('')}
+              </select>
+              <select id="rowStatus" class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                ${[['ทั้งหมด', 'ทุกสถานะ'], ['unassigned', 'ยังไม่กำหนดครู'], ['assigned', 'กำหนดครูแล้ว'], ['closed', 'ปิดการสอน']].map(([v, l]) => `<option value="${v}" ${state.rowStatus === v ? 'selected' : ''}>${l}</option>`).join('')}
+              </select>
+            </div>
+            <div class="flex shrink-0 flex-wrap gap-2">
+              <button data-action="auto-assign" type="button" class="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 bg-blue-50 px-3 py-2.5 text-sm font-semibold text-blue-700 transition hover:bg-blue-100">${icon(ICONS.wand)}กำหนดครูอัตโนมัติ</button>
+              <button data-action="add-subjects" type="button" class="inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">${icon(ICONS.plus)}เพิ่มรายวิชา</button>
+            </div>
+          </div>
+
+          <div id="bulkBar" class="hidden border-y border-blue-100 bg-blue-50/80 px-5 py-3 lg:px-6"></div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[720px] text-left text-sm">
+              <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                <tr>
+                  <th class="w-10 px-5 py-3.5"><input id="checkAll" type="checkbox" aria-label="เลือกทั้งหมด" class="h-4 w-4 rounded border-slate-300 text-blue-600"></th>
+                  <th class="px-3 py-3.5">รายวิชา</th>
+                  ${state.term === 'all' ? '<th class="px-3 py-3.5 text-center">ภาค</th>' : ''}
+                  <th class="whitespace-nowrap px-3 py-3.5 text-center">นก. / ชม.</th>
+                  <th class="px-3 py-3.5">ครูผู้สอน</th>
+                  <th class="px-3 py-3.5 text-center">เปิดสอน</th>
+                  <th class="px-5 py-3.5 text-right">จัดการ</th>
+                </tr>
+              </thead>
+              <tbody id="rowBody" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+          <div id="rowEmpty" class="hidden px-6 py-14 text-center"></div>
+        </section>
+
+        <section id="loadPanel" class="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft lg:p-6"></section>`;
+      renderRows();
+    }
+
+    function teacherCell(record) {
+      const plan = planOf(record.planId);
+      if (!record.open) return '<span class="text-sm text-slate-400">ปิดการสอน</span>';
+      const missing = uncoveredRooms(record);
+      const chips = record.teachers.slice(0, 3).map((t) => `<span class="inline-flex max-w-full items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700"><span class="truncate">${escapeHTML(shortName(teacherById.get(t.id)))}</span>${plan.rooms.length > 1 ? `<span class="shrink-0 font-medium text-slate-400">${shortRooms(t.rooms, plan)}</span>` : ''}</span>`).join('');
+      const more = record.teachers.length > 3 ? `<span class="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500">+${record.teachers.length - 3}</span>` : '';
+      return `<button data-action="edit-teachers" data-id="${record.id}" type="button" aria-label="จัดการครูผู้สอน" class="group block w-full min-w-[210px] rounded-xl border ${missing.length ? 'border-amber-200 bg-amber-50/60 hover:border-amber-300' : 'border-transparent hover:border-slate-200 hover:bg-white'} px-2.5 py-2 text-left transition focus:outline-none focus:ring-4 focus:ring-blue-100">
+        ${record.teachers.length ? `<span class="flex flex-wrap gap-1">${chips}${more}</span>` : ''}
+        ${missing.length ? `<span class="mt-1 flex items-center gap-1 text-xs font-semibold text-amber-700">${icon(ICONS.warn, 'h-3.5 w-3.5')}${record.teachers.length ? `ยังไม่มีครู ห้อง ${missing.map(roomNo).join(', ')}` : 'ยังไม่กำหนดครูผู้สอน'}</span>` : ''}
+        <span class="mt-1 flex items-center gap-1 text-xs font-semibold text-blue-600 opacity-80 group-hover:opacity-100">${icon(ICONS.plus, 'h-3.5 w-3.5')}${record.teachers.length ? 'เพิ่ม / แก้ไขครู' : 'เพิ่มครูผู้สอน'}</span>
+      </button>`;
+    }
+
+    function renderRows() {
+      const rows = filteredRows();
+      const visibleIds = new Set(rows.map((r) => r.id));
+      [...state.selected].forEach((id) => { if (!visibleIds.has(id)) state.selected.delete(id); });
+      $('rowBody').innerHTML = rows.map((r) => {
+        const s = subjectById.get(r.subjectId);
+        const checked = state.selected.has(r.id);
+        return `
+          <tr class="${checked ? 'bg-blue-50/60' : 'hover:bg-slate-50/70'} ${r.open ? '' : 'text-slate-400'}">
+            <td class="px-5 py-3"><input data-check="${r.id}" type="checkbox" ${checked ? 'checked' : ''} aria-label="เลือก ${escapeHTML(s.name)}" class="h-4 w-4 rounded border-slate-300 text-blue-600"></td>
+            <td class="px-3 py-3">
+              <div class="flex flex-wrap items-center gap-2"><span class="font-mono text-xs font-semibold ${r.open ? 'text-blue-700' : ''}">${s.code}</span>${typeBadge(s.type)}</div>
+              <p class="mt-0.5 font-semibold ${r.open ? 'text-slate-900' : ''}">${escapeHTML(s.name)}</p>
+              <p class="text-xs text-slate-500">${escapeHTML(s.group)}${s.grade !== planOf(state.planId).grade ? ` · <span class="text-amber-600">วิชาของ ${s.grade}</span>` : ''}</p>
+            </td>
+            ${state.term === 'all' ? `<td class="px-3 py-3 text-center"><span class="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">${r.term}</span></td>` : ''}
+            <td class="whitespace-nowrap px-3 py-3 text-center"><span class="font-semibold">${s.credits ? fmt(s.credits) : '-'}</span><span class="text-slate-400"> / ${s.hours}</span></td>
+            <td class="px-3 py-2">${teacherCell(r)}</td>
+            <td class="px-3 py-3 text-center">
+              <button data-action="toggle-open" data-id="${r.id}" type="button" role="switch" aria-checked="${r.open}" aria-label="เปิดสอน ${escapeHTML(s.name)}" class="relative inline-flex h-6 w-11 items-center rounded-full transition ${r.open ? 'bg-emerald-500' : 'bg-slate-300'}"><span class="inline-block h-5 w-5 rounded-full bg-white shadow transition ${r.open ? 'translate-x-[22px]' : 'translate-x-0.5'}"></span></button>
+            </td>
+            <td class="px-5 py-3">
+              <div class="flex items-center justify-end gap-1">
+                <button data-action="move-term" data-id="${r.id}" type="button" title="ย้ายไปภาคเรียนที่ ${r.term === '1' ? '2' : '1'}" aria-label="ย้ายภาคเรียน" class="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-blue-700">${icon(ICONS.swap)}</button>
+                <button data-action="remove-row" data-id="${r.id}" type="button" title="นำออกจากแผน" aria-label="นำออกจากแผน" class="rounded-lg p-2 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600">${icon(ICONS.trash)}</button>
+              </div>
+            </td>
+          </tr>`;
+      }).join('');
+      const hasAny = recordsOfPlan(state.planId).some((r) => state.term === 'all' || r.term === state.term);
+      $('rowEmpty').classList.toggle('hidden', rows.length > 0);
+      $('rowEmpty').innerHTML = hasAny
+        ? '<p class="text-sm font-semibold text-slate-700">ไม่พบรายวิชาที่ตรงกับเงื่อนไข</p><p class="mt-1 text-sm text-slate-500">ลองเปลี่ยนคำค้นหาหรือตัวกรอง</p>'
+        : `<p class="text-sm font-semibold text-slate-700">ยังไม่มีรายวิชาในภาคเรียนนี้</p><button data-action="add-subjects" type="button" class="mt-4 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">${icon(ICONS.plus)}เพิ่มรายวิชา</button>`;
+      const checkAll = $('checkAll');
+      checkAll.checked = rows.length > 0 && rows.every((r) => state.selected.has(r.id));
+      checkAll.indeterminate = !checkAll.checked && rows.some((r) => state.selected.has(r.id));
+      renderCreditSummary();
+      renderBulkBar();
+      renderLoadPanel();
+    }
+
+    function renderCreditSummary() {
+      const s = termSummary(state.planId, state.term);
+      const maxHours = state.term === 'all' ? 70 : 35;
+      const over = s.hours > maxHours;
+      const item = (label, value, tone = 'text-slate-900') => `<div class="rounded-xl bg-slate-50 px-3 py-2"><p class="text-[11px] font-semibold text-slate-500">${label}</p><p class="text-base font-bold ${tone}">${value}</p></div>`;
+      $('creditSummary').innerHTML = `<div class="grid grid-cols-2 gap-2 sm:grid-cols-5">
+        ${item('รายวิชาพื้นฐาน', `${fmt(s.basic)} นก.`)}
+        ${item('รายวิชาเพิ่มเติม', `${fmt(s.extra)} นก.`)}
+        ${item('รวมหน่วยกิต', `${fmt(s.basic + s.extra)} นก.`, 'text-blue-700')}
+        ${item('เวลาเรียน', `${s.hours} ชม./สัปดาห์`, over ? 'text-rose-600' : 'text-slate-900')}
+        ${item('ยังไม่มีครู', `${s.missing} วิชา`, s.missing ? 'text-amber-600' : 'text-emerald-600')}
+      </div>${over ? `<p class="mt-2 text-xs font-semibold text-rose-600">เวลาเรียนเกิน ${maxHours} ชม./สัปดาห์ ควรตรวจสอบจำนวนรายวิชา</p>` : ''}`;
+    }
+
+    function renderBulkBar() {
+      const bar = $('bulkBar');
+      const n = state.selected.size;
+      bar.classList.toggle('hidden', n === 0);
+      if (!n) return;
+      bar.innerHTML = `<div class="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
+        <p class="text-sm font-semibold text-blue-900">เลือกแล้ว ${n} วิชา</p>
+        <div class="flex flex-wrap items-center gap-2">
+          <select id="bulkTeacher" class="rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm outline-none focus:ring-4 focus:ring-blue-100"><option value="">เลือกครูผู้สอน…</option>${GROUPS.map((g) => `<optgroup label="${g}">${teachers.filter((t) => t.group === g).map((t) => `<option value="${t.id}">${escapeHTML(t.name)}</option>`).join('')}</optgroup>`).join('')}</select>
+          <button data-action="bulk-teacher" type="button" class="rounded-xl bg-blue-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-blue-700">เพิ่มครูในห้องที่ยังว่าง</button>
+          <span class="mx-1 hidden h-6 w-px bg-blue-200 sm:block"></span>
+          <button data-action="bulk-auto" type="button" class="rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm font-semibold text-blue-700 transition hover:bg-blue-50">ครูอัตโนมัติ</button>
+          <button data-action="bulk-open" data-open="true" type="button" class="rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-50">เปิดสอน</button>
+          <button data-action="bulk-open" data-open="false" type="button" class="rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-50">ปิดสอน</button>
+          <button data-action="bulk-move" type="button" class="rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-blue-50">สลับภาคเรียน</button>
+          <button data-action="bulk-remove" type="button" class="rounded-xl border border-rose-200 bg-white px-3 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50">นำออก</button>
+          <button data-action="bulk-clear" type="button" class="rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 transition hover:bg-white">ยกเลิกเลือก</button>
+        </div>
+      </div>`;
+    }
+
+    function renderLoadPanel() {
+      const loads = teacherLoads(state.curriculumId);
+      const planTeacherIds = new Set(recordsOfPlan(state.planId).flatMap(teacherIdsOf));
+      const rows = teachers.filter((t) => planTeacherIds.has(t.id)).map((t) => ({ ...t, load: loads.get(t.id) })).sort((a, b) => Math.max(b.load['1'], b.load['2']) - Math.max(a.load['1'], a.load['2']));
+      const maxValue = Math.max(HIGH_LOAD_HOURS + 6, ...rows.map((r) => Math.max(r.load['1'], r.load['2'])));
+      const bar = (value) => `<div class="flex items-center gap-2"><div class="h-2 flex-1 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${value > HIGH_LOAD_HOURS ? 'bg-rose-500' : 'bg-blue-500'}" style="width:${Math.round((value / maxValue) * 100)}%"></div></div><span class="w-14 text-right text-xs font-semibold ${value > HIGH_LOAD_HOURS ? 'text-rose-600' : 'text-slate-700'}">${value} ชม.</span></div>`;
+      $('loadPanel').innerHTML = `
+        <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h3 class="text-lg font-semibold text-slate-950">ภาระงานสอนของครูในแผนนี้</h3>
+            <p class="mt-1 text-sm text-slate-500">รวมทุกแผนในหลักสูตร (ชม. ของวิชา × จำนวนห้อง) · เกณฑ์แนะนำไม่เกิน ${HIGH_LOAD_HOURS} ชม./สัปดาห์</p>
+          </div>
+          <div class="flex items-center gap-4 text-xs text-slate-500"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500"></span>ปกติ</span><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500"></span>เกินเกณฑ์</span></div>
+        </div>
+        ${rows.length ? `
+          <div class="mt-5 grid gap-x-8 gap-y-4 md:grid-cols-2">
+            ${rows.map((t) => `<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] items-center gap-3">
+              <div class="min-w-0"><p class="truncate text-sm font-semibold text-slate-900">${escapeHTML(t.name)}</p><p class="truncate text-xs text-slate-500">${escapeHTML(t.group)}</p></div>
+              <div class="space-y-1"><div class="grid grid-cols-[28px_1fr] items-center gap-1 text-[11px] text-slate-400"><span>ภ.1</span>${bar(t.load['1'])}</div><div class="grid grid-cols-[28px_1fr] items-center gap-1 text-[11px] text-slate-400"><span>ภ.2</span>${bar(t.load['2'])}</div></div>
+            </div>`).join('')}
+          </div>` : '<p class="mt-5 rounded-2xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">ยังไม่มีครูผู้สอนในแผนนี้</p>'}`;
+    }
+
+    /* ---------- การกระทำกับรายวิชาในแผน ---------- */
+    function updateAfterRowChange() { touch(); renderRows(); refreshTermTabs(); renderPlanList(); renderWsStats(); }
+    function refreshTermTabs() {
+      document.querySelectorAll('#termTabs [data-term]').forEach((btn) => {
+        const s = termSummary(state.planId, btn.dataset.term);
+        const label = { '1': 'ภาคเรียนที่ 1', '2': 'ภาคเรียนที่ 2', all: 'ทั้งปีการศึกษา' }[btn.dataset.term];
+        btn.innerHTML = `<span class="flex items-center justify-between gap-2"><span class="text-sm font-semibold">${label}</span>${s.missing ? `<span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">ขาดครู ${s.missing}</span>` : ''}</span><span class="term-tab-meta mt-0.5 block text-xs text-slate-500">${s.count} วิชา · ${fmt(s.basic + s.extra)} หน่วยกิต · ${s.hours} ชม./สัปดาห์</span>`;
+      });
+    }
+    const rowOf = (id) => planSubjects.find((r) => r.id === id);
+
+
+    function removeRows(ids) {
+      const before = snapshot();
+      planSubjects = planSubjects.filter((r) => !ids.includes(r.id));
+      ids.forEach((id) => state.selected.delete(id));
+      updateAfterRowChange();
+      showToast(`นำออก ${ids.length} รายวิชาแล้ว`, 'สามารถเลิกทำได้ภายในไม่กี่วินาที', { undo: before });
+    }
+
+    /* ---------- ครูผู้สอนของรายวิชา ---------- */
+    const tm = { recordId: null, draft: [] };
+    function openTeacherModal(recordId) {
+      const r = rowOf(recordId);
+      tm.recordId = recordId;
+      tm.draft = cloneTeachers(r.teachers);
+      const s = subjectById.get(r.subjectId);
+      const plan = planOf(r.planId);
+      $('teacherModalTitle').textContent = `${s.code} ${s.name}`;
+      $('teacherModalSubtitle').textContent = `${plan.grade} ${plan.name} · ภาคเรียนที่ ${r.term} · ${s.hours} ชม./สัปดาห์ต่อห้อง · ${plan.rooms.length} ห้องเรียน`;
+      $('tmSearch').value = '';
+      renderTeacherModal();
+      openModal('teacherModal');
+    }
+    function tmLoads() {
+      const r = rowOf(tm.recordId);
+      const loads = teacherLoads(planOf(r.planId).curriculumId, r.id);
+      const hours = subjectById.get(r.subjectId).hours;
+      tm.draft.forEach((t) => { loads.get(t.id)[r.term] += hours * t.rooms.length; });
+      return loads;
+    }
+    function tmAdd(teacherId) {
+      const r = rowOf(tm.recordId);
+      const plan = planOf(r.planId);
+      if (tm.draft.some((t) => t.id === teacherId)) return;
+      const missing = uncoveredRooms(r, tm.draft);
+      tm.draft.push({ id: teacherId, rooms: missing.length ? missing : plan.rooms.length === 1 ? [...plan.rooms] : [] });
+    }
+    function renderTeacherModal() {
+      const r = rowOf(tm.recordId);
+      const plan = planOf(r.planId);
+      const s = subjectById.get(r.subjectId);
+      const loads = tmLoads();
+      const missing = uncoveredRooms(r, tm.draft);
+      const covered = plan.rooms.length - missing.length;
+      const pct = Math.round((covered / plan.rooms.length) * 100);
+      const loadText = (id) => { const h = loads.get(id)[r.term]; return `<span class="${h > HIGH_LOAD_HOURS ? 'text-rose-600' : 'text-slate-500'}">${h} ชม./สัปดาห์</span>`; };
+
+      $('tmCoverage').innerHTML = `
+        <div class="rounded-2xl border ${missing.length ? 'border-amber-200 bg-amber-50/70' : 'border-emerald-200 bg-emerald-50/70'} p-4">
+          <div class="flex items-center justify-between gap-3 text-sm">
+            <span class="font-semibold ${missing.length ? 'text-amber-800' : 'text-emerald-800'}">${missing.length ? `ยังไม่มีครู ${missing.length} ห้อง: ${missing.join(', ')}` : 'มีครูสอนครบทุกห้องแล้ว'}</span>
+            <span class="shrink-0 font-bold ${missing.length ? 'text-amber-700' : 'text-emerald-700'}">${covered}/${plan.rooms.length} ห้อง</span>
+          </div>
+          <div class="mt-2 h-2 overflow-hidden rounded-full bg-white"><div class="h-full rounded-full ${missing.length ? 'bg-amber-400' : 'bg-emerald-500'}" style="width:${pct}%"></div></div>
+        </div>`;
+
+      $('tmCount').textContent = `${tm.draft.length} คน`;
+      $('tmDistribute').classList.toggle('hidden', tm.draft.length < 2 || plan.rooms.length < 2);
+      $('tmSelected').innerHTML = tm.draft.length ? tm.draft.map((t) => {
+        const teacher = teacherById.get(t.id);
+        const coTeach = (room) => tm.draft.filter((x) => x.rooms.includes(room)).length > 1;
+        return `<div class="rounded-2xl border ${t.rooms.length ? 'border-slate-200' : 'border-rose-200 bg-rose-50/40'} bg-white p-4">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex min-w-0 items-center gap-3">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-sm font-bold text-blue-700">${escapeHTML(teacher.name.replace('อ.', '').slice(0, 1))}</span>
+              <div class="min-w-0"><p class="truncate text-sm font-semibold text-slate-900">${escapeHTML(teacher.name)}</p><p class="truncate text-xs">${escapeHTML(teacher.group)} · ${loadText(t.id)}</p></div>
+            </div>
+            <button data-action="tm-remove" data-tid="${t.id}" type="button" class="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50">นำออก</button>
+          </div>
+          ${plan.rooms.length > 1 ? `
+            <div class="mt-3 flex flex-wrap items-center gap-1.5">
+              <span class="mr-1 text-xs font-semibold text-slate-500">สอนห้อง</span>
+              ${plan.rooms.map((room) => { const on = t.rooms.includes(room); return `<button data-action="tm-room" data-tid="${t.id}" data-room="${room}" type="button" aria-pressed="${on}" class="rounded-lg border px-2.5 py-1 text-xs font-semibold transition ${on ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-600 hover:border-blue-300'}">${room}${on && coTeach(room) ? ' · ร่วมสอน' : ''}</button>`; }).join('')}
+              <button data-action="tm-all-rooms" data-tid="${t.id}" type="button" class="ml-1 text-xs font-semibold text-blue-600 hover:underline">ทุกห้อง</button>
+            </div>
+            ${t.rooms.length ? '' : '<p class="mt-2 text-xs font-semibold text-rose-600">เลือกห้องที่ครูคนนี้สอน หรือนำออก</p>'}` : `<p class="mt-2 text-xs text-slate-500">สอนห้อง ${plan.rooms[0]}${tm.draft.length > 1 ? ' (ร่วมสอน)' : ''}</p>`}
+        </div>`;
+      }).join('') : '<div class="rounded-2xl border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500">ยังไม่มีครูผู้สอน — เลือกครูจากรายชื่อด้านขวา</div>';
+
+      // วิชาเดียวกันในแผนอื่นของหลักสูตร: รวมครูทุกคนที่สอนวิชานี้
+      const same = recordsOfCurriculum(plan.curriculumId).filter((x) => x.subjectId === r.subjectId && x.id !== r.id);
+      const otherIds = [...new Set(same.flatMap(teacherIdsOf))];
+      const addable = otherIds.filter((id) => !tm.draft.some((t) => t.id === id));
+      $('tmOther').innerHTML = same.length ? `
+        <div class="rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div><h3 class="text-sm font-semibold text-slate-800">วิชานี้ในแผนอื่นของหลักสูตร</h3><p class="text-xs text-slate-500">ครูที่สอน ${s.code} ทั้งหมด ${otherIds.length} คน ใน ${same.length} แผน</p></div>
+            ${addable.length ? `<button data-action="tm-add-all" type="button" class="rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-blue-700 ring-1 ring-inset ring-blue-200 transition hover:bg-blue-50">เพิ่มครูทั้งหมด (${addable.length})</button>` : ''}
+          </div>
+          <div class="mt-3 space-y-2">
+            ${same.map((x) => { const p = planOf(x.planId); return `<div class="flex flex-col gap-1 rounded-xl bg-white px-3 py-2 text-xs sm:flex-row sm:items-center sm:justify-between"><span class="font-semibold text-slate-700">${escapeHTML(p.name)} <span class="font-normal text-slate-400">${escapeHTML(roomRange(p.rooms))}</span></span><span class="text-slate-600">${x.teachers.length ? x.teachers.map((t) => escapeHTML(shortName(teacherById.get(t.id)))).join(', ') : '<span class="text-amber-600">ยังไม่มีครู</span>'}</span></div>`; }).join('')}
+          </div>
+        </div>` : '';
+
+      const q = $('tmSearch').value.trim().toLowerCase();
+      const available = teachers.filter((t) => !tm.draft.some((d) => d.id === t.id) && (!q || `${t.name} ${t.group}`.toLowerCase().includes(q)));
+      const section = (title, list) => list.length ? `<p class="px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">${title}</p>${list.map((t) => `
+        <button data-action="tm-add" data-tid="${t.id}" type="button" class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-white hover:shadow-sm">
+          <span class="min-w-0"><span class="block truncate text-sm font-semibold text-slate-800">${escapeHTML(t.name)}${otherIds.includes(t.id) ? ' <span class="ml-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">สอนวิชานี้แผนอื่น</span>' : ''}</span><span class="block truncate text-xs">${q ? `${escapeHTML(t.group)} · ` : ''}${loadText(t.id)}</span></span>
+          <span class="shrink-0 rounded-lg bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">+ เพิ่ม</span>
+        </button>`).join('')}` : '';
+      const byLoad = (a, b) => loads.get(a.id)[r.term] - loads.get(b.id)[r.term];
+      $('tmPicker').innerHTML = (section(`กลุ่มสาระ${s.group}`, available.filter((t) => t.group === s.group).sort(byLoad)) + section('กลุ่มสาระอื่น', available.filter((t) => t.group !== s.group).sort(byLoad))) || '<p class="px-3 py-8 text-center text-sm text-slate-500">ไม่พบครู</p>';
+
+      $('tmFooterNote').textContent = tm.draft.length > 1 ? `${tm.draft.length} คนสอนวิชานี้ · ห้องที่เลือกซ้ำกันหมายถึงสอนร่วมกัน` : 'ภาระสอนคำนวณจากจำนวนห้องที่ครูแต่ละคนสอน';
+    }
+    function saveTeacherModal() {
+      const empty = tm.draft.find((t) => !t.rooms.length);
+      if (empty) { showToast('ยังไม่ได้เลือกห้อง', `${teacherById.get(empty.id).name} ยังไม่มีห้องที่สอน`, { tone: 'warning' }); return; }
+      const r = rowOf(tm.recordId);
+      r.teachers = cloneTeachers(tm.draft).map((t) => ({ ...t, rooms: sortRooms(t.rooms) }));
+      closeModal('teacherModal');
+      updateAfterRowChange();
+      const missing = uncoveredRooms(r);
+      showToast('บันทึกครูผู้สอนแล้ว', `${subjectById.get(r.subjectId).name} · ${r.teachers.length} คน${missing.length ? ` · ยังขาด ${missing.length} ห้อง` : ''}`, { tone: missing.length ? 'warning' : 'success' });
+    }
+
+    /* ---------- เพิ่มรายวิชา ---------- */
+    function openAddSubjects() {
+      const plan = planOf(state.planId);
+      state.addTerm = state.term === '2' ? '2' : '1';
+      state.addSelected.clear();
+      $('addSearch').value = '';
+      $('addShowAll').checked = false;
+      $('addGroup').innerHTML = `<option value="ทั้งหมด">ทุกกลุ่มสาระ</option>${GROUPS.map((g) => `<option>${g}</option>`).join('')}`;
+      $('addSubjectTitle').textContent = `เพิ่มรายวิชา · ${plan.grade} ${plan.name}`;
+      $('addSubjectSubtitle').textContent = 'เลือกได้หลายรายวิชาพร้อมกัน รายวิชาที่อยู่ในแผนแล้วจะถูกข้าม';
+      renderAddList();
+      openModal('addSubjectModal');
+      setTimeout(() => $('addSearch').focus(), 50);
+    }
+    function renderAddList() {
+      const plan = planOf(state.planId);
+      $('addTermSwitch').innerHTML = ['1', '2'].map((t) => `<button data-action="add-term" data-term="${t}" type="button" class="rounded-xl px-4 py-2 text-sm font-semibold transition ${state.addTerm === t ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-500 hover:text-slate-800'}">ภาคเรียนที่ ${t}</button>`).join('');
+      const q = $('addSearch').value.trim().toLowerCase();
+      const group = $('addGroup').value;
+      const showAll = $('addShowAll').checked;
+      const existing = new Set(recordsOfPlan(plan.id).filter((r) => r.term === state.addTerm).map((r) => r.subjectId));
+      const list = catalog.filter((s) => (showAll || (s.grade === plan.grade && s.term === state.addTerm)) && (group === 'ทั้งหมด' || s.group === group) && (!q || `${s.code} ${s.name}`.toLowerCase().includes(q)))
+        .sort((a, b) => TYPE_ORDER[a.type] - TYPE_ORDER[b.type] || GROUPS.indexOf(a.group) - GROUPS.indexOf(b.group) || a.code.localeCompare(b.code, 'th'));
+      $('addSubjectList').innerHTML = list.length ? list.map((s) => {
+        const already = existing.has(s.id);
+        const checked = state.addSelected.has(s.id);
+        return `<label class="flex items-center gap-4 px-5 py-3 transition lg:px-7 ${already ? 'cursor-not-allowed bg-slate-50/70' : checked ? 'cursor-pointer bg-blue-50/60' : 'cursor-pointer hover:bg-slate-50'}">
+          <input data-add="${s.id}" type="checkbox" ${checked || already ? 'checked' : ''} ${already ? 'disabled' : ''} class="h-4 w-4 rounded border-slate-300 text-blue-600">
+          <span class="w-20 shrink-0 font-mono text-xs font-semibold ${already ? 'text-slate-400' : 'text-blue-700'}">${s.code}</span>
+          <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold ${already ? 'text-slate-400' : 'text-slate-900'}">${escapeHTML(s.name)}</span><span class="block truncate text-xs text-slate-500">${escapeHTML(s.group)} · ${s.grade} ภาค ${s.term}</span></span>
+          <span class="hidden sm:block">${typeBadge(s.type)}</span>
+          <span class="w-24 shrink-0 text-right text-xs text-slate-500">${s.credits ? `${fmt(s.credits)} นก. · ` : ''}${s.hours} ชม.</span>
+          ${already ? '<span class="w-24 shrink-0 text-right text-xs font-semibold text-slate-400">อยู่ในแผนแล้ว</span>' : '<span class="w-24 shrink-0"></span>'}
+        </label>`;
+      }).join('') : '<p class="px-6 py-14 text-center text-sm text-slate-500">ไม่พบรายวิชา ลองติ๊ก “แสดงรายวิชาของทุกระดับชั้น”</p>';
+      renderAddSummary();
+    }
+    function renderAddSummary() {
+      const selected = [...state.addSelected].map((id) => subjectById.get(id));
+      const credits = selected.reduce((s, x) => s + x.credits, 0);
+      $('addSummary').textContent = selected.length ? `เลือกแล้ว ${selected.length} วิชา · ${fmt(credits)} หน่วยกิต → ภาคเรียนที่ ${state.addTerm}` : 'ยังไม่ได้เลือกรายวิชา';
+      $('addSubmit').disabled = !selected.length;
+      $('addSubmit').textContent = selected.length ? `เพิ่ม ${selected.length} รายวิชา` : 'เพิ่มรายวิชา';
+    }
+    function confirmAddSubjects() {
+      const auto = $('addAutoTeacher').checked;
+      const added = [...state.addSelected].map((subjectId) => ({ id: nextId('ps'), planId: state.planId, subjectId, term: state.addTerm, teachers: [], open: true }));
+      planSubjects.push(...added);
+      const assigned = auto ? autoAssign(added) : 0;
+      closeModal('addSubjectModal');
+      if (state.term !== 'all') state.term = state.addTerm;
+      touch();
+      renderPlanDetail(); renderPlanList(); renderWsStats();
+      showToast(`เพิ่ม ${added.length} รายวิชาแล้ว`, auto ? `กำหนดครูอัตโนมัติ ${assigned} วิชา` : 'อย่าลืมกำหนดครูผู้สอน');
+    }
+
+    /* ---------- สร้าง / แก้ไขหลักสูตร ---------- */
+    function setMethod(method) {
+      state.method = method;
+      document.querySelectorAll('[data-method]').forEach((b) => b.classList.toggle('is-selected', b.dataset.method === method));
+      $('copySection').classList.toggle('hidden', method !== 'copy' || state.curriculumMode === 'edit');
+      renderCopyPreview();
+    }
+    function renderSourceOptions() {
+      const level = $('cLevel').value;
+      const sources = curricula.filter((c) => c.level === level).sort((a, b) => b.year.localeCompare(a.year));
+      const current = $('cSource').value;
+      $('cSource').innerHTML = sources.length ? sources.map((c) => `<option value="${c.id}">${c.id} · ${escapeHTML(c.name)} (ปี ${c.year})</option>`).join('') : '<option value="">ไม่มีหลักสูตรระดับนี้ให้คัดลอก</option>';
+      if (sources.some((c) => c.id === current)) $('cSource').value = current;
+      renderCopyPreview();
+    }
+    function renderCopyPreview() {
+      const source = curriculumOf($('cSource').value);
+      if (!source) { $('copyPreview').textContent = 'ไม่มีหลักสูตรต้นทาง ระบบจะสร้างหลักสูตรว่าง'; return; }
+      const sPlans = plansOf(source.id);
+      const records = recordsOfCurriculum(source.id);
+      const parts = [];
+      if ($('copyPlans').checked) parts.push(`${sPlans.length} แผนการเรียน`);
+      if ($('copyPlans').checked && $('copySubjects').checked) parts.push(`${records.length} รายวิชา`);
+      if ($('copyPlans').checked && $('copySubjects').checked && $('copyTeachers').checked) parts.push(`ครูผู้สอน ${distinctTeachers(records)} คน`);
+      $('copySubjects').disabled = !$('copyPlans').checked;
+      $('copyTeachers').disabled = !$('copyPlans').checked || !$('copySubjects').checked;
+      $('copyPreview').innerHTML = parts.length ? `ระบบจะคัดลอก <b class="text-slate-900">${parts.join(' · ')}</b> จาก ${source.id}` : 'ไม่ได้เลือกข้อมูลที่จะคัดลอก ระบบจะสร้างหลักสูตรว่าง';
+    }
+    function yearOptions(selected) {
+      const years = ['2566', '2567', '2568', '2569', '2570', '2571', '2572'];
+      $('cYear').innerHTML = years.map((y) => `<option ${y === selected ? 'selected' : ''}>${y}</option>`).join('');
+    }
+    function openCurriculumModal(mode, sourceId) {
+      state.curriculumMode = mode;
+      $('cNameError').classList.add('hidden');
+      $('cName').classList.remove('border-rose-400');
+      $('methodSection').classList.toggle('hidden', mode === 'edit');
+      if (mode === 'edit') {
+        const c = curriculumOf(state.curriculumId);
+        state.editingCurriculumId = c.id;
+        $('curriculumModalTitle').textContent = 'แก้ไขข้อมูลหลักสูตร';
+        $('curriculumSubmit').textContent = 'บันทึกการแก้ไข';
+        $('cName').value = c.name;
+        yearOptions(c.year);
+        $('cLevel').value = c.level;
+        $('cLevel').disabled = plansOf(c.id).length > 0;
+        setMethod('blank');
+      } else {
+        const source = curriculumOf(sourceId) || curricula.slice().sort((a, b) => b.year.localeCompare(a.year))[0];
+        $('curriculumModalTitle').textContent = sourceId ? 'คัดลอกหลักสูตรไปปีการศึกษาใหม่' : 'สร้างหลักสูตร';
+        $('curriculumSubmit').textContent = 'สร้างและเปิดหลักสูตร';
+        $('cLevel').disabled = false;
+        $('cLevel').value = source.level;
+        $('cName').value = source.name.replace(/\s*\(.*\)$/, '');
+        yearOptions(String(Number(source.year) + 1));
+        ['copyPlans', 'copySubjects', 'copyTeachers'].forEach((id) => { $(id).checked = true; });
+        renderSourceOptions();
+        $('cSource').value = source.id;
+        setMethod('copy');
+      }
+      openModal('curriculumModal');
+      setTimeout(() => $('cName').focus(), 50);
+    }
+    function submitCurriculum(event) {
+      event.preventDefault();
+      const name = $('cName').value.trim();
+      if (!name) { $('cNameError').classList.remove('hidden'); $('cName').classList.add('border-rose-400'); $('cName').focus(); return; }
+      if (state.curriculumMode === 'edit') {
+        const c = curriculumOf(state.editingCurriculumId);
+        Object.assign(c, { name, year: $('cYear').value, level: $('cLevel').value });
+        touch();
+        closeModal('curriculumModal');
+        renderWorkspace();
+        showToast('บันทึกข้อมูลหลักสูตรแล้ว');
+        return;
+      }
+      const year = $('cYear').value;
+      const level = $('cLevel').value;
+      const seq = curricula.filter((c) => c.year === year).length + 1;
+      const id = `CUR-${year}-${String(seq).padStart(2, '0')}`;
+      curricula.push({ id, name, year, level, status: 'ฉบับร่าง', updated: todayText(), editor: 'ครูสุนิสา' });
+      const source = curriculumOf($('cSource').value);
+      let copiedPlans = 0;
+      if (state.method === 'copy' && source && $('copyPlans').checked) {
+        plansOf(source.id).forEach((p) => {
+          const np = { ...p, id: nextId('p'), curriculumId: id, rooms: [...p.rooms] };
+          plans.push(np);
+          copiedPlans++;
+          if ($('copySubjects').checked) {
+            recordsOfPlan(p.id).forEach((r) => planSubjects.push({ ...r, id: nextId('ps'), planId: np.id, teachers: $('copyTeachers').checked ? cloneTeachers(r.teachers) : [] }));
+          }
+        });
+      }
+      closeModal('curriculumModal');
+      openCurriculum(id);
+      showToast('สร้างหลักสูตรแล้ว', copiedPlans ? `คัดลอก ${copiedPlans} แผนการเรียนจาก ${source.id}` : 'เริ่มเพิ่มแผนการเรียนได้เลย');
+    }
+
+    function deleteCurriculum(id) {
+      const c = curriculumOf(id);
+      const warn = c.status === 'ใช้งานอยู่' ? '<br><span class="font-semibold text-rose-600">หลักสูตรนี้กำลังใช้งานอยู่</span>' : '';
+      confirmAction({
+        title: 'ลบหลักสูตรนี้?',
+        message: `${escapeHTML(c.name)} (ปี ${c.year}) พร้อมแผนการเรียน ${plansOf(id).length} แผนจะถูกลบ${warn}`,
+        okLabel: 'ลบหลักสูตร',
+        onConfirm: () => {
+          const before = snapshot();
+          const planIds = new Set(plansOf(id).map((p) => p.id));
+          planSubjects = planSubjects.filter((r) => !planIds.has(r.planId));
+          plans = plans.filter((p) => !planIds.has(p.id));
+          curricula = curricula.filter((x) => x.id !== id);
+          if (state.curriculumId === id) backToList(); else renderList();
+          showToast('ลบหลักสูตรแล้ว', c.id, { undo: before });
+        }
+      });
+    }
+
+    function publishCurriculum() {
+      const c = curriculumOf(state.curriculumId);
+      const records = recordsOfCurriculum(c.id);
+      const missing = records.filter(needsTeacher).length;
+      const emptyPlans = plansOf(c.id).filter((p) => !recordsOfPlan(p.id).length);
+      const issues = [];
+      if (missing) issues.push(`รายวิชาที่ยังไม่กำหนดครู <b>${missing}</b> วิชา`);
+      if (emptyPlans.length) issues.push(`แผนที่ยังไม่มีรายวิชา <b>${emptyPlans.length}</b> แผน`);
+      if (!plansOf(c.id).length) issues.push('ยังไม่มีแผนการเรียน');
+      const doPublish = () => {
+        curricula.forEach((x) => { if (x.id !== c.id && x.level === c.level && x.status === 'ใช้งานอยู่' && Number(x.year) < Number(c.year)) x.status = 'ปิดใช้งาน'; });
+        c.status = 'ใช้งานอยู่';
+        touch();
+        renderWorkspace();
+        showToast('ประกาศใช้หลักสูตรแล้ว', `หลักสูตรเดิมระดับเดียวกันถูกปิดใช้งานอัตโนมัติ`);
+      };
+      if (!issues.length) {
+        confirmAction({ title: 'ประกาศใช้หลักสูตรนี้?', message: `ข้อมูลครบถ้วน พร้อมใช้ตั้งแต่ปีการศึกษา ${c.year}`, okLabel: 'ประกาศใช้', tone: 'primary', onConfirm: doPublish });
+      } else {
+        confirmAction({
+          title: 'หลักสูตรยังไม่ครบถ้วน',
+          message: `<ul class="space-y-1 text-left">${issues.map((i) => `<li class="flex gap-2"><span class="text-amber-500">•</span><span>${i}</span></li>`).join('')}</ul>`,
+          okLabel: 'ไปแก้ไข', tone: 'warning', cancelLabel: 'ประกาศใช้ต่อ',
+          onConfirm: () => (missing ? jumpToMissing(c.id) : emptyPlans[0] && selectPlan(emptyPlans[0].id)),
+          onCancel: doPublish
+        });
+      }
+    }
+
+    function jumpToMissing(curriculumId) {
+      const target = curriculumId
+        ? curriculumOf(curriculumId)
+        : curricula.filter((c) => c.status !== 'ปิดใช้งาน').sort((a, b) => recordsOfCurriculum(b.id).filter(needsTeacher).length - recordsOfCurriculum(a.id).filter(needsTeacher).length)[0];
+      const record = recordsOfCurriculum(target.id).find(needsTeacher);
+      if (!record) return;
+      openCurriculum(target.id, record.planId, { term: record.term, rowStatus: 'unassigned' });
+    }
+
+    /* ---------- แผนการเรียน ---------- */
+    function openPlanModal(mode) {
+      const c = curriculumOf(state.curriculumId);
+      state.planMode = mode;
+      $('pNameError').classList.add('hidden');
+      $('roomError').classList.add('hidden');
+      $('pGrade').innerHTML = LEVEL_GRADES[c.level].map((g) => `<option>${g}</option>`).join('');
+      $('planTemplateSection').classList.toggle('hidden', mode === 'edit');
+      const others = plansOf(c.id);
+      $('pCopyFrom').innerHTML = others.length ? others.map((p) => `<option value="${p.id}">${p.grade} · ${escapeHTML(p.name)}</option>`).join('') : '<option value="">ยังไม่มีแผนอื่น</option>';
+      if (mode === 'edit') {
+        const p = planOf(state.planId);
+        state.editingPlanId = p.id;
+        $('planModalTitle').textContent = 'แก้ไขแผนการเรียน';
+        $('pName').value = p.name;
+        $('pGrade').value = p.grade;
+        $('pGrade').disabled = true;
+        state.planRooms = new Set(p.rooms);
+      } else {
+        $('planModalTitle').textContent = 'เพิ่มแผนการเรียน';
+        $('pName').value = '';
+        $('pGrade').disabled = false;
+        $('pGrade').value = state.gradeFilter !== 'ทั้งหมด' ? state.gradeFilter : LEVEL_GRADES[c.level][0];
+        state.planRooms = new Set();
+        document.querySelector('input[name="planTemplate"][value="core"]').checked = true;
+      }
+      renderRoomChips();
+      openModal('planModal');
+      setTimeout(() => $('pName').focus(), 50);
+    }
+    function renderRoomChips() {
+      const grade = $('pGrade').value;
+      const taken = new Map();
+      plansOf(state.curriculumId).forEach((p) => { if (p.id !== state.editingPlanId || state.planMode !== 'edit') p.rooms.forEach((r) => taken.set(r, p.name)); });
+      $('roomChips').innerHTML = Array.from({ length: ROOMS_PER_GRADE }, (_, i) => `${grade}/${i + 1}`).map((room) => {
+        const owner = taken.get(room);
+        const selected = state.planRooms.has(room);
+        return `<button data-action="toggle-room" data-room="${room}" type="button" ${owner && !selected ? `title="ใช้ในแผน ${escapeHTML(owner)} แล้ว"` : ''} class="room-chip ${selected ? 'is-selected' : ''} rounded-xl border px-3 py-2 text-sm font-semibold transition ${owner && !selected ? 'border-dashed border-slate-200 text-slate-300' : 'border-slate-200 text-slate-700 hover:border-blue-300'}">${room}</button>`;
+      }).join('');
+      $('roomHint').textContent = state.planRooms.size ? `เลือก ${state.planRooms.size} ห้อง` : 'ห้องเส้นประ = ใช้ในแผนอื่นแล้ว';
+    }
+    function submitPlan(event) {
+      event.preventDefault();
+      const name = $('pName').value.trim();
+      $('pNameError').classList.toggle('hidden', !!name);
+      $('roomError').classList.toggle('hidden', state.planRooms.size > 0);
+      if (!name || !state.planRooms.size) return;
+      const rooms = [...state.planRooms].sort((a, b) => Number(a.split('/')[1]) - Number(b.split('/')[1]));
+      if (state.planMode === 'edit') {
+        const edited = planOf(state.editingPlanId);
+        Object.assign(edited, { name, rooms });
+        syncPlanRooms(edited);
+        touch();
+        closeModal('planModal');
+        renderWorkspace();
+        showToast('บันทึกแผนการเรียนแล้ว');
+        return;
+      }
+      const grade = $('pGrade').value;
+      const plan = { id: nextId('p'), curriculumId: state.curriculumId, grade, name, rooms };
+      plans.push(plan);
+      const template = document.querySelector('input[name="planTemplate"]:checked').value;
+      let added = [];
+      if (template === 'core') {
+        added = catalog.filter((s) => s.grade === grade && ['core', 'act'].includes(s.tag)).map((s) => ({ id: nextId('ps'), planId: plan.id, subjectId: s.id, term: s.term, teachers: [], open: true }));
+        planSubjects.push(...added);
+        autoAssign(added);
+      } else if (template === 'copy' && $('pCopyFrom').value) {
+        added = recordsOfPlan($('pCopyFrom').value).map((r) => ({ ...r, id: nextId('ps'), planId: plan.id, teachers: cloneTeachers(r.teachers) }));
+        planSubjects.push(...added);
+        syncPlanRooms(plan);
+        autoAssign(added);
+      }
+      touch();
+      closeModal('planModal');
+      state.gradeFilter = 'ทั้งหมด';
+      state.planId = plan.id;
+      state.term = '1';
+      state.rowStatus = 'ทั้งหมด';
+      state.selected.clear();
+      renderWorkspace();
+      updateHash();
+      showToast('เพิ่มแผนการเรียนแล้ว', added.length ? `ใส่รายวิชาให้ ${added.length} รายการ` : 'เริ่มเพิ่มรายวิชาได้เลย');
+    }
+    function duplicatePlan() {
+      const p = planOf(state.planId);
+      const copy = { ...p, id: nextId('p'), name: `${p.name} (สำเนา)`, rooms: [] };
+      plans.push(copy);
+      recordsOfPlan(p.id).forEach((r) => planSubjects.push({ ...r, id: nextId('ps'), planId: copy.id, teachers: cloneTeachers(r.teachers) }));
+      state.planId = copy.id;
+      touch();
+      renderWorkspace();
+      updateHash();
+      openPlanModal('edit');
+      showToast('ทำสำเนาแผนแล้ว', 'เลือกห้องเรียนและตั้งชื่อแผนใหม่', { tone: 'info' });
+    }
+    function deletePlan() {
+      const p = planOf(state.planId);
+      confirmAction({
+        title: 'ลบแผนการเรียนนี้?',
+        message: `${p.grade} ${escapeHTML(p.name)} และรายวิชา ${recordsOfPlan(p.id).length} รายการในแผนจะถูกลบ`,
+        okLabel: 'ลบแผน',
+        onConfirm: () => {
+          const before = snapshot();
+          planSubjects = planSubjects.filter((r) => r.planId !== p.id);
+          plans = plans.filter((x) => x.id !== p.id);
+          state.planId = plansOf(state.curriculumId)[0]?.id || null;
+          touch();
+          renderWorkspace();
+          updateHash();
+          showToast('ลบแผนการเรียนแล้ว', '', { undo: before });
+        }
+      });
+    }
+
+    /* ---------- Excel ---------- */
+    function downloadCsv(filename, rows) {
+      const csv = '﻿' + rows.map((row) => row.map((v) => `"${String(v ?? '').replace(/"/g, '""')}"`).join(',')).join('\r\n');
+      const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+      const a = Object.assign(document.createElement('a'), { href: url, download: filename });
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+    function exportCurriculum(id) {
+      const c = curriculumOf(id);
+      const header = ['แผนการเรียน', 'ระดับชั้น', 'ห้องเรียน', 'ภาคเรียน', 'รหัสวิชา', 'ชื่อวิชา', 'กลุ่มสาระ', 'ประเภท', 'หน่วยกิต', 'ชม./สัปดาห์', 'ครูผู้สอน', 'สถานะ'];
+      const rows = [];
+      plansOf(id).forEach((p) => recordsOfPlan(p.id).sort((a, b) => a.term.localeCompare(b.term)).forEach((r) => {
+        const s = subjectById.get(r.subjectId);
+        rows.push([p.name, p.grade, p.rooms.join(' '), r.term, s.code, s.name, s.group, s.type, s.credits, s.hours, r.teachers.map((t) => `${teacherById.get(t.id).name} (${t.rooms.join(' ')})`).join('; '), r.open ? 'เปิดสอน' : 'ปิดสอน']);
+      }));
+      downloadCsv(`${c.id}_แผนการเรียน.csv`, [header, ...rows]);
+      showToast('ส่งออกไฟล์แล้ว', `${rows.length} รายการ · เปิดด้วย Excel ได้ทันที`);
+    }
+    function resetImport() {
+      $('importFile').value = '';
+      $('dropZone').classList.remove('is-ready');
+      $('dropZoneText').textContent = 'ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์';
+      $('importPreview').classList.add('hidden');
+      $('importSubmit').disabled = true;
+    }
+    function fileChosen(file) {
+      if (!file) return;
+      $('dropZone').classList.add('is-ready');
+      $('dropZoneText').textContent = file.name;
+      $('importPreview').classList.remove('hidden');
+      $('importSubmit').disabled = false;
+    }
+
+    /* ---------- render รวม ---------- */
+    function renderAll() {
+      if (state.curriculumId && curriculumOf(state.curriculumId)) {
+        if (!planOf(state.planId)) state.planId = plansOf(state.curriculumId)[0]?.id || null;
+        renderWorkspace();
+      } else {
+        if (state.curriculumId) backToList();
+        renderList();
+      }
+    }
+
+    /* ---------- events ---------- */
+    document.addEventListener('click', (event) => {
+      const closeBtn = event.target.closest('[data-close]');
+      if (closeBtn && !closeBtn.onclick) { closeModal(closeBtn.dataset.close); return; }
+      const methodBtn = event.target.closest('[data-method]');
+      if (methodBtn) { setMethod(methodBtn.dataset.method); return; }
+      const el = event.target.closest('[data-action]');
+      if (!el) return;
+      const { action, id } = el.dataset;
+      switch (action) {
+        case 'create-curriculum': openCurriculumModal('create'); break;
+        case 'copy-curriculum': openCurriculumModal('create', id); break;
+        case 'edit-curriculum': openCurriculumModal('edit'); break;
+        case 'open-curriculum': openCurriculum(id); break;
+        case 'delete-curriculum': deleteCurriculum(id); break;
+        case 'export-curriculum': exportCurriculum(id || state.curriculumId); break;
+        case 'back-to-list': backToList(); break;
+        case 'clear-list-filters': $('listSearch').value = ''; $('listYear').value = 'ทั้งหมด'; $('listLevel').value = 'ทั้งหมด'; $('listStatus').value = 'ทั้งหมด'; renderCurriculumGrid(); break;
+        case 'jump-missing': jumpToMissing(); break;
+        case 'jump-missing-here': jumpToMissing(state.curriculumId); break;
+        case 'publish': publishCurriculum(); break;
+        case 'grade-filter': state.gradeFilter = el.dataset.grade; renderGradeChips(); renderPlanList(); break;
+        case 'select-plan': selectPlan(id); break;
+        case 'add-plan': openPlanModal('create'); break;
+        case 'edit-plan': openPlanModal('edit'); break;
+        case 'duplicate-plan': duplicatePlan(); break;
+        case 'delete-plan': deletePlan(); break;
+        case 'toggle-room': { const room = el.dataset.room; state.planRooms.has(room) ? state.planRooms.delete(room) : state.planRooms.add(room); renderRoomChips(); $('roomError').classList.add('hidden'); break; }
+        case 'set-term': state.term = el.dataset.term; state.selected.clear(); renderPlanDetail(); break;
+        case 'edit-teachers': openTeacherModal(id); break;
+        case 'tm-add': tmAdd(el.dataset.tid); renderTeacherModal(); break;
+        case 'tm-add-all': {
+          const r = rowOf(tm.recordId);
+          recordsOfCurriculum(planOf(r.planId).curriculumId).filter((x) => x.subjectId === r.subjectId && x.id !== r.id).flatMap(teacherIdsOf).forEach((tid) => tmAdd(tid));
+          renderTeacherModal();
+          break;
+        }
+        case 'tm-remove': tm.draft = tm.draft.filter((t) => t.id !== el.dataset.tid); renderTeacherModal(); break;
+        case 'tm-room': { const t = tm.draft.find((x) => x.id === el.dataset.tid); const room = el.dataset.room; t.rooms = t.rooms.includes(room) ? t.rooms.filter((x) => x !== room) : sortRooms([...t.rooms, room]); renderTeacherModal(); break; }
+        case 'tm-all-rooms': { const t = tm.draft.find((x) => x.id === el.dataset.tid); t.rooms = [...planOf(rowOf(tm.recordId).planId).rooms]; renderTeacherModal(); break; }
+        case 'tm-distribute': {
+          const rooms = planOf(rowOf(tm.recordId).planId).rooms;
+          const n = tm.draft.length;
+          tm.draft.forEach((t, i) => { t.rooms = rooms.filter((_, idx) => Math.floor((idx * n) / rooms.length) === i); });
+          tm.draft = tm.draft.filter((t) => t.rooms.length);
+          renderTeacherModal();
+          break;
+        }
+        case 'tm-save': saveTeacherModal(); break;
+        case 'add-subjects': openAddSubjects(); break;
+        case 'add-term': state.addTerm = el.dataset.term; state.addSelected.clear(); renderAddList(); break;
+        case 'confirm-add-subjects': confirmAddSubjects(); break;
+        case 'auto-assign': {
+          const targets = recordsOfPlan(state.planId).filter((r) => state.term === 'all' || r.term === state.term);
+          const count = autoAssign(targets);
+          if (count) { updateAfterRowChange(); showToast(`กำหนดครูอัตโนมัติ ${count} วิชา`, 'เลือกครูในกลุ่มสาระที่มีภาระสอนน้อยที่สุด'); }
+          else showToast('ทุกรายวิชามีครูผู้สอนแล้ว', '', { tone: 'info' });
+          break;
+        }
+        case 'toggle-open': { const r = rowOf(id); r.open = !r.open; updateAfterRowChange(); break; }
+        case 'move-term': { const r = rowOf(id); r.term = r.term === '1' ? '2' : '1'; updateAfterRowChange(); showToast(`ย้ายไปภาคเรียนที่ ${r.term} แล้ว`, subjectById.get(r.subjectId).name); break; }
+        case 'remove-row': removeRows([id]); break;
+        case 'bulk-teacher': {
+          const teacherId = $('bulkTeacher').value;
+          if (!teacherId) { showToast('กรุณาเลือกครูผู้สอน', '', { tone: 'warning' }); break; }
+          let n = 0;
+          state.selected.forEach((rid) => {
+            const r = rowOf(rid);
+            const missing = uncoveredRooms(r);
+            if (!missing.length) return;
+            const entry = r.teachers.find((t) => t.id === teacherId);
+            if (entry) entry.rooms = sortRooms([...entry.rooms, ...missing]); else r.teachers.push({ id: teacherId, rooms: missing });
+            r.open = true;
+            n++;
+          });
+          state.selected.clear(); updateAfterRowChange();
+          showToast(n ? `เพิ่มครูใน ${n} วิชาแล้ว` : 'ทุกห้องมีครูอยู่แล้ว', n ? `${teacherById.get(teacherId).name} · สอนห้องที่ยังไม่มีครู` : 'เปิดแต่ละวิชาเพื่อเพิ่มครูร่วมสอน', { tone: n ? 'success' : 'info' });
+          break;
+        }
+        case 'bulk-auto': { const count = autoAssign([...state.selected].map(rowOf)); state.selected.clear(); updateAfterRowChange(); showToast(`กำหนดครูอัตโนมัติ ${count} วิชา`); break; }
+        case 'bulk-open': { const open = el.dataset.open === 'true'; state.selected.forEach((rid) => { rowOf(rid).open = open; }); const n = state.selected.size; state.selected.clear(); updateAfterRowChange(); showToast(`${open ? 'เปิด' : 'ปิด'}สอน ${n} วิชาแล้ว`); break; }
+        case 'bulk-move': { state.selected.forEach((rid) => { const r = rowOf(rid); r.term = r.term === '1' ? '2' : '1'; }); const n = state.selected.size; state.selected.clear(); updateAfterRowChange(); showToast(`สลับภาคเรียน ${n} วิชาแล้ว`); break; }
+        case 'bulk-remove': removeRows([...state.selected]); break;
+        case 'bulk-clear': state.selected.clear(); renderRows(); break;
+        case 'open-import': resetImport(); openModal('importModal'); break;
+        case 'download-template': downloadCsv('แม่แบบนำเข้าแผนการเรียน.csv', [['แผนการเรียน', 'ระดับชั้น', 'ห้องเรียน', 'ภาคเรียน', 'รหัสวิชา', 'ครูผู้สอน'], ['ห้องเรียนปกติ', 'ม.1', 'ม.1/1 ม.1/2', '1', 'ท21101', 'อ.ปาริฉัตร ทองดี']]); break;
+        case 'confirm-import': closeModal('importModal'); showToast('นำเข้าข้อมูลแล้ว', '24 รายการ · ตรวจสอบรายวิชาที่ยังไม่มีครูได้จากการ์ดความพร้อม'); break;
+      }
+    });
+
+    document.addEventListener('change', (event) => {
+      const t = event.target;
+      if (t.matches('#listYear, #listLevel, #listStatus')) renderCurriculumGrid();
+      if (t.matches('[data-check]')) { t.checked ? state.selected.add(t.dataset.check) : state.selected.delete(t.dataset.check); renderRows(); }
+      if (t.matches('#checkAll')) { filteredRows().forEach((r) => (t.checked ? state.selected.add(r.id) : state.selected.delete(r.id))); renderRows(); }
+      if (t.matches('#rowGroup')) { state.rowGroup = t.value; renderRows(); }
+      if (t.matches('#rowStatus')) { state.rowStatus = t.value; renderRows(); }
+      if (t.matches('[data-add]')) {
+        t.checked ? state.addSelected.add(t.dataset.add) : state.addSelected.delete(t.dataset.add);
+        const label = t.closest('label');
+        label.classList.toggle('bg-blue-50/60', t.checked);
+        label.classList.toggle('hover:bg-slate-50', !t.checked);
+        renderAddSummary();
+      }
+      if (t.matches('#addGroup, #addShowAll')) renderAddList();
+      if (t.matches('#cLevel')) renderSourceOptions();
+      if (t.matches('#cSource, #copyPlans, #copySubjects, #copyTeachers')) renderCopyPreview();
+      if (t.matches('#pGrade')) { state.planRooms.clear(); renderRoomChips(); }
+      if (t.matches('#importFile')) fileChosen(t.files[0]);
+    });
+
+    document.addEventListener('input', (event) => {
+      const t = event.target;
+      if (t.matches('#listSearch')) renderCurriculumGrid();
+      if (t.matches('#planSearch')) renderPlanList();
+      if (t.matches('#rowSearch')) { state.rowSearch = t.value; renderRows(); }
+      if (t.matches('#addSearch')) renderAddList();
+      if (t.matches('#tmSearch')) renderTeacherModal();
+      if (t.matches('#cName') && t.value.trim()) { $('cNameError').classList.add('hidden'); t.classList.remove('border-rose-400'); }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      const open = ['confirmModal', 'teacherModal', 'addSubjectModal', 'planModal', 'curriculumModal', 'importModal'].find((id) => !$(id).classList.contains('hidden'));
+      if (open) closeModal(open);
+    });
+    document.querySelectorAll('.modal-backdrop').forEach((backdrop) => backdrop.addEventListener('mousedown', (event) => { if (event.target === backdrop) closeModal(backdrop.id); }));
+
+    const dropZone = $('dropZone');
+    ['dragover', 'dragenter'].forEach((type) => dropZone.addEventListener(type, (e) => { e.preventDefault(); dropZone.classList.add('is-ready'); }));
+    dropZone.addEventListener('dragleave', () => { if (!$('importFile').files.length) dropZone.classList.remove('is-ready'); });
+    dropZone.addEventListener('drop', (e) => { e.preventDefault(); fileChosen(e.dataTransfer.files[0]); });
+
+    $('curriculumForm').addEventListener('submit', submitCurriculum);
+    $('planForm').addEventListener('submit', submitPlan);
+
+    /* ---------- เริ่มต้น ---------- */
+    renderList();
+    const [hashCurriculum, hashPlan] = decodeURIComponent(location.hash.slice(1)).split('/');
+    if (hashCurriculum && curriculumOf(hashCurriculum)) openCurriculum(hashCurriculum, hashPlan);
+  </script>
+</body>
+</html>

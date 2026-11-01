@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ภาพรวมงานวิชาการ</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#F7F9FC',
+            brand: '#2563eb',
+            ink: '#0f172a',
+            muted: '#64748b'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          fontSize: {
+            xs: ['1.15vh', { lineHeight: '1.55' }],
+            sm: ['1.35vh', { lineHeight: '1.6' }],
+            base: ['1.55vh', { lineHeight: '1.6' }],
+            lg: ['1.75vh', { lineHeight: '1.45' }],
+            xl: ['2vh', { lineHeight: '1.35' }],
+            '2xl': ['2.45vh', { lineHeight: '1.25' }],
+            '3xl': ['3vh', { lineHeight: '1.18' }],
+            '4xl': ['3.6vh', { lineHeight: '1.12' }],
+            '5xl': ['4.2vh', { lineHeight: '1.08' }]
+          },
+          boxShadow: {
+            soft: '0 12px 32px rgba(15, 23, 42, 0.06)'
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-canvas font-body text-ink">
+  <div id="layoutSidebar"></div>
+
+  <div class="lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="../shared/academic-layout.js?v=8"></script>
+    <script>AcademicLayout.mount({"active":"overview","title":"ภาพรวมงานวิชาการ"});</script>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8">
+      <div class="mx-auto max-w-7xl space-y-6">
+        <section>
+          <div>
+            <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
+              <a href="overview.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">หน้าหลัก</a>
+              <span class="text-slate-300">></span>
+              <span class="font-medium text-slate-800">ภาพรวมงานวิชาการ</span>
+            </nav>
+            <h1 class="text-3xl font-semibold tracking-tight text-slate-950 lg:text-4xl">ภาพรวมงานวิชาการ</h1>
+            <p class="mt-3 max-w-4xl text-sm leading-6 text-slate-500">ติดตามงานคะแนน งานสอบซ่อม และประเด็นเร่งด่วนที่ต้องดำเนินการ</p>
+          </div>
+        </section>
+
+        <section id="actionCards" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"></section>
+
+        <div id="dashboardContent" class="space-y-6">
+          <section class="grid gap-6 xl:grid-cols-[1.35fr_.85fr]">
+            <article class="rounded-2xl border border-slate-200 bg-white shadow-soft">
+              <div class="border-b border-slate-100 px-5 py-5 lg:px-6">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                  <div>
+                    <h2 class="text-xl font-semibold text-slate-950">งานที่ต้องดำเนินการ</h2>
+                    <p class="mt-1 text-sm text-slate-500">เรียงตามผลกระทบ ความเสี่ยง และกำหนดเวลาที่ใกล้ที่สุด</p>
+                  </div>
+                  <span id="workQueueCount" class="w-fit rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">0 งาน</span>
+                </div>
+              </div>
+              <div id="workQueue" class="divide-y divide-slate-100"></div>
+            </article>
+
+            <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+              <div>
+                <h2 class="text-xl font-semibold text-slate-950">ความคืบหน้างานปีการศึกษา</h2>
+                <p class="mt-1 text-sm text-slate-500">ติดตามสถานะงานหลักของปีการศึกษา 2568</p>
+              </div>
+              <div id="workflowProgress" class="mt-5 space-y-5"></div>
+            </article>
+          </section>
+
+          <section class="grid gap-6 xl:grid-cols-[.95fr_1.05fr]">
+            <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 class="text-xl font-semibold text-slate-950">สัญญาณที่ควรตรวจสอบ</h2>
+                  <p class="mt-1 text-sm text-slate-500">แสดงเฉพาะห้องหรือรายวิชาที่มีความผิดปกติสูงสุด</p>
+                </div>
+                <a href="subject-results.html" class="rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100">เปิดรายงานผล</a>
+              </div>
+              <div id="riskExceptions" class="mt-5 space-y-4"></div>
+            </article>
+
+            <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                <div>
+                  <h2 class="text-xl font-semibold text-slate-950">นักเรียนที่ต้องติดตาม</h2>
+                  <p class="mt-1 text-sm text-slate-500">สรุปกลุ่มนักเรียนที่ควรดำเนินการต่อในปีการศึกษา 2568</p>
+                </div>
+                <a href="student-retake-management.html" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">ดูรายชื่อนักเรียนทั้งหมด</a>
+              </div>
+              <div id="studentFollowUp" class="mt-5"></div>
+            </article>
+          </section>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const overviewRecords = [
+      { year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/1', subject: 'คณิตศาสตร์', teacher: 'อ.ชลธิชา', students: 38, passRate: 42, avgGpa: 2.18, belowStandard: 14, retakeWaiting: 8, retakeDone: 4, followUp: 3, trend: -6.1, scoreSubmissionStatus: 'pending', scoreApprovalStatus: 'overdue', scoreSubmissionPercent: 78, reviewPercent: 70, approvalPercent: 55, retakeProgressPercent: 42, submissionDeadline: '2026-08-03', retakeDeadline: '2026-08-05', overdueDays: 2, retakeOverdueCount: 3, assignedTeacher: 'อ.ชลธิชา', actionRequired: 'approve_scores', lastUpdated: '2026-08-05T04:40:00+07:00' },
+      { year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/2', subject: 'วิทยาศาสตร์', teacher: 'อ.ปวีณา', students: 40, passRate: 55, avgGpa: 2.64, belowStandard: 9, retakeWaiting: 5, retakeDone: 7, followUp: 2, trend: 2.4, scoreSubmissionStatus: 'submitted', scoreApprovalStatus: 'pending', scoreSubmissionPercent: 100, reviewPercent: 82, approvalPercent: 68, retakeProgressPercent: 58, submissionDeadline: '2026-08-05', retakeDeadline: '2026-08-08', overdueDays: 0, retakeOverdueCount: 0, assignedTeacher: 'อ.ปวีณา', actionRequired: 'review_scores', lastUpdated: '2026-08-05T04:20:00+07:00' },
+      { year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/3', subject: 'ภาษาอังกฤษพื้นฐาน', teacher: 'อ.จิราพร', students: 35, passRate: 38, avgGpa: 2.02, belowStandard: 16, retakeWaiting: 10, retakeDone: 3, followUp: 5, trend: -4.8, scoreSubmissionStatus: 'pending', scoreApprovalStatus: 'pending', scoreSubmissionPercent: 66, reviewPercent: 54, approvalPercent: 40, retakeProgressPercent: 24, submissionDeadline: '2026-08-05', retakeDeadline: '2026-08-05', overdueDays: 0, retakeOverdueCount: 0, assignedTeacher: 'อ.จิราพร', actionRequired: 'manage_retake', lastUpdated: '2026-08-05T04:25:00+07:00' },
+      { year: '2568', term: '2', grade: 'ม.2', classroom: 'ม.2/1', subject: 'วิทยาศาสตร์และเทคโนโลยี', teacher: 'อ.พิมพ์ชนก', students: 42, passRate: 61, avgGpa: 2.82, belowStandard: 8, retakeWaiting: 4, retakeDone: 9, followUp: 1, trend: 3.6, scoreSubmissionStatus: 'submitted', scoreApprovalStatus: 'approved', scoreSubmissionPercent: 100, reviewPercent: 96, approvalPercent: 92, retakeProgressPercent: 69, submissionDeadline: '2026-08-07', retakeDeadline: '2026-08-10', overdueDays: 0, retakeOverdueCount: 0, assignedTeacher: 'อ.พิมพ์ชนก', actionRequired: 'open_subject', lastUpdated: '2026-08-05T04:05:00+07:00' },
+      { year: '2568', term: '2', grade: 'ม.2', classroom: 'ม.2/2', subject: 'ภาษาอังกฤษเพื่อการสื่อสาร', teacher: 'อ.จิราพร', students: 39, passRate: 49, avgGpa: 2.41, belowStandard: 12, retakeWaiting: 7, retakeDone: 5, followUp: 3, trend: -2.5, scoreSubmissionStatus: 'pending', scoreApprovalStatus: 'pending', scoreSubmissionPercent: 72, reviewPercent: 64, approvalPercent: 50, retakeProgressPercent: 42, submissionDeadline: '2026-08-06', retakeDeadline: '2026-08-07', overdueDays: 0, retakeOverdueCount: 1, assignedTeacher: 'อ.จิราพร', actionRequired: 'contact_teacher', lastUpdated: '2026-08-05T04:16:00+07:00' },
+      { year: '2568', term: '2', grade: 'ม.3', classroom: 'ม.3/2', subject: 'คณิตศาสตร์', teacher: 'อ.กมลชนก', students: 44, passRate: 45, avgGpa: 2.29, belowStandard: 18, retakeWaiting: 12, retakeDone: 6, followUp: 6, trend: -7.2, scoreSubmissionStatus: 'submitted', scoreApprovalStatus: 'overdue', scoreSubmissionPercent: 100, reviewPercent: 76, approvalPercent: 46, retakeProgressPercent: 33, submissionDeadline: '2026-08-03', retakeDeadline: '2026-08-06', overdueDays: 2, retakeOverdueCount: 4, assignedTeacher: 'อ.กมลชนก', actionRequired: 'approve_scores', lastUpdated: '2026-08-05T04:40:00+07:00' },
+      { year: '2568', term: '2', grade: 'ม.3', classroom: 'ม.3/1', subject: 'ภาษาไทย', teacher: 'อ.ปาริฉัตร', students: 41, passRate: 72, avgGpa: 3.05, belowStandard: 5, retakeWaiting: 2, retakeDone: 8, followUp: 1, trend: 5.3, scoreSubmissionStatus: 'submitted', scoreApprovalStatus: 'approved', scoreSubmissionPercent: 100, reviewPercent: 98, approvalPercent: 94, retakeProgressPercent: 80, submissionDeadline: '2026-08-08', retakeDeadline: '2026-08-11', overdueDays: 0, retakeOverdueCount: 0, assignedTeacher: 'อ.ปาริฉัตร', actionRequired: 'open_subject', lastUpdated: '2026-08-05T04:12:00+07:00' },
+      { year: '2568', term: '1', grade: 'ม.2', classroom: 'ม.2/3', subject: 'คณิตศาสตร์เพิ่มเติม', teacher: 'อ.กมลชนก', students: 36, passRate: 52, avgGpa: 2.48, belowStandard: 11, retakeWaiting: 6, retakeDone: 5, followUp: 3, trend: -1.8, scoreSubmissionStatus: 'submitted', scoreApprovalStatus: 'pending', scoreSubmissionPercent: 100, reviewPercent: 79, approvalPercent: 62, retakeProgressPercent: 45, submissionDeadline: '2026-08-05', retakeDeadline: '2026-08-09', overdueDays: 0, retakeOverdueCount: 0, assignedTeacher: 'อ.กมลชนก', actionRequired: 'review_scores', lastUpdated: '2026-08-05T04:18:00+07:00' },
+      { year: '2568', term: '1', grade: 'ม.2', classroom: 'ม.2/4', subject: 'สังคมศึกษา', teacher: 'อ.มณฑิรา', students: 37, passRate: 68, avgGpa: 2.95, belowStandard: 6, retakeWaiting: 3, retakeDone: 7, followUp: 1, trend: 4.1, scoreSubmissionStatus: 'submitted', scoreApprovalStatus: 'approved', scoreSubmissionPercent: 100, reviewPercent: 94, approvalPercent: 90, retakeProgressPercent: 70, submissionDeadline: '2026-08-07', retakeDeadline: '2026-08-12', overdueDays: 0, retakeOverdueCount: 0, assignedTeacher: 'อ.มณฑิรา', actionRequired: 'open_subject', lastUpdated: '2026-08-05T04:08:00+07:00' },
+      { year: '2568', term: '2', grade: 'ม.1', classroom: 'ม.1/4', subject: 'ภาษาไทย', teacher: 'อ.ปาริฉัตร', students: 34, passRate: 63, avgGpa: 2.74, belowStandard: 7, retakeWaiting: 4, retakeDone: 6, followUp: 2, trend: 1.9, scoreSubmissionStatus: 'submitted', scoreApprovalStatus: 'pending', scoreSubmissionPercent: 100, reviewPercent: 86, approvalPercent: 72, retakeProgressPercent: 60, submissionDeadline: '2026-08-06', retakeDeadline: '2026-08-10', overdueDays: 0, retakeOverdueCount: 0, assignedTeacher: 'อ.ปาริฉัตร', actionRequired: 'review_scores', lastUpdated: '2026-08-05T04:11:00+07:00' },
+      { year: '2568', term: '2', grade: 'ม.3', classroom: 'ม.3/3', subject: 'วิทยาศาสตร์', teacher: 'อ.ปวีณา', students: 43, passRate: 58, avgGpa: 2.67, belowStandard: 10, retakeWaiting: 5, retakeDone: 8, followUp: 2, trend: -0.9, scoreSubmissionStatus: 'submitted', scoreApprovalStatus: 'approved', scoreSubmissionPercent: 100, reviewPercent: 91, approvalPercent: 88, retakeProgressPercent: 62, submissionDeadline: '2026-08-08', retakeDeadline: '2026-08-13', overdueDays: 0, retakeOverdueCount: 0, assignedTeacher: 'อ.ปวีณา', actionRequired: 'open_subject', lastUpdated: '2026-08-05T04:07:00+07:00' },
+      { year: '2568', term: '2', grade: 'ม.1', classroom: 'ม.1/2', subject: 'สุขศึกษา', teacher: 'อ.ธนกฤต', students: 40, passRate: 76, avgGpa: 3.12, belowStandard: 3, retakeWaiting: 1, retakeDone: 9, followUp: 0, trend: 6.4, scoreSubmissionStatus: 'submitted', scoreApprovalStatus: 'approved', scoreSubmissionPercent: 100, reviewPercent: 99, approvalPercent: 96, retakeProgressPercent: 90, submissionDeadline: '2026-08-09', retakeDeadline: '2026-08-14', overdueDays: 0, retakeOverdueCount: 0, assignedTeacher: 'อ.ธนกฤต', actionRequired: 'open_subject', lastUpdated: '2026-08-05T04:02:00+07:00' },
+      { year: '2568', term: '1', grade: 'ม.3', classroom: 'ม.3/4', subject: 'ภาษาอังกฤษพื้นฐาน', teacher: 'อ.จิราพร', students: 42, passRate: 43, avgGpa: 2.21, belowStandard: 15, retakeWaiting: 9, retakeDone: 4, followUp: 4, trend: -5.6, scoreSubmissionStatus: 'pending', scoreApprovalStatus: 'pending', scoreSubmissionPercent: 74, reviewPercent: 58, approvalPercent: 44, retakeProgressPercent: 31, submissionDeadline: '2026-08-04', retakeDeadline: '2026-08-07', overdueDays: 1, retakeOverdueCount: 2, assignedTeacher: 'อ.จิราพร', actionRequired: 'contact_teacher', lastUpdated: '2026-08-05T04:23:00+07:00' },
+      { year: '2567', term: '2', grade: 'ม.2', classroom: 'ม.2/2', subject: 'ประวัติศาสตร์', teacher: 'อ.ปาริฉัตร', students: 39, passRate: 57, avgGpa: 2.61, belowStandard: 10, retakeWaiting: 6, retakeDone: 6, followUp: 2, trend: 0.8, scoreSubmissionStatus: 'submitted', scoreApprovalStatus: 'pending', scoreSubmissionPercent: 100, reviewPercent: 84, approvalPercent: 70, retakeProgressPercent: 50, submissionDeadline: '2026-08-04', retakeDeadline: '2026-08-09', overdueDays: 1, retakeOverdueCount: 0, assignedTeacher: 'อ.ปาริฉัตร', actionRequired: 'review_scores', lastUpdated: '2026-08-05T03:50:00+07:00' }
+    ];
+
+    const watchlistRecords = [
+      { year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/3', id: '681325', name: 'สุทธิภัทร แดงดี', subjects: ['ภาษาอังกฤษพื้นฐาน', 'คณิตศาสตร์', 'วิทยาศาสตร์'], riskSubjects: 3, highRisk: true, overdueRetake: false, reason: 'คะแนนอังกฤษต่ำและยังไม่ส่งงานหลัก' },
+      { year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/1', id: '681133', name: 'ธนภัทร กลิ่นจันทร์', subjects: ['คณิตศาสตร์', 'ภาษาอังกฤษพื้นฐาน'], riskSubjects: 2, highRisk: true, overdueRetake: true, reason: 'ขาดเรียนต่อเนื่องและสอบซ่อมเกินกำหนด' },
+      { year: '2568', term: '1', grade: 'ม.3', classroom: 'ม.3/4', id: '4849', name: 'วิชญาดา ศรีนวล', subjects: ['ภาษาอังกฤษพื้นฐาน', 'คณิตศาสตร์เพิ่มเติม'], riskSubjects: 2, highRisk: true, overdueRetake: true, reason: 'รอสอบซ่อมอังกฤษและคะแนนลดลงต่อเนื่อง' },
+      { year: '2568', term: '2', grade: 'ม.2', classroom: 'ม.2/2', id: '572211', name: 'พิมพ์ชนก ศรีสวัสดิ์', subjects: ['ภาษาอังกฤษเพื่อการสื่อสาร', 'คณิตศาสตร์เพิ่มเติม'], riskSubjects: 2, highRisk: false, overdueRetake: false, reason: 'รอแก้งานภาษาอังกฤษเพื่อการสื่อสาร' },
+      { year: '2568', term: '2', grade: 'ม.3', classroom: 'ม.3/2', id: '4831', name: 'พีรวิชญ์ คงช่วย', subjects: ['คณิตศาสตร์', 'วิทยาศาสตร์', 'ภาษาอังกฤษพื้นฐาน'], riskSubjects: 3, highRisk: true, overdueRetake: true, reason: 'ค้างงานหลายวิชาและรอสอบซ่อมคณิตศาสตร์' },
+      { year: '2568', term: '2', grade: 'ม.3', classroom: 'ม.3/2', id: '4824', name: 'ณัฐญ์ชญา จันทาพันธ์', subjects: ['คณิตศาสตร์', 'ภาษาไทย'], riskSubjects: 2, highRisk: false, overdueRetake: true, reason: 'รอประกาศผลสอบซ่อม' },
+      { year: '2568', term: '2', grade: 'ม.3', classroom: 'ม.3/1', id: '4807', name: 'กฤตภาส ทองดี', subjects: ['ภาษาไทย'], riskSubjects: 1, highRisk: false, overdueRetake: false, reason: 'คะแนนภาษาไทยต่ำกว่าเกณฑ์เล็กน้อย' },
+      { year: '2567', term: '2', grade: 'ม.2', classroom: 'ม.2/2', id: '571018', name: 'ปวริศา เกตุแก้ว', riskSubjects: 2, highRisk: false, overdueRetake: false, reason: 'ต้องติดตามการส่งงานประวัติศาสตร์' }
+    ];
+
+    const currentScope = {
+      year: '2568',
+      term: 'ทั้งหมด',
+      grade: 'ทั้งหมด'
+    };
+
+    function escapeHTML(value) {
+      return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function formatThaiDate(dateInput) {
+      const date = new Date(dateInput);
+      const dateText = new Intl.DateTimeFormat('th-TH', {
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        timeZone: 'Asia/Bangkok'
+      }).format(date);
+      const timeText = new Intl.DateTimeFormat('th-TH', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+        timeZone: 'Asia/Bangkok'
+      }).format(date);
+      return `${dateText} เวลา ${timeText}`;
+    }
+
+    function buildUrl(base, row) {
+      const params = new URLSearchParams({
+        grade: row.grade,
+        classroom: row.classroom,
+        subject: row.subject
+      });
+      return `${base}?${params.toString()}`;
+    }
+
+    function getFilteredRecords() {
+      return overviewRecords.filter((record) =>
+        record.year === currentScope.year &&
+        (currentScope.term === 'ทั้งหมด' || record.term === currentScope.term) &&
+        (currentScope.grade === 'ทั้งหมด' || record.grade === currentScope.grade)
+      );
+    }
+
+    function getFilteredWatchlist() {
+      return watchlistRecords.filter((student) =>
+        student.year === currentScope.year &&
+        (currentScope.term === 'ทั้งหมด' || student.term === currentScope.term) &&
+        (currentScope.grade === 'ทั้งหมด' || student.grade === currentScope.grade)
+      );
+    }
+
+    function getPriorityLevel(row) {
+      if (row.passRate < 45 || row.trend <= -5 || row.retakeWaiting >= 10 || row.overdueDays > 0 || row.scoreApprovalStatus === 'overdue') {
+        return { label: 'เร่งด่วนสูง', rank: 3, classes: 'bg-rose-50 text-rose-700 ring-1 ring-rose-100' };
+      }
+      if (row.passRate < 60 || row.retakeWaiting >= 5 || row.followUp >= 3 || row.scoreSubmissionStatus === 'pending') {
+        return { label: 'ต้องดำเนินการ', rank: 2, classes: 'bg-amber-50 text-amber-700 ring-1 ring-amber-100' };
+      }
+      return { label: 'ติดตามปกติ', rank: 1, classes: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-100' };
+    }
+
+    function getPriorityReasons(row) {
+      const reasons = [];
+      if (row.passRate < 45) reasons.push('อัตราผ่านต่ำกว่า 45%');
+      if (row.trend <= -5) reasons.push(`ลดลงจากภาคเรียนก่อน ${Math.abs(row.trend).toFixed(1)}%`);
+      if (row.retakeWaiting >= 10) reasons.push(`รอสอบซ่อมตั้งแต่ ${row.retakeWaiting} รายการ`);
+      if (row.overdueDays > 0) reasons.push(`เลยกำหนด ${row.overdueDays} วัน`);
+      if (row.scoreApprovalStatus === 'overdue') reasons.push('คะแนนยังไม่ผ่านการอนุมัติ');
+      if (row.passRate >= 45 && row.passRate < 60) reasons.push('อัตราผ่านต่ำกว่า 60%');
+      if (row.followUp >= 3) reasons.push(`มีนักเรียนต้องติดตาม ${row.followUp} คน`);
+      if (row.scoreSubmissionStatus === 'pending') reasons.push('ยังส่งคะแนนไม่ครบ');
+      return reasons.slice(0, 2);
+    }
+
+    function getTaskAction(row) {
+      const actions = {
+        approve_scores: { label: 'อนุมัติผล', href: buildUrl('subject-results.html', row), style: 'primary' },
+        review_scores: { label: 'ตรวจสอบคะแนน', href: buildUrl('subject-results.html', row), style: 'primary' },
+        manage_retake: { label: 'จัดการสอบซ่อม', href: buildUrl('student-retake-management.html', row), style: 'primary' },
+        contact_teacher: { label: 'ติดต่อครูผู้สอน', href: buildUrl('subject-results.html', row), style: 'secondary' },
+        open_subject: { label: 'เปิดรายวิชา', href: buildUrl('subject-results.html', row), style: 'secondary' }
+      };
+      if (row.scoreApprovalStatus === 'overdue') return actions.approve_scores;
+      if (row.retakeWaiting >= 10) return actions.manage_retake;
+      if (row.scoreSubmissionStatus === 'pending') return actions.contact_teacher;
+      return actions[row.actionRequired] || actions.open_subject;
+    }
+
+    function buildWorkQueue(rows) {
+      return rows
+        .map((row) => {
+          const priority = getPriorityLevel(row);
+          const reasons = getPriorityReasons(row);
+          const action = getTaskAction(row);
+          const score = priority.rank * 100 + row.retakeWaiting * 3 + row.belowStandard + Math.max(0, 60 - row.passRate) + Math.max(0, Math.abs(Math.min(row.trend, 0)));
+          return { ...row, priority, reasons, action, score };
+        })
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 6);
+    }
+
+    function buildActionMetrics(rows, students) {
+      const pendingScoreRows = rows.filter((row) => row.scoreSubmissionStatus === 'pending' || row.scoreApprovalStatus !== 'approved');
+      const followUpCount = students.length;
+      const highRiskCount = students.filter((student) => student.highRisk).length;
+      const retakeWaiting = rows.reduce((sum, row) => sum + row.retakeWaiting, 0);
+      const retakeOverdue = rows.reduce((sum, row) => sum + row.retakeOverdueCount, 0);
+      const riskyClassrooms = new Set(rows.filter((row) => row.passRate < 50).map((row) => row.classroom));
+      const riskySubjectCount = rows.filter((row) => row.passRate < 50).length;
+      return [
+        { title: 'งานคะแนนค้าง', value: pendingScoreRows.length, unit: 'วิชา', text: 'ยังส่งคะแนนหรืออนุมัติไม่ครบ', action: 'ดูรายการ', href: 'subject-results.html', icon: 'M6 4h12v16H6V4Zm3 4h6v2H9V8Zm0 4h6v2H9v-2Zm0 4h4v2H9v-2Z', tone: 'bg-blue-50 text-blue-700' },
+        { title: 'นักเรียนต้องติดตาม', value: followUpCount, unit: 'คน', text: `${highRiskCount} คนมีความเสี่ยงสูง`, action: 'ดูนักเรียน', href: 'fail-student-detail.html', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0H5Z', tone: 'bg-rose-50 text-rose-700' },
+        { title: 'สอบซ่อมค้าง', value: retakeWaiting, unit: 'รายการ', text: `${retakeOverdue} รายการเลยกำหนด`, action: 'จัดการสอบซ่อม', href: 'student-retake-management.html', icon: 'M7 3h10v2h3v16H4V5h3V3Zm2 2v2h6V5H9Zm-1 6h8v2H8v-2Zm0 4h6v2H8v-2Z', tone: 'bg-amber-50 text-amber-700' },
+        { title: 'ห้องเสี่ยง', value: riskyClassrooms.size, unit: 'ห้อง', text: `พบ ${riskySubjectCount} รายวิชาเสี่ยง`, action: 'ดูห้องเสี่ยง', href: 'subject-results.html', icon: 'M12 2 2 20h20L12 2Zm1 14h-2v2h2v-2Zm0-7h-2v5h2V9Z', tone: 'bg-sky-50 text-sky-700' }
+      ];
+    }
+
+    function buildWorkflowMetrics(rows) {
+      const total = rows.length || 1;
+      const submitted = rows.filter((row) => row.scoreSubmissionStatus === 'submitted').length;
+      const reviewed = rows.filter((row) => row.reviewPercent >= 80).length;
+      const approved = rows.filter((row) => row.scoreApprovalStatus === 'approved').length;
+      const retakeFinished = rows.reduce((sum, row) => sum + row.retakeDone, 0);
+      const retakeTotal = rows.reduce((sum, row) => sum + row.retakeDone + row.retakeWaiting, 0) || 1;
+      return [
+        { label: 'การส่งคะแนน', percentage: Math.round((submitted / total) * 100), completed: submitted, total, remaining: total - submitted, doneLabel: 'ส่งครบ', remainingLabel: 'เหลือ', unit: 'วิชา', action: 'ดูรายการค้าง', href: 'subject-results.html', color: 'blue' },
+        { label: 'การตรวจสอบคะแนน', percentage: Math.round((reviewed / total) * 100), completed: reviewed, total, remaining: total - reviewed, doneLabel: 'ตรวจสอบแล้ว', remainingLabel: 'รอตรวจสอบ', unit: 'วิชา', action: 'ตรวจสอบคะแนน', href: 'subject-results.html', color: 'amber' },
+        { label: 'การอนุมัติผลการเรียน', percentage: Math.round((approved / total) * 100), completed: approved, total, remaining: total - approved, doneLabel: 'อนุมัติแล้ว', remainingLabel: 'รออนุมัติ', unit: 'วิชา', action: 'อนุมัติผล', href: 'subject-results.html', color: rows.some((row) => row.scoreApprovalStatus === 'overdue') ? 'red' : 'blue' },
+        { label: 'การดำเนินการสอบซ่อม', percentage: Math.round((retakeFinished / retakeTotal) * 100), completed: retakeFinished, total: retakeTotal, remaining: retakeTotal - retakeFinished, doneLabel: 'ดำเนินการแล้ว', remainingLabel: 'ค้างดำเนินการ', unit: 'รายการ', action: 'จัดการสอบซ่อม', href: 'student-retake-management.html', color: rows.some((row) => row.retakeOverdueCount > 0) ? 'red' : 'green' }
+      ];
+    }
+
+    function buildRiskExceptions(rows) {
+      return rows
+        .map((row) => {
+          const reasons = [];
+          if (row.belowStandard > 0) reasons.push(`นักเรียนต่ำกว่าเกณฑ์ ${row.belowStandard} คน`);
+          if (row.retakeWaiting > 0) reasons.push(`รอสอบซ่อม ${row.retakeWaiting} รายการ`);
+          if (row.scoreSubmissionStatus === 'pending') reasons.push('ยังส่งคะแนนไม่ครบ');
+          return {
+            ...row,
+            reasons: reasons.slice(0, 2),
+            anomalyScore: Math.max(0, 65 - row.passRate) + row.belowStandard + row.retakeWaiting + Math.abs(Math.min(row.trend, 0)) * 2
+          };
+        })
+        .filter((row) => row.passRate < 60 || row.trend < 0 || row.retakeWaiting >= 5 || row.scoreSubmissionStatus === 'pending')
+        .sort((a, b) => b.anomalyScore - a.anomalyScore)
+        .slice(0, 5);
+    }
+
+    function renderActionCards(metrics) {
+      document.getElementById('actionCards').innerHTML = metrics.map((card) => `
+        <a href="${escapeHTML(card.href)}" class="group rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-soft focus:outline-none focus:ring-4 focus:ring-blue-100">
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <p class="text-sm font-semibold text-slate-600">${escapeHTML(card.title)}</p>
+              <div class="mt-3 flex items-baseline gap-2">
+                <span class="text-3xl font-bold text-slate-950">${card.value.toLocaleString('th-TH')}</span>
+                <span class="text-sm font-semibold text-slate-500">${escapeHTML(card.unit)}</span>
+              </div>
+              <p class="mt-2 text-sm text-slate-500">${escapeHTML(card.text)}</p>
+              <p class="mt-4 text-sm font-semibold text-blue-700">${escapeHTML(card.action)} →</p>
+            </div>
+            <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${card.tone}">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="${card.icon}"/></svg>
+            </div>
+          </div>
+        </a>
+      `).join('');
+    }
+
+    function renderWorkQueue(tasks) {
+      document.getElementById('workQueueCount').textContent = `${tasks.length} งาน`;
+      document.getElementById('workQueue').innerHTML = tasks.map((task) => {
+        const buttonClass = task.action.style === 'primary'
+          ? 'bg-blue-600 text-white hover:bg-blue-700'
+          : 'border border-slate-200 text-slate-700 hover:bg-slate-50';
+        const dueDate = task.action.label === 'จัดการสอบซ่อม' ? task.retakeDeadline : task.submissionDeadline;
+        const dueText = task.overdueDays > 0 ? `เลยกำหนด ${task.overdueDays} วัน` : `ครบกำหนด ${formatThaiDate(dueDate).split(' เวลา ')[0]}`;
+        return `
+          <div class="px-5 py-5 transition hover:bg-slate-50 lg:px-6">
+            <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div class="min-w-0 flex-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="rounded-full px-3 py-1 text-xs font-semibold ${task.priority.classes}">${escapeHTML(task.priority.label)}</span>
+                  <span class="text-xs font-semibold text-slate-400">${escapeHTML(task.classroom)} • ${escapeHTML(task.subject)}</span>
+                </div>
+                <h3 class="mt-2 text-base font-semibold text-slate-950">${escapeHTML(task.action.label)} ${escapeHTML(task.classroom)} ${escapeHTML(task.subject)}</h3>
+                <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-sm text-slate-500">
+                  <span>อัตราผ่าน ${task.passRate}%</span>
+                  <span>รอสอบซ่อม ${task.retakeWaiting} รายการ</span>
+                  <span>${escapeHTML(dueText)}</span>
+                  <span>ผู้รับผิดชอบ: ${escapeHTML(task.assignedTeacher)}</span>
+                </div>
+                <div class="mt-3 flex flex-wrap gap-2">
+                  ${task.reasons.map((reason) => `<span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-medium text-slate-600">${escapeHTML(reason)}</span>`).join('')}
+                </div>
+              </div>
+              <a href="${escapeHTML(task.action.href)}" class="rounded-xl px-4 py-2 text-center text-sm font-semibold transition focus:outline-none focus:ring-4 focus:ring-blue-100 sm:w-fit ${buttonClass}">${escapeHTML(task.action.label)}</a>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderWorkflowProgress(metrics) {
+      const colorMap = {
+        green: { bar: 'bg-emerald-500', text: 'text-emerald-700', bg: 'bg-emerald-50' },
+        blue: { bar: 'bg-blue-500', text: 'text-blue-700', bg: 'bg-blue-50' },
+        amber: { bar: 'bg-amber-500', text: 'text-amber-700', bg: 'bg-amber-50' },
+        red: { bar: 'bg-rose-500', text: 'text-rose-700', bg: 'bg-rose-50' }
+      };
+      document.getElementById('workflowProgress').innerHTML = metrics.map((item) => {
+        const tone = colorMap[item.color];
+        return `
+          <div>
+            <div class="flex items-start justify-between gap-3">
+              <div>
+                <p class="font-semibold text-slate-950">${escapeHTML(item.label)}</p>
+                <p class="mt-1 text-sm text-slate-500">${escapeHTML(item.doneLabel)} ${item.completed.toLocaleString('th-TH')} จาก ${item.total.toLocaleString('th-TH')} ${escapeHTML(item.unit)} • ${escapeHTML(item.remainingLabel)} ${item.remaining.toLocaleString('th-TH')} ${escapeHTML(item.unit)}</p>
+              </div>
+              <span class="rounded-full px-3 py-1 text-sm font-bold ${tone.bg} ${tone.text}">${item.percentage}%</span>
+            </div>
+            <div class="mt-3 h-2 overflow-hidden rounded-full bg-slate-100">
+              <div class="h-full rounded-full ${tone.bar}" style="width:${item.percentage}%"></div>
+            </div>
+            <a href="${escapeHTML(item.href)}" class="mt-2 inline-flex text-sm font-semibold text-blue-700 transition hover:text-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-100">${escapeHTML(item.action)} →</a>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function renderRiskExceptions(exceptions) {
+      document.getElementById('riskExceptions').innerHTML = exceptions.map((row) => {
+        const trendText = row.trend < 0
+          ? `ลดลง ${Math.abs(row.trend).toFixed(1)}% จากภาคเรียนก่อน`
+          : `เพิ่มขึ้น ${row.trend.toFixed(1)}% จากภาคเรียนก่อน`;
+        return `
+        <div class="border-b border-slate-100 pb-4 last:border-0 last:pb-0">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p class="font-semibold text-slate-950">${escapeHTML(row.classroom)} • ${escapeHTML(row.subject)}</p>
+              <p class="mt-1 text-sm text-slate-500">${escapeHTML(row.teacher)}</p>
+            </div>
+            <div class="text-left sm:text-right">
+              <p class="font-bold text-rose-700">อัตราผ่าน ${row.passRate}%</p>
+              <p class="mt-1 text-sm text-slate-500">${escapeHTML(trendText)}</p>
+            </div>
+          </div>
+          <div class="mt-3 rounded-xl bg-slate-50 px-4 py-3">
+            <p class="text-xs font-semibold text-slate-400">เหตุผล</p>
+            <p class="mt-1 text-sm text-slate-600">${row.reasons.map(escapeHTML).join(' • ') || 'ควรตรวจสอบแนวโน้มคะแนนเพิ่มเติม'}</p>
+          </div>
+          <a href="${escapeHTML(buildUrl('subject-results.html', row))}" class="mt-3 inline-flex text-sm font-semibold text-blue-700 transition hover:text-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-100">เปิดรายวิชา →</a>
+        </div>
+      `;
+      }).join('');
+    }
+
+    function renderStudentFollowUp(students) {
+      const highRisk = students.filter((student) => student.highRisk).length;
+      const multiSubject = students.filter((student) => student.riskSubjects >= 2).length;
+      const overdue = students.filter((student) => student.overdueRetake).length;
+      const summary = [
+        { label: 'นักเรียนทั้งหมดที่ต้องติดตาม', value: students.length },
+        { label: 'นักเรียนความเสี่ยงสูง', value: highRisk },
+        { label: 'นักเรียนติดหลายวิชา', value: multiSubject },
+        { label: 'นักเรียนสอบซ่อมเกินกำหนด', value: overdue }
+      ];
+      const previews = students.slice(0, 3);
+      document.getElementById('studentFollowUp').innerHTML = `
+        <div class="grid gap-3 sm:grid-cols-2">
+          ${summary.map((item) => `
+            <div class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+              <p class="text-2xl font-bold text-slate-950">${item.value.toLocaleString('th-TH')}</p>
+              <p class="mt-1 text-xs text-slate-500">${escapeHTML(item.label)}</p>
+            </div>
+          `).join('')}
+        </div>
+        <div class="mt-5 divide-y divide-slate-100 rounded-xl border border-slate-200">
+          ${previews.map((student) => `
+            <a href="student-retake-management.html?student=${encodeURIComponent(student.id)}" class="flex flex-col gap-2 px-4 py-4 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p class="font-semibold text-slate-950">${escapeHTML(student.name)}</p>
+                <p class="mt-1 text-sm text-slate-500">${escapeHTML(student.id)} • ${escapeHTML(student.classroom)} • ${student.riskSubjects} วิชา</p>
+                <p class="mt-1 text-xs text-slate-400">${(student.subjects || []).map(escapeHTML).join(' / ')}</p>
+              </div>
+              <p class="text-sm text-slate-500 sm:max-w-[260px] sm:text-right">${escapeHTML(student.reason)} →</p>
+            </a>
+          `).join('') || '<div class="px-4 py-6 text-center text-sm text-slate-500">ยังไม่มีนักเรียนที่ต้องติดตามในปีการศึกษา 2568</div>'}
+        </div>
+      `;
+    }
+
+    function renderAll() {
+      const rows = getFilteredRecords();
+      const students = getFilteredWatchlist();
+      renderActionCards(buildActionMetrics(rows, students));
+      renderWorkQueue(buildWorkQueue(rows));
+      renderWorkflowProgress(buildWorkflowMetrics(rows));
+      renderRiskExceptions(buildRiskExceptions(rows));
+      renderStudentFollowUp(students);
+    }
+
+    renderAll();
+  </script>
+</body>
+</html>

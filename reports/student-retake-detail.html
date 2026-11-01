@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>รายละเอียดนักเรียนสอบซ่อม</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#f7f8fc',
+            surface: '#ffffff',
+            surfaceSoft: '#f2f5fb',
+            line: '#d9e2ef',
+            ink: '#1e293b',
+            muted: '#64748b',
+            brand: '#2563eb',
+            success: '#1f9d68',
+            warning: '#d97706',
+            danger: '#dc2626'
+          },
+          boxShadow: {
+            panel: '0 18px 50px rgba(15, 23, 42, 0.08)'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          fontSize: {
+            xs: ['1.15vh', { lineHeight: '1.55' }],
+            sm: ['1.35vh', { lineHeight: '1.6' }],
+            base: ['1.55vh', { lineHeight: '1.6' }],
+            lg: ['1.75vh', { lineHeight: '1.45' }],
+            xl: ['2vh', { lineHeight: '1.35' }],
+            '2xl': ['2.45vh', { lineHeight: '1.25' }],
+            '3xl': ['3vh', { lineHeight: '1.18' }],
+            '4xl': ['3.6vh', { lineHeight: '1.12' }],
+            '5xl': ['4.2vh', { lineHeight: '1.08' }]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .menu-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-radius: 0.75rem;
+      padding: 0.625rem 0.75rem;
+      font-size: 1.35vh;
+      font-weight: 500;
+      color: #475569;
+      text-decoration: none;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    .menu-link:hover {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .menu-link.active {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    .menu-icon {
+      height: 1rem;
+      width: 1rem;
+      flex-shrink: 0;
+      fill: currentColor;
+    }
+  </style>
+</head>
+<body class="relative min-h-screen overflow-x-hidden bg-canvas font-body text-ink">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden">
+    <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl"></div>
+    <div class="absolute right-0 top-20 h-80 w-80 rounded-full bg-sky-100/60 blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-100/50 blur-3xl"></div>
+  </div>
+
+  <div id="layoutSidebar"></div>
+
+  <div class="relative lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="../shared/academic-layout.js?v=8"></script>
+    <script>AcademicLayout.mount({"active":"retake","title":"รายละเอียดนักเรียนสอบซ่อม","rightHtml":"<a id=\"backLink\" href=\"student-retake-management.html?view=student\" class=\"inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700\">\n            <svg class=\"h-4 w-4\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M10 19v-6H4l8-8 8 8h-6v6h-4Z\"/></svg>\n            กลับหน้ารวม\n          </a>"});</script>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8">
+      <div class="space-y-6">
+        <section class="mb-6">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+            <div>
+              <div class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+                <span>รายงานผลการเรียน</span>
+                <span class="text-slate-300">></span>
+                <span>รายงานผลการสอบซ่อม</span>
+                <span class="text-slate-300">></span>
+                <span class="font-medium text-slate-700">รายละเอียดนักเรียน</span>
+              </div>
+              <div class="flex flex-wrap items-center gap-3">
+                <h1 class="text-3xl font-semibold tracking-tight text-slate-900 lg:text-4xl">รายละเอียดนักเรียนสอบซ่อม</h1>
+                <button type="button" class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:text-slate-700" title="แสดงรายการสอบซ่อมของนักเรียนหนึ่งคน">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 6.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM10.75 11h2.5v6h-2.5v-6Z"/></svg>
+                </button>
+              </div>
+              <p id="contextLine" class="mt-3 text-sm leading-6 text-slate-500">กำลังโหลดข้อมูล...</p>
+            </div>
+          </div>
+        </section>
+
+      <section id="studentHero" class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+        <div class="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.2em] text-brand">ข้อมูลนักเรียน</p>
+            <h2 id="studentName" class="mt-2 text-3xl font-semibold leading-tight text-ink">-</h2>
+            <div class="mt-3 flex flex-wrap items-center gap-2 text-sm text-muted">
+              <span id="studentId" class="rounded-full bg-slate-100 px-3 py-1.5 font-semibold text-slate-700">-</span>
+              <span id="studentClass" class="rounded-full bg-slate-100 px-3 py-1.5 font-semibold text-slate-700">-</span>
+              <span id="studentGrade" class="rounded-full bg-slate-100 px-3 py-1.5 font-semibold text-slate-700">-</span>
+            </div>
+            <div class="mt-4 flex flex-wrap gap-2">
+              <span id="overallBadge" class="inline-flex rounded-full border px-3 py-1.5 text-xs font-semibold"></span>
+              <span id="priorityBadge" class="inline-flex rounded-full border px-3 py-1.5 text-xs font-semibold"></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="summaryCards" class="grid gap-4 md:grid-cols-2 xl:grid-cols-4"></section>
+
+      <section class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 p-5 lg:p-6">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">รายละเอียดรายวิชา</p>
+              <h3 class="mt-2 text-xl font-semibold text-slate-900">ข้อมูลสอบซ่อมของนักเรียนคนนี้</h3>
+            </div>
+            <div class="text-sm text-muted">
+              <span id="recordCount">0</span> รายการ
+            </div>
+          </div>
+        </div>
+
+        <div class="px-4 pb-4 pt-4 lg:px-6 lg:pb-6 lg:pt-6">
+          <div class="overflow-auto rounded-3xl border border-slate-200 bg-white shadow-sm">
+            <table class="min-w-[1000px] w-full border-collapse text-sm">
+              <thead class="sticky top-0 z-10 bg-[#F5F7FA]">
+                <tr class="border-b border-slate-200 text-slate-600">
+                  <th class="px-5 py-5 text-left font-semibold">รหัส/ชื่อวิชา</th>
+                  <th class="px-5 py-5 text-center font-semibold">ปีการศึกษา</th>
+                  <th class="px-5 py-5 text-center font-semibold">ภาคเรียน</th>
+                  <th class="px-5 py-5 text-center font-semibold">ช่วงการประเมิน</th>
+                  <th class="px-5 py-5 text-center font-semibold">คะแนน</th>
+                  <th class="px-5 py-5 text-center font-semibold">สถานะ</th>
+                  <th class="px-5 py-5 text-left font-semibold">หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody" class="divide-y divide-slate-200 bg-white"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+      </div>
+    </main>
+
+  <script>
+    const records = [
+      { id: 1, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 1, studentId: '4824', name: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'รอสอบซ่อม', remark: 'ขาดสอบย่อย' },
+      { id: 2, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 1, studentId: '4824', name: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ว23103', subjectName: 'วิทยาศาสตร์ 6', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'คะแนนรวมไม่ถึงเกณฑ์' },
+      { id: 3, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 1, studentId: '4824', name: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ท23103', subjectName: 'ภาษาไทย', score: 'ร', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'สอบซ่อมแล้ว', remark: 'รอประกาศผล' },
+      { id: 4, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 2, studentId: '4831', name: 'เด็กชายพีรวิชญ์ คงช่วย', subjectCode: 'ว23103', subjectName: 'วิทยาศาสตร์ 6', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'ไม่ส่งงานโครงงาน' },
+      { id: 5, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 2, studentId: '4831', name: 'เด็กชายพีรวิชญ์ คงช่วย', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: 'ร', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'ติดตามงาน', remark: 'ยังไม่ครบแบบฝึกหัด' },
+      { id: 6, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 3, studentId: '4837', name: 'เด็กหญิงสุภัสสรา ใจดี', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'รอสอบซ่อม', remark: 'ไม่เข้าสอบกลางภาค' },
+      { id: 7, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 4, studentId: '4843', name: 'เด็กชายธนกฤต ศรีสุข', subjectCode: 'อ23101', subjectName: 'ภาษาอังกฤษ 6', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'คะแนน speaking ต่ำ' },
+      { id: 8, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 4, studentId: '4843', name: 'เด็กชายธนกฤต ศรีสุข', subjectCode: 'ส23102', subjectName: 'สังคมศึกษา', score: 'ร', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'สอบซ่อมแล้ว', remark: '' },
+      { id: 9, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/1', order: 1, studentId: '4708', name: 'เด็กหญิงพิชญาภา สุขทอง', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'รอสอบซ่อม', remark: 'ไม่ส่งใบงาน' },
+      { id: 10, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/1', order: 2, studentId: '4716', name: 'เด็กชายภูผา ชูศรี', subjectCode: 'อ23101', subjectName: 'ภาษาอังกฤษ 6', score: 'ร', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'ติดตามงาน', remark: 'ขาดสอบปลายภาค' },
+      { id: 11, year: '2568', term: '1', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 1, studentId: '4824', name: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ค23100', subjectName: 'คณิตศาสตร์ 5', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'สอบซ่อมแล้ว', remark: 'ผ่านหลังสอบซ่อม' },
+      { id: 12, year: '2568', term: '1', gradeLevel: 'ม.2', classRoom: 'ม.2/3', order: 1, studentId: '3610', name: 'เด็กหญิงอรปรียา เมืองทอง', subjectCode: 'ว22102', subjectName: 'วิทยาศาสตร์และเทคโนโลยี', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'คะแนนปฏิบัติไม่ครบ' },
+      { id: 13, year: '2568', term: '1', gradeLevel: 'ม.2', classRoom: 'ม.2/3', order: 2, studentId: '3618', name: 'เด็กชายกฤตเมธ สุขสม', subjectCode: 'ท22101', subjectName: 'ภาษาไทยวิเคราะห์', score: 'ร', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'ติดตามงาน', remark: 'ไม่ส่งชิ้นงาน' },
+      { id: 14, year: '2567', term: '2', gradeLevel: 'ม.2', classRoom: 'ม.2/1', order: 1, studentId: '3501', name: 'เด็กหญิงณิชานันท์ ทองดี', subjectCode: 'อ22102', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'สอบซ่อมแล้ว', remark: 'ผ่านแล้ว' }
+    ];
+
+    const params = new URLSearchParams(window.location.search);
+    const studentId = params.get('studentId');
+
+    const els = {
+      sidebar: document.getElementById('sidebar'),
+      sidebarOverlay: document.getElementById('sidebarOverlay'),
+      mobileMenuButton: document.getElementById('mobileMenuButton'),
+      contextLine: document.getElementById('contextLine'),
+      backLink: document.getElementById('backLink'),
+      studentName: document.getElementById('studentName'),
+      studentId: document.getElementById('studentId'),
+      studentClass: document.getElementById('studentClass'),
+      studentGrade: document.getElementById('studentGrade'),
+      overallBadge: document.getElementById('overallBadge'),
+      priorityBadge: document.getElementById('priorityBadge'),
+      summaryCards: document.getElementById('summaryCards'),
+      recordCount: document.getElementById('recordCount'),
+      tableBody: document.getElementById('tableBody')
+    };
+
+    function escapeHTML(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function buildBackLink() {
+      const backParams = new URLSearchParams({ view: 'student' });
+      ['year', 'term', 'gradeLevel', 'classRoom', 'subject', 'assessmentPeriod', 'status'].forEach((key) => {
+        const value = params.get(key);
+        if (value) {
+          backParams.set(key, value);
+        }
+      });
+      const qs = backParams.toString();
+      els.backLink.href = qs ? `student-retake-management.html?${qs}` : 'student-retake-management.html?view=student';
+    }
+
+    function getStudentOverallStatus(student) {
+      if (student.completedCount === student.subjectCount && student.subjectCount > 0) {
+        return 'ดำเนินการครบแล้ว';
+      }
+      if (student.followUpCount > 0) {
+        return 'ต้องติดตาม';
+      }
+      return 'รอสอบซ่อม';
+    }
+
+    function getStudentPriority(student) {
+      if (student.completedCount === student.subjectCount && student.subjectCount > 0) {
+        return { label: 'ดำเนินการครบแล้ว', tone: 'green' };
+      }
+      if (student.subjectCount >= 3 || student.waitingCount >= 2 || (student.zeroCount > 0 && student.pendingGradeCount > 0)) {
+        return { label: 'เร่งด่วนสูง', tone: 'red' };
+      }
+      if (student.subjectCount >= 2 || student.followUpCount > 0) {
+        return { label: 'ต้องติดตาม', tone: 'amber' };
+      }
+      return { label: 'ปกติ', tone: 'green' };
+    }
+
+    function groupRecordsByStudent(rows) {
+      const map = new Map();
+      rows.forEach((row) => {
+        if (!map.has(row.studentId)) {
+          map.set(row.studentId, {
+            studentId: row.studentId,
+            name: row.name,
+            gradeLevel: row.gradeLevel,
+            classRoom: row.classRoom,
+            subjects: [],
+            subjectCount: 0,
+            waitingCount: 0,
+            completedCount: 0,
+            followUpCount: 0,
+            zeroCount: 0,
+            pendingGradeCount: 0
+          });
+        }
+
+        const student = map.get(row.studentId);
+        student.subjects.push(row);
+        student.subjectCount = student.subjects.length;
+        student.waitingCount += row.status === 'รอสอบซ่อม' ? 1 : 0;
+        student.completedCount += row.status === 'สอบซ่อมแล้ว' ? 1 : 0;
+        student.followUpCount += row.status === 'ติดตามงาน' ? 1 : 0;
+        student.zeroCount += row.score === '0' ? 1 : 0;
+        student.pendingGradeCount += row.score === 'ร' ? 1 : 0;
+      });
+
+      return [...map.values()].map((student) => ({
+        ...student,
+        subjects: [...student.subjects].sort((a, b) => a.id - b.id),
+        overallStatus: getStudentOverallStatus(student),
+        priority: getStudentPriority(student)
+      }));
+    }
+
+    function statusBadgeClass(status) {
+      switch (status) {
+        case 'ดำเนินการครบแล้ว':
+          return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+        case 'ต้องติดตาม':
+          return 'border-amber-200 bg-amber-50 text-amber-700';
+        default:
+          return 'border-sky-200 bg-sky-50 text-sky-700';
+      }
+    }
+
+    function priorityBadgeClass(tone) {
+      switch (tone) {
+        case 'red':
+          return 'border-rose-200 bg-rose-50 text-rose-700';
+        case 'amber':
+          return 'border-amber-200 bg-amber-50 text-amber-700';
+        default:
+          return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+      }
+    }
+
+    function renderSummaryCards(student) {
+      const cards = [
+        { title: 'วิชาที่ต้องสอบซ่อม', value: student.subjectCount, hint: 'จำนวนรายวิชาทั้งหมดของนักเรียนคนนี้' },
+        { title: 'รอสอบซ่อม', value: student.waitingCount, hint: 'รายการที่ยังรอการสอบซ่อม' },
+        { title: 'สอบซ่อมแล้ว', value: student.completedCount, hint: 'รายการที่ดำเนินการครบแล้ว' },
+        { title: 'ติดตามงาน', value: student.followUpCount, hint: 'รายการที่ต้องติดตามต่อ' }
+      ];
+
+      els.summaryCards.innerHTML = cards.map((card) => `
+        <article class="rounded-[1.75rem] border border-line bg-white p-5 shadow-sm">
+          <p class="text-xs font-semibold uppercase tracking-[0.18em] text-muted">${card.title}</p>
+          <p class="mt-3 text-3xl font-semibold text-ink">${card.value}</p>
+          <p class="mt-2 text-sm leading-6 text-muted">${card.hint}</p>
+        </article>
+      `).join('');
+    }
+
+    function renderTable(student) {
+      els.tableBody.innerHTML = student.subjects.map((row) => `
+        <tr class="transition hover:bg-surfaceSoft/70">
+          <td class="px-5 py-6 align-top">
+            <div class="text-[1.45vh] font-semibold leading-6 text-ink">${escapeHTML(row.subjectCode)} ${escapeHTML(row.subjectName)}</div>
+            <div class="mt-1 text-xs text-muted">${escapeHTML(row.teacher || '-')}</div>
+          </td>
+          <td class="px-5 py-6 text-center align-top">${escapeHTML(row.year)}</td>
+          <td class="px-5 py-6 text-center align-top">${escapeHTML(row.term)}</td>
+          <td class="px-5 py-6 text-center align-top">${escapeHTML(row.category)}</td>
+          <td class="px-5 py-6 text-center align-top">
+            <span class="inline-flex rounded-full ${row.score === '0' ? 'bg-rose-50 text-rose-700' : row.score === 'ร' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-700'} px-3 py-1.5 text-xs font-semibold">${escapeHTML(row.score)}</span>
+          </td>
+          <td class="px-5 py-6 text-center align-top">
+            <span class="inline-flex rounded-full border border-line px-3 py-1.5 text-xs font-semibold ${row.status === 'รอสอบซ่อม' ? 'border-sky-200 bg-sky-50 text-sky-700' : row.status === 'สอบซ่อมแล้ว' ? 'border-emerald-200 bg-emerald-50 text-emerald-700' : 'border-amber-200 bg-amber-50 text-amber-700'}">${escapeHTML(row.status)}</span>
+          </td>
+          <td class="px-5 py-6 align-top text-slate-700">${escapeHTML(row.remark || '-')}</td>
+        </tr>
+      `).join('');
+    }
+
+    function openSidebar() {
+      els.sidebar.classList.remove('-translate-x-full');
+      els.sidebarOverlay.classList.remove('hidden');
+    }
+
+    function closeSidebar() {
+      els.sidebar.classList.add('-translate-x-full');
+      els.sidebarOverlay.classList.add('hidden');
+    }
+
+    function boot() {
+      buildBackLink();
+      els.mobileMenuButton?.addEventListener('click', openSidebar);
+      els.sidebarOverlay?.addEventListener('click', closeSidebar);
+
+      if (!studentId) {
+        els.contextLine.textContent = 'ไม่พบรหัสนักเรียนใน URL กรุณากลับไปหน้ารวม';
+        els.studentName.textContent = 'ไม่พบข้อมูล';
+        els.summaryCards.innerHTML = '';
+        els.tableBody.innerHTML = `
+          <tr><td colspan="7" class="px-6 py-12 text-center text-sm text-muted">ไม่พบข้อมูลนักเรียน</td></tr>
+        `;
+        return;
+      }
+
+      const matching = records.filter((row) => row.studentId === studentId);
+      if (!matching.length) {
+        els.contextLine.textContent = `ไม่พบข้อมูลของนักเรียนรหัส ${studentId}`;
+        els.studentName.textContent = 'ไม่พบข้อมูล';
+        els.tableBody.innerHTML = `
+          <tr><td colspan="7" class="px-6 py-12 text-center text-sm text-muted">ไม่พบข้อมูลนักเรียน</td></tr>
+        `;
+        return;
+      }
+
+      const grouped = groupRecordsByStudent(matching);
+      const student = grouped[0];
+
+      const contextYear = params.get('year') || student.subjects[0].year;
+      const contextTerm = params.get('term') || student.subjects[0].term;
+      const contextGrade = params.get('gradeLevel') || student.gradeLevel;
+      const contextClass = params.get('classRoom') || student.classRoom;
+
+      els.contextLine.textContent = `เปิดจากบริบท ปีการศึกษา ${contextYear} ภาคเรียน ${contextTerm} ${contextGrade} ${contextClass}`;
+      els.studentName.textContent = student.name;
+      els.studentId.textContent = `รหัสนักเรียน ${student.studentId}`;
+      els.studentClass.textContent = `ห้อง ${student.classRoom}`;
+      els.studentGrade.textContent = `ระดับชั้น ${student.gradeLevel}`;
+      els.overallBadge.textContent = student.overallStatus;
+      els.overallBadge.className = `inline-flex rounded-full border px-3 py-1.5 text-xs font-semibold ${statusBadgeClass(student.overallStatus)}`;
+      els.priorityBadge.textContent = student.priority.label;
+      els.priorityBadge.className = `inline-flex rounded-full border px-3 py-1.5 text-xs font-semibold ${priorityBadgeClass(student.priority.tone)}`;
+
+      renderSummaryCards(student);
+      renderTable(student);
+      els.recordCount.textContent = student.subjects.length;
+    }
+
+    boot();
+  </script>
+  </div>
+</body>
+</html>

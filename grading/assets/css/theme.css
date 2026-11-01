@@ -1,0 +1,305 @@
+/*
+ * Re-themes the gradebook and attendance apps (style.css, attendance.css) to match the shared
+ * Academic Report layout and the Tailwind pages. Visual only: no selector here is used by the
+ * app scripts. Font sizes come from type-scale.css (generated); the overrides below that set
+ * font-size are the places where the Tailwind pages use a different step.
+ */
+
+/* ---------- tokens ---------- */
+.ar-themed {
+  --bg: #f7f9fc;
+  --surface: #ffffff;
+  --surface-2: #f2f5fb;
+  --border: #e2e8f0;
+  --border-strong: #d9e2ef;
+  --text: #0f172a;
+  --text-2: #64748b;
+  --text-3: #94a3b8;
+  --primary: #2563eb;
+  --primary-600: #1d4ed8;
+  --primary-50: #eff6ff;
+  --primary-100: #dbeafe;
+  --ok: #1f9d68;
+  --warn: #d97706;
+  --radius: 24px;
+  --radius-sm: 12px;
+  --shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  --shadow-lg: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+  --font: "Noto Sans Thai", system-ui, sans-serif;
+
+  font-family: var(--font);
+  font-size: 1.35vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ---------- page frame: full width beside the sidebar, Tailwind page padding ---------- */
+.ar-themed .view {
+  max-width: none;
+  margin: 0;
+  padding: 24px 16px;
+}
+
+@media (min-width: 1024px) {
+  .ar-themed .view {
+    padding: 32px;
+  }
+}
+
+.ar-themed .page-head {
+  margin-bottom: 24px;
+}
+
+.ar-themed .page-head h1 {
+  color: #0f172a;
+  font-size: 3vh;
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+@media (min-width: 1024px) {
+  .ar-themed .page-head h1 {
+    font-size: 3.6vh;
+  }
+}
+
+.ar-themed .page-head p {
+  margin-top: 12px;
+  color: #64748b;
+}
+
+.ar-themed .back-link {
+  color: #64748b;
+}
+
+/* ---------- cards ---------- */
+.ar-themed .card {
+  border-color: var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+}
+
+.ar-themed .card-pad {
+  padding: 24px;
+}
+
+/* stat cards: label, bold value, icon tile, like the KPI cards on the Tailwind pages */
+.ar-themed .stat-row {
+  gap: 16px;
+}
+
+.ar-themed .stat {
+  position: relative;
+  padding: 24px 84px 24px 24px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ar-themed .stat-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 6px -1px rgba(15, 23, 42, 0.1), 0 2px 4px -2px rgba(15, 23, 42, 0.1);
+}
+
+.ar-themed .stat::before,
+.ar-themed .stat::after {
+  content: "";
+  position: absolute;
+}
+
+.ar-themed .stat::before {
+  top: 24px;
+  right: 24px;
+  width: 48px;
+  height: 48px;
+  border-radius: 16px;
+  background: var(--primary-50);
+}
+
+.ar-themed .stat::after {
+  top: 36px;
+  right: 36px;
+  width: 24px;
+  height: 24px;
+  background: var(--primary);
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 9h3v10H5V9Zm5.5-5h3v15h-3V4ZM16 13h3v6h-3v-6Z'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 9h3v10H5V9Zm5.5-5h3v15h-3V4ZM16 13h3v6h-3v-6Z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+.ar-themed .stat-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.ar-themed .stat-value {
+  margin-top: 12px;
+  font-size: 3vh;
+  font-weight: 700;
+}
+
+/* ---------- buttons and form controls ---------- */
+.ar-themed .btn {
+  height: auto;
+  min-height: 0;
+  padding: 10px 20px;
+  border-color: var(--border-strong);
+  border-radius: 12px;
+  font-size: 1.35vh;
+}
+
+.ar-themed .btn-sm {
+  padding: 8px 16px;
+  border-radius: 9999px;
+  font-size: 1.15vh;
+}
+
+.ar-themed .btn-primary {
+  box-shadow: var(--shadow);
+}
+
+.ar-themed .btn-ghost {
+  border-color: transparent;
+}
+
+.ar-themed .select,
+.ar-themed .input {
+  height: auto;
+  padding: 12px 16px;
+  border-color: var(--border-strong);
+  border-radius: 16px;
+}
+
+.ar-themed .search .input {
+  padding-left: 40px;
+}
+
+.ar-themed .search svg {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.ar-themed .select:focus,
+.ar-themed .input:focus {
+  box-shadow: 0 0 0 4px var(--primary-100);
+}
+
+/* ---------- chips, tabs, segmented controls ---------- */
+.ar-themed .chip {
+  padding: 4px 12px;
+}
+
+.ar-themed .tabs {
+  gap: 8px;
+  padding-bottom: 4px;
+  border-bottom: 0;
+}
+
+.ar-themed .tab {
+  margin-bottom: 0;
+  padding: 10px 16px;
+  color: #475569;
+  background: #ffffff;
+  border: 1px solid var(--border-strong);
+  border-radius: 9999px;
+}
+
+.ar-themed .tab.active {
+  color: #ffffff;
+  background: var(--primary);
+  border-color: var(--primary);
+  box-shadow: 0 12px 28px rgba(37, 99, 235, 0.2);
+}
+
+.ar-themed .tab.active .step {
+  color: var(--primary);
+  background: #ffffff;
+}
+
+.ar-themed .seg {
+  padding: 4px;
+  gap: 4px;
+  background: var(--surface-2);
+  border-color: var(--border-strong);
+  border-radius: 9999px;
+}
+
+.ar-themed .seg button {
+  height: auto;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: 9999px;
+}
+
+.ar-themed .seg button.on {
+  color: #ffffff;
+  background: var(--primary);
+}
+
+/* ---------- tables ---------- */
+.ar-themed .list th,
+.ar-themed .struct th {
+  color: #475569;
+  background: #f5f7fa;
+}
+
+.ar-themed .list th,
+.ar-themed .list td {
+  padding: 16px 20px;
+}
+
+.ar-themed .list td,
+.ar-themed .struct td {
+  border-bottom-color: var(--border);
+}
+
+.ar-themed .list tr:hover td {
+  background: rgba(242, 245, 251, 0.7);
+}
+
+.ar-themed .grid thead th:not(.grp) {
+  color: #475569;
+  background: #f5f7fa;
+}
+
+/* ---------- popups and toasts ---------- */
+.ar-themed .modal-backdrop {
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(4px);
+}
+
+.ar-themed .modal {
+  border-radius: 32px;
+}
+
+.ar-themed .modal-head {
+  padding: 24px 24px 8px;
+}
+
+.ar-themed .toast {
+  border-radius: 16px;
+}
+
+/* two stat cards per row on phones leave no room for the icon tile */
+@media (max-width: 639px) {
+  .ar-themed .stat {
+    padding-right: 24px;
+  }
+
+  .ar-themed .stat::before,
+  .ar-themed .stat::after {
+    display: none;
+  }
+}
+
+/* ---------- class names the app shares with Tailwind utilities (the CDN build styles them too) ---------- */
+/* .grid → display: grid would turn the score table into a grid and misalign every column */
+.ar-themed table.grid {
+  display: table;
+}
+
+.ar-themed svg .grid {
+  display: inline;
+}
+
+/* .ring → Tailwind's 3px focus ring around the progress donut */
+.ar-themed .ring {
+  box-shadow: none;
+}

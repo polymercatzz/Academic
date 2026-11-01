@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>โปรไฟล์และเวลาไม่ว่าง | Academic Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#F7F9FC',
+            brand: '#2563eb',
+            ink: '#0f172a',
+            muted: '#64748b'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          boxShadow: {
+            soft: '0 12px 32px rgba(15, 23, 42, 0.06)',
+            modal: '0 24px 80px rgba(15, 23, 42, 0.18)'
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .field-invalid { border-color: #f43f5e !important; box-shadow: 0 0 0 4px rgba(244, 63, 94, .1); }
+    .un-hatch-rose { background-color: rgba(255, 241, 242, .9); background-image: repeating-linear-gradient(135deg, rgba(244, 63, 94, .16) 0 6px, transparent 6px 12px); }
+    .un-hatch-amber { background-color: rgba(255, 251, 235, .9); background-image: repeating-linear-gradient(135deg, rgba(245, 158, 11, .2) 0 6px, transparent 6px 12px); }
+    .tp-ref .tt-cell { min-height: 0 !important; opacity: .55; }
+    .chip-active { border-color: #2563eb !important; background: #eff6ff !important; color: #1d4ed8 !important; }
+  </style>
+</head>
+<body class="min-h-screen overflow-x-hidden bg-canvas font-body text-ink">
+  <div id="layoutSidebar"></div>
+  <div class="lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="timetable-core.js"></script>
+    <script src="timetable-data.js"></script>
+    <script>TT.load();</script>
+    <script src="../shared/academic-layout.js?v=8"></script>
+    <script>AcademicLayout.mount({ active: 'teacher-profile', eyebrow: 'งานของฉัน', title: 'โปรไฟล์และเวลาไม่ว่าง' });</script>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8">
+      <div class="mx-auto max-w-[1600px] space-y-6">
+        <section>
+          <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
+            <a href="my-timetable.html" class="font-medium text-slate-600 transition hover:text-brand">งานของฉัน</a>
+            <span class="text-slate-300">&gt;</span>
+            <span class="font-medium text-slate-800">โปรไฟล์และเวลาไม่ว่าง</span>
+          </nav>
+          <h1 class="text-3xl font-semibold tracking-tight text-slate-950 lg:text-4xl">โปรไฟล์และเวลาไม่ว่าง</h1>
+          <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-500">ตรวจข้อมูลครูจากระบบงานบุคคล และแจ้งเวลาไม่ว่างของครูประจำสัปดาห์ (เฉพาะภารกิจในโรงเรียน) ก่อนวันปิดรับเวลาไม่ว่างของแต่ละภาคเรียน</p>
+        </section>
+        <div id="page" class="space-y-6"></div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+  (function () {
+    const db = () => TT.db;
+    const esc = TT.esc;
+    const STAGE_LABEL = { lower: 'ม.ต้น (ม.1–ม.3)', upper: 'ม.ปลาย (ม.4–ม.6)', both: 'ม.ต้น และ ม.ปลาย (ม.1–ม.6)' };
+    const STATUS = {
+      pending: { label: 'รออนุมัติ', cls: 'bg-amber-50 text-amber-700 ring-1 ring-amber-200' },
+      approved: { label: 'อนุมัติแล้ว', cls: 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' },
+      rejected: { label: 'ไม่อนุมัติ', cls: 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' }
+    };
+    const TIME_OPTS = []; for (let m = 7 * 60; m <= 17 * 60; m += 5) TIME_OPTS.push(TT.fmt(m));
+    const inputCls = 'w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100';
+
+    const terms = () => Object.keys(db().terms);
+    const defaultTerm = () => terms().find((t) => TT.unavailabilityOpen(t)) || terms()[terms().length - 1];
+    const blankForm = () => ({ editingId: null, day: 0, start: '08:30', end: '09:20', reason: TT.UNAVAIL_REASONS[0], note: '', confirm: false });
+    const state = { term: null, form: blankForm(), errors: {}, showSubjects: false, chip: null };
+
+    const tid = () => TT.me().teacherId;
+    const myRecords = (term) => db().unavailability.filter((u) => u.term === term && u.teacherId === tid())
+      .sort((a, b) => a.day - b.day || a.start.localeCompare(b.start));
+    const refVersion = (term) => {
+      const list = TT.versionsOf(term);
+      return TT.publishedOf(term) || list.find((v) => v.status === 'draft') || list[0] || null;
+    };
+    const chipVersion = (term) => refVersion(term) || db().versions[0] || null;
+
+    /* ---------------------------------------------------------------- render */
+    function render() {
+      const root = document.getElementById('page');
+      if (TT.role() !== 'teacher') { root.innerHTML = guardHtml(); bindGuard(); return; }
+      if (!state.term || !db().terms[state.term]) state.term = defaultTerm();
+      root.innerHTML = profileHtml() + unavailHtml();
+      bind();
+    }
+
+    function guardHtml() {
+      return `<section class="rounded-3xl border border-slate-200 bg-white p-8 text-center shadow-soft">
+        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">${TT.icon('user', 'h-7 w-7')}</div>
+        <h2 class="mt-4 text-xl font-semibold text-slate-950">หน้านี้สำหรับครู</h2>
+        <p class="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">ขณะนี้คุณใช้งานในบทบาท admin หน้าโปรไฟล์และเวลาไม่ว่างใช้สำหรับครูเท่านั้น สลับบทบาทเพื่อดูมุมมองของครูตัวอย่าง (${esc(TT.PERSONAS.teacher.name)})</p>
+        <button id="switchRole" type="button" class="mt-5 inline-flex items-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">${TT.icon('swap')}สลับเป็นบทบาทครู</button>
+      </section>`;
+    }
+    function bindGuard() {
+      document.getElementById('switchRole').onclick = () => { TT.setRole('teacher'); location.reload(); };
+    }
+
+    /* ---------------------------------------------------------------- profile */
+    function latestPublished() {
+      const ts = terms().slice().reverse();
+      for (const t of ts) { const v = TT.publishedOf(t); if (v) return v; }
+      return null;
+    }
+    function profileHtml() {
+      const t = TT.teacher(tid());
+      if (!t) return `<section class="rounded-3xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">ไม่พบข้อมูลครูรหัส ${esc(tid())} ในระบบงานบุคคล</section>`;
+      const g = TT.GROUPS[t.group] || TT.GROUPS['ก'];
+      const advisorOf = db().external.classes.filter((c) => c.advisor === t.id);
+      const subjects = t.canTeach.map(TT.subject).filter(Boolean);
+      const pv = latestPublished();
+      let loadHtml = '<p class="text-sm text-slate-500">ยังไม่มีฉบับเผยแพร่</p>';
+      if (pv) {
+        const load = TT.loadOfTeacher(pv.term, t.id);
+        const prog = TT.teacherProgress(pv, t.id);
+        const classes = [...new Set(load.map((l) => l.classId))].map(TT.className);
+        loadHtml = `<div class="flex items-end gap-2"><span class="text-3xl font-semibold text-slate-950">${prog.placed}</span><span class="pb-1 text-sm text-slate-500">/ ${prog.required} คาบต่อสัปดาห์</span></div>
+          <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-blue-600" style="width:${Math.min(100, prog.pct)}%"></div></div>
+          <p class="mt-2 text-xs leading-5 text-slate-500">${esc(TT.termLabel(pv.term))} · ${esc(pv.name)} (ฉบับเผยแพร่)<br>${load.length} การมอบหมายสอน · ${classes.length} ห้อง${classes.length ? ` (${esc(classes.join(', '))})` : ''}</p>
+          ${prog.remaining.length ? `<p class="mt-1 text-xs font-semibold text-amber-700">ยังไม่ได้จัดลงตาราง ${prog.required - prog.placed} คาบ</p>` : ''}`;
+      }
+      const field = (label, value) => `<div class="min-w-0"><p class="text-xs font-semibold text-slate-400">${label}</p><div class="mt-1 text-sm font-medium text-slate-800">${value}</div></div>`;
+      return `<section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">โปรไฟล์ครู</p>
+            <h2 class="mt-2 text-xl font-semibold text-slate-950">${esc(t.name)}</h2>
+          </div>
+          <span class="inline-flex w-fit items-center gap-1.5 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">${TT.icon('lock', 'h-3.5 w-3.5')}ข้อมูลจากระบบงานบุคคล · แก้ไขที่ระบบต้นทาง</span>
+        </div>
+        <div class="mt-5 grid gap-6 lg:grid-cols-[1.6fr_1fr]">
+          <div class="grid gap-5 sm:grid-cols-2">
+            ${field('รหัสครู', esc(t.id))}
+            ${field('ตำแหน่ง', esc(t.position || '-'))}
+            ${field('กลุ่มสาระ', `<span class="inline-flex items-center gap-2"><span class="h-2.5 w-2.5 rounded-full ${g.dot}"></span>${esc(g.name)}</span>`)}
+            ${field('ช่วงชั้นที่สอนได้', esc(STAGE_LABEL[t.stage] || t.stage || '-'))}
+            ${field('ครูประจำชั้น', advisorOf.length ? advisorOf.map((c) => `<span class="mr-1 inline-flex rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-semibold text-blue-700">${esc(c.name)}</span>`).join('') : '<span class="text-slate-400">ไม่ได้เป็นครูประจำชั้น</span>')}
+            ${field('วิชาที่ครูสอนได้', `<button id="toggleSubjects" type="button" class="inline-flex items-center gap-1 text-blue-700 hover:underline" aria-expanded="${state.showSubjects}">${subjects.length} รายวิชา · ${state.showSubjects ? 'ซ่อนรายการ' : 'ดูรายการ'}</button>`)}
+            ${state.showSubjects ? `<div class="sm:col-span-2"><div class="flex flex-wrap gap-2">${subjects.length ? subjects.map((s) => `<span class="inline-flex max-w-full items-center gap-1.5 rounded-xl border ${TT.groupOf(s.code).card} px-2.5 py-1 text-xs"><span class="font-bold ${TT.groupOf(s.code).text}">${esc(s.code)}</span><span class="truncate text-slate-700">${esc(s.name)}</span></span>`).join('') : '<span class="text-sm text-slate-400">ไม่มีรายวิชา</span>'}</div></div>` : ''}
+          </div>
+          <div class="rounded-2xl border border-slate-100 bg-slate-50 p-4">
+            <p class="text-xs font-semibold text-slate-400">ภาระสอนปัจจุบัน</p>
+            <div class="mt-2">${loadHtml}</div>
+          </div>
+        </div>
+      </section>`;
+    }
+
+    /* ---------------------------------------------------------------- unavailability */
+    function unavailHtml() {
+      const term = state.term;
+      const info = db().terms[term];
+      const open = TT.unavailabilityOpen(term);
+      const recs = myRecords(term);
+      const termOpts = terms().map((t) => `<option value="${t}" ${t === term ? 'selected' : ''}>${esc(TT.termLabel(t))}${TT.unavailabilityOpen(t) ? ' · เปิดรับ' : ''}</option>`).join('');
+      const left = info?.unavailDeadline ? TT.daysLeft(info.unavailDeadline) : 0;
+      const banner = open
+        ? `<div class="flex items-start gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-4"><span class="mt-0.5 text-emerald-600">${TT.icon('clock', 'h-5 w-5')}</span><div><p class="text-sm font-semibold text-emerald-800">เปิดรับถึง ${esc(TT.formatDate(info.unavailDeadline))} · เหลืออีก ${left} วัน</p><p class="mt-0.5 text-xs text-emerald-700">เพิ่ม แก้ไข หรือลบรายการที่รออนุมัติได้จนถึงวันปิดรับเวลาไม่ว่าง</p></div></div>`
+        : `<div class="flex items-start gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4"><span class="mt-0.5 text-slate-500">${TT.icon('lock', 'h-5 w-5')}</span><div><p class="text-sm font-semibold text-slate-800">ปิดรับแล้วเมื่อ ${esc(TT.formatDate(info?.unavailDeadline))}</p><p class="mt-0.5 text-xs leading-5 text-slate-600">หลังวันปิดรับเวลาไม่ว่าง หากต้องการเปลี่ยนเวลาสอนในฉบับเผยแพร่ ให้ยื่นคำร้องขอเปลี่ยนการจัดที่ <a href="my-timetable.html" class="font-semibold text-blue-700 hover:underline">ตารางสอนของฉัน</a></p></div></div>`;
+      const policy = `<div class="rounded-2xl border border-blue-100 bg-blue-50/60 p-4 text-xs leading-5 text-slate-600">
+          <p class="flex items-center gap-1.5 text-sm font-semibold text-blue-800">${TT.icon('info')}แจ้งได้เฉพาะภารกิจในโรงเรียน</p>
+          <ul class="mt-1 list-disc space-y-0.5 pl-5">
+            <li>เช่น ประชุม งานบริหาร / งานฝ่าย คุมกิจกรรมหรือนักกีฬา ที่เกิดขึ้นทุกสัปดาห์</li>
+            <li>ธุระส่วนตัว (ไปธนาคาร พบแพทย์ รับส่งบุตร ฯลฯ) จะไม่ได้รับอนุมัติ</li>
+            <li>มีผลกับการจัดตารางเมื่อ admin อนุมัติแล้วเท่านั้น ระหว่างรออนุมัติยังจัดคาบทับได้</li>
+          </ul></div>`;
+      const prev = prevTerm(term);
+      return `<section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
+        <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-blue-600">เวลาไม่ว่างของครู</p>
+            <div class="mt-2 flex flex-wrap items-center gap-3"><h2 class="text-xl font-semibold text-slate-950">เวลาไม่ว่างประจำสัปดาห์</h2><span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">${recs.length} รายการ</span></div>
+            <p class="mt-1 text-sm text-slate-500">บันทึกเป็นวันและเวลาจริง เพราะ ม.ต้น และ ม.ปลาย มีเวลาคาบไม่ตรงกัน</p>
+          </div>
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ภาคเรียน</span><select id="termSelect" class="${inputCls} sm:w-64">${termOpts}</select></label>
+            ${open && prev ? `<button id="copyPrev" type="button" class="inline-flex shrink-0 whitespace-nowrap items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">${TT.icon('copy')}คัดลอกจากภาคเรียนก่อน</button>` : ''}
+          </div>
+        </div>
+        <div class="mt-5 grid gap-4 lg:grid-cols-2">${banner}${policy}</div>
+        ${timelineHtml(term)}
+        <div class="mt-6 grid gap-6 xl:grid-cols-[420px_1fr]">
+          ${open ? formHtml(term) : `<div class="rounded-2xl border border-dashed border-slate-200 p-5 text-sm text-slate-500">${TT.icon('lock', 'mb-2 h-5 w-5 text-slate-400')}ภาคเรียนนี้ปิดรับเวลาไม่ว่างแล้ว ดูรายการได้อย่างเดียว</div>`}
+          ${listHtml(term, recs, open)}
+        </div>
+      </section>`;
+    }
+
+    function timelineHtml(term) {
+      const v = refVersion(term);
+      const bands = myRecords(term).filter((u) => u.status !== 'rejected').map((u) => ({
+        day: u.day, start: TT.toMin(u.start), end: TT.toMin(u.end),
+        label: `${STATUS[u.status].label} · ${u.reason}`,
+        cls: u.status === 'approved' ? 'un-hatch-rose text-rose-700 border-x border-rose-200' : 'un-hatch-amber text-amber-700 border-x border-amber-200'
+      }));
+      let blocks = [];
+      if (v) {
+        blocks = TT.teacherBlocks(v, tid()).map((b) => ({
+          day: b.day, start: b.start, end: b.end,
+          html: `<div class="tp-ref h-full">${TT.entryCard({ code: b.entry.code, title: TT.className(b.cid), line1: `${TT.fmt(b.start)}–${TT.fmt(b.end)}`, extraClass: 'h-full' })}</div>`
+        }));
+      }
+      const legend = `<div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-500">
+        <span class="inline-flex items-center gap-1.5"><span class="h-3 w-5 rounded un-hatch-rose border border-rose-200"></span>อนุมัติแล้ว</span>
+        <span class="inline-flex items-center gap-1.5"><span class="h-3 w-5 rounded un-hatch-amber border border-amber-200"></span>รออนุมัติ</span>
+        ${v ? `<span class="inline-flex items-center gap-1.5"><span class="h-3 w-5 rounded border border-blue-200 bg-blue-50 opacity-60"></span>คาบสอนของฉัน (${esc(v.name)} · ${esc(TT.VERSION_STATUS[v.status]?.label || v.status)}) ใช้อ้างอิงเท่านั้น</span>` : '<span>ภาคเรียนนี้ยังไม่มีตารางสอน</span>'}
+      </div>`;
+      return `<div class="mt-6">
+        <div class="mb-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><h3 class="text-base font-semibold text-slate-900">ภาพรวมรายสัปดาห์</h3>${legend}</div>
+        <div class="tt-scroll overflow-x-auto pb-2">${TT.timeline({ days: [0, 1, 2, 3, 4], range: [480, 1000], bands, blocks, id: 'unavailTimeline' })}</div>
+      </div>`;
+    }
+
+    function chipsHtml(term) {
+      const v = chipVersion(term);
+      if (!v) return '';
+      const groups = v.timeStructures.map((ts) => `<div><p class="mb-1.5 text-xs font-semibold text-slate-500">${esc(ts.name)} · คาบละ ${ts.periodMin} นาที</p><div class="flex flex-wrap gap-1.5">${TT.periodTimes(ts).map((p) => {
+        const s = TT.fmt(p.start), e = TT.fmt(p.end);
+        const active = state.chip === `${ts.id}-${p.no}`;
+        return `<button type="button" class="tp-chip rounded-lg border border-slate-200 bg-white px-2 py-1 text-[11px] font-medium text-slate-600 transition hover:border-blue-300 hover:bg-blue-50 ${active ? 'chip-active' : ''}" data-chip="${ts.id}-${p.no}" data-start="${s}" data-end="${e}" title="คาบ ${p.no} ${s}–${e}">คาบ ${p.no} <span class="text-slate-400">${s}–${e}</span></button>`;
+      }).join('')}</div></div>`).join('');
+      return `<div class="rounded-2xl border border-slate-100 bg-slate-50 p-3"><p class="mb-2 text-xs text-slate-500">เลือกเร็วจากเวลาคาบ · คลิกเพื่อใส่เวลา, <b>Shift+คลิก</b> เพื่อขยายเวลาสิ้นสุดถึงคาบนั้น</p><div class="space-y-3">${groups}</div></div>`;
+    }
+
+    function formHtml(term) {
+      const f = state.form, er = state.errors;
+      const opt = (list, val) => list.map((x) => `<option value="${esc(x)}" ${x === val ? 'selected' : ''}>${esc(x)}</option>`).join('');
+      const errTxt = (k) => (er[k] ? `<p class="mt-1 text-xs font-medium text-rose-600">${esc(er[k])}</p>` : '');
+      const bad = (k) => (er[k] ? 'field-invalid' : '');
+      return `<form id="unavailForm" class="space-y-4 rounded-2xl border ${f.editingId ? 'border-blue-200 bg-blue-50/30' : 'border-slate-200'} p-4 sm:p-5" novalidate>
+        <div class="flex items-center justify-between gap-2"><h3 class="text-base font-semibold text-slate-900">${f.editingId ? 'แก้ไขรายการที่รออนุมัติ' : 'แจ้งเวลาไม่ว่างเพิ่ม'}</h3>${f.editingId ? '<button id="cancelEdit" type="button" class="rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-600 hover:bg-slate-100">ยกเลิกการแก้ไข</button>' : ''}</div>
+        <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">วัน</span><select id="fDay" class="${inputCls}">${[0, 1, 2, 3, 4].map((d) => `<option value="${d}" ${d === f.day ? 'selected' : ''}>${TT.DAYS[d].name}</option>`).join('')}</select></label>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">เริ่ม</span><select id="fStart" class="${inputCls} ${bad('time')}">${opt(TIME_OPTS, f.start)}</select></label>
+          <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">สิ้นสุด</span><select id="fEnd" class="${inputCls} ${bad('time')}">${opt(TIME_OPTS, f.end)}</select></label>
+        </div>
+        ${errTxt('time')}
+        ${chipsHtml(term)}
+        <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ภารกิจ</span><select id="fReason" class="${inputCls}">${opt(TT.UNAVAIL_REASONS, f.reason)}</select></label>
+        <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">รายละเอียด <span class="text-rose-500">*</span></span><textarea id="fNote" rows="2" maxlength="200" placeholder="เช่น ประชุมกรรมการพัฒนาหลักสูตร ทุกวันอังคาร" class="${inputCls} ${bad('note')}">${esc(f.note)}</textarea>${errTxt('note')}</label>
+        <label class="flex items-start gap-3 rounded-2xl border ${er.confirm ? 'border-rose-300 bg-rose-50' : 'border-slate-200'} p-3 text-sm text-slate-700"><input id="fConfirm" type="checkbox" class="mt-0.5 h-4 w-4 rounded border-slate-300 text-blue-600" ${f.confirm ? 'checked' : ''}><span>ยืนยันว่าเป็นภารกิจในโรงเรียน ไม่ใช่ธุระส่วนตัว</span></label>
+        ${errTxt('confirm')}
+        <button type="submit" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">${TT.icon(f.editingId ? 'check' : 'send')}${f.editingId ? 'บันทึกการแก้ไข' : 'ส่งให้ admin อนุมัติ'}</button>
+      </form>`;
+    }
+
+    function listHtml(term, recs, open) {
+      if (!recs.length) {
+        return `<div class="flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 px-6 py-12 text-center"><div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-400">${TT.icon('clock', 'h-6 w-6')}</div><p class="mt-3 text-sm font-semibold text-slate-800">ยังไม่มีเวลาไม่ว่างใน${esc(TT.termLabel(term))}</p><p class="mt-1 text-xs text-slate-500">${open ? 'กรอกแบบฟอร์มหรือคัดลอกจากภาคเรียนก่อน' : 'ภาคเรียนนี้ปิดรับแล้ว'}</p></div>`;
+      }
+      const items = recs.map((u) => {
+        const st = STATUS[u.status] || STATUS.pending;
+        const editable = open && u.status === 'pending' && u.by === 'teacher';
+        const editing = state.form.editingId === u.id;
+        return `<li class="rounded-2xl border ${editing ? 'border-blue-300 ring-4 ring-blue-50' : u.status === 'rejected' ? 'border-rose-200' : 'border-slate-200'} bg-white p-4">
+          <div class="flex flex-wrap items-start justify-between gap-3">
+            <div class="min-w-0">
+              <p class="flex flex-wrap items-center gap-2 text-sm font-semibold text-slate-900"><span class="h-2.5 w-2.5 rounded-full ${TT.DAYS[u.day].dot}"></span>${TT.DAYS[u.day].name} ${esc(u.start)}–${esc(u.end)}<span class="rounded-full px-2.5 py-0.5 text-xs font-semibold ${st.cls}">${st.label}</span>${u.by === 'admin' ? '<span class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-500">admin บันทึกให้</span>' : ''}</p>
+              <p class="mt-1 text-sm text-slate-700"><span class="font-medium">${esc(u.reason)}</span> · ${esc(u.note || '-')}</p>
+            </div>
+            ${editable ? `<div class="flex shrink-0 gap-1"><button type="button" data-edit="${esc(u.id)}" class="rounded-xl border border-slate-200 px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50">แก้ไข</button><button type="button" data-del="${esc(u.id)}" class="rounded-xl border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50">ลบ</button></div>` : `<span class="inline-flex shrink-0 items-center gap-1 text-xs text-slate-400">${TT.icon('lock', 'h-3.5 w-3.5')}ดูอย่างเดียว</span>`}
+          </div>
+          ${u.status === 'rejected' ? `<div class="mt-3 flex items-start gap-2 rounded-xl bg-rose-50 p-3 text-sm text-rose-700">${TT.icon('warn', 'mt-0.5 h-4 w-4 shrink-0')}<div><p class="font-semibold">เหตุผลที่ไม่อนุมัติ</p><p>${esc(u.adminNote || 'ไม่ระบุเหตุผล')}</p></div></div>` : u.adminNote ? `<p class="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600">หมายเหตุจาก admin: ${esc(u.adminNote)}</p>` : ''}
+          <p class="mt-2 text-xs text-slate-400">แจ้งเมื่อ ${esc(TT.formatDateTime(u.createdAt))}${u.decidedAt ? ` · พิจารณาเมื่อ ${esc(TT.formatDateTime(u.decidedAt))}${u.decidedBy ? ` โดย ${esc(u.decidedBy)}` : ''}` : ''}</p>
+        </li>`;
+      }).join('');
+      return `<div><h3 class="mb-3 text-base font-semibold text-slate-900">รายการใน${esc(TT.termLabel(term))}</h3><ul class="space-y-3">${items}</ul></div>`;
+    }
+
+    /* ---------------------------------------------------------------- behaviour */
+    function prevTerm(term) { const ks = terms(); const i = ks.indexOf(term); return i > 0 ? ks[i - 1] : null; }
+
+    function bind() {
+      const $ = (id) => document.getElementById(id);
+      $('toggleSubjects')?.addEventListener('click', () => { state.showSubjects = !state.showSubjects; render(); });
+      $('termSelect').onchange = (e) => { state.term = e.target.value; state.form = blankForm(); state.errors = {}; state.chip = null; render(); };
+      $('copyPrev')?.addEventListener('click', copyPrevious);
+      document.querySelectorAll('[data-edit]').forEach((b) => { b.onclick = () => startEdit(b.dataset.edit); });
+      document.querySelectorAll('[data-del]').forEach((b) => { b.onclick = () => removeRecord(b.dataset.del); });
+      const form = $('unavailForm');
+      if (!form) return;
+      $('fDay').onchange = (e) => { state.form.day = Number(e.target.value); };
+      $('fStart').onchange = (e) => { state.form.start = e.target.value; state.chip = null; };
+      $('fEnd').onchange = (e) => { state.form.end = e.target.value; state.chip = null; };
+      $('fReason').onchange = (e) => { state.form.reason = e.target.value; };
+      $('fNote').oninput = (e) => { state.form.note = e.target.value; };
+      $('fConfirm').onchange = (e) => { state.form.confirm = e.target.checked; };
+      $('cancelEdit')?.addEventListener('click', () => { state.form = blankForm(); state.errors = {}; state.chip = null; render(); });
+      document.querySelectorAll('.tp-chip').forEach((c) => {
+        c.onclick = (ev) => {
+          if (ev.shiftKey && TT.toMin(c.dataset.end) > TT.toMin(state.form.start)) state.form.end = c.dataset.end;
+          else { state.form.start = c.dataset.start; state.form.end = c.dataset.end; }
+          state.chip = c.dataset.chip; state.errors.time = ''; render();
+        };
+      });
+      form.onsubmit = (e) => { e.preventDefault(); submit(); };
+    }
+
+    function validate(term, f) {
+      const er = {};
+      const s = TT.toMin(f.start), e = TT.toMin(f.end);
+      if (e <= s) er.time = 'เวลาสิ้นสุดต้องหลังเวลาเริ่ม';
+      else {
+        const clash = myRecords(term).find((u) => u.id !== f.editingId && u.day === f.day && (u.status === 'pending' || u.status === 'approved') && TT.overlaps({ start: s, end: e }, { start: TT.toMin(u.start), end: TT.toMin(u.end) }));
+        if (clash) er.time = `ทับกับรายการ${STATUS[clash.status].label} ${TT.DAYS[clash.day].name} ${clash.start}–${clash.end} (${clash.reason})`;
+      }
+      if (f.note.trim().length < 5) er.note = 'กรุณาระบุรายละเอียดภารกิจอย่างน้อย 5 ตัวอักษร';
+      if (!f.confirm) er.confirm = 'ต้องยืนยันว่าเป็นภารกิจในโรงเรียน';
+      return er;
+    }
+
+    function submit() {
+      const term = state.term;
+      if (!TT.unavailabilityOpen(term)) { TT.toast('ปิดรับเวลาไม่ว่างแล้ว', 'ภาคเรียนนี้แก้ไขไม่ได้', 'error'); render(); return; }
+      const f = state.form;
+      state.errors = validate(term, f);
+      if (Object.values(state.errors).some(Boolean)) { render(); TT.toast('ตรวจสอบข้อมูลอีกครั้ง', Object.values(state.errors).filter(Boolean)[0], 'error'); return; }
+      const t = TT.teacher(tid());
+      const tName = t?.name || TT.me().name;
+      const when = `${TT.DAYS[f.day].name} ${f.start}–${f.end}`;
+      const note = f.note.trim();
+      let title;
+      if (f.editingId) {
+        const u = db().unavailability.find((x) => x.id === f.editingId);
+        if (!u || u.status !== 'pending') { TT.toast('แก้ไขไม่ได้', 'รายการนี้ถูกพิจารณาแล้ว', 'error'); state.form = blankForm(); render(); return; }
+        Object.assign(u, { day: f.day, start: f.start, end: f.end, reason: f.reason, note });
+        TT.notify('admin', 'เวลาไม่ว่างรออนุมัติ (แก้ไข)', `${tName} · ${when}`, 'timetable-approvals.html#unavailability');
+        TT.logHistory(term, null, 'แก้ไขเวลาไม่ว่าง', `${when} · ${f.reason} · ${note}`, tName);
+        title = 'บันทึกการแก้ไขแล้ว';
+      } else {
+        db().unavailability.push({ id: TT.newId('UN'), term, teacherId: tid(), day: f.day, start: f.start, end: f.end, reason: f.reason, note, status: 'pending', by: 'teacher', createdAt: TT.nowIso(), decidedAt: null, decidedBy: null, adminNote: '' });
+        TT.notify('admin', 'เวลาไม่ว่างรออนุมัติ', `${tName} · ${when}`, 'timetable-approvals.html#unavailability');
+        TT.logHistory(term, null, 'แจ้งเวลาไม่ว่าง', `${when} · ${f.reason} · ${note}`, tName);
+        title = 'ส่งเวลาไม่ว่างแล้ว';
+      }
+      state.form = blankForm(); state.errors = {}; state.chip = null;
+      TT.save();
+      TT.toast(title, `${when} · รอ admin อนุมัติ`);
+    }
+
+    function startEdit(id) {
+      const u = db().unavailability.find((x) => x.id === id);
+      if (!u) return;
+      state.form = { editingId: u.id, day: u.day, start: u.start, end: u.end, reason: u.reason, note: u.note || '', confirm: true };
+      state.errors = {}; state.chip = null;
+      render();
+      document.getElementById('unavailForm')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    async function removeRecord(id) {
+      const u = db().unavailability.find((x) => x.id === id);
+      if (!u) return;
+      const when = `${TT.DAYS[u.day].name} ${u.start}–${u.end}`;
+      const ok = await TT.confirm({ title: 'ลบเวลาไม่ว่างนี้?', message: `${esc(when)} · ${esc(u.reason)}<br>รายการที่รออนุมัติจะถูกถอนออก`, okText: 'ลบรายการ' });
+      if (!ok) return;
+      if (!TT.unavailabilityOpen(u.term) || u.status !== 'pending') { TT.toast('ลบไม่ได้', 'ปิดรับแล้วหรือรายการถูกพิจารณาแล้ว', 'error'); render(); return; }
+      db().unavailability.splice(db().unavailability.indexOf(u), 1);
+      const tName = TT.teacher(tid())?.name || TT.me().name;
+      TT.logHistory(u.term, null, 'ถอนเวลาไม่ว่าง', `${when} · ${u.reason}`, tName);
+      if (state.form.editingId === id) state.form = blankForm();
+      TT.save();
+      TT.toast('ลบรายการแล้ว', when);
+    }
+
+    async function copyPrevious() {
+      const term = state.term;
+      const prev = prevTerm(term);
+      if (!prev || !TT.unavailabilityOpen(term)) return;
+      const src = myRecords(prev).filter((u) => u.status === 'approved');
+      if (!src.length) { TT.toast('ไม่มีรายการให้คัดลอก', `ไม่พบเวลาไม่ว่างที่อนุมัติแล้วใน${TT.termLabel(prev)}`, 'info'); return; }
+      const mine = myRecords(term).filter((u) => u.status !== 'rejected');
+      const dup = (u) => mine.some((m) => m.day === u.day && m.start === u.start && m.end === u.end);
+      const overlap = (u) => mine.some((m) => m.day === u.day && TT.overlaps({ start: TT.toMin(u.start), end: TT.toMin(u.end) }, { start: TT.toMin(m.start), end: TT.toMin(m.end) }));
+      const toAdd = src.filter((u) => !dup(u) && !overlap(u));
+      const skipped = src.length - toAdd.length;
+      if (!toAdd.length) { TT.toast('ไม่มีรายการใหม่ให้คัดลอก', `รายการที่อนุมัติแล้วจาก${TT.termLabel(prev)} มีอยู่แล้วหรือทับกับรายการในภาคเรียนนี้`, 'info'); return; }
+      const listTxt = src.map((u) => `<li>${esc(TT.DAYS[u.day].name)} ${esc(u.start)}–${esc(u.end)} · ${esc(u.reason)}${toAdd.includes(u) ? '' : ' <span class="text-slate-400">(มีอยู่แล้ว/ทับกัน · ข้าม)</span>'}</li>`).join('');
+      const ok = await TT.confirm({ title: `คัดลอกจาก${TT.termLabel(prev)}?`, message: `รายการที่อนุมัติแล้ว ${src.length} รายการ จะถูกเพิ่มเป็นรายการรออนุมัติ ${toAdd.length} รายการ${skipped ? ` (ข้าม ${skipped} รายการที่ซ้ำหรือทับกัน)` : ''}<ul class="mt-2 list-disc pl-5 text-xs">${listTxt}</ul>`, okText: `คัดลอก ${toAdd.length} รายการ`, tone: 'primary' });
+      if (!ok) return;
+      const tName = TT.teacher(tid())?.name || TT.me().name;
+      toAdd.forEach((u) => db().unavailability.push({ id: TT.newId('UN'), term, teacherId: tid(), day: u.day, start: u.start, end: u.end, reason: u.reason, note: `${u.note || ''} (คัดลอกจากภาคก่อน)`.trim(), status: 'pending', by: 'teacher', createdAt: TT.nowIso(), decidedAt: null, decidedBy: null, adminNote: '' }));
+      TT.notify('admin', 'เวลาไม่ว่างรออนุมัติ', `${tName} · คัดลอกจาก${TT.termLabel(prev)} ${toAdd.length} รายการ`, 'timetable-approvals.html#unavailability');
+      TT.logHistory(term, null, 'แจ้งเวลาไม่ว่าง', `คัดลอกจาก${TT.termLabel(prev)} ${toAdd.length} รายการ`, tName);
+      TT.save();
+      TT.toast('คัดลอกแล้ว', `เพิ่ม ${toAdd.length} รายการ รอ admin อนุมัติ`);
+    }
+
+    TT.onChange(() => { render(); AcademicLayout.refresh(); });
+    render();
+  }());
+  </script>
+</body>
+</html>

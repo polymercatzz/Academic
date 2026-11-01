@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fail Student Detail</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#f7f8fc',
+            surface: '#ffffff',
+            surfaceSoft: '#f2f5fb',
+            line: '#d9e2ef',
+            ink: '#1e293b',
+            muted: '#64748b',
+            brand: '#2563eb',
+            brandSoft: '#eaf2ff',
+            success: '#1f9d68',
+            warning: '#d97706',
+            danger: '#dc2626'
+          },
+          boxShadow: {
+            panel: '0 18px 50px rgba(15, 23, 42, 0.08)'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          fontSize: {
+            xs: ['1.15vh', { lineHeight: '1.55' }],
+            sm: ['1.35vh', { lineHeight: '1.6' }],
+            base: ['1.55vh', { lineHeight: '1.6' }],
+            lg: ['1.75vh', { lineHeight: '1.45' }],
+            xl: ['2vh', { lineHeight: '1.35' }],
+            '2xl': ['2.45vh', { lineHeight: '1.25' }],
+            '3xl': ['3vh', { lineHeight: '1.18' }],
+            '4xl': ['3.6vh', { lineHeight: '1.12' }],
+            '5xl': ['4.2vh', { lineHeight: '1.08' }]
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    .menu-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      border-radius: 0.75rem;
+      padding: 0.625rem 0.75rem;
+      font-size: 1.35vh;
+      font-weight: 500;
+      color: #475569;
+      text-decoration: none;
+      transition: background-color 0.15s ease, color 0.15s ease;
+    }
+    .menu-link:hover {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    .menu-link.active {
+      background: #eff6ff;
+      color: #1d4ed8;
+    }
+    .menu-icon {
+      height: 1rem;
+      width: 1rem;
+      flex-shrink: 0;
+      fill: currentColor;
+    }
+    .quick-chip {
+      border-radius: 9999px;
+      border: 1px solid #e2e8f0;
+      background: #ffffff;
+      padding: 0.5rem 0.875rem;
+      font-size: 1.35vh;
+      font-weight: 500;
+      color: #475569;
+      box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06);
+      transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+    }
+    .quick-chip:hover {
+      background: #f8fafc;
+      border-color: #cbd5e1;
+    }
+    .quick-chip-active {
+      border-color: #2563eb;
+      background: #2563eb;
+      color: #ffffff;
+    }
+  </style>
+</head>
+<body class="relative min-h-screen overflow-x-hidden bg-slate-100 font-body text-slate-800">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden">
+    <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl"></div>
+    <div class="absolute right-0 top-20 h-80 w-80 rounded-full bg-sky-100/60 blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-100/50 blur-3xl"></div>
+  </div>
+
+  <div id="layoutSidebar"></div>
+
+  <div class="relative lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="../shared/academic-layout.js?v=8"></script>
+    <script>AcademicLayout.mount({"active":"fail-student","title":"นักเรียนต้องปรับปรุง","rightHtml":"<div class=\"flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm\">\n            <div class=\"flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600\">\n              <svg class=\"h-5 w-5\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 2 4 6v6c0 5 3.5 9.7 8 10 4.5-.3 8-5 8-10V6l-8-4Zm0 2.2 5.9 2.8v4.8c0 3.8-2.4 7.4-5.9 8-3.5-.6-5.9-4.2-5.9-8V7l5.9-2.8Z\"/></svg>\n            </div>\n            <div>\n              <p class=\"text-[1.05vh] font-semibold uppercase tracking-[0.18em] text-slate-400\">ข้อมูลล่าสุด</p>\n              <p id=\"timestampText\" class=\"text-sm font-medium text-slate-900\">-</p>\n            </div>\n          </div>"});</script>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8">
+      <section class="mb-6">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <div class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
+              <span>รายงานผลการเรียน</span>
+              <span class="text-slate-300">></span>
+              <span class="font-medium text-slate-700">นักเรียนต้องปรับปรุง</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3">
+              <h1 class="text-3xl font-semibold tracking-tight text-slate-900 lg:text-4xl">รายงานนักเรียนต้องปรับปรุง</h1>
+              <button type="button" id="thresholdInfo" class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:text-slate-700" title="แสดงรายวิชาที่มีนักเรียนอย่างน้อย 1 คนอยู่ในช่วงคะแนนที่เลือก">
+                <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 6.5a1.25 1.25 0 1 1 0 2.5 1.25 1.25 0 0 1 0-2.5ZM10.75 11h2.5v6h-2.5v-6Z"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mb-6 rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
+        <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ตัวกรองการค้นหา</p>
+            <h2 class="mt-2 text-xl font-semibold text-slate-900">เลือกเงื่อนไขก่อนแสดงผลลัพธ์</h2>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="resetButton" type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">ล้างทั้งหมด</button>
+            <button id="searchButton" type="button" class="inline-flex min-w-[132px] items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700">
+              <svg id="searchSpinner" class="hidden h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="3" opacity="0.25"/><path d="M21 12a9 9 0 0 1-9 9" stroke="currentColor" stroke-width="3" stroke-linecap="round"/></svg>
+              <span id="searchButtonLabel">แสดงผลลัพธ์</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-slate-700">ปีการศึกษา</span>
+            <select id="year" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-slate-700">ภาคเรียน</span>
+            <select id="term" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-slate-700">ระดับชั้น</span>
+            <select id="grade" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select>
+          </label>
+          <label class="block">
+            <span class="mb-2 block text-sm font-medium text-slate-700">ห้องเรียน</span>
+            <select id="classroom" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select>
+          </label>
+        </div>
+
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <button id="advancedToggle" type="button" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+            <span>ตัวกรองเพิ่มเติม</span>
+            <span id="advancedBadge" class="hidden rounded-full bg-blue-600 px-2 py-0.5 text-xs text-white">0</span>
+          </button>
+          <div class="text-sm text-slate-500">คลิกชิปเพื่อล้างค่าแต่ละตัวได้</div>
+        </div>
+
+        <div id="advancedFilters" class="mt-4 hidden rounded-2xl border border-slate-200 bg-slate-50 p-4">
+          <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">รายวิชา</span>
+              <select id="subject" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select>
+            </label>
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">ครูผู้สอน</span>
+              <select id="teacher" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select>
+            </label>
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">แผนการเรียน</span>
+              <select id="program" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select>
+            </label>
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">ช่วงคะแนน</span>
+              <select id="scoreBand" class="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100"></select>
+            </label>
+          </div>
+        </div>
+
+        <div id="activeFilterChips" class="mt-4 flex flex-wrap gap-2"></div>
+        
+      </section>
+
+      <section class="mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-4" id="summaryCards"></section>
+
+      <section class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+        <div class="border-b border-slate-200 p-5 lg:p-6">
+          <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600" id="resultCountLabel">ผลการค้นหา 0 รายวิชา</div>
+              <p class="mt-2 text-sm text-slate-500">ค้นหาได้ทั้งรหัสวิชา ชื่อวิชา ห้องเรียน ครูผู้สอน แผนการเรียน รหัสนักเรียน ชื่อนักเรียน และหมายเหตุ</p>
+            </div>
+            <div class="flex flex-col gap-3 lg:flex-row lg:items-center">
+              <label class="relative block">
+                <span class="sr-only">ค้นหาในผลลัพธ์</span>
+                <span class="pointer-events-none absolute inset-y-0 left-3 flex items-center text-slate-400">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M10 4a6 6 0 1 0 3.8 10.6l4.3 4.3 1.4-1.4-4.3-4.3A6 6 0 0 0 10 4Zm0 2a4 4 0 1 1 0 8 4 4 0 0 1 0-8Z"/></svg>
+                </span>
+                <input id="tableSearch" type="text" placeholder="ค้นหาในตาราง..." class="w-full rounded-xl border border-slate-200 bg-white py-2.5 pl-9 pr-4 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100 lg:w-80">
+              </label>
+              <select id="tableSort" class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-4 focus:ring-blue-100">
+                <option value="default">เรียง: ค่าเริ่มต้น</option>
+                <option value="failDesc">ไม่ผ่านมากไปน้อย</option>
+                <option value="failAsc">ไม่ผ่านน้อยไปมาก</option>
+                <option value="scoreAsc">คะแนนเฉลี่ยต่ำไปสูง</option>
+                <option value="subjectAsc">ชื่อวิชา</option>
+              </select>
+              <select id="tableFilter" class="sr-only" aria-hidden="true">
+                <option value="ทั้งหมด">ทั้งหมด</option>
+                <option value="high">เสี่ยงสูง</option>
+                <option value="fail4">นักเรียน ≥ 4 คน</option>
+                <option value="score30">คะแนนเฉลี่ยต่ำกว่า 30</option>
+              </select>
+              <div class="relative">
+                <button id="exportDropdownButton" type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 lg:w-auto">
+                  ส่งออก
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="m7 10 5 5 5-5H7Z"/></svg>
+                </button>
+                <div id="exportDropdown" class="absolute right-0 top-full z-20 mt-2 hidden w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+                  <button type="button" data-global-export="pdf" class="block w-full px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">ส่งออก PDF</button>
+                  <button type="button" data-global-export="excel" class="block w-full px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">ส่งออก Excel</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            <button type="button" data-quick-filter="ทั้งหมด" class="quick-chip">ทั้งหมด</button>
+            <button type="button" data-quick-filter="high" class="quick-chip">เสี่ยงสูง</button>
+            <button type="button" data-quick-filter="fail4" class="quick-chip">นักเรียน ≥ 4 คน</button>
+            <button type="button" data-quick-filter="score30" class="quick-chip">คะแนนเฉลี่ยต่ำกว่า 30</button>
+          </div>
+          <div class="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            <span id="selectedReportLabel">ยังไม่ได้เลือกรายวิชา</span>
+            <span class="mx-2 text-slate-300">•</span>
+            <span id="selectedReportHint">กดดูรายละเอียดจากแถวที่สนใจ</span>
+          </div>
+        </div>
+
+        <div class="p-5 lg:p-6">
+          <div id="loadingState" class="hidden">
+            <div class="space-y-3">
+              <div class="h-4 w-40 animate-pulse rounded bg-slate-200"></div>
+              <div class="h-14 animate-pulse rounded-2xl bg-slate-100"></div>
+              <div class="h-14 animate-pulse rounded-2xl bg-slate-100"></div>
+              <div class="h-14 animate-pulse rounded-2xl bg-slate-100"></div>
+            </div>
+          </div>
+          <div id="emptyState" class="hidden rounded-3xl border border-dashed border-slate-300 bg-slate-50 p-10 text-center">
+            <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm">
+              <svg class="h-6 w-6" viewBox="0 0 24 24" fill="currentColor"><path d="M10 2a8 8 0 1 0 5.3 14L21 21l1-1-5.7-5.7A8 8 0 0 0 10 2Zm0 2a6 6 0 1 1 0 12 6 6 0 0 1 0-12Z"/></svg>
+            </div>
+            <h3 class="mt-4 text-lg font-semibold text-slate-900">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</h3>
+            <p class="mt-2 text-sm text-slate-500">ลองลบตัวกรองบางรายการหรือเลือกห้องเรียนเป็นทั้งหมด</p>
+            <button id="emptyResetButton" type="button" class="mt-5 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700">ล้างตัวกรอง</button>
+          </div>
+
+          <div id="desktopTableWrap" class="hidden lg:block">
+            <div class="overflow-hidden rounded-2xl border border-slate-200">
+              <table class="w-full table-fixed text-sm">
+                <thead class="bg-slate-50 text-slate-500">
+                  <tr class="border-b border-slate-200">
+                    <th class="w-12 px-3 py-3 text-center font-semibold"></th>
+                    <th class="px-4 py-3 text-left font-semibold">รายวิชา</th>
+                    <th class="px-4 py-3 text-left font-semibold">ห้อง / ครูผู้สอน</th>
+                    <th class="w-36 px-4 py-3 text-center font-semibold">นักเรียนต้องปรับปรุง</th>
+                    <th class="w-28 px-4 py-3 text-center font-semibold">คะแนนเฉลี่ย</th>
+                    <th class="w-32 px-4 py-3 text-center font-semibold">ระดับความเสี่ยง</th>
+                    <th class="w-40 px-4 py-3 text-center font-semibold">ดำเนินการ</th>
+                  </tr>
+                </thead>
+                <tbody id="resultTable" class="divide-y divide-slate-200 bg-white"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div id="mobileResultList" class="space-y-3 lg:hidden"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="previewModal" class="fixed inset-0 z-50 hidden bg-slate-950/60 p-4">
+    <div class="mx-auto flex min-h-full max-w-6xl items-center justify-center">
+      <div class="flex max-h-[92vh] w-full flex-col overflow-hidden rounded-[2rem] bg-white shadow-2xl">
+        <div class="flex flex-col gap-3 border-b border-slate-200 bg-white px-5 py-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">Preview Report</p>
+            <h3 id="previewModalTitle" class="mt-1 text-xl font-semibold text-slate-900">ตัวอย่างรายงาน</h3>
+          </div>
+          <div class="flex flex-wrap gap-2">
+            <button id="printPreviewButton" type="button" class="rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">พิมพ์ตัวอย่าง</button>
+            <button id="closePreviewModal" type="button" class="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800">ปิด</button>
+          </div>
+        </div>
+        <div class="overflow-auto bg-slate-100 p-4 lg:p-8">
+          <div id="previewReportContent" class="mx-auto max-w-5xl rounded-3xl bg-white p-6 text-slate-800 shadow-sm lg:p-10"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const mockData = [
+      { id: 1, year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/1', subjectCode: 'ค21101', subjectName: 'คณิตศาสตร์', teacher: 'อ.ชลธิชา ศรีสวัสดิ์', program: 'วิทย์-คณิต', totalStudents: 38, students: [{ studentId: '681101', name: 'กวินภพ แสงทอง', score: 36, grade: '1', remark: 'ขาดส่งงานหน่วยที่ 3' }, { studentId: '681114', name: 'ชลธิชา มีสุข', score: 28, grade: '0', remark: 'สอบปลายภาคไม่ผ่าน' }, { studentId: '681129', name: 'ณัฐนันท์ รัตนพงศ์', score: 41, grade: '1.5', remark: 'ต้องเรียนเสริมพื้นฐาน' }, { studentId: '681133', name: 'ธนภัทร กลิ่นจันทร์', score: 19, grade: '0', remark: 'ขาดเรียนต่อเนื่อง' }] },
+      { id: 2, year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/2', subjectCode: 'ว21101', subjectName: 'วิทยาศาสตร์', teacher: 'อ.ปวีณา สุดตา', program: 'วิทย์-คณิต', totalStudents: 40, students: [{ studentId: '681203', name: 'พิชญาภา คงเมือง', score: 39, grade: '1', remark: 'คะแนนปฏิบัติการต่ำ' }, { studentId: '681215', name: 'รชต นวลจันทร์', score: 22, grade: '0', remark: 'สอบไม่ครบทุกหน่วย' }] },
+      { id: 3, year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/2', subjectCode: 'ส21102', subjectName: 'ประวัติศาสตร์', teacher: 'อ.ปาริฉัตร สุดตา', program: 'ศิลป์ทั่วไป', totalStudents: 40, students: [{ studentId: '681221', name: 'วรัญญา แก้วคำ', score: 13, grade: '0', remark: 'ไม่เข้าสอบกลางภาค' }, { studentId: '681228', name: 'สิรภัทร วงษ์ดี', score: 32, grade: '1', remark: 'เนื้อหาย้อนหลังหลายบท' }, { studentId: '681237', name: 'อภิชาติ อินทร์เงิน', score: 0, grade: '0', remark: 'หยุดยาวโดยไม่มีใบลา' }] },
+      { id: 4, year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/3', subjectCode: 'อ21101', subjectName: 'ภาษาอังกฤษพื้นฐาน', teacher: 'อ.จิราพร สุขใจ', program: 'English Program', totalStudents: 35, students: [{ studentId: '681308', name: 'กัญญาณัฐ วงศ์สอาด', score: 44, grade: '1.5', remark: 'ผ่านบาง competency' }, { studentId: '681311', name: 'ภัทรพล นาคทอง', score: 31, grade: '1', remark: 'ทักษะฟัง-พูดต้องเสริม' }, { studentId: '681319', name: 'ศิริวรรณ วิเศษ', score: 26, grade: '0', remark: 'ขาดสอบ speaking' }, { studentId: '681325', name: 'สุทธิภัทร แดงดี', score: 18, grade: '0', remark: 'ไม่ส่ง portfolio' }, { studentId: '681333', name: 'อิงฟ้า ชูศรี', score: 47, grade: '1.5', remark: 'ต้อง remedial reading' }] },
+      { id: 5, year: '2568', term: '2', grade: 'ม.1', classroom: 'ม.1/1', subjectCode: 'ท21102', subjectName: 'ภาษาไทย', teacher: 'อ.กมลชนก ชูเชิด', program: 'ศิลป์ทั่วไป', totalStudents: 38, students: [{ studentId: '681105', name: 'ชญานิศ แก้วเรือง', score: 42, grade: '1.5', remark: 'วิเคราะห์บทความยังอ่อน' }] },
+      { id: 6, year: '2568', term: '2', grade: 'ม.1', classroom: 'ม.1/4', subjectCode: 'ค21102', subjectName: 'คณิตศาสตร์', teacher: 'อ.ชลธิชา ศรีสวัสดิ์', program: 'ห้องเรียนพิเศษ', totalStudents: 36, students: [{ studentId: '681406', name: 'ธีรภัทร แซ่หลี', score: 38, grade: '1', remark: 'ขาดพื้นฐานสมการ' }, { studentId: '681412', name: 'ปาลิตา พูลทรัพย์', score: 29, grade: '0', remark: 'ไม่ผ่าน quiz ต่อเนื่อง' }] },
+      { id: 7, year: '2568', term: '2', grade: 'ม.2', classroom: 'ม.2/1', subjectCode: 'ว22102', subjectName: 'วิทยาศาสตร์และเทคโนโลยี', teacher: 'อ.พิมพ์ชนก สายชล', program: 'วิทย์-คณิต', totalStudents: 42, students: [{ studentId: '672108', name: 'กิตติศักดิ์ พูลเกิด', score: 20, grade: '0', remark: 'ไม่ผ่านภาคปฏิบัติ' }, { studentId: '672116', name: 'ธัญญารัตน์ พรหมมา', score: 37, grade: '1', remark: 'ขาดชิ้นงาน stem' }, { studentId: '672122', name: 'นราธิป แสงสว่าง', score: 45, grade: '1.5', remark: 'ต้องเสริมการทดลอง' }] },
+      { id: 8, year: '2567', term: '2', grade: 'ม.2', classroom: 'ม.2/2', subjectCode: 'อ22102', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', teacher: 'อ.จิราพร สุขใจ', program: 'English Program', totalStudents: 39, students: [{ studentId: '672205', name: 'พิมพ์ลดา ธรรมวงศ์', score: 34, grade: '1', remark: 'ขาดสอบ conversation' }, { studentId: '672224', name: 'อธิคุณ ศรีทอง', score: 11, grade: '0', remark: 'ไม่เข้าสอบปลายภาค' }] }
+    ].map((item) => {
+      const failCount = item.students.length;
+      const averageFailScore = Number((item.students.reduce((sum, student) => sum + student.score, 0) / failCount).toFixed(1));
+      return { ...item, failCount, averageFailScore };
+    });
+
+    const defaultDraftFilters = {
+      year: '2568',
+      term: 'ทั้งหมด',
+      grade: 'ทั้งหมด',
+      classroom: 'ทั้งหมด',
+      subject: 'ทั้งหมด',
+      teacher: 'ทั้งหมด',
+      program: 'ทั้งหมด',
+      scoreBand: 'ทั้งหมด'
+    };
+
+    const state = {
+      draftFilters: { ...defaultDraftFilters },
+      appliedFilters: { ...defaultDraftFilters },
+      rows: [],
+      expandedIds: new Set(),
+      selectedId: null,
+      keyword: '',
+      quickFilter: 'ทั้งหมด',
+      tableSort: 'default',
+      tableSearch: '',
+      loading: false,
+      advancedOpen: false,
+      openMenuId: null,
+      sidebarOpen: false,
+      activeExportTarget: 'current'
+    };
+
+    const els = {
+      sidebar: document.getElementById('sidebar'),
+      sidebarOverlay: document.getElementById('sidebarOverlay'),
+      mobileMenuButton: document.getElementById('mobileMenuButton'),
+      timestampText: document.getElementById('timestampText'),
+      year: document.getElementById('year'),
+      term: document.getElementById('term'),
+      grade: document.getElementById('grade'),
+      classroom: document.getElementById('classroom'),
+      subject: document.getElementById('subject'),
+      teacher: document.getElementById('teacher'),
+      program: document.getElementById('program'),
+      scoreBand: document.getElementById('scoreBand'),
+      advancedToggle: document.getElementById('advancedToggle'),
+      advancedBadge: document.getElementById('advancedBadge'),
+      advancedFilters: document.getElementById('advancedFilters'),
+      activeFilterChips: document.getElementById('activeFilterChips'),
+      activeFilterSummary: document.getElementById('activeFilterSummary'),
+      summaryCards: document.getElementById('summaryCards'),
+      searchButton: document.getElementById('searchButton'),
+      searchButtonLabel: document.getElementById('searchButtonLabel'),
+      searchSpinner: document.getElementById('searchSpinner'),
+      resultCountLabel: document.getElementById('resultCountLabel'),
+      tableSearch: document.getElementById('tableSearch'),
+      tableSort: document.getElementById('tableSort'),
+      tableFilter: document.getElementById('tableFilter'),
+      exportDropdownButton: document.getElementById('exportDropdownButton'),
+      exportDropdown: document.getElementById('exportDropdown'),
+      resultTable: document.getElementById('resultTable'),
+      mobileResultList: document.getElementById('mobileResultList'),
+      loadingState: document.getElementById('loadingState'),
+      emptyState: document.getElementById('emptyState'),
+      desktopTableWrap: document.getElementById('desktopTableWrap'),
+      selectedReportLabel: document.getElementById('selectedReportLabel'),
+      selectedReportHint: document.getElementById('selectedReportHint'),
+      emptyResetButton: document.getElementById('emptyResetButton'),
+      previewModal: document.getElementById('previewModal'),
+      previewModalTitle: document.getElementById('previewModalTitle'),
+      previewReportContent: document.getElementById('previewReportContent'),
+      closePreviewModal: document.getElementById('closePreviewModal'),
+      printPreviewButton: document.getElementById('printPreviewButton')
+    };
+
+    const filterOrder = ['year', 'term', 'grade', 'classroom', 'subject', 'teacher', 'program', 'scoreBand'];
+
+    function escapeHTML(value) {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+    function getTimestamp() {
+      return new Intl.DateTimeFormat('th-TH', {
+        dateStyle: 'medium',
+        timeStyle: 'short'
+      }).format(new Date());
+    }
+
+    function updateTimestamp() {
+      const value = getTimestamp();
+      els.timestampText.textContent = value;
+    }
+
+    function isAll(value) {
+      return value === 'ทั้งหมด';
+    }
+
+    function getDraftFilters() {
+      return {
+        year: els.year.value,
+        term: els.term.value,
+        grade: els.grade.value,
+        classroom: els.classroom.value,
+        subject: els.subject.value,
+        teacher: els.teacher.value,
+        program: els.program.value,
+        scoreBand: els.scoreBand.value
+      };
+    }
+
+    function getUniqueValues(key, filters = {}) {
+      return [...new Set(mockData.filter((item) => Object.entries(filters).every(([filterKey, value]) => isAll(value) || item[filterKey] === value)).map((item) => item[key]))].sort((a, b) => a.localeCompare(b, 'th'));
+    }
+
+    function fillSelect(selectEl, values, includeAll = true) {
+      const options = [];
+      if (includeAll) {
+        options.push('<option value="ทั้งหมด">ทั้งหมด</option>');
+      }
+      values.forEach((value) => {
+        options.push(`<option value="${escapeHTML(value)}">${escapeHTML(value)}</option>`);
+      });
+      selectEl.innerHTML = options.join('');
+    }
+
+    function setSelectValue(selectEl, value) {
+      const exists = [...selectEl.options].some((option) => option.value === value);
+      selectEl.value = exists ? value : 'ทั้งหมด';
+    }
+
+    function syncDependentOptions() {
+      const draft = { ...state.draftFilters };
+
+      fillSelect(els.year, getUniqueValues('year'), false);
+      setSelectValue(els.year, draft.year);
+
+      fillSelect(els.term, getUniqueValues('term', { year: draft.year }));
+      setSelectValue(els.term, draft.term);
+
+      fillSelect(els.grade, getUniqueValues('grade', { year: draft.year, term: draft.term }));
+      setSelectValue(els.grade, draft.grade);
+
+      fillSelect(els.classroom, getUniqueValues('classroom', { year: draft.year, term: draft.term, grade: draft.grade }));
+      setSelectValue(els.classroom, draft.classroom);
+
+      fillSelect(els.subject, getUniqueValues('subjectName', { year: draft.year, term: draft.term, grade: draft.grade, classroom: draft.classroom }));
+      setSelectValue(els.subject, draft.subject);
+
+      fillSelect(els.teacher, getUniqueValues('teacher', { year: draft.year, term: draft.term, grade: draft.grade, classroom: draft.classroom, subjectName: draft.subject }));
+      setSelectValue(els.teacher, draft.teacher);
+
+      fillSelect(els.program, getUniqueValues('program', { year: draft.year, term: draft.term, grade: draft.grade, classroom: draft.classroom, subjectName: draft.subject, teacher: draft.teacher }));
+      setSelectValue(els.program, draft.program);
+
+      fillSelect(els.scoreBand, ['ต่ำกว่า 20', '20-39', '40-49']);
+      setSelectValue(els.scoreBand, draft.scoreBand);
+
+      state.draftFilters = getDraftFilters();
+    }
+
+    function matchesScoreBand(item, scoreBand) {
+      if (isAll(scoreBand)) return true;
+      return item.students.some((student) => {
+        if (scoreBand === 'ต่ำกว่า 20') return student.score < 20;
+        if (scoreBand === '20-39') return student.score >= 20 && student.score <= 39;
+        if (scoreBand === '40-49') return student.score >= 40 && student.score <= 49;
+        return true;
+      });
+    }
+
+    function getRiskLevel(row) {
+      if (row.failCount >= 4 || row.averageFailScore < 30) return 'high';
+      if (row.failCount >= 2 || row.averageFailScore < 40) return 'medium';
+      return 'low';
+    }
+
+    function getRiskLabel(level) {
+      return level === 'high' ? 'เสี่ยงสูง' : level === 'medium' ? 'เสี่ยงปานกลาง' : 'เสี่ยงต่ำ';
+    }
+
+    function getRiskBadgeClass(level) {
+      if (level === 'high') return 'bg-rose-50 text-rose-700 ring-1 ring-rose-200';
+      if (level === 'medium') return 'bg-amber-50 text-amber-700 ring-1 ring-amber-200';
+      return 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200';
+    }
+
+    function getRiskIconBg(level) {
+      if (level === 'high') return 'bg-rose-100 text-rose-700';
+      if (level === 'medium') return 'bg-amber-100 text-amber-700';
+      return 'bg-emerald-100 text-emerald-700';
+    }
+
+    function getStudentCause(remark) {
+      const text = String(remark || '');
+      if (text.includes('ขาดสอบ') || text.includes('ไม่เข้าสอบ')) return 'ขาดสอบ';
+      if (text.includes('ไม่ส่ง') || text.includes('ขาดส่งงาน')) return 'ไม่ส่งงาน';
+      if (text.includes('ขาดเรียน') || text.includes('หยุดยาว')) return 'ขาดเรียน';
+      return 'คะแนนต่ำกว่าเกณฑ์';
+    }
+
+    function getCauseBadgeClass(cause) {
+      if (cause === 'ขาดสอบ') return 'bg-blue-50 text-blue-700 ring-1 ring-blue-200';
+      if (cause === 'ไม่ส่งงาน') return 'bg-amber-50 text-amber-700 ring-1 ring-amber-200';
+      if (cause === 'ขาดเรียน') return 'bg-violet-50 text-violet-700 ring-1 ring-violet-200';
+      return 'bg-slate-100 text-slate-700 ring-1 ring-slate-200';
+    }
+
+    function getProcessedRows() {
+      let rows = [...state.rows];
+      if (state.tableSearch.trim()) {
+        const keyword = state.tableSearch.trim().toLowerCase();
+        rows = rows.filter((item) => {
+          const subjectText = `${item.subjectCode} ${item.subjectName} ${item.classroom} ${item.teacher} ${item.program}`.toLowerCase();
+          const studentText = item.students.map((student) => `${student.studentId} ${student.name} ${student.remark}`).join(' ').toLowerCase();
+          return subjectText.includes(keyword) || studentText.includes(keyword);
+        });
+      }
+
+      if (state.quickFilter === 'high') {
+        rows = rows.filter((row) => getRiskLevel(row) === 'high');
+      } else if (state.quickFilter === 'fail4') {
+        rows = rows.filter((row) => row.failCount >= 4);
+      } else if (state.quickFilter === 'score30') {
+        rows = rows.filter((row) => row.averageFailScore < 30);
+      }
+
+      if (state.tableSort === 'failDesc') rows.sort((a, b) => b.failCount - a.failCount);
+      else if (state.tableSort === 'failAsc') rows.sort((a, b) => a.failCount - b.failCount);
+      else if (state.tableSort === 'scoreAsc') rows.sort((a, b) => a.averageFailScore - b.averageFailScore);
+      else if (state.tableSort === 'subjectAsc') rows.sort((a, b) => `${a.subjectCode} ${a.subjectName}`.localeCompare(`${b.subjectCode} ${b.subjectName}`, 'th'));
+
+      return rows;
+    }
+
+    function getAppliedRows() {
+      const f = state.appliedFilters;
+      return mockData.filter((item) => {
+        return item.year === f.year &&
+          (isAll(f.term) || item.term === f.term) &&
+          (isAll(f.grade) || item.grade === f.grade) &&
+          (isAll(f.classroom) || item.classroom === f.classroom) &&
+          (isAll(f.subject) || item.subjectName === f.subject) &&
+          (isAll(f.teacher) || item.teacher === f.teacher) &&
+          (isAll(f.program) || item.program === f.program) &&
+          matchesScoreBand(item, f.scoreBand);
+      });
+    }
+
+    function countActiveAdvancedFilters() {
+      return ['subject', 'teacher', 'program', 'scoreBand'].reduce((count, key) => count + (state.draftFilters[key] !== 'ทั้งหมด' ? 1 : 0), 0);
+    }
+
+    function renderAdvancedState() {
+      els.advancedFilters.classList.toggle('hidden', !state.advancedOpen);
+      const count = countActiveAdvancedFilters();
+      if (count > 0) {
+        els.advancedBadge.classList.remove('hidden');
+        els.advancedBadge.textContent = String(count);
+      } else {
+        els.advancedBadge.classList.add('hidden');
+      }
+    }
+
+    function chipLabel(key, value) {
+      const labels = {
+        year: `ปีการศึกษา ${value}`,
+        term: value === 'ทั้งหมด' ? 'ทุกภาคเรียน' : `ภาคเรียน ${value}`,
+        grade: value === 'ทั้งหมด' ? 'ทุกระดับชั้น' : value,
+        classroom: value === 'ทั้งหมด' ? 'ทุกห้อง' : value,
+        subject: value === 'ทั้งหมด' ? 'รายวิชาทั้งหมด' : value,
+        teacher: value === 'ทั้งหมด' ? 'ครูทั้งหมด' : value,
+        program: value === 'ทั้งหมด' ? 'แผนทั้งหมด' : value,
+        scoreBand: value === 'ทั้งหมด' ? 'ช่วงคะแนนทั้งหมด' : value
+      };
+      return labels[key] || value;
+    }
+
+    function resetDraftKey(key) {
+      const defaults = { ...defaultDraftFilters };
+      state.draftFilters[key] = defaults[key];
+      applyDraftToInputs();
+      syncDependentOptions();
+      renderActiveFilterChips();
+      renderAdvancedState();
+      renderFilterSummary();
+    }
+
+    function renderActiveFilterChips() {
+      const chips = filterOrder.map((key) => {
+        const value = state.draftFilters[key];
+        const label = chipLabel(key, value);
+        return `
+          <button type="button" data-reset-key="${key}" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-700 shadow-sm transition hover:bg-slate-50">
+            <span>${escapeHTML(label)}</span>
+            <span class="text-slate-400">×</span>
+          </button>
+        `;
+      });
+      els.activeFilterChips.innerHTML = chips.join('');
+    }
+
+    function renderFilterSummary() {
+      const summaryEl = els.activeFilterSummary;
+      if (!summaryEl) return;
+      const d = state.draftFilters;
+      const parts = [
+        `ปี ${d.year}`,
+        d.term === 'ทั้งหมด' ? 'ทุกภาคเรียน' : `ภาคเรียน ${d.term}`,
+        d.grade === 'ทั้งหมด' ? 'ทุกระดับชั้น' : d.grade,
+        d.classroom === 'ทั้งหมด' ? 'ทุกห้อง' : d.classroom
+      ];
+      summaryEl.textContent = `ตั้งค่าค้นหา: ${parts.join(' • ')}`;
+    }
+
+    function renderSummaryCards() {
+      const rows = state.rows;
+      const totalSubjects = rows.length;
+      const totalFlaggedStudents = rows.reduce((sum, row) => sum + row.failCount, 0);
+      const totalEnrolledStudents = rows.reduce((sum, row) => sum + row.totalStudents, 0);
+      const flaggedPercent = totalEnrolledStudents ? ((totalFlaggedStudents / totalEnrolledStudents) * 100).toFixed(1) : '0.0';
+      const highRiskSubjects = rows.filter((row) => getRiskLevel(row) === 'high').length;
+      const classroomMap = new Map();
+      rows.forEach((row) => {
+        const current = classroomMap.get(row.classroom) || { classroom: row.classroom, failCount: 0, enrolled: 0 };
+        current.failCount += row.failCount;
+        current.enrolled += row.totalStudents;
+        classroomMap.set(row.classroom, current);
+      });
+      let highestClassroom = { classroom: '-', failCount: 0, enrolled: 0 };
+      for (const value of classroomMap.values()) {
+        if (value.failCount > highestClassroom.failCount) highestClassroom = value;
+      }
+      const highestPercent = highestClassroom.enrolled ? ((highestClassroom.failCount / highestClassroom.enrolled) * 100).toFixed(1) : '0.0';
+
+      const cards = [
+        { label: 'นักเรียนต้องปรับปรุงทั้งหมด', value: totalFlaggedStudents.toString(), note: `${totalSubjects} รายวิชาที่มีข้อมูล`, icon: 'M12 2 4 6v6c0 5 3.5 9.7 8 10 4.5-.3 8-5 8-10V6l-8-4Z', tone: 'rose', accent: 'bg-rose-100 text-rose-700' },
+        { label: 'สัดส่วนคะแนนต่ำกว่าเกณฑ์', value: `${flaggedPercent}%`, note: `${totalFlaggedStudents} / ${totalEnrolledStudents} คน`, icon: 'M4 18h16v2H4v-2Zm2-7h3v5H6v-5Zm5-4h3v9h-3V7Zm5-4h3v13h-3V3Z', tone: 'orange', accent: 'bg-amber-100 text-amber-700' },
+        { label: 'วิชาเสี่ยงสูง', value: highRiskSubjects.toString(), note: 'คำนวณจากจำนวนไม่ผ่านและคะแนนเฉลี่ย', icon: 'M12 2 1 21h22L12 2Zm0 5 5.3 10H6.7L12 7Zm-1 3v4h2v-4h-2Zm0 5v2h2v-2h-2Z', tone: 'violet', accent: 'bg-violet-100 text-violet-700' },
+        { label: 'ห้องที่มีนักเรียนต้องปรับปรุงสูงสุด', value: highestClassroom.classroom, note: `${highestClassroom.failCount} คน • ${highestPercent}%`, icon: 'M3 10.5 12 3l9 7.5V21H3v-10.5Zm2 1.3V19h3v-4h6v4h3v-7.2L12 6.1 5 11.8Z', tone: 'emerald', accent: 'bg-emerald-100 text-emerald-700' }
+      ];
+
+      els.summaryCards.innerHTML = cards.map((card) => `
+        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+          <div class="flex items-start gap-4">
+            <div class="flex h-11 w-11 items-center justify-center rounded-xl ${card.accent}">
+              <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="${card.icon}"/></svg>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="text-sm font-medium text-slate-500">${card.label}</p>
+              <p class="mt-2 text-2xl font-semibold tracking-tight text-slate-900">${card.value}</p>
+              <p class="mt-1 text-sm text-slate-500">${card.note}</p>
+            </div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderSelectedState() {
+      const selected = mockData.find((item) => item.id === state.selectedId);
+      if (!selected) {
+        els.selectedReportLabel.textContent = 'ยังไม่ได้เลือกรายวิชา';
+        els.selectedReportHint.textContent = 'กดดูรายละเอียดจากแถวที่สนใจ';
+        return;
+      }
+      els.selectedReportLabel.textContent = `${selected.subjectCode} ${selected.subjectName}`;
+      els.selectedReportHint.textContent = `${selected.classroom} • ${selected.teacher} • ${selected.failCount} คน • คะแนนเฉลี่ย ${selected.averageFailScore.toFixed(1)}`;
+    }
+
+    function getDisplayRows() {
+      return getProcessedRows();
+    }
+
+    function renderLoadingState() {
+      els.loadingState.classList.remove('hidden');
+      els.emptyState.classList.add('hidden');
+      els.desktopTableWrap.classList.add('hidden');
+      els.mobileResultList.classList.add('hidden');
+    }
+
+    function renderEmptyState() {
+      els.loadingState.classList.add('hidden');
+      els.emptyState.classList.remove('hidden');
+      els.desktopTableWrap.classList.add('hidden');
+      els.mobileResultList.classList.add('hidden');
+      els.resultCountLabel.textContent = 'ผลการค้นหา 0 รายวิชา';
+    }
+
+    function buildStudentRows(row) {
+      return row.students.map((student, index) => {
+        const cause = getStudentCause(student.remark);
+        return `
+          <tr class="border-t border-slate-200">
+            <td class="px-3 py-3 text-center text-slate-500">${index + 1}</td>
+            <td class="px-3 py-3 font-medium text-slate-700">${escapeHTML(student.studentId)}</td>
+            <td class="px-3 py-3 text-slate-800">${escapeHTML(student.name)}</td>
+            <td class="px-3 py-3 text-center text-slate-600">${student.score.toFixed(1)}</td>
+            <td class="px-3 py-3 text-center text-slate-600">${student.score.toFixed(1)}%</td>
+            <td class="px-3 py-3 text-center text-slate-600">${escapeHTML(student.grade)}</td>
+            <td class="px-3 py-3"><span class="inline-flex rounded-full px-2.5 py-1 text-xs font-semibold ${getCauseBadgeClass(cause)}">${cause}</span></td>
+            <td class="px-3 py-3 text-slate-500">${escapeHTML(student.remark)}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function renderExpandedSection(row) {
+      return `
+        <tr class="bg-slate-50/80">
+          <td colspan="7" class="px-4 py-4">
+            <div class="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <div class="flex flex-col gap-3 border-b border-slate-200 pb-4 lg:flex-row lg:items-center lg:justify-between">
+                <div>
+                  <p class="text-sm font-semibold text-slate-900">รายชื่อนักเรียนที่ต้องปรับปรุง</p>
+                  <p class="mt-1 text-sm text-slate-500">${escapeHTML(row.subjectCode)} ${escapeHTML(row.subjectName)} • ${escapeHTML(row.classroom)} • ${escapeHTML(row.teacher)} • ${row.failCount} คน</p>
+                </div>
+                <button type="button" data-subject-export="${row.id}" class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+                  <svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M5 4h14v16H5V4Zm2 2v12h10V6H7Zm2 2h6v2H9V8Zm0 4h6v2H9v-2Z"/></svg>
+                  ส่งออกวิชานี้
+                </button>
+              </div>
+              <div class="mt-4 overflow-x-auto">
+                <table class="w-full min-w-[880px] text-sm">
+                  <thead class="bg-slate-50 text-slate-500">
+                    <tr>
+                      <th class="px-3 py-3 text-center font-semibold">ลำดับ</th>
+                      <th class="px-3 py-3 text-left font-semibold">รหัสนักเรียน</th>
+                      <th class="px-3 py-3 text-left font-semibold">ชื่อ-สกุล</th>
+                      <th class="px-3 py-3 text-center font-semibold">คะแนนรวม</th>
+                      <th class="px-3 py-3 text-center font-semibold">คิดเป็นร้อยละ</th>
+                      <th class="px-3 py-3 text-center font-semibold">เกรด</th>
+                      <th class="px-3 py-3 text-center font-semibold">สาเหตุหลัก</th>
+                      <th class="px-3 py-3 text-left font-semibold">หมายเหตุ</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-200">
+                    ${buildStudentRows(row)}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </td>
+        </tr>
+      `;
+    }
+
+    function renderActionMenu(row) {
+      const open = state.openMenuId === row.id;
+      return `
+        <div class="relative inline-block text-left">
+          <button type="button" data-more-menu="${row.id}" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50" aria-label="เมนูเพิ่มเติม">
+            <span class="text-lg leading-none">...</span>
+          </button>
+          <div class="${open ? '' : 'hidden'} absolute right-0 top-full z-20 mt-2 w-48 overflow-hidden rounded-xl border border-slate-200 bg-white shadow-lg">
+            <button type="button" data-action="preview" data-row-id="${row.id}" class="block w-full px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">ดูตัวอย่างรายงาน</button>
+            <button type="button" data-action="print" data-row-id="${row.id}" class="block w-full px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">พิมพ์รายงาน</button>
+            <button type="button" data-action="pdf" data-row-id="${row.id}" class="block w-full px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">ส่งออก PDF</button>
+            <button type="button" data-action="excel" data-row-id="${row.id}" class="block w-full px-4 py-3 text-left text-sm text-slate-700 transition hover:bg-slate-50">ส่งออก Excel</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderDesktopTable(rows) {
+      if (!rows.length) {
+        els.resultTable.innerHTML = '';
+        return;
+      }
+
+      els.resultTable.innerHTML = rows.map((row) => {
+        const selected = state.selectedId === row.id;
+        const expanded = state.expandedIds.has(row.id);
+        const risk = getRiskLevel(row);
+        const riskLabel = getRiskLabel(risk);
+        const subjectBadge = row.program.includes('วิทย์') ? 'วิชาหลัก' : row.program.includes('English') ? 'EP' : 'ทั่วไป';
+        return `
+          <tr class="${selected ? 'bg-blue-50/60 ring-1 ring-inset ring-blue-100' : 'bg-white'}">
+            <td class="px-3 py-4 align-top">
+              <button type="button" data-expand="${row.id}" aria-expanded="${expanded ? 'true' : 'false'}" aria-label="${expanded ? 'ย่อรายละเอียด' : 'ขยายรายละเอียด'}" class="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50">
+                <svg class="h-4 w-4 transition-transform ${expanded ? 'rotate-90' : ''}" viewBox="0 0 24 24" fill="currentColor"><path d="M9 6 17 12 9 18V6Z"/></svg>
+              </button>
+            </td>
+            <td class="px-4 py-4 align-top">
+              <div class="space-y-1">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-semibold text-slate-900">${escapeHTML(row.subjectCode)} ${escapeHTML(row.subjectName)}</span>
+                  <span class="inline-flex rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">${subjectBadge}</span>
+                </div>
+                <p class="text-sm text-slate-500">เทอม ${escapeHTML(row.term)} • ${escapeHTML(row.program)}</p>
+              </div>
+            </td>
+            <td class="px-4 py-4 align-top">
+              <p class="font-medium text-slate-800">${escapeHTML(row.classroom)}</p>
+              <p class="mt-1 text-sm text-slate-500">${escapeHTML(row.teacher)}</p>
+            </td>
+            <td class="px-4 py-4 text-center align-top">
+              <div class="font-semibold text-slate-900">${row.failCount} / ${row.totalStudents} คน</div>
+              <div class="mt-1 text-sm text-slate-500">${((row.failCount / row.totalStudents) * 100).toFixed(1)}%</div>
+            </td>
+            <td class="px-4 py-4 text-center align-top font-semibold text-slate-900">${row.averageFailScore.toFixed(1)}</td>
+            <td class="px-4 py-4 text-center align-top"><span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold ${getRiskBadgeClass(risk)}">${riskLabel}</span></td>
+            <td class="px-4 py-4 align-top">
+              <div class="flex items-center justify-center gap-2">
+                <button type="button" data-detail="${row.id}" class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">ดูรายละเอียด</button>
+                ${renderActionMenu(row)}
+              </div>
+            </td>
+          </tr>
+          ${expanded ? renderExpandedSection(row) : ''}
+        `;
+      }).join('');
+    }
+
+    function renderMobileCards(rows) {
+      if (!rows.length) {
+        els.mobileResultList.innerHTML = '';
+        return;
+      }
+      els.mobileResultList.innerHTML = rows.map((row) => {
+        const selected = state.selectedId === row.id;
+        const expanded = state.expandedIds.has(row.id);
+        const risk = getRiskLevel(row);
+        return `
+          <article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${selected ? 'ring-1 ring-blue-100' : ''}">
+            <div class="flex items-start gap-3 p-4">
+              <button type="button" data-expand="${row.id}" aria-expanded="${expanded ? 'true' : 'false'}" aria-label="${expanded ? 'ย่อรายละเอียด' : 'ขยายรายละเอียด'}" class="mt-0.5 inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 transition hover:bg-slate-50">
+                <svg class="h-4 w-4 ${expanded ? 'rotate-90' : ''}" viewBox="0 0 24 24" fill="currentColor"><path d="M9 6 17 12 9 18V6Z"/></svg>
+              </button>
+              <div class="min-w-0 flex-1">
+                <div class="flex items-center gap-2">
+                  <p class="truncate font-semibold text-slate-900">${escapeHTML(row.subjectCode)} ${escapeHTML(row.subjectName)}</p>
+                  <span class="inline-flex rounded-full px-2.5 py-1 text-[1.05vh] font-semibold ${getRiskBadgeClass(risk)}">${getRiskLabel(risk)}</span>
+                </div>
+                <p class="mt-1 text-sm text-slate-500">${escapeHTML(row.classroom)} • ${escapeHTML(row.teacher)}</p>
+                <p class="mt-2 text-sm text-slate-700">${row.failCount} / ${row.totalStudents} คน • ${((row.failCount / row.totalStudents) * 100).toFixed(1)}%</p>
+              </div>
+              <div>${renderActionMenu(row)}</div>
+            </div>
+            ${expanded ? `
+              <div class="border-t border-slate-200 bg-slate-50 p-4">
+                <div class="mb-3 flex flex-wrap items-center justify-between gap-2">
+                  <div>
+                    <p class="text-sm font-semibold text-slate-900">รายชื่อนักเรียนที่ต้องปรับปรุง</p>
+                    <p class="text-xs text-slate-500">${escapeHTML(row.subjectCode)} ${escapeHTML(row.subjectName)} • ${escapeHTML(row.teacher)}</p>
+                  </div>
+                  <button type="button" data-subject-export="${row.id}" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">ส่งออกวิชานี้</button>
+                </div>
+                <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white">
+                  <table class="min-w-[760px] w-full text-sm">
+                    <thead class="bg-slate-50 text-slate-500">
+                      <tr>
+                        <th class="px-3 py-3 text-center">ลำดับ</th>
+                        <th class="px-3 py-3 text-left">รหัสนักเรียน</th>
+                        <th class="px-3 py-3 text-left">ชื่อ-สกุล</th>
+                        <th class="px-3 py-3 text-center">คะแนนรวม</th>
+                        <th class="px-3 py-3 text-center">คิดเป็นร้อยละ</th>
+                        <th class="px-3 py-3 text-center">เกรด</th>
+                        <th class="px-3 py-3 text-center">สาเหตุหลัก</th>
+                        <th class="px-3 py-3 text-left">หมายเหตุ</th>
+                      </tr>
+                    </thead>
+                    <tbody>${buildStudentRows(row)}</tbody>
+                  </table>
+                </div>
+              </div>
+            ` : ''}
+          </article>
+        `;
+      }).join('');
+    }
+
+    function renderResults() {
+      const rows = getDisplayRows();
+      els.resultCountLabel.textContent = `ผลการค้นหา ${rows.length} รายวิชา`;
+      if (state.loading) {
+        renderLoadingState();
+        return;
+      }
+      if (!rows.length) {
+        renderEmptyState();
+        return;
+      }
+      els.loadingState.classList.add('hidden');
+      els.emptyState.classList.add('hidden');
+      els.desktopTableWrap.classList.remove('hidden');
+      els.mobileResultList.classList.remove('hidden');
+      renderDesktopTable(rows);
+      renderMobileCards(rows);
+    }
+
+    function applyAppliedFilters() {
+      state.rows = getAppliedRows();
+      if (!state.rows.some((row) => row.id === state.selectedId)) {
+        state.selectedId = null;
+      }
+      state.expandedIds = new Set([...state.expandedIds].filter((id) => state.rows.some((row) => row.id === id)));
+      renderSelectedState();
+      renderSummaryCards();
+    }
+
+    function applyDraftToInputs() {
+      Object.entries(state.draftFilters).forEach(([key, value]) => {
+        if (els[key]) els[key].value = value;
+      });
+    }
+
+    function setDraftKey(key, value) {
+      state.draftFilters[key] = value;
+      syncDependentOptions();
+      renderActiveFilterChips();
+      renderAdvancedState();
+      renderFilterSummary();
+    }
+
+    function resetFilters() {
+      state.draftFilters = { ...defaultDraftFilters };
+      state.appliedFilters = { ...defaultDraftFilters };
+      state.keyword = '';
+      state.quickFilter = 'ทั้งหมด';
+      state.tableSort = 'default';
+      state.tableSearch = '';
+      state.expandedIds = new Set();
+      state.selectedId = null;
+      state.openMenuId = null;
+      state.loading = false;
+      applyDraftToInputs();
+      syncDependentOptions();
+      els.tableSearch.value = '';
+      els.tableSort.value = 'default';
+      els.searchButton.disabled = false;
+      els.searchButtonLabel.textContent = 'แสดงผลลัพธ์';
+      els.searchSpinner.classList.add('hidden');
+      renderActiveFilterChips();
+      renderAdvancedState();
+      renderFilterSummary();
+      applyAppliedFilters();
+      renderResults();
+      closeDropdowns();
+    }
+
+    function closeDropdowns() {
+      state.openMenuId = null;
+      els.exportDropdown.classList.add('hidden');
+      renderResults();
+    }
+
+    function startSearch() {
+      if (state.loading) return;
+      state.loading = true;
+      els.searchButton.disabled = true;
+      els.searchButtonLabel.textContent = 'กำลังค้นหา...';
+      els.searchSpinner.classList.remove('hidden');
+      renderResults();
+      setTimeout(() => {
+        state.appliedFilters = { ...state.draftFilters };
+        state.loading = false;
+        els.searchButton.disabled = false;
+        els.searchButtonLabel.textContent = 'แสดงผลลัพธ์';
+        els.searchSpinner.classList.add('hidden');
+        applyAppliedFilters();
+        renderResults();
+        updateTimestamp();
+      }, 650);
+    }
+
+    function openSidebar() {
+      state.sidebarOpen = true;
+      els.sidebar.classList.remove('-translate-x-full');
+      els.sidebarOverlay.classList.remove('hidden');
+    }
+
+    function closeSidebar() {
+      state.sidebarOpen = false;
+      els.sidebar.classList.add('-translate-x-full');
+      els.sidebarOverlay.classList.add('hidden');
+    }
+
+    function updateQuickChipState() {
+      document.querySelectorAll('[data-quick-filter]').forEach((button) => {
+        const active = button.dataset.quickFilter === state.quickFilter;
+        button.className = `quick-chip ${active ? 'quick-chip-active' : ''}`;
+      });
+    }
+
+    function toggleAdvancedFilters() {
+      state.advancedOpen = !state.advancedOpen;
+      renderAdvancedState();
+    }
+
+    function openMoreMenu(id) {
+      state.openMenuId = state.openMenuId === id ? null : id;
+      els.exportDropdown.classList.add('hidden');
+      renderResults();
+    }
+
+    function buildPreviewStudentRows(row) {
+      return row.students.map((student, index) => `
+        <tr class="border-b border-slate-200 last:border-b-0">
+          <td class="px-4 py-4 text-center text-slate-500">${index + 1}</td>
+          <td class="px-4 py-4 font-semibold text-slate-900">${escapeHTML(student.studentId)}</td>
+          <td class="px-4 py-4">${escapeHTML(student.name)}</td>
+          <td class="px-4 py-4 text-center font-semibold text-slate-900">${student.score}</td>
+          <td class="px-4 py-4 text-center font-semibold ${Number(student.grade) <= 0 ? 'text-rose-700' : 'text-amber-700'}">${escapeHTML(student.grade)}</td>
+          <td class="px-4 py-4 text-slate-600">${escapeHTML(student.remark || '-')}</td>
+        </tr>
+      `).join('');
+    }
+
+    function openPreviewReport(row) {
+      const risk = getRiskLevel(row);
+      const riskLabel = getRiskLabel(risk);
+      const failedPercent = row.totalStudents ? ((row.failCount / row.totalStudents) * 100).toFixed(1) : '0.0';
+      els.previewModalTitle.textContent = `ตัวอย่างรายงาน: ${row.subjectCode} ${row.subjectName}`;
+      els.previewReportContent.innerHTML = `
+        <div class="border-b border-slate-200 pb-6">
+          <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.22em] text-blue-600">Academic Report</p>
+              <h4 class="mt-3 text-2xl font-bold text-slate-900">รายงานนักเรียนต้องปรับปรุง</h4>
+              <p class="mt-2 text-sm text-slate-500">ตัวอย่างรายงานสำหรับตรวจสอบก่อนส่งออกหรือพิมพ์</p>
+            </div>
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+              <p class="font-semibold text-slate-900">ปีการศึกษา ${escapeHTML(row.year)} / ภาคเรียน ${escapeHTML(row.term)}</p>
+              <p class="mt-1">สร้างตัวอย่างเมื่อ ${new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short' }).format(new Date())}</p>
+            </div>
+          </div>
+        </div>
+
+        <section class="mt-6 grid gap-4 lg:grid-cols-2">
+          <div class="rounded-3xl border border-slate-200 bg-white p-5">
+            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Subject</p>
+            <h5 class="mt-2 text-xl font-bold text-slate-900">${escapeHTML(row.subjectCode)} ${escapeHTML(row.subjectName)}</h5>
+            <div class="mt-4 grid gap-3 text-sm text-slate-600 sm:grid-cols-2">
+              <p><span class="font-semibold text-slate-900">ระดับชั้น:</span> ${escapeHTML(row.grade)}</p>
+              <p><span class="font-semibold text-slate-900">ห้องเรียน:</span> ${escapeHTML(row.classroom)}</p>
+              <p><span class="font-semibold text-slate-900">ครูผู้สอน:</span> ${escapeHTML(row.teacher)}</p>
+              <p><span class="font-semibold text-slate-900">แผนการเรียน:</span> ${escapeHTML(row.program)}</p>
+            </div>
+          </div>
+          <div class="grid gap-3 sm:grid-cols-2">
+            <div class="rounded-3xl border border-slate-200 bg-slate-50 p-5">
+              <p class="text-sm text-slate-500">นักเรียนทั้งหมด</p>
+              <p class="mt-2 text-3xl font-bold text-slate-900">${row.totalStudents}</p>
+            </div>
+            <div class="rounded-3xl border border-rose-100 bg-rose-50 p-5">
+              <p class="text-sm text-rose-600">ต้องปรับปรุง</p>
+              <p class="mt-2 text-3xl font-bold text-rose-700">${row.failCount}</p>
+              <p class="mt-1 text-xs text-rose-500">${failedPercent}% ของห้อง</p>
+            </div>
+            <div class="rounded-3xl border border-amber-100 bg-amber-50 p-5">
+              <p class="text-sm text-amber-600">คะแนนเฉลี่ย</p>
+              <p class="mt-2 text-3xl font-bold text-amber-700">${row.averageFailScore}</p>
+            </div>
+            <div class="rounded-3xl border border-slate-200 bg-white p-5">
+              <p class="text-sm text-slate-500">ระดับความเสี่ยง</p>
+              <p class="mt-2 text-lg font-bold text-slate-900">${escapeHTML(riskLabel)}</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="mt-6 overflow-hidden rounded-3xl border border-slate-200 bg-white">
+          <div class="border-b border-slate-200 bg-[#F5F7FA] px-5 py-4">
+            <h5 class="font-semibold text-slate-900">รายชื่อนักเรียนที่ต้องปรับปรุง</h5>
+          </div>
+          <div class="overflow-auto">
+            <table class="min-w-[820px] w-full border-collapse text-sm">
+              <thead class="bg-[#F5F7FA] text-slate-600">
+                <tr class="border-b border-slate-200">
+                  <th class="px-4 py-4 text-center font-semibold">ลำดับ</th>
+                  <th class="px-4 py-4 text-left font-semibold">รหัสนักเรียน</th>
+                  <th class="px-4 py-4 text-left font-semibold">ชื่อ-สกุล</th>
+                  <th class="px-4 py-4 text-center font-semibold">คะแนน</th>
+                  <th class="px-4 py-4 text-center font-semibold">เกรด</th>
+                  <th class="px-4 py-4 text-left font-semibold">หมายเหตุ</th>
+                </tr>
+              </thead>
+              <tbody>${buildPreviewStudentRows(row)}</tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-5">
+          <h5 class="font-semibold text-slate-900">ข้อเสนอแนะเบื้องต้น</h5>
+          <ul class="mt-3 space-y-2 text-sm leading-6 text-slate-600">
+            <li>• นัดหมายเรียนเสริมเฉพาะกลุ่มสำหรับนักเรียนที่ได้เกรด 0</li>
+            <li>• ติดตามงานค้างตามหมายเหตุรายบุคคล</li>
+            <li>• ประเมินซ้ำหลังการปรับพื้นฐานและบันทึกผลในระบบงานวิชาการ</li>
+          </ul>
+        </section>
+      `;
+      els.previewModal.classList.remove('hidden');
+      document.body.classList.add('overflow-hidden');
+    }
+
+    function closePreviewReport() {
+      els.previewModal.classList.add('hidden');
+      document.body.classList.remove('overflow-hidden');
+    }
+
+    function handleAction(row, action) {
+      if (action === 'preview') openPreviewReport(row);
+      else if (action === 'print') alert(`พิมพ์รายงาน: ${row.subjectCode} ${row.subjectName}`);
+      else if (action === 'pdf') alert(`ส่งออก PDF: ${row.subjectCode} ${row.subjectName}`);
+      else if (action === 'excel') alert(`ส่งออก Excel: ${row.subjectCode} ${row.subjectName}`);
+    }
+
+    function handleGlobalExport(type) {
+      alert(type === 'pdf' ? 'ส่งออก PDF ของผลลัพธ์ปัจจุบัน' : 'ส่งออก Excel ของผลลัพธ์ปัจจุบัน');
+      els.exportDropdown.classList.add('hidden');
+    }
+
+    function initDefaultState() {
+      applyDraftToInputs();
+      syncDependentOptions();
+      state.appliedFilters = { ...state.draftFilters };
+      applyAppliedFilters();
+      renderActiveFilterChips();
+      renderAdvancedState();
+      renderFilterSummary();
+      updateQuickChipState();
+      renderResults();
+      updateTimestamp();
+    }
+
+    document.getElementById('searchButton').addEventListener('click', startSearch);
+    document.getElementById('resetButton').addEventListener('click', resetFilters);
+    document.getElementById('emptyResetButton').addEventListener('click', resetFilters);
+    document.getElementById('advancedToggle').addEventListener('click', toggleAdvancedFilters);
+    document.getElementById('mobileMenuButton').addEventListener('click', openSidebar);
+    document.getElementById('sidebarOverlay').addEventListener('click', closeSidebar);
+
+    els.year.addEventListener('change', (event) => { setDraftKey('year', event.target.value); });
+    els.term.addEventListener('change', (event) => { setDraftKey('term', event.target.value); });
+    els.grade.addEventListener('change', (event) => { setDraftKey('grade', event.target.value); });
+    els.classroom.addEventListener('change', (event) => { setDraftKey('classroom', event.target.value); });
+    els.subject.addEventListener('change', (event) => { setDraftKey('subject', event.target.value); });
+    els.teacher.addEventListener('change', (event) => { setDraftKey('teacher', event.target.value); });
+    els.program.addEventListener('change', (event) => { setDraftKey('program', event.target.value); });
+    els.scoreBand.addEventListener('change', (event) => { setDraftKey('scoreBand', event.target.value); });
+
+    els.tableSearch.addEventListener('input', (event) => {
+      state.tableSearch = event.target.value.trim();
+      renderResults();
+    });
+
+    els.tableSort.addEventListener('change', (event) => {
+      state.tableSort = event.target.value;
+      renderResults();
+    });
+
+    els.tableFilter = document.getElementById('tableFilter');
+
+    document.addEventListener('click', (event) => {
+      const quickButton = event.target.closest('[data-quick-filter]');
+      if (quickButton) {
+        state.quickFilter = quickButton.dataset.quickFilter;
+        updateQuickChipState();
+        renderResults();
+        return;
+      }
+
+      const resetChip = event.target.closest('[data-reset-key]');
+      if (resetChip) {
+        resetDraftKey(resetChip.dataset.resetKey);
+        return;
+      }
+
+      const expandButton = event.target.closest('[data-expand]');
+      if (expandButton) {
+        const id = Number(expandButton.dataset.expand);
+        if (state.expandedIds.has(id)) state.expandedIds.delete(id);
+        else state.expandedIds.add(id);
+        state.selectedId = id;
+        renderSelectedState();
+        renderResults();
+        return;
+      }
+
+      const detailButton = event.target.closest('[data-detail]');
+      if (detailButton) {
+        const id = Number(detailButton.dataset.detail);
+        state.selectedId = id;
+        state.expandedIds.add(id);
+        renderSelectedState();
+        renderResults();
+        return;
+      }
+
+      const moreButton = event.target.closest('[data-more-menu]');
+      if (moreButton) {
+        openMoreMenu(Number(moreButton.dataset.moreMenu));
+        return;
+      }
+
+      const rowAction = event.target.closest('[data-action]');
+      if (rowAction) {
+        const row = mockData.find((item) => item.id === Number(rowAction.dataset.rowId));
+        if (row) handleAction(row, rowAction.dataset.action);
+        state.openMenuId = null;
+        renderResults();
+        return;
+      }
+
+      const subjectExport = event.target.closest('[data-subject-export]');
+      if (subjectExport) {
+        const row = mockData.find((item) => item.id === Number(subjectExport.dataset.subjectExport));
+        if (row) alert(`ส่งออกวิชานี้: ${row.subjectCode} ${row.subjectName}`);
+        return;
+      }
+
+      const globalExport = event.target.closest('[data-global-export]');
+      if (globalExport) {
+        handleGlobalExport(globalExport.dataset.globalExport);
+        return;
+      }
+
+      let shouldRender = false;
+      if (!event.target.closest('[data-more-menu]') && state.openMenuId !== null) {
+        state.openMenuId = null;
+        shouldRender = true;
+      }
+      if (!event.target.closest('#exportDropdownButton') && !els.exportDropdown.classList.contains('hidden')) {
+        els.exportDropdown.classList.add('hidden');
+        shouldRender = true;
+      }
+      if (shouldRender) {
+        renderResults();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        state.openMenuId = null;
+        els.exportDropdown.classList.add('hidden');
+        closePreviewReport();
+        closeSidebar();
+        renderResults();
+      }
+    });
+
+    els.exportDropdownButton.addEventListener('click', (event) => {
+      event.stopPropagation();
+      els.exportDropdown.classList.toggle('hidden');
+      state.openMenuId = null;
+      renderResults();
+    });
+    els.closePreviewModal.addEventListener('click', closePreviewReport);
+    els.previewModal.addEventListener('click', (event) => {
+      if (event.target === els.previewModal) closePreviewReport();
+    });
+    els.printPreviewButton.addEventListener('click', () => window.print());
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 1024) closeSidebar();
+    });
+
+    initDefaultState();
+  </script>
+</body>
+</html>

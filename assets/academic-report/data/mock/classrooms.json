@@ -1,0 +1,30 @@
+[
+    {
+        "id":  "room-m1-1",
+        "gradeId":  "grade-m1",
+        "code":  "m1-1",
+        "name":  "ม.1/1",
+        "homeroomTeacherId":  "teacher-anong"
+    },
+    {
+        "id":  "room-m1-2",
+        "gradeId":  "grade-m1",
+        "code":  "m1-2",
+        "name":  "ม.1/2",
+        "homeroomTeacherId":  "teacher-krit"
+    },
+    {
+        "id":  "room-m2-1",
+        "gradeId":  "grade-m2",
+        "code":  "m2-1",
+        "name":  "ม.2/1",
+        "homeroomTeacherId":  "teacher-sunee"
+    },
+    {
+        "id":  "room-m3-1",
+        "gradeId":  "grade-m3",
+        "code":  "m3-1",
+        "name":  "ม.3/1",
+        "homeroomTeacherId":  "teacher-preecha"
+    }
+]
