@@ -163,15 +163,21 @@
     const style = document.createElement('style');
     style.id = 'academicLayoutStyles';
     style.textContent = `
-      .menu-link { display:flex; align-items:center; gap:.75rem; border-radius:1rem; padding:.8rem .75rem; font-size:1rem; font-weight:600; color:#475569; text-decoration:none; transition:background-color .15s ease,color .15s ease; }
-      .menu-link:hover { background:#f8fafc; color:#0f172a; }
-      .menu-link.active { background:#f8fafc; color:#0f172a; }
+      .menu-group + .menu-group { margin-top:.75rem; border-top:1px solid #e2e8f0; padding-top:.75rem; }
+      .menu-group-items { position:relative; margin:.25rem 0 .25rem 1.375rem; border-left:1px solid #e2e8f0; padding-left:.5rem; }
+      .menu-group-items > * + * { margin-top:.125rem; }
+      .menu-link { position:relative; display:flex; align-items:center; gap:.625rem; border-radius:.75rem; padding:.55rem .75rem; font-size:.9375rem; font-weight:500; color:#64748b; text-decoration:none; transition:background-color .15s ease,color .15s ease; }
+      .menu-link:hover { background:#f1f5f9; color:#0f172a; }
+      .menu-link.active { background:#eff6ff; color:#1d4ed8; font-weight:600; }
+      /* the active page also marks the group's tree line */
+      .menu-link.active::before { content:''; position:absolute; left:calc(-.5rem - 2px); top:.375rem; bottom:.375rem; width:3px; border-radius:9999px; background:#2563eb; }
       .menu-icon { height:1rem; width:1rem; flex-shrink:0; fill:currentColor; }
-      .report-menu-toggle { display:flex; width:100%; align-items:center; justify-content:space-between; gap:.75rem; border-radius:1rem; padding:.25rem .75rem .75rem; color:#0f172a; text-align:left; transition:color .15s ease; }
-      .report-menu-toggle:hover { color:#2563eb; }
+      .report-menu-toggle { display:flex; width:100%; align-items:center; justify-content:space-between; gap:.75rem; border-radius:.75rem; padding:.5rem .75rem; color:#0f172a; text-align:left; transition:background-color .15s ease,color .15s ease; }
+      .report-menu-toggle:hover { background:#f8fafc; color:#2563eb; }
       .report-menu-toggle:focus-visible { outline:2px solid #93c5fd; outline-offset:3px; }
-      .report-menu-chevron { transition:transform .2s ease; }
+      .report-menu-chevron { color:#94a3b8; transition:transform .2s ease; }
       .report-menu-toggle[aria-expanded="true"] .report-menu-chevron { transform:rotate(180deg); }
+      .report-menu-toggle[aria-expanded="true"] .menu-group-count { display:none; }
     `;
     document.head.appendChild(style);
   }
@@ -261,17 +267,38 @@
     }).join('');
   }
 
+  // groups the user folded away, by group id; kept across pages and re-renders
+  const COLLAPSED_KEY = 'ar-sidebar-collapsed';
+  function collapsedGroups() {
+    try { const v = JSON.parse(localStorage.getItem(COLLAPSED_KEY) || '[]'); return Array.isArray(v) ? v : []; } catch (e) { return []; }
+  }
+  function setGroupCollapsed(id, collapsed) {
+    const ids = collapsedGroups().filter((g) => g !== id);
+    if (collapsed) ids.push(id);
+    try { localStorage.setItem(COLLAPSED_KEY, JSON.stringify(ids)); } catch (e) { /* ignore */ }
+  }
+
   function menuGroup(group, active) {
+    // the group holding the current page always opens, so the user can see where they are
+    const expanded = group.items.some((item) => item.key === active) || !collapsedGroups().includes(group.id);
+    // shown only while folded: pending badges if any, otherwise how many links are hidden
+    const pending = group.items.reduce((sum, item) => sum + (item.badge ? badgeCount(item.badge) : 0), 0);
+    const count = pending
+      ? `<span class="menu-group-count rounded-full bg-rose-500 px-2 py-0.5 text-[11px] font-bold text-white">${pending}</span>`
+      : `<span class="menu-group-count rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-500">${group.items.length}</span>`;
     return `
-      <div>
-        <button type="button" class="report-menu-toggle" aria-expanded="true" aria-controls="${group.id}" data-menu-toggle>
+      <div class="menu-group">
+        <button type="button" class="report-menu-toggle" aria-expanded="${expanded}" aria-controls="${group.id}" data-menu-toggle>
           <span class="flex items-center gap-3">
             <svg class="h-5 w-5 flex-shrink-0 fill-current" viewBox="0 0 24 24" aria-hidden="true">${group.icon}</svg>
-            <span class="text-lg font-bold">${group.label}</span>
+            <span class="text-base font-bold">${group.label}</span>
           </span>
-          <svg class="report-menu-chevron h-5 w-5 flex-shrink-0 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="m7.41 8.59 4.59 4.58 4.59-4.58L18 10l-6 6-6-6 1.41-1.41Z"/></svg>
+          <span class="flex items-center gap-2">
+            ${count}
+            <svg class="report-menu-chevron h-5 w-5 flex-shrink-0 fill-current" viewBox="0 0 24 24" aria-hidden="true"><path d="m7.41 8.59 4.59 4.58 4.59-4.58L18 10l-6 6-6-6 1.41-1.41Z"/></svg>
+          </span>
         </button>
-        <div id="${group.id}" class="mt-1 space-y-1">
+        <div id="${group.id}" class="menu-group-items${expanded ? '' : ' hidden'}">
           ${menuLinks(group.items, active)}
         </div>
       </div>
@@ -292,7 +319,7 @@
               </div>
             </div>
           </div>
-          <nav class="flex-1 space-y-5 px-4 py-5">
+          <nav class="flex-1 px-4 py-5">
             ${(currentRole() === 'teacher' ? teacherMenuGroups : menuGroups).map((group) => menuGroup(group, active)).join('')}
           </nav>
           <div class="border-t border-slate-200 p-4">
@@ -499,6 +526,7 @@
         const expanded = toggle.getAttribute('aria-expanded') === 'true';
         toggle.setAttribute('aria-expanded', String(!expanded));
         menu.classList.toggle('hidden', expanded);
+        setGroupCollapsed(menu.id, expanded);
       });
     });
   }
