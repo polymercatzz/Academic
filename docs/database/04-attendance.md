@@ -1,0 +1,167 @@
+# ขอบเขต 4 — เช็คชื่อ
+
+> **สถานะ:** ร่าง (2026-11-03) · อ้างตารางจาก [ขอบเขต 0](00-core.md), [1](01-curriculum.md), [2](02-grading.md) และ [3](03-timetable.md) · ข้อตกลงอยู่ที่ [README.md](README.md#ข้อตกลง)
+
+การเช็คชื่อรายคาบของห้องเรียนที่สอน เวลาเรียน (%) ที่ใช้ตัดสิน มส คำนวณจากข้อมูลในขอบเขตนี้เท่านั้น ([ADR 0011](../../grading/docs/adr/0011-attendance-drives-ms-and-locks-with-submission.md))
+
+- เวลาเรียน (%) = (มา + สาย) ÷ คาบที่เช็คแล้ว · คาบที่ยังไม่เช็คไม่นับเป็นตัวหาร
+- ครูผู้สอนแก้ย้อนหลังได้จนกว่าจะส่งผลการเรียน หลังจากนั้นล็อกพร้อมคะแนน ต้องใช้คำขอปลดล็อก
+- ลา เป็นสถานะที่ครูผู้สอนเลือกตอนเช็คชื่อ การแจ้งลาโดยครูประจำชั้นอยู่นอกขอบเขต
+- **ชุมนุมไม่เช็คชื่อรายคาบ** (ตัดสินแล้ว 2026-11-03) ครูที่ปรึกษากรอกเวลาเข้าร่วมเองใน `activity_result` ([ขอบเขต 2](02-grading.md))
+
+## 1. ที่มาในระบบจำลอง
+
+| ข้อมูล | หน้า / ไฟล์ |
+|---|---|
+| คาบวันนี้ของครู ปุ่มเช็คชื่อ (ค่าเริ่มต้นคือมาทุกคน กด `1`–`4` = มา / สาย / ลา / ขาด) และคาบที่ยังไม่เช็คทั้งภาค | `attendance.html#/` |
+| เวลาเรียนรายห้องรายนักเรียน รายชื่อ มส และกลุ่มเสี่ยง | `attendance.html#/sections`, `/ms`, `/risk` |
+| ห้องประจำชั้น: นักเรียน × คาบของทุกวิชาในหนึ่งวัน, สรุปทั้งภาค, แจ้งเตือนนักเรียนขาดทั้งวัน | `attendance.html#/h`, `#/h/sum` |
+| สถานะ 4 แบบ และกฎล็อกเมื่อส่งผล | `ATT`, `secLocked()` ใน [attendance-core.js](../../grading/assets/js/attendance-core.js) |
+| คาบที่เช็คแล้ว (เก็บเฉพาะคนที่ไม่ใช่ "มา") | `db.att.records['secId|date|period']` |
+
+ระบบจำลองใช้ตารางสอนจำลองของตัวเอง (`db.att.timetable`) ในฐานข้อมูลจริงใช้ `timetable_entry` จาก [ขอบเขต 3](03-timetable.md)
+
+## 2. ER
+
+ตารางที่มีแค่ PK มาจากขอบเขตก่อนหน้า
+
+```mermaid
+erDiagram
+    timetable_entry ||--o{ attendance_session : "เช็คชื่อในวันที่"
+    class_subject ||--o{ attendance_session : "ของห้องเรียนที่สอน"
+    app_user ||--o{ attendance_session : "ผู้เช็ค"
+    attendance_session ||--o{ attendance_record : "สถานะรายคน"
+    student ||--o{ attendance_record : "เข้าเรียน"
+    academic_year ||--o{ school_holiday : "วันหยุดของปี"
+
+    attendance_session {
+        BIGINT attendance_session_id PK
+        BIGINT timetable_entry_id FK
+        INTEGER class_subject_id FK
+        DATE class_date
+        VARCHAR session_status
+        TEXT note
+        INTEGER checked_by FK
+        TIMESTAMPTZ checked_at
+    }
+    attendance_record {
+        BIGINT attendance_record_id PK
+        BIGINT attendance_session_id FK
+        INTEGER student_id FK
+        VARCHAR status
+    }
+    school_holiday {
+        INTEGER school_holiday_id PK
+        SMALLINT academic_year FK
+        DATE holiday_date
+        VARCHAR holiday_name
+    }
+    timetable_entry {
+        BIGINT timetable_entry_id PK
+    }
+    class_subject {
+        INTEGER class_subject_id PK
+    }
+    app_user {
+        INTEGER user_id PK
+    }
+    student {
+        INTEGER student_id PK
+    }
+    academic_year {
+        SMALLINT academic_year PK
+    }
+```
+
+## 3. Data dictionary
+
+รูปแบบคอลัมน์: **ฟิลด์ · ชนิดข้อมูล · คีย์ · Null · คำอธิบาย / ค่าที่เป็นไปได้**
+
+#### `attendance_session` — คาบที่เช็คชื่อแล้ว
+
+| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
+|---|---|---|---|---|
+| attendance_session_id | BIGINT | PK | N | รหัส |
+| timetable_entry_id | BIGINT | FK (timetable_entry_id, class_subject_id) → timetable_entry | N | คาบในตารางสอนฉบับเผยแพร่ ณ วันนั้น (บอกคาบ เวลา และครู) |
+| class_subject_id | INTEGER | (ส่วนหนึ่งของ FK ข้างบน) | N | ห้องเรียนที่สอน ซ้ำจาก `timetable_entry` เพราะคำนวณเวลาเรียนรายห้องเรียนที่สอนบ่อยที่สุด และ `timetable_entry` ของแต่ละฉบับเป็นคนละแถว |
+| class_date | DATE | | N | วันที่สอน |
+| session_status | VARCHAR(20) | | N | `checked` เช็คชื่อแล้ว · `no_class` คาบนี้ไม่มีการเรียน (เช่น ไปทัศนศึกษา สอบกลางภาค) |
+| note | TEXT | | Y | เหตุผล บังคับเมื่อ `no_class` |
+| checked_by | INTEGER | FK → app_user | N | ผู้เช็คชื่อ |
+| checked_at | TIMESTAMPTZ | | N | เวลาที่บันทึกล่าสุด |
+| | | UK (timetable_entry_id, class_date) | | |
+| | | CHECK (`session_status IN ('checked', 'no_class')`) | | |
+| | | CHECK (`session_status <> 'no_class' OR note IS NOT NULL`) | | |
+
+- composite FK นี้อ้าง UK (timetable_entry_id, class_subject_id) ที่เพิ่มไว้ใน [`timetable_entry`](03-timetable.md#timetable_entry--คาบในตารางสอน)
+- เก็บเฉพาะคาบที่เช็คแล้วหรือบันทึกว่าไม่มีการเรียน คาบที่ยังไม่เช็คคำนวณจากตารางสอน (หัวข้อ 4)
+- `no_class` ไม่มีแถวใน `attendance_record` และไม่นับเป็นตัวหาร
+
+#### `attendance_record` — สถานะการเข้าเรียนของนักเรียนในคาบ
+
+| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
+|---|---|---|---|---|
+| attendance_record_id | BIGINT | PK | N | รหัส |
+| attendance_session_id | BIGINT | FK → attendance_session | N | คาบ |
+| student_id | INTEGER | FK → student | N | นักเรียน |
+| status | VARCHAR(10) | | N | `present` มา · `late` สาย · `leave` ลา · `absent` ขาด (มา และ สาย นับเป็นเวลาเรียน) |
+| | | UK (attendance_session_id, student_id) | | |
+| | | CHECK (`status IN ('present', 'late', 'leave', 'absent')`) | | |
+
+เก็บทุกคนในห้อง รวมคนที่มา ต่างจากระบบจำลองที่เก็บเฉพาะคนที่ไม่ใช่ "มา" เพราะ
+- นักเรียนที่ย้ายเข้ากลางภาคต้องไม่ถูกนับว่ามาในคาบก่อนที่จะเข้า ถ้าเก็บเฉพาะข้อยกเว้น ฐานข้อมูลแยกไม่ออก
+- query เวลาเรียนเป็น `COUNT ... FILTER (WHERE status IN ('present', 'late'))` ตรง ๆ ไม่ต้องรู้รายชื่อห้องตอนนั้น
+- ขนาด: นักเรียน 1,500 คน × ประมาณ 30 คาบต่อสัปดาห์ × 20 สัปดาห์ ≈ 900,000 แถวต่อภาค ยังเล็กสำหรับ PostgreSQL (จึงใช้ BIGINT)
+
+#### `school_holiday` — วันหยุดของโรงเรียน
+
+| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
+|---|---|---|---|---|
+| school_holiday_id | INTEGER | PK | N | รหัส |
+| academic_year | SMALLINT | FK → academic_year | N | ปีการศึกษา |
+| holiday_date | DATE | UK | N | วันที่ |
+| holiday_name | VARCHAR(100) | | N | เช่น `วันจักรี`, `กีฬาสี` |
+
+🆕 ไม่มีในระบบจำลอง (ซึ่งรู้แค่ว่าเสาร์–อาทิตย์ไม่มีเรียน) แต่ต้องมี ไม่อย่างนั้นทุกคาบในวันหยุดนักขัตฤกษ์จะขึ้นเป็น "ยังไม่เช็ค" และครูต้องกดบันทึก `no_class` เองทีละคาบ
+
+## 4. ค่าที่คำนวณ ไม่เก็บ
+
+| สิ่งที่หน้าจอแสดง | คำนวณจาก |
+|---|---|
+| คาบที่ต้องเช็ค | ทุกวันในภาคเรียน (`semester.start_date`–`end_date`) ที่ไม่ใช่ `school_holiday` × `timetable_entry` ของฉบับที่เผยแพร่อยู่ในวันนั้น ที่ `day_of_week` = `ISODOW` ของวันที่ |
+| คาบที่ยังไม่เช็ค | คาบที่ต้องเช็ค ที่วันที่ไม่เกินวันนี้ และยังไม่มี `attendance_session` |
+| เวลาเรียน (%) รายนักเรียน × ห้องเรียนที่สอน | `attendance_record` ของ session `checked` · (present + late) ÷ จำนวนแถว |
+| ขาดได้อีก | `subject.hours_per_week` × จำนวนสัปดาห์ × (100 − `grading_policy.min_attendance_percent`)% ลบด้วยคาบที่ขาดและลาแล้ว |
+| ใกล้ มส / มส | เทียบเวลาเรียน (%) กับ `grading_policy.min_attendance_percent` |
+| ห้องประจำชั้น: ตารางรายวัน | `attendance_record` ของนักเรียนใน `student_classroom` ของห้อง ในวันนั้น ทุกวิชา |
+| แจ้งเตือนขาดทั้งวัน | นักเรียนที่มีแถวในวันนั้น และทุกแถวเป็น `absent` |
+
+**ฉบับที่เผยแพร่อยู่ในวันนั้น** คือฉบับที่ `published_at` ล่าสุดซึ่งไม่เกินวันนั้น เมื่ออนุมัติคำร้องเปลี่ยนตารางกลางภาค (ADR 0001) คาบเดิมจะยังอ้างถึง `timetable_entry` ของฉบับเก่าได้ เพราะฉบับเก่าไม่ถูกลบ
+
+ควรทำเป็น view `v_attendance_summary` (นักเรียน × ห้องเรียนที่สอน) เพื่อให้หน้าเช็คชื่อ หน้ากรอกคะแนน และรายงานใช้ตัวเลขเดียวกัน ตอนส่งผล ค่าจาก view นี้ถูกเก็บเป็น snapshot ใน `student_subject_result.attendance_percent` ([ขอบเขต 2](02-grading.md))
+
+## 5. กฎทางธุรกิจ (ใช้ constraint ไม่ได้)
+
+1. เช็คชื่อได้เฉพาะครูใน `timetable_entry_teacher` ของคาบนั้น (รวมครูร่วมสอน)
+2. เช็คชื่อหรือแก้ได้เฉพาะเมื่อ `class_subject.grading_status` เป็น `no_structure` หรือ `draft` หลังส่งผลต้องใช้คำขอปลดล็อก
+3. `class_date` ต้องอยู่ในภาคเรียนของห้องเรียนที่สอน ไม่ใช่วันหยุด ไม่เกินวันนี้ และ `ISODOW(class_date)` ต้องเท่ากับ `timetable_entry.day_of_week`
+4. `timetable_entry` ต้องเป็นของฉบับที่เผยแพร่อยู่ในวันที่ `class_date`
+5. `attendance_record.student_id` ต้องอยู่ใน `student_classroom` ของห้องนั้นในวันที่สอน
+6. บันทึก session `checked` ต้องมี `attendance_record` ครบทุกคนในห้องใน transaction เดียวกัน (ค่าเริ่มต้นบนหน้าจอคือมาทุกคน)
+7. การแก้สถานะหลังบันทึกครั้งแรกต้องเพิ่มแถวใน `grade_change_log` ที่ `change_type = 'attendance'` ([ขอบเขต 2](02-grading.md))
+8. ครูประจำชั้นดูได้ทุกวิชาของห้องตน แต่แก้ไม่ได้
+
+## 6. เทียบกับ ER เดิม (หัวข้อ 8 ใน er-data-dictionary.md)
+
+| ER เดิม | ขอบเขตนี้ | เหตุผล |
+|---|---|---|
+| `HomeroomTeacher` | ย้ายไป [ขอบเขต 0](00-core.md) เป็น `homeroom_teacher` | ใช้ทั้งเช็คชื่อและรายงาน |
+| `AttendanceSession` | `attendance_session` + 🆕 `class_subject_id`, `session_status`, `note` | คำนวณเวลาเรียนรายห้องเรียนที่สอนได้ข้ามฉบับตาราง · บันทึกคาบที่ไม่มีการเรียนได้ (ระบบเดิมมีสถานะ "ไม่มีการเรียนในคาบนั้น" ในหน้าตรวจสอบการเช็กชื่อ ดู [pain-points.md](../pain-points.md)) |
+| `AttendanceRecord` | `attendance_record` | คงเดิม เปลี่ยนเป็น BIGINT |
+| — | 🆕 `school_holiday` | ไม่ให้วันหยุดขึ้นเป็นคาบที่ยังไม่เช็ค |
+
+## 7. คำถามที่ยังเปิดอยู่
+
+- **`no_class` ต้องมีใครอนุมัติไหม** ตอนนี้ครูผู้สอนบันทึกเองพร้อมเหตุผล ถ้าใช้บ่อยจะทำให้ตัวหารเล็กลงและเวลาเรียนสูงขึ้น อาจต้องให้งานวิชาการเห็นรายการนี้
+- **วันหยุดเฉพาะบางระดับ** เช่น ม.6 สอบ O-NET ทั้งวัน ตอนนี้ `school_holiday` ใช้กับทั้งโรงเรียน ถ้าต้องการรายระดับ ต้องเพิ่ม `grade_level_id`
+- **ครูสอนแทน** ยังไม่ตัดสินว่าใครเช็คชื่อในคาบสอนแทน ([grading/GLOSSARY.md](../../grading/GLOSSARY.md#-ยังไม่ชัดเจน)) ถ้าให้ครูสอนแทนเช็ค กฎข้อ 1 ต้องยอมรับผู้ที่ไม่อยู่ใน `timetable_entry_teacher`
