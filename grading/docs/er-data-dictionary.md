@@ -1,7 +1,7 @@
 # ER & Data Dictionary — ระบบบันทึกคะแนน
 
 เอกสารนี้ต่อยอดจาก ER เดิมของโครงงาน และปรับให้รองรับสิ่งที่ตัดสินใจไว้ใน [ADR 0001–0010](adr/) กับ Demo
-คำศัพท์ทั้งหมดใช้ตาม [GLOSSARY](GLOSSARY.md)
+คำศัพท์ทั้งหมดใช้ตาม [GLOSSARY](../GLOSSARY.md)
 
 > **ฉบับที่ 2 (2026-10-13):** แก้ตาม [ADR 0010](adr/0010-classsubject-vs-teachinggroup.md)
 > `ClassSubject` = รายวิชา × ห้อง × ภาคเรียน (ห้องเรียนที่สอน) · `TeachingGroup` = **ชุมนุม** (ผ / มผ)

@@ -3,7 +3,7 @@
 // sidebar/topbar into hidden stand-ins, which this file mirrors into the shared sidebar and header.
 (function () {
   const app = document.body.dataset.gradingApp; // 'scores' | 'attendance'
-  const academic = AcademicLayout.role() === 'admin'; // admin = ครูฝ่ายวิชาการ (see GLOSSARY-MAP.md)
+  const academic = AcademicLayout.role() === 'admin'; // admin = ครูฝ่ายวิชาการ (see docs/actors.md)
 
   // the mock data belongs to ครูสมศรี; admin keeps the shared admin persona
   const PERSONA = { teacher: { name: 'ครูสมศรี ใจดี', title: 'ครู · คณิตศาสตร์', initials: 'สศ' } };
