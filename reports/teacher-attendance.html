@@ -324,7 +324,7 @@
 
   <div class="teacher-page relative lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=8"></script>
+    <script src="../shared/academic-layout.js?v=9"></script>
     <script src="../assets/academic-report/js/scope-chip.js?v=3"></script>
     <script>AcademicLayout.mount({ active: "teacher-attendance", title: "รายงานการเข้าเรียน", rightHtml: ScopeChip.html });</script>
 
@@ -560,7 +560,24 @@
         els.riskList.innerHTML = riskRows.length ? riskRows.slice(0, 6).map(row => `<button class="teacher-risk-item" type="button" data-student-target="${row.code}"><strong>${row.name}</strong><span>${row.code} · เข้าเรียน ${row.rate}% · ขาด ${row.absent} คาบ</span></button>`).join("") : `<div class="empty-state">ไม่มีนักเรียนต่ำกว่าเกณฑ์ ${state.threshold}%</div>`;
       }
 
-      function render() { renderSummary(); renderTable(); }
+      function render() { renderSummary(); renderTable(); saveLastSearch(); }
+
+      const LAST_SEARCH_KEY = "teacherAttendance:lastSearch";
+      const SEARCH_FIELDS = ["room", "periodType", "monthlyMonth", "startDate", "endDate", "statusFilter"];
+      function saveLastSearch() {
+        AcademicLayout.lastSearch(LAST_SEARCH_KEY, Object.fromEntries(SEARCH_FIELDS.map(key => [key, els[key].value])));
+      }
+      function restoreLastSearch() {
+        const saved = AcademicLayout.lastSearch(LAST_SEARCH_KEY);
+        if (!saved) return;
+        SEARCH_FIELDS.forEach(key => {
+          const control = els[key];
+          const value = saved[key];
+          if (!value) return;
+          if (control.tagName === "SELECT" && ![...control.options].some(option => option.value === value)) return;
+          control.value = value;
+        });
+      }
 
       function syncPeriodFields() {
         const type = els.periodType.value;
@@ -618,7 +635,7 @@
       els.room.addEventListener("change", render);
       [els.monthlyYear, els.monthlyMonth, els.startDate, els.endDate].forEach(control => control.addEventListener("change", syncPeriodFields));
       els.periodType.addEventListener("change", syncPeriodFields);
-      els.statusFilter.addEventListener("change", renderTable);
+      els.statusFilter.addEventListener("change", () => { renderTable(); saveLastSearch(); });
       els.riskList.addEventListener("click", jumpToStudent);
       els.editBtn.addEventListener("click", toggleEdit);
       els.saveBtn.addEventListener("click", saveChanges);
@@ -633,6 +650,7 @@
       });
 
       seedAttendance();
+      restoreLastSearch();
       syncPeriodFields();
     })();
   </script>

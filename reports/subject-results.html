@@ -54,7 +54,7 @@
 
   <div class="relative lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=8"></script>
+    <script src="../shared/academic-layout.js?v=9"></script>
     <script>AcademicLayout.mount({"active":"student-results","title":"รายงานสรุปผลการเรียนรู้"});</script>
     <div class="hidden" aria-hidden="true"><p id="selectedSubjectLabel">ยังไม่ได้เลือกวิชา</p><p id="selectedSubjectHint">คลิกแถวในตารางเพื่อเตรียมส่งออกใบปะหน้า</p></div>
 
@@ -92,24 +92,16 @@
             <label class="block">
               <span class="mb-2 block text-sm font-medium text-slate-700">ปีการศึกษา</span>
               <select id="year" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
-                <option value="2568">2568</option>
-                <option value="2567">2567</option>
               </select>
             </label>
             <label class="block">
               <span class="mb-2 block text-sm font-medium text-slate-700">ภาคเรียน</span>
               <select id="term" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
-                <option value="ทั้งหมด">ทั้งหมด</option>
-                <option value="1">1</option>
-                <option value="2">2</option>
               </select>
             </label>
             <label class="block">
               <span class="mb-2 block text-sm font-medium text-slate-700">ระดับชั้น</span>
               <select id="grade" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
-                <option value="ม.1">ม.1</option>
-                <option value="ม.2">ม.2</option>
-                <option value="ม.3">ม.3</option>
               </select>
             </label>
             <label class="block">
@@ -128,8 +120,8 @@
             <div id="advancedFilters" class="mt-4 hidden rounded-3xl border border-slate-200 bg-[#F7F9FC] p-4">
               <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                 <label class="block"><span class="mb-2 block text-sm font-medium text-slate-700">ครูผู้สอน</span><select id="teacherFilter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"><option>ทั้งหมด</option></select></label>
-                <label class="block"><span class="mb-2 block text-sm font-medium text-slate-700">ขอบเขตข้อมูล</span><select id="classroomFilter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"><option>ทั้งหมด</option></select></label>
-                <label class="block"><span class="mb-2 block text-sm font-medium text-slate-700">หลักสูตร</span><select id="curriculumFilter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"><option>ทั้งหมด</option></select></label>
+                <label class="block"><span class="mb-2 block text-sm font-medium text-slate-700">ห้องเรียน</span><select id="classroomFilter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"><option>ทั้งหมด</option></select></label>
+                <label class="block"><span class="mb-2 block text-sm font-medium text-slate-700">แผนการเรียน</span><select id="planFilter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"><option>ทั้งหมด</option></select></label>
                 <label class="block"><span class="mb-2 block text-sm font-medium text-slate-700">กลุ่มสาระ</span><select id="departmentFilter" class="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm outline-none"><option>ทั้งหมด</option></select></label>
               </div>
             </div>
@@ -243,7 +235,7 @@
 
             <div class="mt-14 grid gap-6 text-lg lg:grid-cols-[1fr_auto_1fr_auto_1fr]">
               <div class="font-semibold text-slate-800">ปีการศึกษา</div>
-              <div id="modalYear" class="text-slate-700">รายปี / 2568</div>
+              <div id="modalYear" class="text-slate-700">รายปี / 2569</div>
               <div></div>
               <div class="font-semibold text-slate-800">ชั้นปี</div>
               <div id="modalGrade" class="text-slate-700">ม.1</div>
@@ -409,8 +401,7 @@
     ].map((item, index) => {
       const mockTrends = [5.4, -2.8, 8.7, 0, 3.2, -6.1, 4.5, 1.8, -3.9, 7.2, 0, -1.4];
       const mockTeachers = ['ครูสมชาย ใจดี', 'ครูพิมพ์ชนก ศรีสุข', 'ครูอนุชา วงศ์ดี', 'ครูสุภาวดี แก้วใส', 'ครูมาลี พัฒนกิจ', 'ครูวรพล แสงทอง'];
-      const mockClassroomScopes = ['รวมทุกห้อง', 'ม.1/1-ม.1/2', 'ม.1/3-ม.1/4', 'โครงการพิเศษ'];
-      const mockCurriculums = ['หลักสูตรแกนกลาง', 'ห้องเรียนพิเศษ', 'หลักสูตรเข้มวิทย์-คณิต'];
+      const mockPlans = ['แผนการเรียนทั่วไป', 'แผนห้องเรียนพิเศษ', 'แผนเน้นวิทย์-คณิต'];
       const departmentMap = [
         { prefixes: ['ท'], department: 'ภาษาไทย' },
         { prefixes: ['ค'], department: 'คณิตศาสตร์' },
@@ -427,12 +418,12 @@
       return {
         ...item,
         id: index + 1,
-        year: '2568',
+        year: '2569',
         grade: 'ม.1',
         term: index < 22 ? '1' : '2',
         teacher: mockTeachers[index % mockTeachers.length],
-        classroomScope: mockClassroomScopes[index % mockClassroomScopes.length],
-        curriculum: mockCurriculums[index % mockCurriculums.length],
+        classroom: `ม.1/${(index % 4) + 1}`,
+        plan: mockPlans[index % mockPlans.length],
         department,
         trend: mockTrends[index % mockTrends.length],
         pass3Up,
@@ -522,7 +513,7 @@
     }
 
     function getSubjectScope(item) {
-      return `ระดับชั้น ${item.grade} • ${item.classroomScope || 'รวมทุกห้อง'}`;
+      return `ระดับชั้น ${item.grade} • ${item.classroom || 'รวมทุกห้อง'}`;
     }
 
     function getTrendValue(item) {
@@ -553,23 +544,45 @@
       return `student-results-detail.html?${params.toString()}`;
     }
 
-    function fillSubjectOptions() {
-      const uniqueSubjects = [...new Set(subjectData.map((item) => item.subject))];
-      els.subject.innerHTML = '<option value="ทั้งหมด">ทั้งหมด</option>' +
-        uniqueSubjects.map((subject) => `<option value="${subject}">${subject}</option>`).join('');
+    const LAST_SEARCH_KEY = 'subjectResults:lastSearch';
+    const ALL = 'ทั้งหมด';
+
+    // Cascading filters: each select only offers values that exist under the selections above it
+    // (year → term → grade → room → subject/teacher/plan/department). A value that disappears falls back to ทั้งหมด.
+    function fillSelect(id, values, { withAll = true, fallback } = {}) {
+      const select = document.getElementById(id);
+      const current = select.value;
+      const unique = [...new Set(values)].filter(Boolean);
+      select.innerHTML = (withAll ? `<option value="${ALL}">${ALL}</option>` : '') +
+        unique.map((value) => `<option value="${value}">${value}</option>`).join('');
+      select.value = unique.includes(current) ? current : (withAll ? ALL : (unique.includes(fallback) ? fallback : unique[0] || ''));
     }
 
-    function fillAdvancedFilterOptions() {
-      const filterMap = [
-        { id: 'teacherFilter', values: subjectData.map((item) => item.teacher) },
-        { id: 'classroomFilter', values: subjectData.map((item) => item.classroomScope) },
-        { id: 'curriculumFilter', values: subjectData.map((item) => item.curriculum) },
-        { id: 'departmentFilter', values: subjectData.map((item) => item.department) }
-      ];
-      filterMap.forEach((filter) => {
-        const uniqueValues = [...new Set(filter.values)].filter(Boolean);
-        document.getElementById(filter.id).innerHTML = '<option value="ทั้งหมด">ทั้งหมด</option>' +
-          uniqueValues.map((value) => `<option value="${value}">${value}</option>`).join('');
+    function syncFilterOptions() {
+      const pick = (id) => document.getElementById(id).value;
+      const matches = (item, key, id) => pick(id) === ALL || item[key] === pick(id);
+      fillSelect('year', subjectData.map((item) => item.year).sort().reverse(), { withAll: false, fallback: AcademicLayout.currentTerm.year });
+      const inYear = subjectData.filter((item) => item.year === pick('year'));
+      fillSelect('term', inYear.map((item) => item.term).sort());
+      const inTerm = inYear.filter((item) => matches(item, 'term', 'term'));
+      fillSelect('grade', inTerm.map((item) => item.grade).sort(), { withAll: false });
+      const inGrade = inTerm.filter((item) => item.grade === pick('grade'));
+      fillSelect('classroomFilter', inGrade.map((item) => item.classroom).sort());
+      const inRoom = inGrade.filter((item) => matches(item, 'classroom', 'classroomFilter'));
+      fillSelect('subject', inRoom.map((item) => item.subject));
+      fillSelect('teacherFilter', inRoom.map((item) => item.teacher));
+      fillSelect('planFilter', inRoom.map((item) => item.plan));
+      fillSelect('departmentFilter', inRoom.map((item) => item.department));
+    }
+
+    function restoreLastSearch() {
+      const saved = AcademicLayout.lastSearch(LAST_SEARCH_KEY);
+      if (!saved) return;
+      // apply top-down so each level's options exist before its value is set
+      [['year', 'year'], ['term', 'term'], ['grade', 'grade'], ['classroomFilter', 'classroom'], ['subject', 'subject'],
+        ['teacherFilter', 'teacher'], ['planFilter', 'plan'], ['departmentFilter', 'department']].forEach(([id, key]) => {
+        if (saved[key]) document.getElementById(id).value = saved[key];
+        syncFilterOptions();
       });
     }
 
@@ -580,8 +593,8 @@
         grade: document.getElementById('grade').value,
         subject: document.getElementById('subject').value,
         teacher: document.getElementById('teacherFilter').value,
-        classroomScope: document.getElementById('classroomFilter').value,
-        curriculum: document.getElementById('curriculumFilter').value,
+        classroom: document.getElementById('classroomFilter').value,
+        plan: document.getElementById('planFilter').value,
         department: document.getElementById('departmentFilter').value
       };
     }
@@ -592,10 +605,10 @@
         const matchTerm = filters.term === 'ทั้งหมด' || item.term === filters.term;
         const matchSubject = filters.subject === 'ทั้งหมด' || item.subject === filters.subject;
         const matchTeacher = filters.teacher === 'ทั้งหมด' || item.teacher === filters.teacher;
-        const matchClassroom = filters.classroomScope === 'ทั้งหมด' || item.classroomScope === filters.classroomScope;
-        const matchCurriculum = filters.curriculum === 'ทั้งหมด' || item.curriculum === filters.curriculum;
+        const matchClassroom = filters.classroom === 'ทั้งหมด' || item.classroom === filters.classroom;
+        const matchPlan = filters.plan === 'ทั้งหมด' || item.plan === filters.plan;
         const matchDepartment = filters.department === 'ทั้งหมด' || item.department === filters.department;
-        return item.year === filters.year && item.grade === filters.grade && matchTerm && matchSubject && matchTeacher && matchClassroom && matchCurriculum && matchDepartment;
+        return item.year === filters.year && item.grade === filters.grade && matchTerm && matchSubject && matchTeacher && matchClassroom && matchPlan && matchDepartment;
       });
 
       if (!state.filtered.some((item) => item.id === state.selectedId)) {
@@ -810,8 +823,8 @@
       ];
       if (filters.subject !== 'ทั้งหมด') chips.push({ key: 'subject', label: `รายวิชา ${filters.subject}` });
       if (filters.teacher !== 'ทั้งหมด') chips.push({ key: 'teacherFilter', label: `ครูผู้สอน ${filters.teacher}` });
-      if (filters.classroomScope !== 'ทั้งหมด') chips.push({ key: 'classroomFilter', label: `ขอบเขต ${filters.classroomScope}` });
-      if (filters.curriculum !== 'ทั้งหมด') chips.push({ key: 'curriculumFilter', label: `หลักสูตร ${filters.curriculum}` });
+      if (filters.classroom !== 'ทั้งหมด') chips.push({ key: 'classroomFilter', label: `ห้อง ${filters.classroom}` });
+      if (filters.plan !== 'ทั้งหมด') chips.push({ key: 'planFilter', label: `แผน ${filters.plan}` });
       if (filters.department !== 'ทั้งหมด') chips.push({ key: 'departmentFilter', label: `กลุ่มสาระ ${filters.department}` });
       els.activeFilterChips.innerHTML = chips.map((chip) => `
         <button type="button" data-clear-filter="${chip.key}" class="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-semibold text-blue-700">
@@ -834,24 +847,24 @@
 
     function resetFilter(key) {
       if (key === 'all') {
-        document.getElementById('year').value = '2568';
+        document.getElementById('year').value = AcademicLayout.currentTerm.year;
         document.getElementById('term').value = 'ทั้งหมด';
-        document.getElementById('grade').value = 'ม.1';
+        document.getElementById('grade').value = '';
         document.getElementById('subject').value = 'ทั้งหมด';
         document.getElementById('teacherFilter').value = 'ทั้งหมด';
         document.getElementById('classroomFilter').value = 'ทั้งหมด';
-        document.getElementById('curriculumFilter').value = 'ทั้งหมด';
+        document.getElementById('planFilter').value = 'ทั้งหมด';
         document.getElementById('departmentFilter').value = 'ทั้งหมด';
         state.tableFilter = 'ทั้งหมด';
         document.getElementById('tableFilter').value = 'ทั้งหมด';
       } else if (key === 'term' || key === 'subject') {
         document.getElementById(key).value = 'ทั้งหมด';
-      } else if (['teacherFilter', 'classroomFilter', 'curriculumFilter', 'departmentFilter'].includes(key)) {
+      } else if (['teacherFilter', 'classroomFilter', 'planFilter', 'departmentFilter'].includes(key)) {
         document.getElementById(key).value = 'ทั้งหมด';
       } else if (key === 'year') {
-        document.getElementById('year').value = '2568';
+        document.getElementById('year').value = AcademicLayout.currentTerm.year;
       } else if (key === 'grade') {
-        document.getElementById('grade').value = 'ม.1';
+        document.getElementById('grade').value = '';
       }
       refreshAll();
     }
@@ -896,6 +909,8 @@
     }
 
     function refreshAll() {
+      syncFilterOptions();
+      AcademicLayout.lastSearch(LAST_SEARCH_KEY, getFilters());
       filterData();
       renderSummary();
       renderSelectedSubject();
@@ -906,7 +921,7 @@
 
     document.getElementById('searchButton').addEventListener('click', refreshAll);
     document.getElementById('resetButton').addEventListener('click', () => resetFilter('all'));
-    ['year', 'term', 'grade', 'subject', 'teacherFilter', 'classroomFilter', 'curriculumFilter', 'departmentFilter'].forEach((id) => {
+    ['year', 'term', 'grade', 'subject', 'teacherFilter', 'classroomFilter', 'planFilter', 'departmentFilter'].forEach((id) => {
       document.getElementById(id).addEventListener('change', refreshAll);
     });
     document.getElementById('tableSearch').addEventListener('input', (event) => {
@@ -1008,8 +1023,8 @@
       }
     });
 
-    fillSubjectOptions();
-    fillAdvancedFilterOptions();
+    syncFilterOptions();
+    restoreLastSearch();
     refreshAll();
   </script>
 </body>

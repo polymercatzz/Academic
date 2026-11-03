@@ -499,6 +499,28 @@ function syncCurrentAcademicLabel() {
   els.currentAcademicLabel.textContent = `${currentYear.name} / ภาคเรียนที่ ${currentSemester.term}`;
 }
 
+const ATTENDANCE_LAST_SEARCH_KEY = "attendanceReport:lastSearch";
+// order matters on restore: each select's options depend on the ones before it
+const ATTENDANCE_SEARCH_FIELDS = ["searchType", "monthlyYear", "monthlyMonth", "semesterYear", "semesterTerm", "startDate", "endDate", "classLevel", "room", "subject"];
+
+function saveAttendanceSearch() {
+  AcademicLayout.lastSearch(ATTENDANCE_LAST_SEARCH_KEY, Object.fromEntries(ATTENDANCE_SEARCH_FIELDS.map((key) => [key, els[key].value])));
+}
+
+function restoreAttendanceSearch() {
+  const saved = AcademicLayout.lastSearch(ATTENDANCE_LAST_SEARCH_KEY);
+  if (!saved) return;
+  ATTENDANCE_SEARCH_FIELDS.forEach((key) => {
+    const control = els[key];
+    const value = saved[key];
+    if (!value || (control.tagName === "SELECT" && ![...control.options].some((option) => option.value === value))) return;
+    control.value = value;
+    if (key === "semesterYear") populateSemesterTerms();
+    if (key === "classLevel") syncRoomOptions();
+    if (key === "classLevel" || key === "room") syncSubjectOptions();
+  });
+}
+
 function populateFilters() {
   const currentSemester = getDefaultSemester();
   els.searchType.value = "semester";
@@ -510,6 +532,7 @@ function populateFilters() {
   syncSubjectOptions();
   populateSemesterTerms();
   populateDateDefaults();
+  restoreAttendanceSearch();
   syncCurrentAcademicLabel();
 }
 
@@ -1450,6 +1473,7 @@ function syncModeControls() {
 }
 
 function searchData() {
+  saveAttendanceSearch();
   const result = buildSearchResult();
   state.visibleSessions = result.sessions;
   state.visibleStudents = result.students;

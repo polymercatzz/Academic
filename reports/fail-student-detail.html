@@ -103,7 +103,7 @@
 
   <div class="relative lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=8"></script>
+    <script src="../shared/academic-layout.js?v=9"></script>
     <script>AcademicLayout.mount({"active":"fail-student","title":"นักเรียนต้องปรับปรุง","rightHtml":"<div class=\"flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm\">\n            <div class=\"flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600\">\n              <svg class=\"h-5 w-5\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 2 4 6v6c0 5 3.5 9.7 8 10 4.5-.3 8-5 8-10V6l-8-4Zm0 2.2 5.9 2.8v4.8c0 3.8-2.4 7.4-5.9 8-3.5-.6-5.9-4.2-5.9-8V7l5.9-2.8Z\"/></svg>\n            </div>\n            <div>\n              <p class=\"text-[1.05vh] font-semibold uppercase tracking-[0.18em] text-slate-400\">ข้อมูลล่าสุด</p>\n              <p id=\"timestampText\" class=\"text-sm font-medium text-slate-900\">-</p>\n            </div>\n          </div>"});</script>
 
     <main class="px-4 py-6 lg:px-8 lg:py-8">
@@ -313,22 +313,23 @@
 
   <script>
     const mockData = [
-      { id: 1, year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/1', subjectCode: 'ค21101', subjectName: 'คณิตศาสตร์', teacher: 'อ.ชลธิชา ศรีสวัสดิ์', program: 'วิทย์-คณิต', totalStudents: 38, students: [{ studentId: '681101', name: 'กวินภพ แสงทอง', score: 36, grade: '1', remark: 'ขาดส่งงานหน่วยที่ 3' }, { studentId: '681114', name: 'ชลธิชา มีสุข', score: 28, grade: '0', remark: 'สอบปลายภาคไม่ผ่าน' }, { studentId: '681129', name: 'ณัฐนันท์ รัตนพงศ์', score: 41, grade: '1.5', remark: 'ต้องเรียนเสริมพื้นฐาน' }, { studentId: '681133', name: 'ธนภัทร กลิ่นจันทร์', score: 19, grade: '0', remark: 'ขาดเรียนต่อเนื่อง' }] },
-      { id: 2, year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/2', subjectCode: 'ว21101', subjectName: 'วิทยาศาสตร์', teacher: 'อ.ปวีณา สุดตา', program: 'วิทย์-คณิต', totalStudents: 40, students: [{ studentId: '681203', name: 'พิชญาภา คงเมือง', score: 39, grade: '1', remark: 'คะแนนปฏิบัติการต่ำ' }, { studentId: '681215', name: 'รชต นวลจันทร์', score: 22, grade: '0', remark: 'สอบไม่ครบทุกหน่วย' }] },
-      { id: 3, year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/2', subjectCode: 'ส21102', subjectName: 'ประวัติศาสตร์', teacher: 'อ.ปาริฉัตร สุดตา', program: 'ศิลป์ทั่วไป', totalStudents: 40, students: [{ studentId: '681221', name: 'วรัญญา แก้วคำ', score: 13, grade: '0', remark: 'ไม่เข้าสอบกลางภาค' }, { studentId: '681228', name: 'สิรภัทร วงษ์ดี', score: 32, grade: '1', remark: 'เนื้อหาย้อนหลังหลายบท' }, { studentId: '681237', name: 'อภิชาติ อินทร์เงิน', score: 0, grade: '0', remark: 'หยุดยาวโดยไม่มีใบลา' }] },
-      { id: 4, year: '2568', term: '1', grade: 'ม.1', classroom: 'ม.1/3', subjectCode: 'อ21101', subjectName: 'ภาษาอังกฤษพื้นฐาน', teacher: 'อ.จิราพร สุขใจ', program: 'English Program', totalStudents: 35, students: [{ studentId: '681308', name: 'กัญญาณัฐ วงศ์สอาด', score: 44, grade: '1.5', remark: 'ผ่านบาง competency' }, { studentId: '681311', name: 'ภัทรพล นาคทอง', score: 31, grade: '1', remark: 'ทักษะฟัง-พูดต้องเสริม' }, { studentId: '681319', name: 'ศิริวรรณ วิเศษ', score: 26, grade: '0', remark: 'ขาดสอบ speaking' }, { studentId: '681325', name: 'สุทธิภัทร แดงดี', score: 18, grade: '0', remark: 'ไม่ส่ง portfolio' }, { studentId: '681333', name: 'อิงฟ้า ชูศรี', score: 47, grade: '1.5', remark: 'ต้อง remedial reading' }] },
-      { id: 5, year: '2568', term: '2', grade: 'ม.1', classroom: 'ม.1/1', subjectCode: 'ท21102', subjectName: 'ภาษาไทย', teacher: 'อ.กมลชนก ชูเชิด', program: 'ศิลป์ทั่วไป', totalStudents: 38, students: [{ studentId: '681105', name: 'ชญานิศ แก้วเรือง', score: 42, grade: '1.5', remark: 'วิเคราะห์บทความยังอ่อน' }] },
-      { id: 6, year: '2568', term: '2', grade: 'ม.1', classroom: 'ม.1/4', subjectCode: 'ค21102', subjectName: 'คณิตศาสตร์', teacher: 'อ.ชลธิชา ศรีสวัสดิ์', program: 'ห้องเรียนพิเศษ', totalStudents: 36, students: [{ studentId: '681406', name: 'ธีรภัทร แซ่หลี', score: 38, grade: '1', remark: 'ขาดพื้นฐานสมการ' }, { studentId: '681412', name: 'ปาลิตา พูลทรัพย์', score: 29, grade: '0', remark: 'ไม่ผ่าน quiz ต่อเนื่อง' }] },
-      { id: 7, year: '2568', term: '2', grade: 'ม.2', classroom: 'ม.2/1', subjectCode: 'ว22102', subjectName: 'วิทยาศาสตร์และเทคโนโลยี', teacher: 'อ.พิมพ์ชนก สายชล', program: 'วิทย์-คณิต', totalStudents: 42, students: [{ studentId: '672108', name: 'กิตติศักดิ์ พูลเกิด', score: 20, grade: '0', remark: 'ไม่ผ่านภาคปฏิบัติ' }, { studentId: '672116', name: 'ธัญญารัตน์ พรหมมา', score: 37, grade: '1', remark: 'ขาดชิ้นงาน stem' }, { studentId: '672122', name: 'นราธิป แสงสว่าง', score: 45, grade: '1.5', remark: 'ต้องเสริมการทดลอง' }] },
-      { id: 8, year: '2567', term: '2', grade: 'ม.2', classroom: 'ม.2/2', subjectCode: 'อ22102', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', teacher: 'อ.จิราพร สุขใจ', program: 'English Program', totalStudents: 39, students: [{ studentId: '672205', name: 'พิมพ์ลดา ธรรมวงศ์', score: 34, grade: '1', remark: 'ขาดสอบ conversation' }, { studentId: '672224', name: 'อธิคุณ ศรีทอง', score: 11, grade: '0', remark: 'ไม่เข้าสอบปลายภาค' }] }
+      { id: 1, year: '2569', term: '1', grade: 'ม.1', classroom: 'ม.1/1', subjectCode: 'ค21101', subjectName: 'คณิตศาสตร์', teacher: 'อ.ชลธิชา ศรีสวัสดิ์', program: 'วิทย์-คณิต', totalStudents: 38, students: [{ studentId: '681101', name: 'กวินภพ แสงทอง', score: 36, grade: '1', remark: 'ขาดส่งงานหน่วยที่ 3' }, { studentId: '681114', name: 'ชลธิชา มีสุข', score: 28, grade: '0', remark: 'สอบปลายภาคไม่ผ่าน' }, { studentId: '681129', name: 'ณัฐนันท์ รัตนพงศ์', score: 41, grade: '1.5', remark: 'ต้องเรียนเสริมพื้นฐาน' }, { studentId: '681133', name: 'ธนภัทร กลิ่นจันทร์', score: 19, grade: '0', remark: 'ขาดเรียนต่อเนื่อง' }] },
+      { id: 2, year: '2569', term: '1', grade: 'ม.1', classroom: 'ม.1/2', subjectCode: 'ว21101', subjectName: 'วิทยาศาสตร์', teacher: 'อ.ปวีณา สุดตา', program: 'วิทย์-คณิต', totalStudents: 40, students: [{ studentId: '681203', name: 'พิชญาภา คงเมือง', score: 39, grade: '1', remark: 'คะแนนปฏิบัติการต่ำ' }, { studentId: '681215', name: 'รชต นวลจันทร์', score: 22, grade: '0', remark: 'สอบไม่ครบทุกหน่วย' }] },
+      { id: 3, year: '2569', term: '1', grade: 'ม.1', classroom: 'ม.1/2', subjectCode: 'ส21102', subjectName: 'ประวัติศาสตร์', teacher: 'อ.ปาริฉัตร สุดตา', program: 'ศิลป์ทั่วไป', totalStudents: 40, students: [{ studentId: '681221', name: 'วรัญญา แก้วคำ', score: 13, grade: '0', remark: 'ไม่เข้าสอบกลางภาค' }, { studentId: '681228', name: 'สิรภัทร วงษ์ดี', score: 32, grade: '1', remark: 'เนื้อหาย้อนหลังหลายบท' }, { studentId: '681237', name: 'อภิชาติ อินทร์เงิน', score: 0, grade: '0', remark: 'หยุดยาวโดยไม่มีใบลา' }] },
+      { id: 4, year: '2569', term: '1', grade: 'ม.1', classroom: 'ม.1/3', subjectCode: 'อ21101', subjectName: 'ภาษาอังกฤษพื้นฐาน', teacher: 'อ.จิราพร สุขใจ', program: 'English Program', totalStudents: 35, students: [{ studentId: '681308', name: 'กัญญาณัฐ วงศ์สอาด', score: 44, grade: '1.5', remark: 'ผ่านบาง competency' }, { studentId: '681311', name: 'ภัทรพล นาคทอง', score: 31, grade: '1', remark: 'ทักษะฟัง-พูดต้องเสริม' }, { studentId: '681319', name: 'ศิริวรรณ วิเศษ', score: 26, grade: '0', remark: 'ขาดสอบ speaking' }, { studentId: '681325', name: 'สุทธิภัทร แดงดี', score: 18, grade: '0', remark: 'ไม่ส่ง portfolio' }, { studentId: '681333', name: 'อิงฟ้า ชูศรี', score: 47, grade: '1.5', remark: 'ต้อง remedial reading' }] },
+      { id: 5, year: '2569', term: '2', grade: 'ม.1', classroom: 'ม.1/1', subjectCode: 'ท21102', subjectName: 'ภาษาไทย', teacher: 'อ.กมลชนก ชูเชิด', program: 'ศิลป์ทั่วไป', totalStudents: 38, students: [{ studentId: '681105', name: 'ชญานิศ แก้วเรือง', score: 42, grade: '1.5', remark: 'วิเคราะห์บทความยังอ่อน' }] },
+      { id: 6, year: '2569', term: '2', grade: 'ม.1', classroom: 'ม.1/4', subjectCode: 'ค21102', subjectName: 'คณิตศาสตร์', teacher: 'อ.ชลธิชา ศรีสวัสดิ์', program: 'ห้องเรียนพิเศษ', totalStudents: 36, students: [{ studentId: '681406', name: 'ธีรภัทร แซ่หลี', score: 38, grade: '1', remark: 'ขาดพื้นฐานสมการ' }, { studentId: '681412', name: 'ปาลิตา พูลทรัพย์', score: 29, grade: '0', remark: 'ไม่ผ่าน quiz ต่อเนื่อง' }] },
+      { id: 7, year: '2569', term: '2', grade: 'ม.2', classroom: 'ม.2/1', subjectCode: 'ว22102', subjectName: 'วิทยาศาสตร์และเทคโนโลยี', teacher: 'อ.พิมพ์ชนก สายชล', program: 'วิทย์-คณิต', totalStudents: 42, students: [{ studentId: '672108', name: 'กิตติศักดิ์ พูลเกิด', score: 20, grade: '0', remark: 'ไม่ผ่านภาคปฏิบัติ' }, { studentId: '672116', name: 'ธัญญารัตน์ พรหมมา', score: 37, grade: '1', remark: 'ขาดชิ้นงาน stem' }, { studentId: '672122', name: 'นราธิป แสงสว่าง', score: 45, grade: '1.5', remark: 'ต้องเสริมการทดลอง' }] },
+      { id: 8, year: '2568', term: '2', grade: 'ม.2', classroom: 'ม.2/2', subjectCode: 'อ22102', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', teacher: 'อ.จิราพร สุขใจ', program: 'English Program', totalStudents: 39, students: [{ studentId: '672205', name: 'พิมพ์ลดา ธรรมวงศ์', score: 34, grade: '1', remark: 'ขาดสอบ conversation' }, { studentId: '672224', name: 'อธิคุณ ศรีทอง', score: 11, grade: '0', remark: 'ไม่เข้าสอบปลายภาค' }] }
     ].map((item) => {
       const failCount = item.students.length;
       const averageFailScore = Number((item.students.reduce((sum, student) => sum + student.score, 0) / failCount).toFixed(1));
       return { ...item, failCount, averageFailScore };
     });
 
+    const LAST_SEARCH_KEY = 'failStudentDetail:lastSearch';
     const defaultDraftFilters = {
-      year: '2568',
+      year: AcademicLayout.currentTerm.year,
       term: 'ทั้งหมด',
       grade: 'ทั้งหมด',
       classroom: 'ทั้งหมด',
@@ -918,6 +919,7 @@
     }
 
     function applyAppliedFilters() {
+      AcademicLayout.lastSearch(LAST_SEARCH_KEY, state.appliedFilters);
       state.rows = getAppliedRows();
       if (!state.rows.some((row) => row.id === state.selectedId)) {
         state.selectedId = null;
@@ -1139,6 +1141,7 @@
     }
 
     function initDefaultState() {
+      state.draftFilters = { ...defaultDraftFilters, ...AcademicLayout.lastSearch(LAST_SEARCH_KEY) };
       applyDraftToInputs();
       syncDependentOptions();
       state.appliedFilters = { ...state.draftFilters };

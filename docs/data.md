@@ -21,9 +21,11 @@
 | `gradebook-demo-v2` | `grading/assets/js/app.js`, `attendance.js` | ห้องเรียนที่สอน คะแนน รอบการตรวจ คำขอปลดล็อก และการเช็คชื่อ (`db.att`) |
 | `gradebook-demo-role` | `grading/assets/js/app.js` | มุมมองของแอป grading · `grading-layout.js` ตั้งค่าให้ตาม `tt-role` ทุกครั้ง |
 | `studentResultsData` | `reports/subject-results.html` | ข้อมูลที่ส่งต่อไปยัง `student-results-detail.html` |
-| `averageScoreYear:lastSearch`, `recordReport:lastSearch`, `scorePerSubject:lastSearch`, `unableExamReport:index:lastSearch` | module ของ `academic-report.html` | ตัวกรองที่ค้นล่าสุด |
+| `*:lastSearch` | หน้ารายงานทุกหน้า ผ่าน `AcademicLayout.lastSearch()` | ตัวกรองที่ค้นล่าสุด: `attendanceReport`, `unableExamReport:index`, `scorePerSubject`, `averageScoreYear`, `recordReport` (ใน `academic-report.html`) · `subjectResults`, `failStudentDetail`, `studentRetakeManagement`, `studentListByClassroom`, `studentScoreRanking`, `teacherAttendance` |
 
-`sessionStorage['ar-sidebar-scroll']` เก็บตำแหน่ง scroll ของ sidebar
+`sessionStorage['ar-sidebar-scroll']` เก็บตำแหน่ง scroll ของ sidebar · หน้าสอบซ่อมและรายชื่อตามห้องใช้ `sessionStorage` เพิ่มเพื่อคืนตำแหน่ง scroll และตารางเมื่อกดย้อนกลับจากหน้ารายละเอียด
+
+ปีการศึกษาที่ถือเป็น "ปัจจุบัน" อยู่ที่ `CURRENT_TERM` ใน `academic-layout.js` (อ่านผ่าน `AcademicLayout.currentTerm`) ข้อมูลจำลองทุกโมดูลใช้ปี 2569
 
 ปุ่ม "รีเซ็ตข้อมูลตัวอย่าง" ใน sidebar ลบเฉพาะ `tt-store-v1` และ `gradebook-demo-v2` (รายชื่ออยู่ใน `DEMO_STORES` ของ `academic-layout.js`) ถ้าเพิ่ม store ใหม่ที่ต้องรีเซ็ตได้ ให้เพิ่มคีย์ในรายการนั้นด้วย
 

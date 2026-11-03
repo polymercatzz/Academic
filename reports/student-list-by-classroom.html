@@ -78,7 +78,7 @@
 
   <div class="relative lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=8"></script>
+    <script src="../shared/academic-layout.js?v=9"></script>
     <script>AcademicLayout.mount({"active":"retake","title":"รายชื่อนักเรียนสอบซ่อม","rightHtml":"<button id=\"refreshButton\" type=\"button\" class=\"inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700\">\n            <svg class=\"h-4 w-4\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M17.7 6.3A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.76-4.24L14 10h6V4l-2.3 2.3Z\"/></svg>\n            รีเฟรช\n          </button>"});</script>
 
     <main class="px-4 py-6 lg:px-8 lg:py-8">
@@ -299,25 +299,28 @@
 
   <script>
     const records = [
-      { id: 1, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 1, studentId: '4824', name: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'รอสอบซ่อม', remark: 'ขาดสอบย่อย' },
-      { id: 2, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 1, studentId: '4824', name: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ว23103', subjectName: 'วิทยาศาสตร์ 6', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'คะแนนรวมไม่ถึงเกณฑ์' },
-      { id: 3, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 1, studentId: '4824', name: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ท23103', subjectName: 'ภาษาไทย', score: 'ร', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'สอบซ่อมแล้ว', remark: 'รอประกาศผล' },
-      { id: 4, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 2, studentId: '4831', name: 'เด็กชายพีรวิชญ์ คงช่วย', subjectCode: 'ว23103', subjectName: 'วิทยาศาสตร์ 6', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'ไม่ส่งงานโครงงาน' },
-      { id: 5, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 2, studentId: '4831', name: 'เด็กชายพีรวิชญ์ คงช่วย', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: 'ร', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'ติดตามงาน', remark: 'ยังไม่ครบแบบฝึกหัด' },
-      { id: 6, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 3, studentId: '4837', name: 'เด็กหญิงสุภัสสรา ใจดี', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'รอสอบซ่อม', remark: 'ไม่เข้าสอบกลางภาค' },
-      { id: 7, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 4, studentId: '4843', name: 'เด็กชายธนกฤต ศรีสุข', subjectCode: 'อ23101', subjectName: 'ภาษาอังกฤษ 6', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'คะแนน speaking ต่ำ' },
-      { id: 8, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 4, studentId: '4843', name: 'เด็กชายธนกฤต ศรีสุข', subjectCode: 'ส23102', subjectName: 'สังคมศึกษา', score: 'ร', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'สอบซ่อมแล้ว', remark: '' },
-      { id: 9, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/1', order: 1, studentId: '4708', name: 'เด็กหญิงพิชญาภา สุขทอง', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'รอสอบซ่อม', remark: 'ไม่ส่งใบงาน' },
-      { id: 10, year: '2568', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/1', order: 2, studentId: '4716', name: 'เด็กชายภูผา ชูศรี', subjectCode: 'อ23101', subjectName: 'ภาษาอังกฤษ 6', score: 'ร', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'ติดตามงาน', remark: 'ขาดสอบปลายภาค' },
-      { id: 11, year: '2568', term: '1', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 1, studentId: '4824', name: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ค23100', subjectName: 'คณิตศาสตร์ 5', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'สอบซ่อมแล้ว', remark: 'ผ่านหลังสอบซ่อม' },
-      { id: 12, year: '2568', term: '1', gradeLevel: 'ม.2', classRoom: 'ม.2/3', order: 1, studentId: '3610', name: 'เด็กหญิงอรปรียา เมืองทอง', subjectCode: 'ว22102', subjectName: 'วิทยาศาสตร์และเทคโนโลยี', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'คะแนนปฏิบัติไม่ครบ' },
-      { id: 13, year: '2568', term: '1', gradeLevel: 'ม.2', classRoom: 'ม.2/3', order: 2, studentId: '3618', name: 'เด็กชายกฤตเมธ สุขสม', subjectCode: 'ท22101', subjectName: 'ภาษาไทยวิเคราะห์', score: 'ร', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'ติดตามงาน', remark: 'ไม่ส่งชิ้นงาน' },
-      { id: 14, year: '2567', term: '2', gradeLevel: 'ม.2', classRoom: 'ม.2/1', order: 1, studentId: '3501', name: 'เด็กหญิงณิชานันท์ ทองดี', subjectCode: 'อ22102', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'สอบซ่อมแล้ว', remark: 'ผ่านแล้ว' }
+      { id: 1, year: '2569', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 1, studentId: '4824', name: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'รอสอบซ่อม', remark: 'ขาดสอบย่อย' },
+      { id: 2, year: '2569', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 1, studentId: '4824', name: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ว23103', subjectName: 'วิทยาศาสตร์ 6', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'คะแนนรวมไม่ถึงเกณฑ์' },
+      { id: 3, year: '2569', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 1, studentId: '4824', name: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ท23103', subjectName: 'ภาษาไทย', score: 'ร', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'สอบซ่อมแล้ว', remark: 'รอประกาศผล' },
+      { id: 4, year: '2569', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 2, studentId: '4831', name: 'เด็กชายพีรวิชญ์ คงช่วย', subjectCode: 'ว23103', subjectName: 'วิทยาศาสตร์ 6', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'ไม่ส่งงานโครงงาน' },
+      { id: 5, year: '2569', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 2, studentId: '4831', name: 'เด็กชายพีรวิชญ์ คงช่วย', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: 'ร', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'ติดตามงาน', remark: 'ยังไม่ครบแบบฝึกหัด' },
+      { id: 6, year: '2569', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 3, studentId: '4837', name: 'เด็กหญิงสุภัสสรา ใจดี', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'รอสอบซ่อม', remark: 'ไม่เข้าสอบกลางภาค' },
+      { id: 7, year: '2569', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 4, studentId: '4843', name: 'เด็กชายธนกฤต ศรีสุข', subjectCode: 'อ23101', subjectName: 'ภาษาอังกฤษ 6', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'คะแนน speaking ต่ำ' },
+      { id: 8, year: '2569', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 4, studentId: '4843', name: 'เด็กชายธนกฤต ศรีสุข', subjectCode: 'ส23102', subjectName: 'สังคมศึกษา', score: 'ร', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'สอบซ่อมแล้ว', remark: '' },
+      { id: 9, year: '2569', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/1', order: 1, studentId: '4708', name: 'เด็กหญิงพิชญาภา สุขทอง', subjectCode: 'ค23101', subjectName: 'คณิตศาสตร์', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'รอสอบซ่อม', remark: 'ไม่ส่งใบงาน' },
+      { id: 10, year: '2569', term: '2', gradeLevel: 'ม.3', classRoom: 'ม.3/1', order: 2, studentId: '4716', name: 'เด็กชายภูผา ชูศรี', subjectCode: 'อ23101', subjectName: 'ภาษาอังกฤษ 6', score: 'ร', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'ติดตามงาน', remark: 'ขาดสอบปลายภาค' },
+      { id: 11, year: '2569', term: '1', gradeLevel: 'ม.3', classRoom: 'ม.3/2', order: 1, studentId: '4824', name: 'เด็กหญิงณัฐญ์ชญา จันทาพันธ์', subjectCode: 'ค23100', subjectName: 'คณิตศาสตร์ 5', score: '0', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'สอบซ่อมแล้ว', remark: 'ผ่านหลังสอบซ่อม' },
+      { id: 12, year: '2569', term: '1', gradeLevel: 'ม.2', classRoom: 'ม.2/3', order: 1, studentId: '3610', name: 'เด็กหญิงอรปรียา เมืองทอง', subjectCode: 'ว22102', subjectName: 'วิทยาศาสตร์และเทคโนโลยี', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'รอสอบซ่อม', remark: 'คะแนนปฏิบัติไม่ครบ' },
+      { id: 13, year: '2569', term: '1', gradeLevel: 'ม.2', classRoom: 'ม.2/3', order: 2, studentId: '3618', name: 'เด็กชายกฤตเมธ สุขสม', subjectCode: 'ท22101', subjectName: 'ภาษาไทยวิเคราะห์', score: 'ร', category: 'กลางภาค', scoreType: 'คะแนนกลางภาค', status: 'ติดตามงาน', remark: 'ไม่ส่งชิ้นงาน' },
+      { id: 14, year: '2568', term: '2', gradeLevel: 'ม.2', classRoom: 'ม.2/1', order: 1, studentId: '3501', name: 'เด็กหญิงณิชานันท์ ทองดี', subjectCode: 'อ22102', subjectName: 'ภาษาอังกฤษเพื่อการสื่อสาร', score: '0', category: 'ปลายภาค', scoreType: 'คะแนนปลายภาค', status: 'สอบซ่อมแล้ว', remark: 'ผ่านแล้ว' }
     ];
 
     const STATE_KEY = 'studentRetakeListState';
+    // sessionStorage (STATE_KEY) brings back scroll and table state when returning from a detail page;
+    // the filters alone are also kept in localStorage so the next visit opens on the last search
+    const LAST_SEARCH_KEY = 'studentListByClassroom:lastSearch';
     const defaultFilters = {
-      year: '2568',
+      year: AcademicLayout.currentTerm.year,
       term: '2',
       gradeLevel: 'ม.3',
       classRoom: 'ม.3/2',
@@ -508,6 +511,11 @@
     function restoreListState() {
       const raw = sessionStorage.getItem(STATE_KEY);
       if (!raw) {
+        const last = window.location.search ? null : AcademicLayout.lastSearch(LAST_SEARCH_KEY);
+        if (last) {
+          state.draftFilters = { ...defaultFilters, ...last };
+          state.appliedFilters = { ...defaultFilters, ...last };
+        }
         return false;
       }
       try {
@@ -985,6 +993,7 @@
 
     function applyAndRender() {
       state.appliedFilters = { ...state.draftFilters };
+      AcademicLayout.lastSearch(LAST_SEARCH_KEY, state.appliedFilters);
       state.advancedOpen = ['subject', 'assessmentPeriod', 'status'].some((key) => !isDefaultFilter(key, state.appliedFilters[key]));
       syncSelects();
       syncAdvancedUI();
@@ -999,6 +1008,7 @@
       state.tableSort = 'default';
       state.advancedOpen = false;
       sessionStorage.removeItem(STATE_KEY);
+      AcademicLayout.lastSearch(LAST_SEARCH_KEY, defaultFilters);
       syncSelects();
       els.tableSearch.value = '';
       els.tableSort.value = 'default';

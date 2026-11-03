@@ -111,9 +111,9 @@
 
   function buildInlineMockDatabase() {
     const academicYears = [
-      { id: "2566", name: "2566" },
       { id: "2567", name: "2567" },
-      { id: "2568", name: "2568", isLatest: true }
+      { id: "2568", name: "2568" },
+      { id: "2569", name: "2569", isLatest: true }
     ];
     const grades = [
       { id: "m1", name: "มัธยมศึกษาปีที่ 1" },
@@ -169,8 +169,8 @@
         academicYears.forEach(function (year, yearIndex) {
           [1, 2].forEach(function (semester) {
             subjectGroups.forEach(function (group, groupIndex) {
-              const isMissing = year.id === "2568" && semester === 2 && studentIndex % 10 === 0 && groupIndex === 2;
-              const isPending = year.id === "2568" && semester === 2 && studentIndex % 13 === 0 && groupIndex === 6;
+              const isMissing = year.id === "2569" && semester === 2 && studentIndex % 10 === 0 && groupIndex === 2;
+              const isPending = year.id === "2569" && semester === 2 && studentIndex % 13 === 0 && groupIndex === 6;
               const isFailed = !isMissing && !isPending && ((studentIndex % 7 === 0 && groupIndex === 1 && semester === 2) || (studentIndex % 11 === 0 && groupIndex === 3 && yearIndex === 1));
               const point = isMissing || isPending ? null : isFailed ? 0 : gradePoints[(studentIndex + roomIndex + yearIndex + semester + groupIndex) % gradePoints.length];
               records.push({

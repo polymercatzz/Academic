@@ -81,6 +81,8 @@
     admin: { name: 'อ.สุนิสา ปัญญาดี', title: 'งานวิชาการ (admin)', initials: 'SP', home: 'timetable.html', notifyTo: 'admin' },
     teacher: { name: 'อ.อนุชา แสงทอง', title: 'ครู · คณิตศาสตร์', initials: 'AS', home: 'my-timetable.html', notifyTo: 't05' }
   };
+  // the academic year/term every module treats as "now" (grading data.js and timetable seed use the same)
+  const CURRENT_TERM = { year: '2569', term: '1' };
   // every localStorage key that holds demo data, cleared by the sidebar's reset button
   const DEMO_STORES = ['tt-store-v1', 'gradebook-demo-v2'];
   function currentRole() { try { return localStorage.getItem('tt-role') === 'teacher' ? 'teacher' : 'admin'; } catch (e) { return 'admin'; } }
@@ -549,6 +551,15 @@
     // re-render sidebar badges + bell after the timetable store changes
     refresh() { refreshChrome(); },
     role: currentRole,
-    url: pageUrl
+    url: pageUrl,
+    currentTerm: CURRENT_TERM,
+    // report filters: lastSearch('x:lastSearch') reads, lastSearch('x:lastSearch', values) saves
+    lastSearch(key, values) {
+      try {
+        if (values === undefined) return JSON.parse(localStorage.getItem(key) || 'null');
+        localStorage.setItem(key, JSON.stringify(values));
+      } catch (e) { /* ignore */ }
+      return null;
+    }
   };
 }());

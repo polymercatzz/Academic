@@ -17,7 +17,7 @@
   <div id="layoutSidebar"></div>
   <div class="lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=8"></script>
+    <script src="../shared/academic-layout.js?v=9"></script>
     <script>AcademicLayout.mount({ active: 'my-page', eyebrow: 'กลุ่มเมนู', title: 'ชื่อหน้า' });</script>
     <main class="px-4 py-6 lg:px-8"><!-- เนื้อหา --></main>
   </div>
@@ -25,7 +25,7 @@
 </html>
 ```
 
-ใช้เลข `?v=` เดียวกับหน้าอื่น (ตอนนี้คือ `v=8`)
+ใช้เลข `?v=` เดียวกับหน้าอื่น (ตอนนี้คือ `v=9`)
 
 ตัวเลือกของ `AcademicLayout.mount`
 
@@ -51,7 +51,7 @@
 3. **เพิ่มเลข `?v=N` ในทุกหน้า** ที่โหลด `academic-layout.js` ไม่อย่างนั้นเบราว์เซอร์จะใช้ไฟล์เก่าที่ cache ไว้
 
    ```bash
-   grep -rl "academic-layout.js?v=8" --include=*.html .
+   grep -rl "academic-layout.js?v=9" --include=*.html .
    ```
 
 ## 3. ถ้าหน้าเป็นของบทบาทเดียว

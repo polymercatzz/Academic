@@ -760,6 +760,7 @@ function renderDashboard() {
   if (!state.db) return;
   const filters = getFormValues();
   els.threshold.value = String(filters.threshold);
+  saveLastSearch();
   state.allRows = buildReportRows(filters);
   renderOverview(state.allRows);
 
@@ -783,7 +784,6 @@ function renderDashboard() {
   els.totalRecords.textContent = String(state.filteredRows.length);
   setBanner(els.emptyNotice, state.filteredRows.length ? "" : "ไม่พบข้อมูลตามเงื่อนไขที่เลือก");
   renderSearchResults();
-  saveLastSearch();
 }
 
 function saveLastSearch() {
@@ -1060,6 +1060,7 @@ function init() {
   els.threshold.value = "80";
   syncClassrooms();
   syncSubjects();
+  restoreLastSearch();
   renderTableHeader();
   attachEvents();
 

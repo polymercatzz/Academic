@@ -45,7 +45,7 @@
   function scoreTone(score) { return score >= 80 ? "excellent" : score >= 60 ? "active" : "watch"; }
 
   function buildInlineMockDatabase() {
-    const academicYears = [{ id: "ay-2568", name: "2568", isCurrent: true }, { id: "ay-2567", name: "2567", isCurrent: false }];
+    const academicYears = [{ id: "ay-2569", name: "2569", isCurrent: true }, { id: "ay-2568", name: "2568", isCurrent: false }];
     const semesters = academicYears.flatMap((year) => [1, 2].map((term) => ({ id: `${year.id}-${term}`, academicYearId: year.id, term, name: `ภาคเรียนที่ ${term}/${year.name}` })));
     const grades = [{ id: "grade-m1", name: "ม.1", order: 1 }, { id: "grade-m2", name: "ม.2", order: 2 }, { id: "grade-m3", name: "ม.3", order: 3 }];
     const plans = [{ id: "general", name: "แผนทั่วไป" }, { id: "science", name: "วิทย์-คณิต" }, { id: "language", name: "ภาษา" }];
