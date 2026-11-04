@@ -198,9 +198,10 @@ function computeStudent(sec, s) {
   });
   const total = groups.collect + groups.mid + groups.final;
   const att = attendancePercent(db, sec, s.id); // จากการเช็คชื่อรายคาบ (ADR 0011)
+  const waiver = att < MIN_ATTENDANCE ? msWaiverOf(sec, s.id) : null; // ปลด มส (ADR 0013)
   let code, grade = '—';
   if (!sec.structure.length) code = 'nostruct';
-  else if (att < MIN_ATTENDANCE) { code = 'ms'; grade = 'มส'; }
+  else if (att < MIN_ATTENDANCE && !waiver) { code = 'ms'; grade = 'มส'; }
   else if (invalid) code = 'invalid';
   else if (special.length) { code = 'r'; grade = 'ร'; }
   else if (missing) code = 'incomplete';
@@ -210,6 +211,7 @@ function computeStudent(sec, s) {
       if (remedialPassed(sec, s.id)) { grade = '1'; code = 'remedial-pass'; } // remedial.js
       else code = 'fail';
     } else code = 'pass';
+    if (waiver?.kind === 'makeup' && Number(grade) > 1) grade = '1'; // เรียนชดเชยจนครบเวลา ได้ไม่เกิน 1
   }
   return { groups, total, grade, code, missing, invalid, special, att };
 }
@@ -1605,7 +1607,8 @@ function renderHistory(sec, body) {
           <div>${h.kind === 'event'
             ? `<b>${esc(h.to)}</b><div class="faint" style="font-size:13px">โดย ${esc(h.who)}</div>`
             : `<div><b>${esc(h.student)}</b> <span class="muted">· ${esc(h.field)}</span></div>
-               <div class="tl-diff">${h.from !== '' ? `<span class="tl-from">${esc(h.from)}</span>${icon('chev')}` : '<span class="faint">(ว่าง)</span>' + icon('chev')}<span class="tl-to">${h.to === '' ? '(ลบ)' : esc(h.to)}</span><span class="faint" style="font-size:13px;margin-left:8px">โดย ${esc(h.who)}</span></div>`}
+               <div class="tl-diff">${h.from !== '' ? `<span class="tl-from">${esc(h.from)}</span>${icon('chev')}` : '<span class="faint">(ว่าง)</span>' + icon('chev')}<span class="tl-to">${h.to === '' ? '(ลบ)' : esc(h.to)}</span><span class="faint" style="font-size:13px;margin-left:8px">โดย ${esc(h.who)}</span></div>
+               ${h.reason ? `<div class="muted" style="font-size:13px">เหตุผล: ${esc(h.reason)}</div>` : ''}`}
           </div>
         </div>`).join('')}</div>
     </div>` : `<div class="card empty"><div class="empty-icon">${icon('clock')}</div><h3>ยังไม่มีประวัติการแก้ไข</h3><div>ทุกครั้งที่บันทึกคะแนน ระบบจะเก็บค่าเดิม ค่าใหม่ ผู้แก้ไข และเวลาไว้ที่นี่</div></div>`);

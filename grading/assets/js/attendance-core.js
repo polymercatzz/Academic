@@ -4,9 +4,12 @@
  * db.att = {
  *   start:     วันจันทร์ของสัปดาห์แรกในภาคเรียน 'YYYY-MM-DD'
  *   timetable: [{ sec, day (1=จันทร์..5=ศุกร์), period }]       ตารางสอนรายสัปดาห์ของภาคเรียนปัจจุบัน
- *   records:   { 'secId|date|period': { t, ex: { sid: mark } } } คาบที่เช็คแล้ว (เก็บเฉพาะคนที่ไม่ใช่ “มา”)
+ *   records:   { 'secId|date|period': { t, ex: { sid: mark }, by, fill } } คาบที่เช็คแล้ว (เก็บเฉพาะคนที่ไม่ใช่ “มา”)
+ *              by = ผู้เช็ค (ครูสอนแทนเช็คได้) · fill = วิธีเติมข้อมูลเมื่อเช็คย้อนหลัง (BACKFILL)
  *   holidays:  [{ date, name, by, at }]                       วันหยุดของโรงเรียน ฝ่ายวิชาการกำหนด (UC-25)
+ *   subs:      [{ sec, date, period, teacher, by, at }]       ครูสอนแทนรายคาบ ฝ่ายวิชาการกำหนด (ADR 0013)
  * }
+ * sec.msWaiver = { sid: { kind, ref, reason, by, at } }       ปลด มส ของนักเรียนในห้องเรียนที่สอน (ADR 0013)
  */
 
 const PERIODS = [
@@ -65,6 +68,24 @@ const currentTermKey = () => (TERMS.find((t) => t.current) || TERMS[0]).key;
 const homeroomsOf = (uid) => Object.keys(HOMEROOM).filter((r) => HOMEROOM[r] === uid);
 /* จำนวนคาบที่ขาดหรือลาได้ทั้งภาค ก่อนจะได้ มส คิดจากชั่วโมงตามหลักสูตร */
 const allowedMiss = (sec) => Math.floor((sec.hours * (100 - MIN_ATTENDANCE)) / 100);
+
+/* ครูสอนแทน: เช็คชื่อคาบนั้นได้ในนามตนเอง ครูผู้สอนประจำวิชายังเปิดและแก้ได้ */
+const subOf = (db, secId, date, period) => (db.att.subs || []).find((x) => x.sec === secId && x.date === date && x.period === period) || null;
+const canCheck = (db, sec, date, period, uid) => sec.teacherId === uid || subOf(db, sec.id, date, period)?.teacher === uid;
+
+/* เช็คย้อนหลังคาบที่ลืมเช็ค: ครูเลือกว่าจะเริ่มจากข้อมูลไหน แล้วตรวจแก้ก่อนบันทึก */
+const BACKFILL = {
+  prev:    { label: 'อิงคาบก่อนหน้า', hint: 'คาบล่าสุดก่อนหน้าของห้องนี้ในวันเดียวกัน' },
+  morning: { label: 'อิงคาบเช้า', hint: 'คาบแรกของวันที่เช็คแล้วของห้องนี้' },
+  all:     { label: 'ให้ทุกคนมา', hint: 'เริ่มจากทุกคนมา แล้วแก้รายคน' },
+};
+
+/* ปลด มส: ต้องมีเลขที่บันทึกอนุมัติจากผู้บริหาร */
+const MS_WAIVER = {
+  exam:   { label: 'มีเหตุสุดวิสัย ได้รับอนุมัติให้มีสิทธิ์สอบ', grade: 'ตัดสินผลการเรียนตามปกติ' },
+  makeup: { label: 'เรียนหรือทำงานชดเชยจนครบเวลาเรียน', grade: 'ได้ระดับผลการเรียนไม่เกิน 1' },
+};
+const msWaiverOf = (sec, sid) => sec.msWaiver?.[sid] || null;
 
 /* ---------- แคช: ล้างทุกครั้งที่ข้อมูลการเช็คชื่อเปลี่ยน ---------- */
 let attStamp = 0;
@@ -135,19 +156,43 @@ function studentAttendance(db, sec, sid) {
   const c = a.by[sid] || { present: 0, late: 0, leave: 0, absent: 0 };
   const pct = attendancePercent(db, sec, sid);
   const left = allowedMiss(sec) - (c.leave + c.absent);
-  const level = pct < MIN_ATTENDANCE || left < 0 ? 'ms' : left <= 2 ? 'risk' : 'ok';
+  const ms = pct < MIN_ATTENDANCE || left < 0;
+  const level = ms ? (msWaiverOf(sec, sid) ? 'waived' : 'ms') : left <= 2 ? 'risk' : 'ok';
   return { ...c, pct, left, level };
 }
 
 /* ---------- ข้อมูลจำลอง ---------- */
 function ensureAttendance(db) {
-  if (db.att) {
-    if (db.att.holidays) return false;
-    db.att.holidays = []; // บันทึกไว้ก่อนมีวันหยุด: ไม่เติมวันหยุดตัวอย่าง เพราะจะเปลี่ยนเวลาเรียนที่ตรวจไปแล้ว
-    return true;
-  }
-  seedAttendance(db);
-  return true;
+  if (!db.att) { seedAttendance(db); return true; }
+  let changed = false;
+  // บันทึกไว้ก่อนมีวันหยุด: ไม่เติมวันหยุดตัวอย่าง เพราะจะเปลี่ยนเวลาเรียนที่ตรวจไปแล้ว
+  if (!db.att.holidays) { db.att.holidays = []; changed = true; }
+  if (!db.att.subs) { db.att.subs = seedSubs(db); attTouch(); changed = true; }
+  return changed;
+}
+
+/* ครูสอนแทนตัวอย่าง: ครูสมศรีสอนแทนหนึ่งคาบวันนี้ และมีครูวิไลวรรณสอนแทนครูสมศรีในวันเรียนก่อนหน้า */
+function seedSubs(db) {
+  const term = currentTermKey();
+  let day = todayISO();
+  while (!isSchoolDay(day) || holidayOn(db, day)) day = addDays(day, -1);
+  const prev = (() => { let d = shiftSchoolDay(day, -1); while (holidayOn(db, d)) d = shiftSchoolDay(d, -1); return d; })();
+  const secs = db.sections.filter((s) => s.term === term);
+  const mine = new Set(secs.filter((s) => s.teacherId === CURRENT_USER_ID).map((s) => s.id));
+  const slotsOn = (date) => db.att.timetable.filter((t) => t.day === weekdayOf(date));
+  const busy = new Set(slotsOn(day).filter((t) => mine.has(t.sec)).map((t) => t.period));
+  const at = parseISO(day).getTime() - 86400000;
+  const out = [];
+  const other = slotsOn(day).find((t) => !mine.has(t.sec) && !busy.has(t.period));
+  if (other) out.push({ sec: other.sec, date: day, period: other.period, teacher: CURRENT_USER_ID, by: 'u2', at });
+  const own = slotsOn(prev).find((t) => mine.has(t.sec));
+  if (own) out.push({ sec: own.sec, date: prev, period: own.period, teacher: 'u3', by: 'u2', at: at - 86400000 });
+  // คาบที่ผ่านมาแล้ว: ครูสอนแทนเป็นผู้เช็ค
+  out.forEach((x) => {
+    const rec = db.att.records[sessionKey(x.sec, x.date, x.period)];
+    if (rec && x.date < todayISO()) rec.by = x.teacher;
+  });
+  return out;
 }
 
 /* วันหยุดนักขัตฤกษ์ (เดือน-วัน) ที่ใช้สร้างวันหยุดตัวอย่าง */
@@ -178,7 +223,7 @@ function seedAttendance(db) {
   // ให้วันนี้อยู่ในสัปดาห์ที่ 16 ของภาคเรียน เปิด Demo วันไหนก็มีคาบให้เช็ค
   const now = new Date();
   const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7) - 15 * 7);
-  db.att = { start: isoDate(monday), timetable: [], records: {}, holidays: [] };
+  db.att = { start: isoDate(monday), timetable: [], records: {}, holidays: [], subs: [] };
   const att = db.att;
   att.holidays = seedHolidays(db);
 
@@ -246,5 +291,6 @@ function seedAttendance(db) {
   absentAllDay(roster[3].id, shiftSchoolDay(today, -1));
   absentAllDay(roster[10].id, shiftSchoolDay(addDays(today, -13), -1));
 
+  att.subs = seedSubs(db);
   attTouch();
 }

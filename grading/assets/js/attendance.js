@@ -106,6 +106,7 @@ function confirmModal({ title, message, okLabel = 'ยืนยัน', okCls = 
 const markChip = (m) => `<span class="att-chip att-${m}">${ATT[m].label}</span>`;
 function levelChip(a) {
   if (a.level === 'ms') return `<span class="chip chip-ms">มส</span>`;
+  if (a.level === 'waived') return `<span class="chip chip-ok">ปลด มส แล้ว</span>`;
   if (a.level === 'risk') return `<span class="chip chip-warn">ขาดได้อีก ${a.left}</span>`;
   return `<span class="faint">ขาดได้อีก ${a.left}</span>`;
 }
@@ -114,6 +115,7 @@ function countsOf(db, sec, x, rec) {
   sec.students.forEach((s) => { c[markOf(rec, s.id)]++; });
   return c;
 }
+const userName = (uid) => userById(uid)?.name || '—';
 const countsText = (c) => ['absent', 'leave', 'late'].filter((k) => c[k]).map((k) => `${ATT[k].label} ${c[k]}`).join(' · ') || 'มาครบ';
 
 /* =========================================================
@@ -248,7 +250,11 @@ function parseRoute(hash) {
   if (p[0] === 'c') return { page: 'check', id: p[1], date: p[2], period: Number(p[3]) };
   if (p[0] === 'sections') return { page: 'sections', focus: p[1] || null };
   if (p[0] === 's') return { page: 'section', id: p[1], filter: p[2] || 'all' };
-  if (p[0] === 'h') return p[1] === 'sum' ? { page: 'hsum', focus: p[2] || null } : { page: 'hday', date: p[1] };
+  if (p[0] === 'h') {
+    if (p[1] === 'sum') return { page: 'hsum', focus: p[2] || null };
+    if (p[1] === 'subj') return { page: 'hsubj', id: p[2] || null };
+    return { page: 'hday', date: p[1] };
+  }
   return { page: 'today' };
 }
 const isDirty = () => !!ui.draft && Object.keys(ui.draft.marks).length > 0;
@@ -287,7 +293,7 @@ function go(hash) {
 
 function route() {
   const r = parseRoute(location.hash || '#/');
-  const navKey = { check: 'today', section: 'sections', hsum: 'hday' }[r.page] || r.page;
+  const navKey = { check: 'today', section: 'sections', hsum: 'hday', hsubj: 'hday' }[r.page] || r.page;
   $$('#nav a').forEach((a) => a.classList.toggle('active', a.dataset.nav === navKey));
   $('#sidebar').classList.remove('open');
   $('#scrim').classList.remove('show');
@@ -301,7 +307,7 @@ function route() {
   if (r.page === 'check') renderCheck(r.id, r.date, r.period);
   else if (r.page === 'sections') renderSections(r.focus);
   else if (r.page === 'section') { ui.secFilter = r.filter; renderSection(r.id); }
-  else if (r.page === 'hday' || r.page === 'hsum') renderHomeroom(r);
+  else if (r.page === 'hday' || r.page === 'hsum' || r.page === 'hsubj') renderHomeroom(r);
   else renderToday(r.date);
   const n = backlogOf().length;
   $('#backlogBadge').textContent = n ? String(n) : '';
@@ -310,8 +316,13 @@ function route() {
 /* =========================================================
  *  Page: คาบวันนี้ (ครูผู้สอน)
  * ========================================================= */
+/* คาบที่ครูคนนี้สอนแทนให้ครูอื่น */
+const mySubs = () => (db.att.subs || []).filter((x) => x.teacher === ME);
 function backlogOf() {
-  return mySections().flatMap((s) => sectionAttendance(db, s).unchecked)
+  const today = todayISO();
+  const subbed = mySubs().filter((x) => x.date < today && !db.att.records[sessionKey(x.sec, x.date, x.period)])
+    .map((x) => ({ sec: sectionById(x.sec), date: x.date, period: x.period, sub: x }));
+  return [...mySections().flatMap((s) => sectionAttendance(db, s).unchecked), ...subbed]
     .sort((a, b) => (a.date === b.date ? b.period - a.period : a.date < b.date ? 1 : -1));
 }
 
@@ -322,9 +333,13 @@ function renderToday(date) {
   $('#topbarTitle').textContent = 'คาบวันนี้';
   const mine = new Map(mySections().map((s) => [s.id, s]));
   const holiday = holidayOn(db, date);
-  const slots = inTerm(db, date) && !holiday ? db.att.timetable.filter((t) => t.day === weekdayOf(date) && mine.has(t.sec)).sort((a, b) => a.period - b.period) : [];
+  // คาบของตนเอง + คาบที่สอนแทนครูอื่นในวันนั้น
+  const slots = !inTerm(db, date) || holiday ? [] : [
+    ...db.att.timetable.filter((t) => t.day === weekdayOf(date) && mine.has(t.sec)).map((t) => ({ sec: mine.get(t.sec), period: t.period, sub: subOf(db, t.sec, date, t.period) })),
+    ...mySubs().filter((x) => x.date === date).map((x) => ({ sec: sectionById(x.sec), period: x.period, sub: x })),
+  ].sort((a, b) => a.period - b.period);
   const backlog = backlogOf();
-  const doneN = slots.filter((t) => db.att.records[sessionKey(t.sec, date, t.period)]).length;
+  const doneN = slots.filter((t) => db.att.records[sessionKey(t.sec.id, date, t.period)]).length;
   let risk = 0, ms = 0;
   mine.forEach((sec) => sec.students.forEach((s) => {
     const a = studentAttendance(db, sec, s.id);
@@ -333,7 +348,10 @@ function renderToday(date) {
   const np = date === today ? nowPeriod() : null;
 
   const row = (t) => {
-    const sec = mine.get(t.sec);
+    const sec = t.sec;
+    const subChip = !t.sub ? '' : t.sub.teacher === ME
+      ? `<span class="chip chip-sub">สอนแทน ${esc(userName(sec.teacherId))}</span>`
+      : `<span class="chip chip-sub">${esc(userName(t.sub.teacher))} สอนแทน</span>`;
     const rec = db.att.records[sessionKey(sec.id, date, t.period)];
     const future = date > today;
     let status, btn;
@@ -347,7 +365,7 @@ function renderToday(date) {
       <div class="period-row ${np === t.period ? 'now' : ''}">
         <div class="period-no"><b>${t.period}</b><span>${periodOf(t.period).start}</span></div>
         <div class="period-main">
-          <div class="period-title">${sec.code} ${esc(sec.name)} <span class="sec-room">${sec.room}</span>${np === t.period ? '<span class="chip chip-primary">กำลังสอน</span>' : ''}</div>
+          <div class="period-title">${sec.code} ${esc(sec.name)} <span class="sec-room">${sec.room}</span>${subChip}${np === t.period ? '<span class="chip chip-primary">กำลังสอน</span>' : ''}</div>
           <div class="period-sub">${periodOf(t.period).start}–${periodOf(t.period).end} · ${sec.students.length} คน · ${status}</div>
         </div>
         <div>${btn}</div>
@@ -378,7 +396,7 @@ function renderToday(date) {
       <div class="card list-wrap"><table class="list">
         <thead><tr><th>วันที่</th><th>คาบ</th><th>รายวิชา</th><th class="c">ห้อง</th><th></th></tr></thead>
         <tbody>${backlog.map((x) => `<tr>
-          <td>${thShort(x.date)}</td><td>${periodLabel(x.period)}</td><td>${x.sec.code} ${esc(x.sec.name)}</td><td class="c">${x.sec.room}</td>
+          <td>${thShort(x.date)}</td><td>${periodLabel(x.period)}</td><td>${x.sec.code} ${esc(x.sec.name)}${x.sub ? ` <span class="chip chip-sub">สอนแทน</span>` : ''}</td><td class="c">${x.sec.room}</td>
           <td class="r"><a class="btn btn-sm btn-primary" href="#/c/${x.sec.id}/${x.date}/${x.period}">${icon('check')}เช็คชื่อย้อนหลัง</a></td></tr>`).join('')}</tbody>
       </table></div>`
     : `<div class="card empty" style="padding:22px"><div>${icon('check')} เช็คชื่อครบทุกคาบที่ผ่านมาแล้ว</div></div>`}
@@ -393,17 +411,38 @@ function renderToday(date) {
 /* =========================================================
  *  Page: เช็คชื่อหนึ่งคาบ
  * ========================================================= */
+/* คาบที่เช็คแล้วของห้องเดียวกันในวันเดียวกัน ก่อนคาบ period เรียงจากเช้าไปบ่าย — ใช้เติมข้อมูลเมื่อเช็คย้อนหลัง */
+function earlierChecks(room, date, period) {
+  return roomSections(room).flatMap((s) => slotsOf(db, s.id)
+    .filter((t) => t.day === weekdayOf(date) && t.period < period)
+    .map((t) => db.att.records[sessionKey(s.id, date, t.period)] && { period: t.period, rec: db.att.records[sessionKey(s.id, date, t.period)] }))
+    .filter(Boolean).sort((x, y) => x.period - y.period);
+}
+function backfillSource(sec, date, period, kind) {
+  const list = earlierChecks(sec.room, date, period);
+  if (kind === 'prev') return list[list.length - 1] || null;
+  if (kind === 'morning') return list[0] || null;
+  return null;
+}
+/* ประวัติการแก้ไขของคาบนี้ (เก็บในประวัติของห้องเรียนที่สอน) */
+const sessionHistory = (sec, key) => sec.history.filter((h) => h.att === key);
+
 function renderCheck(secId, date, period) {
   const sec = sectionById(secId);
-  if (!sec || sec.teacherId !== ME) { toast('เปิดได้เฉพาะคาบของห้องเรียนที่ท่านสอน', 'bad'); go('#/'); return; }
+  if (!sec || !canCheck(db, sec, date, period, ME)) { toast('เปิดได้เฉพาะคาบของห้องเรียนที่ท่านสอนหรือสอนแทน', 'bad'); go('#/'); return; }
   const slot = inTerm(db, date) && !holidayOn(db, date) && db.att.timetable.find((t) => t.sec === secId && t.day === weekdayOf(date) && t.period === period);
   if (!slot) { toast('ไม่พบคาบนี้ในตารางสอน', 'bad'); go('#/'); return; }
   const key = sessionKey(secId, date, period);
   const rec = db.att.records[key];
-  const readonly = date > todayISO();
-  if (ui.draft?.key !== key) ui.draft = { key, marks: {} };
+  const sub = subOf(db, secId, date, period);
+  const today = todayISO();
+  const readonly = date > today;
+  const late = !rec && !readonly && date < today; // ลืมเช็ค: เลยวันสอนแล้ว
+  if (ui.draft?.key !== key) ui.draft = { key, marks: {}, reasons: {}, fill: null }; // reasons: เหตุผลที่แก้ ขาด → มา รายคน
   const base = (sid) => (rec ? markOf(rec, sid) : 'present');
   const cur = (sid) => ui.draft.marks[sid] ?? base(sid);
+  const strict = (sid) => rec && base(sid) === 'absent' && cur(sid) === 'present';
+  const hist = sessionHistory(sec, key);
   $('#topbarTitle').textContent = 'เช็คชื่อ';
 
   view.innerHTML = `
@@ -413,15 +452,26 @@ function renderCheck(secId, date, period) {
         <div>
           <h1>${sec.code} ${esc(sec.name)} · ${sec.room}</h1>
           <div class="ws-sub"><span>${icon('calendar')} ${thDay(date)}</span><span>${icon('clock')} ${periodLabel(period)}</span><span>${icon('users')} ${sec.students.length} คน</span>
-          ${rec ? `<span>เช็คล่าสุด ${thTime(rec.t)}</span>` : ''}</div>
+          ${rec ? `<span>เช็คล่าสุด ${thTime(rec.t)}${rec.by && rec.by !== ME ? ` โดย ${esc(userName(rec.by))}` : ''}</span>` : ''}
+          ${rec?.fill ? `<span class="chip">เช็คย้อนหลัง · ${BACKFILL[rec.fill].label}</span>` : ''}</div>
         </div>
       </div>
       <div class="ws-kpis" id="kpis"></div>
     </div>
+    ${sub ? `<div class="callout" style="margin-bottom:12px">${icon('users')}<div>${sub.teacher === ME
+      ? `ท่านสอนแทน <b>${esc(userName(sec.teacherId))}</b> ในคาบนี้ (ฝ่ายวิชาการกำหนดโดย ${esc(userName(sub.by))}) การเช็คชื่อจะบันทึกในนามท่าน ครูผู้สอนประจำวิชาเห็นและแก้ไขต่อได้`
+      : `คาบนี้ <b>${esc(userName(sub.teacher))}</b> สอนแทน ${rec ? '' : 'และยังไม่ได้เช็คชื่อ '}ท่านยังแก้ไขการเช็คชื่อได้ในฐานะครูผู้สอนประจำวิชา`}</div></div>` : ''}
     ${readonly ? `<div class="callout" style="margin-bottom:12px">${icon('info')}<div>ยังไม่ถึงวันสอน เช็คชื่อล่วงหน้าไม่ได้</div></div>` : ''}
+    ${late ? `<div class="callout warn backfill" style="margin-bottom:12px">${icon('clock')}<div style="flex:1">
+      <b>คาบนี้เลยวันสอนแล้วแต่ยังไม่ได้เช็คชื่อ</b> เลือกข้อมูลเริ่มต้น แล้วตรวจแก้รายคนก่อนบันทึก
+      <div class="backfill-opts">${Object.entries(BACKFILL).map(([k, b]) => {
+        const src = k === 'all' ? true : backfillSource(sec, date, period, k);
+        return `<button class="btn btn-sm" data-fill="${k}" ${src ? '' : 'disabled'} title="${esc(src ? b.hint : `${b.hint} — ไม่มีข้อมูล`)}">${b.label}${src && k !== 'all' ? ` <span class="faint">(คาบ ${src.period})</span>` : ''}</button>`;
+      }).join('')}</div></div></div>` : ''}
 
     <div class="toolbar">
       <div class="key-hint"><span class="faint">คีย์ลัดเมื่อเลือกแถว</span>${ATT_KEYS.map((k, i) => `<span class="key-pill att-${k}"><b>${i + 1}</b>${ATT[k].label}</span>`).join('')}<span class="faint">แล้วเลื่อนไปคนถัดไป</span></div>
+      ${readonly ? '' : `<button class="btn btn-sm btn-ghost" id="keyHelp">${icon('info')}วิธีใช้</button>`}
       <span class="spacer"></span>
       ${readonly ? '' : '<button class="btn btn-sm" id="allPresent">ทุกคนมา</button>'}
     </div>
@@ -432,13 +482,18 @@ function renderCheck(secId, date, period) {
         const a = studentAttendance(db, sec, s.id);
         return `<tr data-sid="${s.id}" tabindex="${readonly ? -1 : 0}">
           <td class="c num faint">${s.no}</td>
-          <td>${esc(fullName(s))}</td>
+          <td>${esc(fullName(s))}<span class="strict-note">${icon('alert')}<span></span></span></td>
           <td><div class="att-seg">${ATT_KEYS.map((k) => `<button data-m="${k}" class="m-${k}" ${readonly ? 'disabled' : ''}>${ATT[k].label}</button>`).join('')}</div></td>
           <td class="r num ${a.pct < MIN_ATTENDANCE ? 'txt-bad' : ''}">${a.pct}%</td>
           <td class="c">${levelChip(a)}</td></tr>`;
       }).join('')}</tbody>
     </table></div>
     <p class="faint" style="font-size:12.5px">เวลาเรียนและจำนวนคาบที่ขาดได้อีก คิดจากคาบที่บันทึกแล้ว (${sectionAttendance(db, sec).checked} คาบ) · ขาดหรือลาได้ทั้งภาคไม่เกิน ${allowedMiss(sec)} คาบจาก ${sec.hours} ชั่วโมงตามหลักสูตร</p>
+    ${hist.length ? `<h2 class="sub-head">ประวัติการแก้ไขคาบนี้ <span class="faint">(${hist.length})</span></h2>
+      <div class="card list-wrap"><table class="list">
+        <thead><tr><th>เมื่อ</th><th>ผู้แก้ไข</th><th>นักเรียน</th><th>เปลี่ยน</th><th>เหตุผล</th></tr></thead>
+        <tbody>${hist.map((h) => `<tr><td>${thTime(h.t)}</td><td>${esc(h.who)}</td><td>${esc(h.student)}</td><td>${esc(h.from)} → <b>${esc(h.to)}</b></td><td class="muted">${esc(h.reason || '—')}</td></tr>`).join('')}</tbody>
+      </table></div>` : ''}
     ${readonly ? '' : '<div class="actionbar" id="actionbar"></div>'}
   `;
 
@@ -450,8 +505,11 @@ function renderCheck(secId, date, period) {
       const tr = $(`tr[data-sid="${s.id}"]`, view);
       $$('.att-seg button', tr).forEach((b) => b.classList.toggle('on', b.dataset.m === m));
       tr.classList.toggle('row-changed', s.id in ui.draft.marks);
+      tr.classList.toggle('row-strict', !!strict(s.id));
+      if (strict(s.id)) $('.strict-note span', tr).textContent = `แก้จากขาด · ${ui.draft.reasons[s.id]}`;
     });
     $('#kpis').innerHTML = ATT_KEYS.map((k) => `<div class="kpi"><div class="kpi-label">${ATT[k].label}</div><div class="kpi-value att-text-${k}">${c[k]}</div></div>`).join('');
+    $$('[data-fill]', view).forEach((b) => b.classList.toggle('btn-primary', b.dataset.fill === ui.draft.fill));
     const bar = $('#actionbar');
     if (!bar) return;
     const n = Object.keys(ui.draft.marks).length;
@@ -460,12 +518,19 @@ function renderCheck(secId, date, period) {
         ? (n ? `<span class="dot" style="color:#e0a100"></span><span>แก้ไข <strong>${n}</strong> คน ยังไม่บันทึก</span>` : `<span style="color:var(--ok)">${icon('check')}</span><span>บันทึกแล้ว · ${thTime(rec.t)}</span>`)
         : `<span class="dot" style="color:#e0a100"></span><span>คาบนี้<strong>ยังไม่ได้บันทึก</strong> · มา ${c.present + c.late} / ${sec.students.length} คน</span>`}</div>
       <span class="spacer"></span>
-      <button class="btn btn-ghost" id="discardBtn" ${n ? '' : 'disabled'}>ยกเลิกการแก้ไข</button>
+      <button class="btn btn-ghost" id="discardBtn" ${n || ui.draft.fill ? '' : 'disabled'}>ยกเลิกการแก้ไข</button>
       <button class="btn btn-primary" id="saveBtn" ${rec && !n ? 'disabled' : ''}>${icon('save')}บันทึกการเช็คชื่อ</button>`;
   };
-  const setMark = (sid, m) => {
+  const apply = (sid, m) => {
     if (m === base(sid)) delete ui.draft.marks[sid]; else ui.draft.marks[sid] = m;
+    if (!(rec && base(sid) === 'absent' && m === 'present')) delete ui.draft.reasons[sid];
     refresh();
+  };
+  /* แก้ ขาด → มา: ถามเหตุผลทันทีรายคน ยกเลิกแล้วสถานะไม่เปลี่ยน (ADR 0013) แล้วเรียก after(ok) */
+  const setMark = (sid, m, after) => {
+    if (!(rec && base(sid) === 'absent' && m === 'present') || cur(sid) === 'present') { apply(sid, m); after?.(true); return; }
+    const s = sec.students.find((x) => x.id === sid);
+    askStrictReason(s, (reason) => { ui.draft.reasons[sid] = reason; apply(sid, m); after?.(true); }, () => after?.(false));
   };
   refresh();
   if (readonly) return;
@@ -473,9 +538,27 @@ function renderCheck(secId, date, period) {
   view.addEventListener('click', (e) => {
     const b = e.target.closest('.att-seg button');
     if (b) { setMark(b.closest('tr').dataset.sid, b.dataset.m); return; }
-    if (e.target.closest('#allPresent')) { sec.students.forEach((s) => { const m = 'present'; if (m === base(s.id)) delete ui.draft.marks[s.id]; else ui.draft.marks[s.id] = m; }); refresh(); return; }
-    if (e.target.closest('#discardBtn')) { ui.draft.marks = {}; refresh(); return; }
-    if (e.target.closest('#saveBtn')) { saveCheck(); route(); }
+    const f = e.target.closest('[data-fill]');
+    if (f) {
+      const src = backfillSource(sec, date, period, f.dataset.fill);
+      ui.draft.marks = {};
+      ui.draft.reasons = {};
+      ui.draft.fill = f.dataset.fill;
+      // คัดลอกเฉพาะ ลา และ ขาด — สายในคาบอื่นไม่ได้แปลว่าสายคาบนี้
+      if (src) sec.students.forEach((s) => { const m = markOf(src.rec, s.id); if (m === 'leave' || m === 'absent') ui.draft.marks[s.id] = m; });
+      refresh();
+      return;
+    }
+    if (e.target.closest('#keyHelp')) { openKeyHelp(); return; }
+    if (e.target.closest('#allPresent')) {
+      // คนที่บันทึกไว้ว่าขาดคงเป็นขาด ต้องแก้รายคนพร้อมเหตุผล
+      const kept = sec.students.filter((s) => rec && base(s.id) === 'absent' && cur(s.id) !== 'present');
+      sec.students.forEach((s) => { if (!kept.includes(s)) apply(s.id, 'present'); });
+      if (kept.length) toast(`เว้น ${kept.length} คนที่บันทึกไว้ว่าขาด ถ้าจะแก้เป็นมาให้แก้รายคนพร้อมเหตุผล`, 'info');
+      return;
+    }
+    if (e.target.closest('#discardBtn')) { ui.draft.marks = {}; ui.draft.reasons = {}; ui.draft.fill = null; refresh(); return; }
+    if (e.target.closest('#saveBtn')) saveCheck(() => route());
   });
   view.addEventListener('keydown', (e) => {
     const tr = e.target.closest('tr[data-sid]');
@@ -483,35 +566,78 @@ function renderCheck(secId, date, period) {
     const idx = { 1: 0, 2: 1, 3: 2, 4: 3 }[e.key];
     if (idx != null) {
       e.preventDefault();
-      setMark(tr.dataset.sid, ATT_KEYS[idx]);
-      (tr.nextElementSibling || tr).focus();
+      setMark(tr.dataset.sid, ATT_KEYS[idx], (ok) => (ok ? tr.nextElementSibling || tr : tr).focus());
     } else if (e.key === 'ArrowDown') { e.preventDefault(); tr.nextElementSibling?.focus(); }
     else if (e.key === 'ArrowUp') { e.preventDefault(); tr.previousElementSibling?.focus(); }
   });
 }
 
-/* บันทึกคาบที่กำลังเช็ค: เก็บเฉพาะคนที่ไม่ใช่ “มา” การแก้คาบที่เคยบันทึกแล้วจะลงประวัติการแก้ไขของห้องเรียนที่สอน */
-function saveCheck() {
+function askStrictReason(s, onOk, onCancel) {
+  let done = false;
+  openModal({
+    title: 'แก้ ขาด เป็น มา',
+    body: `<p class="muted" style="margin-top:0"><b>${s.no}. ${esc(fullName(s))}</b> บันทึกไว้ว่า <b class="att-text-absent">ขาด</b> การแก้เป็น <b class="att-text-present">มา</b> จะเพิ่มเวลาเรียน ต้องระบุเหตุผล ระบบจะเก็บชื่อผู้แก้ไขและเวลาไว้ในประวัติ</p>
+      <label class="field-label" for="strictReason">เหตุผล <span class="txt-bad">*</span></label>
+      <textarea id="strictReason" class="input" rows="3" placeholder="เช่น นักเรียนมาเรียนแต่ครูเช็คผิดคน / ไปแข่งขันในนามโรงเรียน มีหนังสือรับรอง"></textarea>
+      <div class="faint" id="strictErr" style="font-size:12.5px;margin-top:4px">อย่างน้อย 10 ตัวอักษร · กด Enter เพื่อยืนยัน</div>`,
+    actions: [
+      { label: 'ไม่แก้', cls: 'btn-ghost', onClick: () => { done = true; onCancel(); } },
+      { label: 'ยืนยันแก้เป็นมา', cls: 'btn-primary', icon: 'check', onClick: (close) => {
+        const reason = $('#strictReason').value.trim();
+        if (reason.length < 10) { $('#strictErr').classList.add('txt-bad'); $('#strictReason').focus(); return false; }
+        done = true; close(); onOk(reason); return false;
+      } },
+    ],
+    onMount: (m) => {
+      const ta = $('#strictReason', m);
+      ta.focus();
+      ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); $$('[data-act]', m)[1].click(); } });
+      // ปิดด้วย Esc หรือคลิกนอกกล่อง = ไม่แก้
+      new MutationObserver((_, o) => { if (!m.isConnected) { o.disconnect(); if (!done) onCancel(); } }).observe($('#modalRoot'), { childList: true });
+    },
+  });
+}
+
+function openKeyHelp() {
+  openModal({
+    title: 'คีย์ลัดในการเช็คชื่อ',
+    body: `<ol class="key-steps">
+      <li>คลิกที่แถวของนักเรียนคนแรก (หรือกด <span class="kbd">Tab</span> จนแถวมีกรอบสีน้ำเงิน)</li>
+      <li>กดตัวเลขเพื่อเลือกสถานะ ระบบจะเลื่อนไปคนถัดไปให้เอง
+        <div class="key-hint" style="margin-top:6px">${ATT_KEYS.map((k, i) => `<span class="key-pill att-${k}"><b>${i + 1}</b>${ATT[k].label}</span>`).join('')}</div></li>
+      <li>ใช้ <span class="kbd">↑</span> <span class="kbd">↓</span> เลื่อนแถวโดยไม่เปลี่ยนสถานะ</li>
+      <li>กด <b>บันทึกการเช็คชื่อ</b> ที่แถบด้านล่างเมื่อเสร็จ</li>
+    </ol>`,
+    actions: [{ label: 'เข้าใจแล้ว', cls: 'btn-primary' }],
+  });
+}
+
+/* บันทึกคาบที่กำลังเช็ค: เก็บเฉพาะคนที่ไม่ใช่ “มา” การแก้คาบที่เคยบันทึกแล้วจะลงประวัติการแก้ไขของห้องเรียนที่สอน
+ * เหตุผลของการแก้ ขาด → มา ถามไว้แล้วตอนกดเปลี่ยนรายคน (draft.reasons, ADR 0013) */
+function saveCheck(done) {
   if (!ui.draft) return;
-  const [secId, date, period] = ui.draft.key.split('|');
+  const draft = ui.draft;
+  const [secId, date, period] = draft.key.split('|');
   const sec = sectionById(secId);
-  const rec = db.att.records[ui.draft.key];
+  const rec = db.att.records[draft.key];
   const ex = {};
   const changes = [];
   sec.students.forEach((s) => {
     const before = rec ? markOf(rec, s.id) : 'present';
-    const m = ui.draft.marks[s.id] ?? before;
+    const m = draft.marks[s.id] ?? before;
     if (m !== 'present') ex[s.id] = m;
     if (rec && m !== before) changes.push({ s, before, m });
   });
   const t = Date.now();
   changes.forEach(({ s, before, m }) => sec.history.unshift({
     t, who: myName(), student: fullName(s), field: `เช็คชื่อ ${thShort(date)} คาบ ${period}`, from: ATT[before].label, to: ATT[m].label,
+    att: draft.key, ...(draft.reasons?.[s.id] ? { reason: draft.reasons[s.id] } : {}),
   }));
-  db.att.records[ui.draft.key] = { t, ex };
+  db.att.records[draft.key] = { t, ex, by: ME, ...(rec?.fill || draft.fill ? { fill: rec?.fill || draft.fill } : {}) };
   ui.draft = null;
   persist();
   toast(rec ? `บันทึกการแก้ไขแล้ว${changes.length ? ` (${changes.length} คน)` : ''}` : 'บันทึกการเช็คชื่อแล้ว', 'ok');
+  done?.();
 }
 
 /* =========================================================
@@ -560,7 +686,8 @@ function renderSection(secId) {
   const a = sectionAttendance(db, sec);
   const rows = sec.students.map((s) => ({ s, a: studentAttendance(db, sec, s.id) }));
   const count = (lv) => rows.filter((x) => x.a.level === lv).length;
-  const shown = rows.filter((x) => ui.secFilter === 'all' || x.a.level === ui.secFilter);
+  // ตัวกรอง มส แสดงคนที่ปลด มส แล้วด้วย เพื่อให้เห็นและยกเลิกได้
+  const shown = rows.filter((x) => ui.secFilter === 'all' || x.a.level === ui.secFilter || (ui.secFilter === 'ms' && x.a.level === 'waived'));
   view.innerHTML = `
     <a class="back-link" href="#/sections">${icon('back')}ห้องที่ฉันสอน</a>
     <div class="card ws-head">
@@ -581,11 +708,13 @@ function renderSection(secId) {
       <div class="seg" id="lvFilter">${[['all', 'ทั้งหมด', rows.length], ['risk', 'ใกล้ มส', count('risk')], ['ms', 'มส', count('ms')]].map(([k, l, c]) => `<button data-f="${k}" class="${ui.secFilter === k ? 'on' : ''}">${l}<span class="cnt">${c}</span></button>`).join('')}</div>
     </div>
     <div class="card list-wrap"><table class="list">
-      <thead><tr><th class="c">เลขที่</th><th>ชื่อ-สกุล</th><th class="c">มา</th><th class="c">สาย</th><th class="c">ลา</th><th class="c">ขาด</th><th class="r">เวลาเรียน</th><th class="c">ก่อน มส</th></tr></thead>
+      <thead><tr><th class="c">เลขที่</th><th>ชื่อ-สกุล</th><th class="c">มา</th><th class="c">สาย</th><th class="c">ลา</th><th class="c">ขาด</th><th class="r">เวลาเรียน</th><th class="c">ก่อน มส</th><th></th></tr></thead>
       <tbody>${shown.map(({ s, a: x }) => `<tr>
         <td class="c num faint">${s.no}</td><td>${esc(fullName(s))}</td>
         <td class="c num">${x.present}</td><td class="c num">${x.late || '<span class="faint">0</span>'}</td><td class="c num">${x.leave || '<span class="faint">0</span>'}</td><td class="c num ${x.absent ? 'txt-bad' : ''}">${x.absent || '<span class="faint">0</span>'}</td>
-        <td class="r num ${x.pct < MIN_ATTENDANCE ? 'txt-bad' : ''}"><b>${x.pct}%</b></td><td class="c">${levelChip(x)}</td></tr>`).join('') || '<tr><td colspan="8" class="c faint" style="padding:24px">ไม่มีนักเรียนในกลุ่มนี้</td></tr>'}</tbody>
+        <td class="r num ${x.pct < MIN_ATTENDANCE ? 'txt-bad' : ''}"><b>${x.pct}%</b></td><td class="c">${levelChip(x)}</td>
+        <td class="r">${x.level === 'ms' && !secLocked(sec) ? `<button class="btn btn-sm" data-waive="${s.id}">ปลด มส</button>`
+          : x.level === 'waived' ? `<button class="btn btn-sm btn-ghost" data-waive="${s.id}" title="${esc(MS_WAIVER[msWaiverOf(sec, s.id).kind].label)}">${icon('eye')}ดูการปลด</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="9" class="c faint" style="padding:24px">ไม่มีนักเรียนในกลุ่มนี้</td></tr>'}</tbody>
     </table></div>
 
     <h2 class="sub-head">คาบที่ผ่านมา <span class="faint">(${a.sessions.length} คาบ · เลือกวันบนปฏิทิน)</span></h2>
@@ -596,6 +725,10 @@ function renderSection(secId) {
   $('#lvFilter').addEventListener('click', (e) => {
     const b = e.target.closest('[data-f]');
     if (b) go(`#/s/${secId}/${b.dataset.f}`);
+  });
+  view.addEventListener('click', (e) => {
+    const w = e.target.closest('[data-waive]');
+    if (w) openWaiver(sec, sec.students.find((s) => s.id === w.dataset.waive));
   });
 
   // ปฏิทินคาบของห้องนี้: เปิดมาเลือกวันสอนล่าสุดที่ผ่านมาไว้ก่อน
@@ -643,6 +776,55 @@ function renderSection(secId) {
   showDay(ui.calSec.date);
 }
 
+/* ปลด มส: บันทึกหลังผู้บริหารอนุมัติแล้ว (นอกระบบ) ต้องมีเลขที่บันทึกอนุมัติและเหตุผล — ADR 0013 */
+function openWaiver(sec, s) {
+  const a = studentAttendance(db, sec, s.id);
+  const w = msWaiverOf(sec, s.id);
+  const head = `<div class="waive-stu"><b>${s.no}. ${esc(fullName(s))}</b><span class="muted">${sec.code} ${esc(sec.name)} · เวลาเรียน ${a.pct}% · ขาด ${a.absent} ลา ${a.leave}</span></div>`;
+  const log = (to, extra = {}) => sec.history.unshift({ t: Date.now(), who: myName(), student: fullName(s), field: 'เวลาเรียน (มส)', from: '', to, ...extra });
+  if (w) {
+    openModal({
+      title: 'การปลด มส',
+      body: `${head}<dl class="waive-dl">
+        <dt>กรณี</dt><dd>${MS_WAIVER[w.kind].label}<div class="faint">${MS_WAIVER[w.kind].grade}</div></dd>
+        <dt>เลขที่บันทึกอนุมัติ</dt><dd>${esc(w.ref)}</dd><dt>เหตุผล</dt><dd>${esc(w.reason)}</dd>
+        <dt>บันทึกโดย</dt><dd>${esc(userName(w.by))} · ${thTime(w.at)}</dd></dl>`,
+      actions: secLocked(sec) ? [{ label: 'ปิด', cls: 'btn-ghost' }] : [
+        { label: 'ยกเลิกการปลด มส', cls: 'btn-danger', onClick: () => {
+          delete sec.msWaiver[s.id]; log('ยกเลิกการปลด มส', { from: 'ปลด มส' }); persist(); route(); toast('ยกเลิกการปลด มส แล้ว', 'ok');
+        } },
+        { label: 'ปิด', cls: 'btn-ghost' },
+      ],
+    });
+    return;
+  }
+  openModal({
+    title: 'ปลด มส',
+    body: `${head}
+      <div class="callout" style="margin:12px 0">${icon('info')}<div>บันทึกได้เมื่อผู้บริหารอนุมัติแล้วเท่านั้น ระบบเก็บผู้บันทึก เวลา และแสดงในประวัติการแก้ไขที่ฝ่ายวิชาการเห็น</div></div>
+      <div class="field-label">กรณี <span class="txt-bad">*</span></div>
+      <div class="waive-kinds">${Object.entries(MS_WAIVER).map(([k, x]) => `<label class="waive-kind"><input type="radio" name="wKind" value="${k}"><span><b>${x.label}</b><span class="faint">${x.grade}</span></span></label>`).join('')}</div>
+      <label class="field-label" for="wRef">เลขที่บันทึกอนุมัติ <span class="txt-bad">*</span></label>
+      <input id="wRef" class="input" placeholder="เช่น วก. 123/2569">
+      <label class="field-label" for="wReason">เหตุผล <span class="txt-bad">*</span></label>
+      <textarea id="wReason" class="input" rows="3" placeholder="เช่น ป่วยนอนโรงพยาบาล 3 สัปดาห์ มีใบรับรองแพทย์"></textarea>
+      <div class="txt-bad" id="wErr" style="font-size:12.5px;margin-top:4px"></div>`,
+    actions: [
+      { label: 'ยกเลิก', cls: 'btn-ghost' },
+      { label: 'บันทึกการปลด มส', cls: 'btn-primary', icon: 'save', onClick: () => {
+        const kind = $('input[name="wKind"]:checked')?.value;
+        const ref = $('#wRef').value.trim();
+        const reason = $('#wReason').value.trim();
+        if (!kind || !ref || reason.length < 10) { $('#wErr').textContent = 'เลือกกรณี กรอกเลขที่บันทึกอนุมัติ และเหตุผลอย่างน้อย 10 ตัวอักษร'; return false; }
+        sec.msWaiver = sec.msWaiver || {};
+        sec.msWaiver[s.id] = { kind, ref, reason, by: ME, at: Date.now() };
+        log(`ปลด มส: ${MS_WAIVER[kind].label} (${ref})`, { from: 'มส', reason });
+        persist(); route(); toast('บันทึกการปลด มส แล้ว', 'ok');
+      } },
+    ],
+  });
+}
+
 /* =========================================================
  *  Page: ห้องประจำชั้นของฉัน (ครูประจำชั้น)
  * ========================================================= */
@@ -670,9 +852,11 @@ function renderHomeroom(r) {
   const shownDate = r.date || latestCheckedDate(secs, ui.date) || ui.date;
   const tabs = `<div class="tabs">
     <a class="tab ${r.page === 'hday' ? 'active' : ''}" href="#/h/${shownDate}">${icon('calendar')}รายวัน</a>
+    <a class="tab ${r.page === 'hsubj' ? 'active' : ''}" href="#/h/subj">${icon('book')}รายวิชา</a>
     <a class="tab ${r.page === 'hsum' ? 'active' : ''}" href="#/h/sum">${icon('grid')}สรุปทั้งภาค</a></div>`;
   const head = `<div class="page-head"><div><h1>ห้องประจำชั้น ${room}</h1><p>เห็นการเข้าเรียนของนักเรียนในห้องทุกวิชา (ดูอย่างเดียว)</p></div>${r.page === 'hday' ? dayNav(shownDate) : ''}</div>`;
   if (r.page === 'hsum') return renderHomeroomSum(room, secs, roster, head, tabs, r.focus);
+  if (r.page === 'hsubj') return renderHomeroomSubj(secs, roster, head, tabs, r.id);
 
   if (r.date) ui.date = r.date;
   const date = shownDate;
@@ -709,6 +893,44 @@ function renderHomeroom(r) {
     </table></div>`}
   `;
   bindDayNav('#/h', date, () => roomDots(room));
+}
+
+/* ---------- รายวิชาย้อนหลัง: นักเรียน × ทุกคาบที่ผ่านมาของวิชาที่เลือก ---------- */
+function renderHomeroomSubj(secs, roster, head, tabs, secId) {
+  const sec = secs.find((x) => x.id === secId) || secs[0];
+  const today = todayISO();
+  const sessions = plannedSessions(db, sec, today);
+  const recs = sessions.map((x) => db.att.records[x.key]);
+  const cell = (s, i) => {
+    const rec = recs[i];
+    if (!rec) return '<td class="hr-cell unchecked">?</td>';
+    const m = markOf(rec, s.id);
+    return `<td class="hr-cell">${m === 'present' ? '<span class="hr-dot"></span>' : markChip(m)}</td>`;
+  };
+  let lastMonth = '';
+  view.innerHTML = `${head}${tabs}
+    <div class="toolbar">
+      <select class="select" id="subjPick" aria-label="เลือกวิชา">${secs.map((x) => `<option value="${x.id}" ${x.id === sec.id ? 'selected' : ''}>${x.code} ${esc(x.name)} · ${esc(userName(x.teacherId))}</option>`).join('')}</select>
+      <span class="faint">${sessions.length} คาบตั้งแต่ต้นภาค · ยังไม่เช็ค ${recs.filter((r) => !r).length} คาบ</span>
+      <span class="spacer"></span>
+      <div class="legend"><span><span class="hr-dot"></span>มา</span>${['late', 'leave', 'absent'].map((k) => `<span>${markChip(k)}</span>`).join('')}<span><span class="hr-q">?</span>ยังไม่เช็ค</span></div>
+    </div>
+    ${sessions.length ? `<div class="card list-wrap hr-wrap hr-hist" id="histWrap"><table class="list hr-table">
+      <thead><tr><th class="c sticky-c">เลขที่</th><th class="sticky-n">ชื่อ-สกุล</th><th class="c">เวลาเรียน</th>${sessions.map((x) => {
+        const mo = x.date.slice(0, 7); const first = mo !== lastMonth; lastMonth = mo;
+        return `<th class="c ${first ? 'hr-mstart' : ''}" title="${thDay(x.date)} ${periodLabel(x.period)}">${dmy(x.date).slice(0, 5)}<div class="hr-subj">${weekdayName(x.date, 'short')} ค.${x.period}</div></th>`;
+      }).join('')}</tr></thead>
+      <tbody>${roster.map((s) => {
+        const a = studentAttendance(db, sec, s.id);
+        return `<tr><td class="c num faint sticky-c">${s.no}</td><td class="sticky-n">${esc(fullName(s))}</td>
+          <td class="c num ${a.level === 'ms' ? 'pct-ms' : a.level === 'risk' ? 'pct-risk' : ''}">${a.pct}%</td>${sessions.map((_, i) => cell(s, i)).join('')}</tr>`;
+      }).join('')}</tbody>
+    </table></div>
+    <p class="faint" style="font-size:12.5px">เลื่อนตารางไปทางซ้ายเพื่อดูคาบที่เก่ากว่า · ชี้ที่หัวคอลัมน์เพื่อดูวันและเวลา</p>`
+    : `<div class="card empty"><div class="empty-icon">${icon('calendar')}</div><h3>ยังไม่มีคาบของวิชานี้</h3></div>`}`;
+  $('#subjPick').addEventListener('change', (e) => go(`#/h/subj/${e.target.value}`));
+  const wrap = $('#histWrap');
+  if (wrap) wrap.scrollLeft = wrap.scrollWidth; // เปิดที่คาบล่าสุด
 }
 
 /* ---------- สรุปทั้งภาคของห้องประจำชั้น ---------- */

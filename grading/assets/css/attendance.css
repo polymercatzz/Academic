@@ -260,3 +260,29 @@ svg.chart { width: 100%; height: auto; display: block; overflow: visible; fill: 
   .cal-layout { grid-template-columns: 1fr; }
   .att-page .key-hint { display: none; }
 }
+
+/* ---------- สอนแทน / เช็คย้อนหลัง / ขาด → มา / ปลด มส (ADR 0013) ---------- */
+.chip-sub { background: var(--primary-50); color: var(--primary); border-color: var(--primary-100); margin-left: 6px; }
+.backfill-opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+.strict-note { display: none; margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--bad); }
+.strict-note svg { width: 13px; height: 13px; vertical-align: -2px; margin-right: 2px; }
+.att-table tr.row-strict .strict-note { display: inline; }
+.att-table tr.row-strict td { background: var(--bad-50); }
+.strict-list { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+.field-label { display: block; font-weight: 600; font-size: 13.5px; margin: 12px 0 6px; }
+.modal textarea.input, .modal input.input { width: 100%; height: auto; padding: 8px 10px; resize: vertical; }
+.key-steps { margin: 0; padding-left: 20px; display: grid; gap: 10px; }
+.waive-stu { display: grid; gap: 2px; }
+.waive-kinds { display: grid; gap: 6px; }
+.waive-kind { display: flex; gap: 8px; align-items: flex-start; border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; cursor: pointer; }
+.waive-kind > span { display: grid; gap: 2px; }
+.waive-kind:has(input:checked) { border-color: var(--primary); background: var(--primary-50); }
+.waive-dl { display: grid; grid-template-columns: max-content 1fr; gap: 6px 14px; margin: 12px 0 0; }
+.waive-dl dt { color: var(--text-3); }
+.waive-dl dd { margin: 0; }
+
+/* รายวิชาย้อนหลัง (ครูประจำชั้น): ล็อกคอลัมน์เลขที่และชื่อไว้ขณะเลื่อน */
+.hr-hist .sticky-c, .hr-hist .sticky-n { position: sticky; background: var(--surface); z-index: 1; }
+.hr-hist .sticky-c { left: 0; min-width: 52px; }
+.hr-hist .sticky-n { left: 52px; box-shadow: inset -1px 0 0 var(--border); }
+.hr-hist th.hr-mstart { border-left: 2px solid var(--border-strong); }
