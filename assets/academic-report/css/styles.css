@@ -488,6 +488,10 @@ h1 {
   gap: 16px;
 }
 
+.attendance-filters-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .advanced-filter {
   margin-top: 14px;
   border-top: 1px solid var(--border-soft);
@@ -782,13 +786,28 @@ button:focus-visible {
 
 .trend-chart-wrap {
   position: relative;
-  min-height: 300px;
+  min-height: 344px;
 }
 
 .trend-chart {
   display: block;
   width: 100%;
-  height: 300px;
+  height: 344px;
+}
+
+.trend-panel-title {
+  fill: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.trend-selected-band {
+  fill: var(--primary-soft);
+}
+
+.trend-x-label.is-selected {
+  fill: var(--primary);
+  font-weight: 700;
 }
 
 .trend-grid-line {
@@ -2084,12 +2103,15 @@ input[type="number"]:focus {
   display: grid;
   position: relative;
   grid-template-columns: minmax(140px, 190px) minmax(150px, 1fr) 58px;
-  gap: 8px 10px;
+  gap: 3px 10px;
   align-items: center;
 }
 
+/* name and code on one line keeps each subject to a single short row */
 .score-bar-label {
-  display: grid;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
   min-width: 0;
 }
 
@@ -2112,7 +2134,7 @@ input[type="number"]:focus {
 .score-bar-track {
   position: relative;
   z-index: 1;
-  height: 10px;
+  height: 8px;
   overflow: hidden;
   background: #edf1f5;
   border-radius: 3px;
@@ -3021,8 +3043,8 @@ input[type="number"]:focus {
 
 .sticky-score-total { left: 380px; min-width: 110px; width: 110px; }
 .sticky-score-average { left: 490px; min-width: 96px; width: 96px; }
-.sticky-score-grade { left: 586px; min-width: 140px; width: 140px; }
-.sticky-score-rank { left: 726px; min-width: 84px; width: 84px; max-width: 84px; box-shadow: 1px 0 0 var(--border-soft); }
+.sticky-score-grade { left: 380px; min-width: 110px; width: 110px; }
+.sticky-score-rank { left: 490px; min-width: 84px; width: 84px; max-width: 84px; box-shadow: 1px 0 0 var(--border-soft); }
 
 .average-year-table .sticky-col-score-no { left: 0; min-width: 64px; width: 64px; }
 .average-year-table .sticky-col-score-id { left: 64px; min-width: 116px; width: 116px; }

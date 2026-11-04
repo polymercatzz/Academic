@@ -29,7 +29,6 @@ const viewModeDetails = {
 };
 
 const els = {
-  classLevel: document.getElementById("classLevel"),
   room: document.getElementById("room"),
   subject: document.getElementById("subject"),
   statusFilter: document.getElementById("statusFilter"),
@@ -56,10 +55,9 @@ const els = {
   attendanceTbody: document.getElementById("attendanceTbody"),
   tableWrap: document.querySelector(".table-wrap"),
   totalStudents: document.getElementById("totalStudents"),
-  presentCount: document.getElementById("presentCount"),
+  absentRate: document.getElementById("absentRate"),
   lateCount: document.getElementById("lateCount"),
   absentCount: document.getElementById("absentCount"),
-  leaveCount: document.getElementById("leaveCount"),
   priorityInsightCount: document.getElementById("priorityInsightCount"),
   priorityList: document.getElementById("priorityList"),
   priorityThresholdNote: document.getElementById("priorityThresholdNote"),
@@ -69,10 +67,9 @@ const els = {
   attendanceThresholdInput: document.getElementById("attendanceThresholdInput"),
   attendanceThresholdCloseBtn: document.getElementById("attendanceThresholdCloseBtn"),
   attendanceThresholdApplyBtn: document.getElementById("attendanceThresholdApplyBtn"),
-  presentDesc: document.getElementById("presentDesc"),
+  absentRateDesc: document.getElementById("absentRateDesc"),
   absentDesc: document.getElementById("absentDesc"),
   lateDesc: document.getElementById("lateDesc"),
-  leaveDesc: document.getElementById("leaveDesc"),
   trendAverage: document.getElementById("trendAverage"),
   trendMax: document.getElementById("trendMax"),
   trendMin: document.getElementById("trendMin"),
@@ -421,42 +418,31 @@ function populateSemesterTerms() {
   els.semesterTerm.value = semesters.some((semester) => semester.id === currentSemester.id) ? currentSemester.id : fallback;
 }
 
-function populateGradeOptions() {
-  const grades = state.db.grades
-    .slice()
-    .sort((a, b) => a.order - b.order);
-  const options = grades
-    .map((grade) => `<option value="${grade.id}">${grade.name}</option>`)
-    .join("");
-  els.classLevel.innerHTML = `<option value="all">ทุกระดับชั้น</option>${options}`;
-  els.classLevel.value = grades[0]?.id || "all";
-}
-
-function getFilteredClassroomsForControls() {
-  const gradeId = els.classLevel.value;
-  return state.db.classrooms.filter((classroom) => gradeId === "all" || classroom.gradeId === gradeId);
-}
-
+// one room picker grouped by grade; the room name already carries the grade (ม.1/1)
 function syncRoomOptions() {
   const previous = els.room.value;
-  const classrooms = getFilteredClassroomsForControls()
-    .sort((a, b) => a.name.localeCompare(b.name, "th"));
+  const groups = state.db.grades
+    .slice()
+    .sort((a, b) => a.order - b.order)
+    .map((grade) => {
+      const rooms = state.db.classrooms
+        .filter((classroom) => classroom.gradeId === grade.id)
+        .sort((a, b) => a.name.localeCompare(b.name, "th", { numeric: true }));
+      return rooms.length
+        ? `<optgroup label="${grade.name}">${rooms.map((classroom) => `<option value="${classroom.id}">${classroom.name}</option>`).join("")}</optgroup>`
+        : "";
+    })
+    .join("");
 
-  els.room.innerHTML = `<option value="all">ทุกห้อง</option>${classrooms
-    .map((classroom) => `<option value="${classroom.id}">${classroom.name}</option>`)
-    .join("")}`;
-
-  const fallback = els.classLevel.value === "all" ? "all" : classrooms[0]?.id || "all";
-  const nextValue = classrooms.some((classroom) => classroom.id === previous) ? previous : fallback;
-  els.room.value = nextValue;
+  els.room.innerHTML = `<option value="all">ทุกห้อง</option>${groups}`;
+  els.room.value = state.db.classrooms.some((classroom) => classroom.id === previous) ? previous : "all";
 }
 
 function syncSubjectOptions() {
   const previous = els.subject.value;
-  const availableClassrooms = getFilteredClassroomsForControls();
   const selectedRoom = els.room.value;
   const classroomIds = new Set(
-    availableClassrooms
+    state.db.classrooms
       .filter((classroom) => selectedRoom === "all" || classroom.id === selectedRoom)
       .map((classroom) => classroom.id)
   );
@@ -501,7 +487,7 @@ function syncCurrentAcademicLabel() {
 
 const ATTENDANCE_LAST_SEARCH_KEY = "attendanceReport:lastSearch";
 // order matters on restore: each select's options depend on the ones before it
-const ATTENDANCE_SEARCH_FIELDS = ["searchType", "monthlyYear", "monthlyMonth", "semesterYear", "semesterTerm", "startDate", "endDate", "classLevel", "room", "subject"];
+const ATTENDANCE_SEARCH_FIELDS = ["searchType", "monthlyYear", "monthlyMonth", "semesterYear", "semesterTerm", "startDate", "endDate", "room", "subject"];
 
 function saveAttendanceSearch() {
   AcademicLayout.lastSearch(ATTENDANCE_LAST_SEARCH_KEY, Object.fromEntries(ATTENDANCE_SEARCH_FIELDS.map((key) => [key, els[key].value])));
@@ -516,8 +502,7 @@ function restoreAttendanceSearch() {
     if (!value || (control.tagName === "SELECT" && ![...control.options].some((option) => option.value === value))) return;
     control.value = value;
     if (key === "semesterYear") populateSemesterTerms();
-    if (key === "classLevel") syncRoomOptions();
-    if (key === "classLevel" || key === "room") syncSubjectOptions();
+    if (key === "room") syncSubjectOptions();
   });
 }
 
@@ -527,7 +512,6 @@ function populateFilters() {
   populateAcademicYears();
   els.semesterYear.value = currentSemester.academicYearId;
   populateMonths();
-  populateGradeOptions();
   syncRoomOptions();
   syncSubjectOptions();
   populateSemesterTerms();
@@ -635,16 +619,13 @@ function formatThaiShortDate(dateString) {
   });
 }
 
-function buildSearchResult() {
-  const dateRange = getDateRangeForType();
+function buildSearchResult(dateRange = getDateRangeForType()) {
   const semesterIds = getRelevantSemesterIds(dateRange);
-  const selectedGradeId = els.classLevel.value;
   const selectedRoomId = els.room.value;
   const selectedSubjectId = els.subject.value;
 
   const classroomIds = new Set(
     state.db.classrooms
-      .filter((classroom) => selectedGradeId === "all" || classroom.gradeId === selectedGradeId)
       .filter((classroom) => selectedRoomId === "all" || classroom.id === selectedRoomId)
       .map((classroom) => classroom.id)
   );
@@ -773,14 +754,12 @@ function summarizeData(students) {
   const summary = dashboard.summary;
 
   els.totalStudents.textContent = `${summary.totalStudents} คน`;
-  els.presentCount.textContent = `${summary.presentStudents} คน`;
+  els.absentRate.textContent = `${formatRate(Math.round(summary.absentRate * 10) / 10)}%`;
+  els.absentRateDesc.textContent = `${summary.absentPeriods} จาก ${summary.totalPeriods} คาบ`;
   els.absentCount.textContent = `${summary.absentStudents} คน`;
   els.lateCount.textContent = `${summary.lateStudents} คน`;
-  els.leaveCount.textContent = `${summary.leaveStudents} คน`;
-  els.presentDesc.textContent = `${summary.presentPeriods} คาบ`;
   els.absentDesc.textContent = `${summary.absentPeriods} คาบ`;
   els.lateDesc.textContent = `${summary.lateTimes} ครั้ง`;
-  els.leaveDesc.textContent = `ลากิจ ${summary.personalLeave} · ลาป่วย ${summary.sickLeave}`;
   els.summaryScope.textContent = buildSummaryHeaderText(summary.totalSessions);
   syncAttendanceThresholdControls();
 
@@ -830,6 +809,7 @@ function buildAttendanceDashboardData(students) {
       totalStudents,
       totalSessions,
       absentRate: totals.totalPeriods ? (totals.absentPeriods / totals.totalPeriods) * 100 : 0,
+      totalPeriods: totals.totalPeriods,
       presentStudents: sourceStudents.filter((student) => student.presentPeriods > 0).length,
       presentPeriods: totals.presentPeriods,
       absentStudents: sourceStudents.filter((student) => student.absentPeriods > 0).length,
@@ -886,62 +866,36 @@ function buildStudentRiskProfile(student) {
   };
 }
 
-function buildTrendDataset(students) {
-  if (state.trendDrilldown) return buildDailyTrendDataset(students, state.trendDrilldown);
-  if (els.searchType.value === "semester") return buildSemesterTrendDataset(students);
-  if (els.searchType.value === "monthly") return buildMonthlyTrendDataset(students);
-  return buildDateRangeTrendDataset(students);
-}
-
-function buildDateRangeTrendDataset(students) {
-  const dates = [...new Set(state.visibleSessions.map((session) => session.date))]
-    .sort((a, b) => a.localeCompare(b));
-
-  return dates.map((date) => {
-    const sessions = state.visibleSessions.filter((session) => session.date === date);
-    return buildTrendPointFromSessions(formatThaiShortDate(date), sessions, students, {
-      dateStart: date,
-      dateEnd: date
-    });
-  });
-}
-
-function buildMonthlyTrendDataset(students) {
-  const points = [1, 2, 3, 4, 5].map((weekNumber) => {
-    const sessions = state.visibleSessions.filter((session) => getWeekOfMonth(session.date) === weekNumber);
-    return buildTrendPointFromSessions(`สัปดาห์ที่ ${weekNumber}`, sessions, students, {
-      drilldownLabel: `สัปดาห์ที่ ${weekNumber}`
-    });
-  });
-  return points.filter((point) => point.sessionCount > 0);
-}
-
-function buildSemesterTrendDataset(students) {
-  const semester = state.maps.semesters.get(els.semesterTerm.value) || getCurrentSemester();
-  const academicYear = state.maps.academicYears.get(semester.academicYearId);
-  const gregorianYear = Number(academicYear.name) - 543;
-  const startMonth = Number(semester.startDate.slice(5, 7));
-  const endMonth = Number(semester.endDate.slice(5, 7));
-  const months = [];
-  for (let month = startMonth; month <= endMonth; month += 1) {
-    months.push(month);
+// monthly mode still charts the whole term so every month shows; the picked month is highlighted
+function getTrendSource(students) {
+  if (els.searchType.value !== "monthly") {
+    return {
+      students,
+      sessions: state.visibleSessions,
+      semester: state.maps.semesters.get(els.semesterTerm.value) || getCurrentSemester(),
+      selectedMonthKey: null
+    };
   }
-
-  const points = months.map((month) => {
-    const monthText = new Date(gregorianYear, month - 1, 1).toLocaleDateString("th-TH", { month: "long" });
-    const monthKey = String(month).padStart(2, "0");
-    const sessions = state.visibleSessions.filter((session) => session.date.slice(5, 7) === monthKey);
-    return buildTrendPointFromSessions(monthText, sessions, students, {
-      drilldownLabel: monthText
-    });
-  });
-  return points.filter((point) => point.sessionCount > 0);
+  const monthStart = getDateRangeForType().start;
+  const semester = state.db.semesters.find((item) => monthStart >= item.startDate && monthStart <= item.endDate) || getCurrentSemester();
+  const result = buildSearchResult({ start: semester.startDate, end: semester.endDate });
+  const visibleIds = new Set(students.map((student) => student.id));
+  return {
+    students: result.students.filter((student) => visibleIds.has(student.id)),
+    sessions: result.sessions,
+    semester,
+    selectedMonthKey: monthStart.slice(5, 7)
+  };
 }
 
-function buildDailyTrendDataset(students, drilldown) {
-  const sessions = state.visibleSessions.filter((session) => {
-    return session.date >= drilldown.dateStart && session.date <= drilldown.dateEnd;
-  });
+function buildTrendDataset(students) {
+  const source = getTrendSource(students);
+  if (state.trendDrilldown) return buildDailyTrendDataset(source, state.trendDrilldown);
+  if (els.searchType.value === "custom") return buildDateRangeTrendDataset(source);
+  return buildSemesterTrendDataset(source);
+}
+
+function buildDateRangeTrendDataset({ students, sessions }) {
   const dates = [...new Set(sessions.map((session) => session.date))]
     .sort((a, b) => a.localeCompare(b));
 
@@ -954,9 +908,40 @@ function buildDailyTrendDataset(students, drilldown) {
   });
 }
 
-function getWeekOfMonth(dateString) {
-  const day = Number(dateString.slice(8, 10));
-  return Math.min(Math.ceil(day / 7), 5);
+function buildSemesterTrendDataset({ students, sessions, semester, selectedMonthKey }) {
+  const months = [];
+  for (let cursor = new Date(`${semester.startDate.slice(0, 7)}-01T00:00:00`); formatDateInput(cursor) <= semester.endDate; cursor.setMonth(cursor.getMonth() + 1)) {
+    months.push({ year: cursor.getFullYear(), month: cursor.getMonth() + 1 });
+  }
+
+  const points = months.map(({ year, month }) => {
+    const monthText = new Date(year, month - 1, 1).toLocaleDateString("th-TH", { month: "short" });
+    const monthKey = `${year}-${String(month).padStart(2, "0")}`;
+    const monthSessions = sessions.filter((session) => session.date.startsWith(monthKey));
+    return {
+      ...buildTrendPointFromSessions(monthText, monthSessions, students, {
+        drilldownLabel: `${new Date(year, month - 1, 1).toLocaleDateString("th-TH", { month: "long" })} ${year + 543}`
+      }),
+      isSelected: selectedMonthKey === monthKey.slice(5, 7)
+    };
+  });
+  return points.filter((point) => point.sessionCount > 0);
+}
+
+function buildDailyTrendDataset({ students, sessions }, drilldown) {
+  const rangeSessions = sessions.filter((session) => {
+    return session.date >= drilldown.dateStart && session.date <= drilldown.dateEnd;
+  });
+  const dates = [...new Set(rangeSessions.map((session) => session.date))]
+    .sort((a, b) => a.localeCompare(b));
+
+  return dates.map((date) => {
+    const dateSessions = rangeSessions.filter((session) => session.date === date);
+    return buildTrendPointFromSessions(formatThaiShortDate(date), dateSessions, students, {
+      dateStart: date,
+      dateEnd: date
+    });
+  });
 }
 
 function getSessionDateRange(sessions) {
@@ -1044,12 +1029,22 @@ function buildSummaryHeaderText(totalSessions) {
   return `${getSummarySubjectLabel()} · ${getSummaryRoomLabel()} · ${buildSummaryPeriodLabel()} · ${totalSessions} คาบเรียน`;
 }
 
+// absent and late rates sit far below the attendance rate, so they get their own panel and scale
+const trendPanels = [
+  { title: "เข้าเรียน", seriesKeys: ["presentRate"], fixedMax: 100, top: 52, height: 108 },
+  { title: "ขาดเรียน และมาสาย", seriesKeys: ["absentRate", "lateRate"], top: 204, height: 96 }
+];
+
+function getNiceRateMax(value) {
+  return [5, 10, 20, 25, 40, 50, 75, 100].find((step) => step >= value * 1.15) || 100;
+}
+
 function renderAttendanceTrend(points) {
   hideTrendTooltip();
   syncTrendDrilldownControls();
 
   if (!points.length) {
-    els.attendanceTrendChart.innerHTML = `<text class="trend-axis-label" x="360" y="152" text-anchor="middle">ไม่มีข้อมูลคาบเรียนในเงื่อนไขที่เลือก</text>`;
+    els.attendanceTrendChart.innerHTML = `<text class="trend-axis-label" x="360" y="172" text-anchor="middle">ไม่มีข้อมูลคาบเรียนในเงื่อนไขที่เลือก</text>`;
     els.trendAverage.textContent = "-";
     els.trendMax.textContent = "-";
     els.trendMin.textContent = "-";
@@ -1064,17 +1059,26 @@ function renderAttendanceTrend(points) {
   const absentAverage = totalPeriods ? (totalAbsent / totalPeriods) * 100 : 0;
   const lateAverage = totalPeriods ? (totalLate / totalPeriods) * 100 : 0;
 
-  els.trendAverage.textContent = `${formatRate(presentAverage)}%`;
-  els.trendMax.textContent = `${formatRate(absentAverage)}%`;
-  els.trendMin.textContent = `${formatRate(lateAverage)}%`;
+  els.trendAverage.textContent = `${formatRate(Math.round(presentAverage * 10) / 10)}%`;
+  els.trendMax.textContent = `${formatRate(Math.round(absentAverage * 10) / 10)}%`;
+  els.trendMin.textContent = `${formatRate(Math.round(lateAverage * 10) / 10)}%`;
 
   const width = Math.max(720, Math.round(els.attendanceTrendChart.clientWidth || 720));
-  const height = 300;
-  const padding = { top: 24, right: 28, bottom: 58, left: 46 };
+  const height = 344;
+  const padding = { right: 28, left: 46 };
   const chartWidth = width - padding.left - padding.right;
-  const chartHeight = height - padding.top - padding.bottom;
   const xStep = points.length > 1 ? chartWidth / (points.length - 1) : chartWidth;
-  const yForRate = (rate) => padding.top + chartHeight - ((rate / 100) * chartHeight);
+  const seriesByKey = new Map(trendSeries.map((series) => [series.key, series]));
+  const panels = trendPanels.map((panel) => {
+    const max = panel.fixedMax || getNiceRateMax(Math.max(...points.flatMap((point) => panel.seriesKeys.map((key) => point[key]))));
+    return {
+      ...panel,
+      max,
+      series: panel.seriesKeys.map((key) => seriesByKey.get(key)),
+      yFor: (rate) => panel.top + panel.height - ((Math.min(rate, max) / max) * panel.height)
+    };
+  });
+  const panelOf = new Map(panels.flatMap((panel) => panel.seriesKeys.map((key) => [key, panel])));
   const pointCoords = points.map((point, index) => ({
     ...point,
     x: padding.left + (points.length > 1 ? index * xStep : chartWidth / 2),
@@ -1083,29 +1087,24 @@ function renderAttendanceTrend(points) {
         ...series,
         value: point[series.key],
         count: point[series.countKey],
-        y: yForRate(point[series.key])
+        y: panelOf.get(series.key).yFor(point[series.key])
       };
       return seriesData;
     }, {})
   }));
   pointCoords.forEach((point) => {
-    point.y = Math.min(...trendSeries.map((series) => point.series[series.key].y));
+    point.y = point.series.presentRate.y;
   });
   const buildPath = (series) => pointCoords
     .map((point, index) => `${index === 0 ? "M" : "L"} ${point.x.toFixed(2)} ${point.series[series.key].y.toFixed(2)}`)
     .join(" ");
-  const yTicks = [0, 25, 50, 75, 100];
+  const chartTop = panels[0].top;
+  const chartBottom = panels[panels.length - 1].top + panels[panels.length - 1].height;
+  const bandWidth = Math.max(Math.min(xStep, 96), 40);
 
   els.attendanceTrendChart.setAttribute("viewBox", `0 0 ${width} ${height}`);
   els.attendanceTrendChart.innerHTML = `
-    ${yTicks.map((tick) => {
-      const y = yForRate(tick);
-      return `
-        <line class="trend-grid-line" x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}"></line>
-        <text class="trend-axis-label" x="${padding.left - 10}" y="${y + 4}" text-anchor="end">${tick}%</text>
-      `;
-    }).join("")}
-    <g class="trend-legend" transform="translate(${padding.left}, 16)">
+    <g class="trend-legend" transform="translate(${padding.left}, 14)">
       ${trendSeries.map((series, index) => `
         <g transform="translate(${index * 104}, 0)">
           <line class="trend-line-swatch trend-line-${series.className}" x1="0" y1="0" x2="18" y2="0"></line>
@@ -1113,14 +1112,27 @@ function renderAttendanceTrend(points) {
         </g>
       `).join("")}
     </g>
-    ${trendSeries.map((series) => `<path class="trend-line trend-line-${series.className}" d="${buildPath(series)}"></path>`).join("")}
+    ${pointCoords.filter((point) => point.isSelected).map((point) => `
+      <rect class="trend-selected-band" x="${point.x - bandWidth / 2}" y="${chartTop - 8}" width="${bandWidth}" height="${chartBottom - chartTop + 16}" rx="6"></rect>
+    `).join("")}
+    ${panels.map((panel) => `
+      <text class="trend-panel-title" x="${padding.left}" y="${panel.top - 12}">${panel.title} (%)</text>
+      ${[0, panel.max / 2, panel.max].map((tick) => {
+        const y = panel.yFor(tick);
+        return `
+          <line class="trend-grid-line" x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}"></line>
+          <text class="trend-axis-label" x="${padding.left - 10}" y="${y + 4}" text-anchor="end">${formatRate(tick)}%</text>
+        `;
+      }).join("")}
+      ${panel.series.map((series) => `<path class="trend-line trend-line-${series.className}" d="${buildPath(series)}"></path>`).join("")}
+    `).join("")}
     ${pointCoords.map((point, index) => `
       <g class="trend-point-group ${point.isDrillable ? "is-drillable" : ""}" data-index="${index}" ${point.isDrillable ? `tabindex="0" role="button" aria-label="ดูรายวัน ${point.drilldownLabel}"` : ""}>
-        <rect class="trend-hit-area" x="${point.x - Math.max(xStep / 2, 24)}" y="${padding.top}" width="${Math.max(xStep, 48)}" height="${chartHeight}"></rect>
+        <rect class="trend-hit-area" x="${point.x - Math.max(xStep / 2, 24)}" y="${chartTop}" width="${Math.max(xStep, 48)}" height="${chartBottom - chartTop}"></rect>
         ${trendSeries.map((series) => `
           <circle class="trend-point trend-point-${series.className}" cx="${point.x}" cy="${point.series[series.key].y}" r="5"></circle>
         `).join("")}
-        <text class="trend-axis-label trend-x-label" x="${point.x}" y="${height - 16}" text-anchor="middle">${point.label}</text>
+        <text class="trend-axis-label trend-x-label${point.isSelected ? " is-selected" : ""}" x="${point.x}" y="${height - 16}" text-anchor="middle">${point.label}</text>
       </g>
     `).join("")}
   `;
@@ -1150,7 +1162,7 @@ function syncTrendDrilldownControls() {
   els.trendZoomOutBtn.hidden = !state.trendDrilldown;
   els.attendanceTrendTitle.textContent = state.trendDrilldown
     ? `แนวโน้มรายวัน: ${state.trendDrilldown.label}`
-    : "แนวโน้มเข้าเรียน";
+    : els.searchType.value === "custom" ? "แนวโน้มการเข้าเรียน" : "แนวโน้มการเข้าเรียนรายเดือน ทั้งภาคเรียน";
 }
 
 function drillDownTrend(point) {
@@ -1680,10 +1692,9 @@ function openAttendancePdfPreview() {
     </div>
     <div class="pdf-summary-strip">
       <span>นักเรียนทั้งหมด <strong>${els.totalStudents.textContent}</strong></span>
-      <span>มาเรียน <strong>${els.presentCount.textContent}</strong></span>
+      <span>% ขาดเรียน <strong>${els.absentRate.textContent}</strong></span>
       <span>ขาดเรียน <strong>${els.absentCount.textContent}</strong></span>
       <span>มาสาย <strong>${els.lateCount.textContent}</strong></span>
-      <span>การลา <strong>${els.leaveCount.textContent}</strong></span>
     </div>
     ${buildPdfPreviewRows()}
     <p class="pdf-preview-note">ตัวอย่างนี้แสดงบางรายการเพื่อดูรูปแบบตารางก่อนดาวน์โหลดจริง</p>
@@ -1812,13 +1823,6 @@ function bindMatrixHover() {
 }
 
 function attachEvents() {
-  els.classLevel.addEventListener("change", () => {
-    clearTrendDrilldown();
-    syncRoomOptions();
-    syncSubjectOptions();
-    refreshAttendanceResults();
-  });
-
   els.room.addEventListener("change", () => {
     clearTrendDrilldown();
     syncSubjectOptions();

@@ -76,6 +76,7 @@ const els = {
 };
 
 const state = {
+  teacherId: null,
   db: null,
   maps: null,
   allRows: [],
@@ -128,7 +129,9 @@ function buildInlineMockDatabase() {
     { id: "teacher-sunee", name: "อ.สุนีย์ พิพัฒน์ผล", shortName: "อ.สุนีย์" },
     { id: "teacher-preecha", name: "อ.ปรีชา ธรรมวงศ์", shortName: "อ.ปรีชา" },
     { id: "teacher-mali", name: "อ.มะลิ กาญจนกิจ", shortName: "อ.มะลิ" },
-    { id: "teacher-niran", name: "อ.นิรันดร์ บุญมาก", shortName: "อ.นิรันดร์" }
+    { id: "teacher-niran", name: "อ.นิรันดร์ บุญมาก", shortName: "อ.นิรันดร์" },
+    // the teacher-role persona in shared/academic-layout.js
+    { id: "teacher-anucha", name: "อ.อนุชา แสงทอง", shortName: "อ.อนุชา" }
   ];
 
   const subjects = [
@@ -155,20 +158,22 @@ function buildInlineMockDatabase() {
   ];
 
   const schedules = [
-    { id: "schedule-m11-math", classroomId: "room-m1-1", subjectId: "subject-math", teacherId: "teacher-anong", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 1 }, { dayOfWeek: 3, period: 4 }, { dayOfWeek: 5, period: 2 }] },
+    { id: "schedule-m11-math", classroomId: "room-m1-1", subjectId: "subject-math", teacherId: "teacher-anucha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 1 }, { dayOfWeek: 3, period: 4 }, { dayOfWeek: 5, period: 2 }] },
     { id: "schedule-m11-thai", classroomId: "room-m1-1", subjectId: "subject-thai", teacherId: "teacher-sunee", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 2 }, { dayOfWeek: 4, period: 1 }] },
     { id: "schedule-m11-english", classroomId: "room-m1-1", subjectId: "subject-english", teacherId: "teacher-mali", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 5 }, { dayOfWeek: 4, period: 6 }] },
-    { id: "schedule-m12-math", classroomId: "room-m1-2", subjectId: "subject-math", teacherId: "teacher-krit", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 2 }, { dayOfWeek: 3, period: 1 }, { dayOfWeek: 5, period: 3 }] },
+    { id: "schedule-m12-math", classroomId: "room-m1-2", subjectId: "subject-math", teacherId: "teacher-anucha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 2 }, { dayOfWeek: 3, period: 1 }, { dayOfWeek: 5, period: 3 }] },
     { id: "schedule-m12-thai", classroomId: "room-m1-2", subjectId: "subject-thai", teacherId: "teacher-sunee", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 4 }, { dayOfWeek: 4, period: 2 }] },
     { id: "schedule-m12-english", classroomId: "room-m1-2", subjectId: "subject-english", teacherId: "teacher-preecha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 3, period: 5 }, { dayOfWeek: 5, period: 5 }] },
     { id: "schedule-m21-science", classroomId: "room-m2-1", subjectId: "subject-science", teacherId: "teacher-niran", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 3 }, { dayOfWeek: 5, period: 4 }] },
     { id: "schedule-m21-social", classroomId: "room-m2-1", subjectId: "subject-social", teacherId: "teacher-preecha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 4 }, { dayOfWeek: 4, period: 3 }] },
-    { id: "schedule-m21-math", classroomId: "room-m2-1", subjectId: "subject-math", teacherId: "teacher-krit", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 3, period: 2 }, { dayOfWeek: 5, period: 1 }] },
+    { id: "schedule-m21-math", classroomId: "room-m2-1", subjectId: "subject-math", teacherId: "teacher-anucha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 3, period: 2 }, { dayOfWeek: 5, period: 1 }] },
     { id: "schedule-m31-math", classroomId: "room-m3-1", subjectId: "subject-math", teacherId: "teacher-anong", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 1 }, { dayOfWeek: 3, period: 3 }, { dayOfWeek: 5, period: 2 }] },
     { id: "schedule-m31-thai", classroomId: "room-m3-1", subjectId: "subject-thai", teacherId: "teacher-sunee", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 1 }, { dayOfWeek: 4, period: 2 }] },
     { id: "schedule-m31-science", classroomId: "room-m3-1", subjectId: "subject-science", teacherId: "teacher-niran", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 5 }, { dayOfWeek: 4, period: 5 }] }
   ];
 
+  // the persona teacher keeps only their explicit math sections above
+  const rotationTeachers = teachers.filter((teacher) => teacher.id !== "teacher-anucha");
   const existingScheduleKeys = new Set(schedules.map((schedule) => `${schedule.classroomId}:${schedule.subjectId}`));
   classrooms.forEach((classroom, roomIndex) => {
     subjects.forEach((subject, subjectIndex) => {
@@ -180,7 +185,7 @@ function buildInlineMockDatabase() {
         id: `schedule-${classroom.code}-${subject.id.replace("subject-", "")}`,
         classroomId: classroom.id,
         subjectId: subject.id,
-        teacherId: teachers[(roomIndex + subjectIndex) % teachers.length].id,
+        teacherId: rotationTeachers[(roomIndex + subjectIndex) % rotationTeachers.length].id,
         semesterId: "sem-2569-1",
         weeklySlots: [
           { dayOfWeek: firstDay, period: (subjectIndex % 6) + 1 },
@@ -337,8 +342,23 @@ function populateSemesters() {
   els.semester.value = semesters.some((item) => item.id === currentSemester.id) ? currentSemester.id : semesters[0]?.id || "";
 }
 
+// a teacher only sees the sections they teach; admin sees the whole school
+const TEACHER_PERSONA_ID = "teacher-anucha";
+
+function getScopedSchedules() {
+  return state.teacherId
+    ? state.db.schedules.filter((schedule) => schedule.teacherId === state.teacherId)
+    : state.db.schedules;
+}
+
+function getScopedClassroomIds() {
+  return new Set(getScopedSchedules().map((schedule) => schedule.classroomId));
+}
+
 function populateGrades() {
+  const roomIds = getScopedClassroomIds();
   const gradeOptions = state.db.grades
+    .filter((grade) => state.db.classrooms.some((room) => room.gradeId === grade.id && roomIds.has(room.id)))
     .sort((a, b) => a.order - b.order)
     .map((grade) => `<option value="${grade.id}">${grade.name}</option>`)
     .join("");
@@ -347,7 +367,9 @@ function populateGrades() {
 
 function syncClassrooms() {
   const gradeId = els.grade.value;
+  const roomIds = getScopedClassroomIds();
   const classrooms = state.db.classrooms
+    .filter((room) => roomIds.has(room.id))
     .filter((room) => !gradeId || room.gradeId === gradeId)
     .sort((a, b) => a.name.localeCompare(b.name, "th"));
   els.classroom.innerHTML = `<option value="">ทุกห้อง</option>${classrooms
@@ -376,7 +398,7 @@ function syncSubjects() {
     .filter((room) => (!gradeId || room.gradeId === gradeId) && (!classroomId || room.id === classroomId))
     .map((room) => room.id));
   const scheduleSubjectIds = new Set(
-    state.db.schedules
+    getScopedSchedules()
       .filter((schedule) => roomIds.has(schedule.classroomId))
       .filter((schedule) => semesterIds.has(schedule.semesterId))
       .map((schedule) => schedule.subjectId)
@@ -454,7 +476,7 @@ function getRemark(studentSummary, threshold) {
 
 function buildReportRows(filters) {
   const semesterIds = getScheduleScopeIds();
-  const selectedSchedules = state.db.schedules.filter((schedule) => (
+  const selectedSchedules = getScopedSchedules().filter((schedule) => (
     (!filters.classroom || schedule.classroomId === filters.classroom)
     && (!filters.subject || schedule.subjectId === filters.subject)
     && semesterIds.has(schedule.semesterId)
@@ -534,7 +556,8 @@ function getScopeLabel() {
   const grade = state.maps.grades.get(els.grade.value);
   const classroom = state.maps.classrooms.get(els.classroom.value);
   const subject = state.maps.subjects.get(els.subject.value);
-  return [grade?.name || "ทุกระดับชั้น", classroom?.name || "ทุกห้อง", subject ? `${subject.code} - ${subject.name}` : "ทุกวิชา"].join(" | ");
+  const allSubjects = state.teacherId ? "ทุกวิชาที่สอน" : "ทุกวิชา";
+  return [grade?.name || "ทุกระดับชั้น", classroom?.name || "ทุกห้อง", subject ? `${subject.code} - ${subject.name}` : allSubjects].join(" | ");
 }
 
 function getUniqueStudentCount(rows, statusKey) {
@@ -564,17 +587,30 @@ function renderBreakdown(element, rows, key, labelKey, drillType) {
     if (!grouped.has(id)) grouped.set(id, { id, label: row[labelKey], rows: [] });
     grouped.get(id).rows.push(row);
   });
+  // only subjects that actually have มส, grouped in learning-area order
   const items = [...grouped.values()]
-    .map((item) => ({ ...item, unable: item.rows.filter((row) => row.statusKey === "unable").length }))
-    .sort((a, b) => b.unable - a.unable || a.label.localeCompare(b.label, "th"));
+    .map((item) => ({ ...item, unable: item.rows.filter((row) => row.statusKey === "unable").length, subject: state.maps.subjects.get(item.id) }))
+    .filter((item) => item.unable > 0)
+    .sort((a, b) => learningAreas.indexOf(a.subject.learningArea) - learningAreas.indexOf(b.subject.learningArea) || a.subject.code.localeCompare(b.subject.code));
+  const areas = learningAreas
+    .map((area) => ({ area, items: items.filter((item) => item.subject.learningArea === area) }))
+    .filter((group) => group.items.length);
 
-  element.innerHTML = items.length ? items.map((item) => `
-    <button class="unable-breakdown-row" type="button" data-drill-type="${drillType}" data-drill-id="${item.id}">
-      <span>${item.label}</span>
-      <span class="unable-breakdown-counts"><strong>${item.unable}</strong> ไม่มีสิทธิ์</span>
-      <span class="unable-drill-arrow" aria-hidden="true">›</span>
-    </button>
-  `).join("") : `<div class="unable-breakdown-empty">ไม่มีข้อมูล</div>`;
+  element.innerHTML = areas.length ? areas.map((group) => `
+    <section class="unable-grade-room-group">
+      <div class="unable-grade-room-heading">
+        <span>${group.area}</span>
+        <strong>${group.items.reduce((sum, item) => sum + item.unable, 0)}</strong>
+      </div>
+      ${group.items.map((item) => `
+        <button class="unable-breakdown-row" type="button" data-drill-type="${drillType}" data-drill-id="${item.id}">
+          <span>${item.label}</span>
+          <span class="unable-breakdown-counts"><strong>${item.unable}</strong> ไม่มีสิทธิ์</span>
+          <span class="unable-drill-arrow" aria-hidden="true">›</span>
+        </button>
+      `).join("")}
+    </section>
+  `).join("") : `<div class="unable-breakdown-empty">ไม่มีนักเรียนที่ไม่มีสิทธิ์สอบ</div>`;
 }
 
 function renderGradeRoomBreakdown(rows) {
@@ -593,7 +629,7 @@ function renderGradeRoomBreakdown(rows) {
             unable: roomRows.filter((row) => row.statusKey === "unable").length
           };
         })
-        .filter((room) => room.total > 0)
+        .filter((room) => room.unable > 0)
         .sort((a, b) => a.label.localeCompare(b.label, "th"));
       return { ...grade, rooms };
     })
@@ -614,7 +650,7 @@ function renderGradeRoomBreakdown(rows) {
         `).join("")}
       </div>
     </section>
-  `).join("") : `<div class="unable-breakdown-empty">ไม่มีข้อมูล</div>`;
+  `).join("") : `<div class="unable-breakdown-empty">ไม่มีนักเรียนที่ไม่มีสิทธิ์สอบ</div>`;
 }
 
 function setBreakdownTab(tabKey) {
@@ -649,7 +685,7 @@ function renderTableHeader() {
     { key: "index", label: "No.", sortable: false },
     { key: "studentId", label: "รหัสนักเรียน", sortable: true },
     { key: "studentName", label: "ชื่อ-สกุล", sortable: true },
-    { key: "gradeClass", label: "ชั้น/ห้อง", sortable: true },
+    { key: "gradeClass", label: "ห้อง", sortable: true },
     { key: "attendancePercent", label: "การเข้าเรียน %", sortable: true, tooltip: "เปอร์เซ็นต์การเข้าเรียนเทียบกับคาบเรียนจริงของวิชาที่เลือก" },
     { key: "absentCount", label: "ขาด", sortable: true },
     { key: "lateCount", label: "สาย", sortable: true },
@@ -884,7 +920,7 @@ function handleExport(type) {
               <th>No.</th>
               <th>รหัส</th>
               <th>ชื่อ-สกุล</th>
-              <th>ชั้น/ห้อง</th>
+              <th>ห้อง</th>
               <th>เข้าเรียน</th>
               <th>ขาด</th>
               <th>สาย</th>
@@ -1008,7 +1044,8 @@ function attachEvents() {
       els.subject.value = drillId;
     }
     renderDashboard();
-    document.getElementById("unableFilterTitle").scrollIntoView({ behavior: "smooth", block: "start" });
+    const target = els.detailPanel.classList.contains("hidden") ? document.getElementById("unableFilterTitle") : els.detailPanel;
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
   document.querySelector(".unable-breakdown-tabs").addEventListener("click", (event) => {
@@ -1039,11 +1076,22 @@ function attachEvents() {
   });
 }
 
+function applyTeacherScopeText() {
+  document.querySelector('[data-page="unable-exam"] .subtitle').textContent = "นักเรียนที่เวลาเรียนไม่ถึงเกณฑ์ เฉพาะรายวิชาและห้องที่คุณสอน";
+  const breadcrumbHome = document.querySelector('[data-page="unable-exam"] .ar-breadcrumb a');
+  if (breadcrumbHome) {
+    breadcrumbHome.textContent = "งานของฉัน";
+    breadcrumbHome.href = "../timetable/my-timetable.html";
+  }
+}
+
 function init() {
   if (!els.filtersForm) {
     return;
   }
   state.db = buildInlineMockDatabase();
+  state.teacherId = window.AcademicLayout?.role() === "teacher" ? TEACHER_PERSONA_ID : null;
+  if (state.teacherId) applyTeacherScopeText();
   state.maps = {
     semesters: buildMap(state.db.semesters),
     grades: buildMap(state.db.grades),

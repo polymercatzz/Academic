@@ -31,7 +31,10 @@ function loadDb() {
       const d = JSON.parse(raw);
       if (d && d.version === 2) {
         // ข้อมูลที่บันทึกไว้ก่อนมีระบบเช็คชื่อ: สร้างการเช็คชื่อจำลองเพิ่มโดยไม่ล้างคะแนนเดิม
-        if (ensureAttendance(d)) localStorage.setItem(STORE_KEY, JSON.stringify(d));
+        let changed = ensureAttendance(d);
+        // ข้อมูลที่บันทึกไว้ก่อนมีหน้าชุมนุม (UC-27)
+        if (!d.clubs) { d.clubs = seedClubs(d.sections); changed = true; }
+        if (changed) localStorage.setItem(STORE_KEY, JSON.stringify(d));
         return d;
       }
     }
@@ -204,7 +207,7 @@ function computeStudent(sec, s) {
   else {
     grade = gradeFor(total);
     if (grade === '0') {
-      if (sec.remedial[s.id] != null && sec.remedial[s.id] >= 50) { grade = '1'; code = 'remedial-pass'; }
+      if (remedialPassed(sec, s.id)) { grade = '1'; code = 'remedial-pass'; } // remedial.js
       else code = 'fail';
     } else code = 'pass';
   }
@@ -410,9 +413,13 @@ function parseRoute(hash) {
     if (parts[1] === 's') return { page: 'asection', id: parts[2], tab: parts[3] || 'scores' };
     if (parts[1] === 'inbox') return { page: 'ainbox' };
     if (parts[1] === 'reports') return { page: 'areports' };
+    if (parts[1] === 'clubs') return { page: 'aclubs' };
+    if (parts[1] === 'holidays') return { page: 'aholidays' };
     return { page: 'aoverview' };
   }
   if (parts[0] === 'followup') return { page: 'followup' };
+  if (parts[0] === 'remedial') return { page: 'remedial' };
+  if (parts[0] === 'clubs') return parts[1] ? { page: 'club', id: parts[1] } : { page: 'clubs' };
   if (parts[0] === 'criteria') return { page: 'criteria' };
   return { page: 'home' };
 }
@@ -490,6 +497,11 @@ function route() {
   else if (r.page === 'aoverview') renderAOverview();
   else if (r.page === 'ainbox') renderAInbox();
   else if (r.page === 'areports') renderAReports();
+  else if (r.page === 'aclubs') renderAClubs();
+  else if (r.page === 'aholidays') renderAHolidays();
+  else if (r.page === 'remedial') renderRemedial();
+  else if (r.page === 'clubs') renderClubs();
+  else if (r.page === 'club') renderClub(r.id);
   else renderHome();
   window.scrollTo(0, 0);
 }
@@ -547,7 +559,7 @@ function renderHome() {
       <div class="card stat"><div class="stat-label">รายวิชา/ห้องที่สอน</div><div class="stat-value">${secs.length} <small>ห้อง · ${students} คน</small></div></div>
       <div class="card stat"><div class="stat-label">ส่งผลการเรียนแล้ว</div><div class="stat-value">${submitted}<small> / ${secs.length}</small></div>${returnedN ? `<div style="font-size:12.5px;color:var(--bad);font-weight:600">${returnedN} ห้องถูกตีกลับ รอแก้ไข</div>` : ''}</div>
       <div class="card stat"><div class="stat-label">นักเรียนที่ต้องติดตาม</div><div class="stat-value" style="color:${follow ? 'var(--bad)' : 'inherit'}">${follow} <small>คน</small></div></div>
-      <div class="card stat"><div class="stat-label">ใกล้ครบกำหนดส่ง</div><div class="stat-value">${nearest == null ? '—' : nearest < 0 ? '<span style="color:var(--bad)">เลยกำหนด</span>' : `${nearest} <small>วัน</small>`}</div></div>
+      <div class="card stat"><div class="stat-label">ใกล้ครบกำหนดส่ง</div><div class="stat-value">${nearest == null ? '—' : nearest < 0 ? `<span style="color:var(--bad);white-space:nowrap">เลย ${-nearest} <small>วัน</small></span>` : `${nearest} <small>วัน</small>`}</div></div>
     </div>
 
     ${secs.length ? `<div class="section-grid">${secs.map(secCard).join('')}</div>` : `
@@ -1449,8 +1461,8 @@ function renderResults(sec, body) {
           const a = levelSummary(sec, 'attr', s.id), w = levelSummary(sec, 'rtw', s.id);
           const complete = !['incomplete', 'invalid'].includes(r.code);
           let action = '';
-          if (r.code === 'fail' && !locked) action = `<button class="btn btn-sm" data-rem="${s.id}">บันทึกผลสอบซ่อม</button>`;
-          else if (r.code === 'remedial-pass') action = `<span class="faint" style="font-size:12.5px">ซ่อมได้ ${sec.remedial[s.id]}%</span>`;
+          if (r.code === 'fail' && canRecordRemedial(sec)) action = `<button class="btn btn-sm" data-rem="${s.id}">บันทึกผลสอบซ่อม</button>`;
+          else if (r.code === 'remedial-pass') action = `<span class="faint" style="font-size:12.5px">ซ่อมได้ ${bestRemedial(sec, s.id)}%</span>`;
           else if ((r.code === 'r' || r.code === 'incomplete' || r.code === 'invalid') && !locked) action = `<a class="btn btn-sm btn-ghost" data-goto="${s.id}">แก้ไขคะแนน ${icon('chev')}</a>`;
           return `<tr>
             <td class="c num faint">${s.no}</td><td class="num muted">${s.id}</td><td>${esc(fullName(s))}${r.code === 'r' ? `<div class="faint" style="font-size:12px">${r.special.map((x) => `${x.mark === 'ข' ? 'ขาดสอบ' : 'รอส่งงาน'}: ${esc(x.comp.name)}`).join(', ')}</div>` : ''}${r.code === 'ms' ? `<div class="faint" style="font-size:12px">เวลาเรียน ${r.att}% (เกณฑ์ ${MIN_ATTENDANCE}%)</div>` : ''}</td>
@@ -1470,7 +1482,7 @@ function renderResults(sec, body) {
     const f = e.target.closest('[data-f]');
     if (f) { ui.resultFilter = f.dataset.f; renderResults(sec, freshBody(body)); return; }
     const rem = e.target.closest('[data-rem]');
-    if (rem) { openRemedial(sec, sec.students.find((s) => s.id === rem.dataset.rem)); return; }
+    if (rem) { openRemedial(sec, sec.students.find((s) => s.id === rem.dataset.rem), () => renderSection(sec, 'results')); return; }
     const g = e.target.closest('[data-goto]');
     if (g) { const s = sec.students.find((x) => x.id === g.dataset.goto); ui.search = s.id; ui.onlyIncomplete = false; go(`#/s/${sec.id}/scores`); return; }
     if (e.target.closest('#csvBtn')) exportResultsCSV(sec);
@@ -1511,29 +1523,6 @@ function openUnlockRequest(sec) {
       } },
     ],
     onMount: (m) => $('#unlockReason', m).focus(),
-  });
-}
-
-function openRemedial(sec, s) {
-  openModal({
-    title: 'บันทึกผลสอบซ่อม',
-    body: `<p style="margin:0 0 12px"><b>${esc(fullName(s))}</b> <span class="muted">· ${sec.code} ${esc(sec.name)}</span></p>
-      <label style="font-size:14px;font-weight:600">คะแนนสอบซ่อม (ร้อยละ)</label>
-      <input class="input" id="remIn" inputmode="numeric" placeholder="0–100" style="width:100%;margin-top:6px" value="${sec.remedial[s.id] ?? ''}">
-      <div class="callout" style="margin-top:12px">${icon('info')}<div>ถ้าผ่านเกณฑ์ (50% ขึ้นไป) ระดับผลการเรียนจะถูกปรับเป็น <b>1</b> ตามระเบียบการวัดผล</div></div>`,
-    actions: [
-      { label: 'ยกเลิก', cls: 'btn-ghost' },
-      { label: 'บันทึก', cls: 'btn-primary', onClick: () => {
-        const v = $('#remIn').value.trim();
-        if (!/^\d+(\.\d+)?$/.test(v) || +v > 100) { toast('กรอกคะแนน 0–100', 'bad'); return false; }
-        sec.remedial[s.id] = +v;
-        sec.history.unshift({ t: Date.now(), who: TEACHER.name, student: fullName(s), field: 'ผลสอบซ่อม', from: '', to: `${v}% ${+v >= 50 ? '→ ผ่าน (1)' : '→ ไม่ผ่าน'}` });
-        persist(); updateFollowBadge();
-        renderSection(sec, 'results');
-        toast(+v >= 50 ? 'สอบซ่อมผ่าน · ปรับผลการเรียนเป็น 1' : 'บันทึกผลสอบซ่อมแล้ว (ยังไม่ผ่าน)', 'ok');
-      } },
-    ],
-    onMount: (m) => $('#remIn', m).focus(),
   });
 }
 

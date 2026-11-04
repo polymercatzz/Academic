@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ภาพรวมงานวิชาการ</title>
+  <title>ภาพรวมงานวิชาการ | Academic Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -42,7 +42,7 @@
 
   <div class="lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=9"></script>
+    <script src="../shared/academic-layout.js?v=12"></script>
     <script>AcademicLayout.mount({"active":"overview","title":"ภาพรวมงานวิชาการ"});</script>
 
     <main class="px-4 py-6 lg:px-8 lg:py-8">
@@ -100,7 +100,7 @@
             <article class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6">
               <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                 <div>
-                  <h2 class="text-xl font-semibold text-slate-950">นักเรียนที่ต้องติดตาม</h2>
+                  <h2 class="text-xl font-semibold text-slate-950">นักเรียนติด 0 / ร / มส</h2>
                   <p class="mt-1 text-sm text-slate-500">สรุปกลุ่มนักเรียนที่ควรดำเนินการต่อในปีการศึกษา 2569</p>
                 </div>
                 <a href="student-retake-management.html" class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">ดูรายชื่อนักเรียนทั้งหมด</a>
@@ -217,7 +217,7 @@
       if (row.overdueDays > 0) reasons.push(`เลยกำหนด ${row.overdueDays} วัน`);
       if (row.scoreApprovalStatus === 'overdue') reasons.push('คะแนนยังไม่ผ่านการอนุมัติ');
       if (row.passRate >= 45 && row.passRate < 60) reasons.push('อัตราผ่านต่ำกว่า 60%');
-      if (row.followUp >= 3) reasons.push(`มีนักเรียนต้องติดตาม ${row.followUp} คน`);
+      if (row.followUp >= 3) reasons.push(`มีนักเรียนติด 0 / ร / มส ${row.followUp} คน`);
       if (row.scoreSubmissionStatus === 'pending') reasons.push('ยังส่งคะแนนไม่ครบ');
       return reasons.slice(0, 2);
     }
@@ -259,7 +259,7 @@
       const riskySubjectCount = rows.filter((row) => row.passRate < 50).length;
       return [
         { title: 'งานคะแนนค้าง', value: pendingScoreRows.length, unit: 'วิชา', text: 'ยังส่งคะแนนหรืออนุมัติไม่ครบ', action: 'ดูรายการ', href: 'subject-results.html', icon: 'M6 4h12v16H6V4Zm3 4h6v2H9V8Zm0 4h6v2H9v-2Zm0 4h4v2H9v-2Z', tone: 'bg-blue-50 text-blue-700' },
-        { title: 'นักเรียนต้องติดตาม', value: followUpCount, unit: 'คน', text: `${highRiskCount} คนมีความเสี่ยงสูง`, action: 'ดูนักเรียน', href: 'fail-student-detail.html', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0H5Z', tone: 'bg-rose-50 text-rose-700' },
+        { title: 'นักเรียนติด 0 / ร / มส', value: followUpCount, unit: 'คน', text: `${highRiskCount} คนมีความเสี่ยงสูง`, action: 'ดูนักเรียน', href: 'fail-student-detail.html', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm-7 8a7 7 0 0 1 14 0H5Z', tone: 'bg-rose-50 text-rose-700' },
         { title: 'สอบซ่อมค้าง', value: retakeWaiting, unit: 'รายการ', text: `${retakeOverdue} รายการเลยกำหนด`, action: 'จัดการสอบซ่อม', href: 'student-retake-management.html', icon: 'M7 3h10v2h3v16H4V5h3V3Zm2 2v2h6V5H9Zm-1 6h8v2H8v-2Zm0 4h6v2H8v-2Z', tone: 'bg-amber-50 text-amber-700' },
         { title: 'ห้องเสี่ยง', value: riskyClassrooms.size, unit: 'ห้อง', text: `พบ ${riskySubjectCount} รายวิชาเสี่ยง`, action: 'ดูห้องเสี่ยง', href: 'subject-results.html', icon: 'M12 2 2 20h20L12 2Zm1 14h-2v2h2v-2Zm0-7h-2v5h2V9Z', tone: 'bg-sky-50 text-sky-700' }
       ];
@@ -412,7 +412,7 @@
       const multiSubject = students.filter((student) => student.riskSubjects >= 2).length;
       const overdue = students.filter((student) => student.overdueRetake).length;
       const summary = [
-        { label: 'นักเรียนทั้งหมดที่ต้องติดตาม', value: students.length },
+        { label: 'นักเรียนติด 0 / ร / มส ทั้งหมด', value: students.length },
         { label: 'นักเรียนความเสี่ยงสูง', value: highRisk },
         { label: 'นักเรียนติดหลายวิชา', value: multiSubject },
         { label: 'นักเรียนสอบซ่อมเกินกำหนด', value: overdue }
@@ -437,7 +437,7 @@
               </div>
               <p class="text-sm text-slate-500 sm:max-w-[260px] sm:text-right">${escapeHTML(student.reason)} →</p>
             </a>
-          `).join('') || '<div class="px-4 py-6 text-center text-sm text-slate-500">ยังไม่มีนักเรียนที่ต้องติดตามในปีการศึกษา 2569</div>'}
+          `).join('') || '<div class="px-4 py-6 text-center text-sm text-slate-500">ยังไม่มีนักเรียนติด 0 / ร / มส ในปีการศึกษา 2569</div>'}
         </div>
       `;
     }

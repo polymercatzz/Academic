@@ -333,7 +333,7 @@ function renderAOverview() {
       <div class="card stat"><div class="stat-label">อนุมัติแล้ว</div><div class="stat-value" style="color:var(--ok)">${approvedN}</div></div>
       <a class="card stat stat-link" href="#/a/inbox"><div class="stat-label">คำขอปลดล็อก</div><div class="stat-value" style="color:${unlockN ? 'var(--warn)' : 'inherit'}">${unlockN}</div></a>
       <div class="card stat"><div class="stat-label">ยังไม่เริ่ม</div><div class="stat-value">${notStarted}</div></div>
-      <div class="card stat"><div class="stat-label">ถึงกำหนดส่ง</div><div class="stat-value">${dl == null ? '—' : dl < 0 ? '<span style="color:var(--bad)">เลยกำหนด</span>' : `${dl} <small>วัน</small>`}</div></div>
+      <div class="card stat"><div class="stat-label">ถึงกำหนดส่ง</div><div class="stat-value">${dl == null ? '—' : dl < 0 ? `<span style="color:var(--bad);white-space:nowrap">เลย ${-dl} <small>วัน</small></span>` : `${dl} <small>วัน</small>`}</div></div>
     </div>
     <div class="toolbar">
       <div class="seg" id="aTabs"><button data-t="matrix" class="${ui.aTab === 'matrix' ? 'on' : ''}">${icon('grid')}ห้อง × รายวิชา</button><button data-t="teacher" class="${ui.aTab === 'teacher' ? 'on' : ''}">${icon('users')}รายครู</button></div>

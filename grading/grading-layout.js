@@ -31,14 +31,23 @@
     }
     if (hash.startsWith('#/a/inbox')) return 'g-ainbox';
     if (hash.startsWith('#/a/reports')) return 'g-areports';
+    if (hash.startsWith('#/a/clubs')) return 'g-aclubs';
+    if (hash.startsWith('#/a/holidays')) return 'g-aholidays';
     if (hash.startsWith('#/a')) return 'g-aoverview';
     if (hash.startsWith('#/followup')) return 'g-followup';
+    if (hash.startsWith('#/remedial')) return 'g-remedial';
+    if (hash.startsWith('#/clubs')) return 'g-clubs';
     if (hash.startsWith('#/criteria')) return 'g-criteria';
     return 'g-home';
   }
 
+  // วันหยุดอยู่ในเมนูตารางเรียน ไม่ใช่เมนูผลการเรียน
+  function group() {
+    return app === 'scores' && (location.hash || '').startsWith('#/a/holidays') ? 'ตารางเรียน' : GROUPS[app];
+  }
+
   function title() {
-    return document.getElementById('topbarTitle')?.textContent.trim() || GROUPS[app];
+    return document.getElementById('topbarTitle')?.textContent.trim() || group();
   }
 
   let mounted = '';
@@ -58,7 +67,7 @@
     const nav = document.createElement('nav');
     nav.className = 'ar-breadcrumb';
     nav.setAttribute('aria-label', 'breadcrumb');
-    nav.innerHTML = `<a href="${AcademicLayout.url(academic ? 'overview.html' : 'my-timetable.html')}">หน้าหลัก</a><span>&gt;</span><span>${GROUPS[app]}</span><span>&gt;</span><span class="ar-breadcrumb-current"></span>`;
+    nav.innerHTML = `<a href="${AcademicLayout.url(academic ? 'overview.html' : 'my-timetable.html')}">หน้าหลัก</a><span>&gt;</span><span>${group()}</span><span>&gt;</span><span class="ar-breadcrumb-current"></span>`;
     // the page name, not the h1 (the home page's h1 is a greeting)
     nav.querySelector('.ar-breadcrumb-current').textContent = title();
     view.insertBefore(nav, first);

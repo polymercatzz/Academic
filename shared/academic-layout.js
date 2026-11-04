@@ -52,6 +52,12 @@
       label: 'คำขออนุมัติ',
       badge: 'approvals',
       icon: '<path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Zm-7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2Zm-2 14-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8Z"/>'
+    },
+    {
+      key: 'g-aholidays',
+      href: 'scores.html#/a/holidays',
+      label: 'วันหยุดของโรงเรียน',
+      icon: '<path d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2Zm11 8H6v10h12V10Zm-6 1.5 1.1 2.3 2.4.3-1.8 1.7.5 2.4-2.2-1.2-2.2 1.2.5-2.4-1.8-1.7 2.4-.3L12 11.5Z"/>'
     }
   ];
 
@@ -73,6 +79,13 @@
       href: 'teacher-attendance.html',
       label: 'รายงานการเข้าเรียน',
       icon: '<path d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2Zm11 8H6v10h12V10Zm-7.5 8L7 14.5l1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6Z"/>'
+    }
+,
+    {
+      key: 'ar-unable-exam',
+      href: 'academic-report.html#unable-exam',
+      label: 'รายงานผู้ไม่มีสิทธิ์สอบ',
+      icon: '<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM4 12a8 8 0 0 1 12.9-6.3L5.7 16.9A7.96 7.96 0 0 1 4 12Zm8 8a7.96 7.96 0 0 1-4.9-1.7L18.3 7.1A8 8 0 0 1 12 20Z"/>'
     }
   ];
 
@@ -165,6 +178,11 @@
     const style = document.createElement('style');
     style.id = 'academicLayoutStyles';
     style.textContent = `
+      /* some pages redefine Tailwind's text-* sizes in vh; the sidebar keeps one fixed scale on every page */
+      #sidebar, #bellPanel { font-size:1rem; line-height:1.5; }
+      #sidebar .text-xs, #bellPanel .text-xs { font-size:.75rem; line-height:1rem; }
+      #sidebar .text-sm, #bellPanel .text-sm { font-size:.875rem; line-height:1.25rem; }
+      #sidebar .text-base { font-size:1rem; line-height:1.5rem; }
       .menu-group + .menu-group { margin-top:.75rem; border-top:1px solid #e2e8f0; padding-top:.75rem; }
       .menu-group-items { position:relative; margin:.25rem 0 .25rem 1.375rem; border-left:1px solid #e2e8f0; padding-left:.5rem; }
       .menu-group-items > * + * { margin-top:.125rem; }
@@ -192,6 +210,8 @@
   const scoreMenuItems = [
     { key: 'g-home', href: 'scores.html#/', label: 'รายวิชาของฉัน', icon: '<path d="M4 5h16v3H4V5Zm0 5h16v9H4v-9Zm2 2v5h5v-5H6Zm7 0v2h5v-2h-5Zm0 3v2h5v-2h-5Z"/>' },
     { key: 'g-followup', href: 'scores.html#/followup', label: 'นักเรียนที่ต้องติดตาม', icon: '<path d="M12 2 1 21h22L12 2Zm1 16h-2v-2h2v2Zm0-4h-2v-4h2v4Z"/>' },
+    { key: 'g-remedial', href: 'scores.html#/remedial', label: 'บันทึกผลสอบซ่อม', icon: '<path d="M4 4h12l4 4v12H4V4Zm2 2v12h12V9h-3V6H6Zm2 6h3v2H8v-2Zm0 3h6v2H8v-2Zm7.3-5.7 1.4 1.4-4.2 4.2-2.1-2.1 1.4-1.4.7.7 2.8-2.8Z"/>' },
+    { key: 'g-clubs', href: 'scores.html#/clubs', label: 'ชุมนุมของฉัน', icon: '<path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13Zm8 0c-.29 0-.62.02-.97.05C16.19 13.89 17 15.02 17 16.5V19h6v-2.5c0-2.33-4.67-3.5-7-3.5Z"/>' },
     { key: 'g-criteria', href: 'scores.html#/criteria', label: 'เกณฑ์การตัดสินผล', icon: ICON_SCALE }
   ];
 
@@ -204,6 +224,7 @@
   const reviewMenuItems = [
     { key: 'g-aoverview', href: 'scores.html#/a', label: 'ภาพรวมทั้งโรงเรียน', icon: '<path d="M4 4h7v7H4V4Zm9 0h7v7h-7V4ZM4 13h7v7H4v-7Zm9 0h7v7h-7v-7Z"/>' },
     { key: 'g-ainbox', href: 'scores.html#/a/inbox', label: 'กล่องงาน', icon: '<path d="M4 4h16v16H4V4Zm2 2v8h3l1 2h4l1-2h3V6H6Z"/>' },
+    { key: 'g-aclubs', href: 'scores.html#/a/clubs', label: 'ชุมนุมและกิจกรรม', icon: '<path d="M16 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm-8 0a3 3 0 1 0 0-6 3 3 0 0 0 0 6Zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5C15 14.17 10.33 13 8 13Zm8 0c-.29 0-.62.02-.97.05C16.19 13.89 17 15.02 17 16.5V19h6v-2.5c0-2.33-4.67-3.5-7-3.5Z"/>' },
     { key: 'g-areports', href: 'scores.html#/a/reports', label: 'รายงานภาพรวม', icon: '<path d="M5 20h14v-2H5v2Zm7-18-5 5h3v7h4V7h3l-5-5Z"/>' },
     { key: 'g-criteria', href: 'scores.html#/criteria', label: 'เกณฑ์การตัดสินผล', icon: ICON_SCALE }
   ];

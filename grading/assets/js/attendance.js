@@ -321,7 +321,8 @@ function renderToday(date) {
   const today = todayISO();
   $('#topbarTitle').textContent = 'คาบวันนี้';
   const mine = new Map(mySections().map((s) => [s.id, s]));
-  const slots = inTerm(db, date) ? db.att.timetable.filter((t) => t.day === weekdayOf(date) && mine.has(t.sec)).sort((a, b) => a.period - b.period) : [];
+  const holiday = holidayOn(db, date);
+  const slots = inTerm(db, date) && !holiday ? db.att.timetable.filter((t) => t.day === weekdayOf(date) && mine.has(t.sec)).sort((a, b) => a.period - b.period) : [];
   const backlog = backlogOf();
   const doneN = slots.filter((t) => db.att.records[sessionKey(t.sec, date, t.period)]).length;
   let risk = 0, ms = 0;
@@ -367,6 +368,7 @@ function renderToday(date) {
     </div>
 
     ${!inTerm(db, date) ? `<div class="card empty"><div class="empty-icon">${icon('calendar')}</div><h3>อยู่นอกภาคเรียน</h3><div>ภาคเรียนนี้เริ่ม ${thDay(db.att.start)} ถึง ${thDay(termEnd(db))}</div></div>`
+      : holiday ? `<div class="card empty"><div class="empty-icon">${icon('calendar')}</div><h3>วันหยุดของโรงเรียน: ${esc(holiday.name)}</h3><div class="muted">ไม่มีคาบเรียน ไม่ต้องเช็คชื่อ และไม่นับเป็นเวลาเรียน</div><div style="margin-top:12px"><button class="btn btn-sm" data-day="${shiftSchoolDay(date, 1)}">ไปวันเรียนถัดไป</button></div></div>`
       : !isSchoolDay(date) ? `<div class="card empty"><div class="empty-icon">${icon('calendar')}</div><h3>วันหยุด ไม่มีคาบสอน</h3><div><button class="btn btn-sm" data-day="${shiftSchoolDay(date, 1)}">ไปวันเรียนถัดไป</button></div></div>`
       : slots.length ? `<div class="card period-list">${slots.map((t, i) => `${i && slots[i - 1].period <= LUNCH_AFTER && t.period > LUNCH_AFTER ? '<div class="lunch">พักกลางวัน</div>' : ''}${row(t)}`).join('')}</div>`
       : `<div class="card empty"><div class="empty-icon">${icon('check')}</div><h3>วันนี้ท่านไม่มีคาบสอน</h3></div>`}
@@ -394,7 +396,7 @@ function renderToday(date) {
 function renderCheck(secId, date, period) {
   const sec = sectionById(secId);
   if (!sec || sec.teacherId !== ME) { toast('เปิดได้เฉพาะคาบของห้องเรียนที่ท่านสอน', 'bad'); go('#/'); return; }
-  const slot = inTerm(db, date) && db.att.timetable.find((t) => t.sec === secId && t.day === weekdayOf(date) && t.period === period);
+  const slot = inTerm(db, date) && !holidayOn(db, date) && db.att.timetable.find((t) => t.sec === secId && t.day === weekdayOf(date) && t.period === period);
   if (!slot) { toast('ไม่พบคาบนี้ในตารางสอน', 'bad'); go('#/'); return; }
   const key = sessionKey(secId, date, period);
   const rec = db.att.records[key];
@@ -676,7 +678,8 @@ function renderHomeroom(r) {
   const date = shownDate;
   const today = todayISO();
   const ids = new Set(secs.map((s) => s.id));
-  const slots = inTerm(db, date) ? db.att.timetable.filter((t) => ids.has(t.sec) && t.day === weekdayOf(date)) : [];
+  const holiday = holidayOn(db, date);
+  const slots = inTerm(db, date) && !holiday ? db.att.timetable.filter((t) => ids.has(t.sec) && t.day === weekdayOf(date)) : [];
   const byPeriod = new Map(slots.map((t) => [t.period, sectionById(t.sec)]));
   const cell = (s, p) => {
     const sec = byPeriod.get(p);
@@ -690,7 +693,7 @@ function renderHomeroom(r) {
   const absentToday = roster.filter((s) => slots.some((t) => db.att.records[sessionKey(t.sec, date, t.period)]?.ex[s.id] === 'absent'));
 
   view.innerHTML = `${head}${tabs}
-    ${!slots.length ? `<div class="card empty"><div class="empty-icon">${icon('calendar')}</div><h3>${!inTerm(db, date) ? 'อยู่นอกภาคเรียน' : 'ไม่มีคาบเรียนในวันนี้'}</h3></div>` : `
+    ${!slots.length ? `<div class="card empty"><div class="empty-icon">${icon('calendar')}</div><h3>${!inTerm(db, date) ? 'อยู่นอกภาคเรียน' : holiday ? `วันหยุดของโรงเรียน: ${esc(holiday.name)}` : 'ไม่มีคาบเรียนในวันนี้'}</h3></div>` : `
     ${absentToday.length ? `<div class="callout warn" style="margin-bottom:12px">${icon('alert')}<div>มีนักเรียน <b>${absentToday.length} คน</b> ขาดเรียนในวันนี้: ${absentToday.map((s) => esc(fullName(s))).join(', ')}</div></div>` : ''}
     <div class="toolbar"><div class="legend">
       <span><span class="hr-dot"></span>มา</span>${['late', 'leave', 'absent'].map((k) => `<span>${markChip(k)}</span>`).join('')}<span><span class="hr-q">?</span>ครูผู้สอนยังไม่เช็ค</span>

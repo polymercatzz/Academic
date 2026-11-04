@@ -18,7 +18,7 @@
 |---|---|---|
 | `tt-role` | `academic-layout.js`, `timetable-core.js` | บทบาทปัจจุบัน `admin` / `teacher` (ไม่มีค่า = admin) |
 | `tt-store-v1` | `timetable-core.js` | store ตารางสอนทั้งหมด: ฉบับ คาบ คำร้อง เวลาไม่ว่าง การแจ้งเตือน ประวัติ (มี `schema`; ถ้าเลขไม่ตรง `SCHEMA` จะสร้าง seed ใหม่) |
-| `gradebook-demo-v2` | `grading/assets/js/app.js`, `attendance.js` | ห้องเรียนที่สอน คะแนน รอบการตรวจ คำขอปลดล็อก และการเช็คชื่อ (`db.att`) |
+| `gradebook-demo-v2` | `grading/assets/js/app.js`, `attendance.js` | ห้องเรียนที่สอน คะแนน ผลสอบซ่อม (`sec.remedialAttempts`) รอบการตรวจ คำขอปลดล็อก การเช็คชื่อและวันหยุด (`db.att`, `db.att.holidays`) และชุมนุม (`db.clubs`) · ข้อมูลที่บันทึกไว้ก่อนมีชุมนุมและวันหยุด จะได้ชุมนุมตัวอย่างเพิ่มแต่ไม่มีวันหยุดตัวอย่าง (กดรีเซ็ตเพื่อให้ได้ครบ) |
 | `gradebook-demo-role` | `grading/assets/js/app.js` | มุมมองของแอป grading · `grading-layout.js` ตั้งค่าให้ตาม `tt-role` ทุกครั้ง |
 | `studentResultsData` | `reports/subject-results.html` | ข้อมูลที่ส่งต่อไปยัง `student-results-detail.html` |
 | `*:lastSearch` | หน้ารายงานทุกหน้า ผ่าน `AcademicLayout.lastSearch()` | ตัวกรองที่ค้นล่าสุด: `attendanceReport`, `unableExamReport:index`, `scorePerSubject`, `averageScoreYear`, `recordReport` (ใน `academic-report.html`) · `subjectResults`, `failStudentDetail`, `studentRetakeManagement`, `studentListByClassroom`, `studentScoreRanking`, `teacherAttendance` |

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Score Ranking Detail</title>
+  <title>รายละเอียดการจัดอันดับคะแนน | Academic Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -53,7 +53,7 @@
 
   <div class="relative lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=9"></script>
+    <script src="../shared/academic-layout.js?v=12"></script>
     <script>AcademicLayout.mount({"active":"ranking","title":"รายละเอียดอันดับคะแนน","rightHtml":"<a href=\"student-score-ranking.html\" class=\"rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50\">กลับหน้ารายวิชา</a>"});</script>
     <div class="hidden" aria-hidden="true"><p id="contextSubject">-</p><p id="contextHint">-</p></div>
 
@@ -101,11 +101,11 @@
                 <input id="tableSearch" type="text" placeholder="ค้นหาชื่อ รหัสนักเรียน หรือห้องเรียน" class="w-full rounded-2xl border border-slate-200 bg-white py-3 pl-10 pr-4 text-sm text-slate-800 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100 sm:w-80">
               </label>
               <select id="tableSort" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
-                <option value="rankAsc">เรียง: ลำดับคะแนน</option>
-                <option value="nameAsc">ชื่อ</option>
-                <option value="statusAsc">สถานะ</option>
-                <option value="scoreDesc">คะแนนรวมมากไปน้อย</option>
-                <option value="classAsc">ห้อง</option>
+                <option value="rankAsc">เรียงตาม: อันดับคะแนน</option>
+                <option value="nameAsc">เรียงตาม: ชื่อ (ก-ฮ)</option>
+                <option value="statusAsc">เรียงตาม: สถานะ</option>
+                <option value="scoreDesc">เรียงตาม: คะแนนรวม มากไปน้อย</option>
+                <option value="classAsc">เรียงตาม: ห้อง</option>
               </select>
               <div class="relative">
                 <button id="exportDropdownButton" type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:w-auto" aria-expanded="false">
@@ -127,7 +127,7 @@
                 <option value="ทั้งหมด">ทั้งหมด</option>
                 <option value="ผ่านเกณฑ์ดี">ผ่านเกณฑ์ดี</option>
                 <option value="ผ่านเกณฑ์">ผ่านเกณฑ์</option>
-                <option value="ต้องติดตาม">ต้องติดตาม</option>
+                <option value="ต่ำกว่าเกณฑ์">ต่ำกว่าเกณฑ์</option>
               </select>
             </label>
             <label class="block">
@@ -274,7 +274,7 @@
       if (row.total >= 50) {
         return 'ผ่านเกณฑ์';
       }
-      return 'ต้องติดตาม';
+      return 'ต่ำกว่าเกณฑ์';
     }
 
     function renderCards(target, cards) {
@@ -324,14 +324,14 @@
       els.contextHint.textContent = `หน้านี้เพิ่ม sorting ตามชื่อ สถานะ คะแนนรวม และห้องเรียน เพื่อช่วยให้ตรวจสอบ ranking รายวิชาได้ตรง pain point มากขึ้น`;
 
       const topScore = state.rows.length ? state.rows[0].total : 0;
-      const followUpCount = state.rows.filter((row) => row.status === 'ต้องติดตาม').length;
+      const followUpCount = state.rows.filter((row) => row.status === 'ต่ำกว่าเกณฑ์').length;
       const avg = state.rows.length ? (state.rows.reduce((sum, row) => sum + row.total, 0) / state.rows.length).toFixed(1) : '0.0';
 
       renderCards(els.overviewCards, [
         { label: 'รายวิชา', value: filters.subjectCode || '-', hint: filters.subjectName || 'รายวิชาที่กำลังแสดงในหน้านี้', iconClass: 'bg-blue-50 text-blue-600', icon: 'M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z' },
         { label: 'นักเรียนทั้งหมด', value: `${state.rows.length} คน`, hint: 'จำนวนนักเรียนในชุด ranking ปัจจุบัน', iconClass: 'bg-sky-50 text-sky-600', icon: 'M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 2c-4 0-7 2-7 4.5V20h14v-1.5C19 16 16 14 12 14Z' },
         { label: 'คะแนนสูงสุด / เฉลี่ย', value: `${topScore} / ${avg}`, hint: 'คะแนนสูงสุดเทียบกับค่าเฉลี่ยรายวิชา', iconClass: 'bg-emerald-50 text-emerald-600', icon: 'M4 18h16v2H4v-2Zm2-7h3v5H6v-5Zm5-4h3v9h-3V7Zm5-4h3v13h-3V3Z' },
-        { label: 'ต้องติดตาม', value: `${followUpCount} คน`, hint: 'นักเรียนที่คะแนนรวมต่ำกว่า 50', iconClass: 'bg-rose-50 text-rose-600', icon: 'M12 2 1 21h22L12 2Zm0 5 5.3 10H6.7L12 7Zm-1 3v4h2v-4h-2Zm0 5v2h2v-2h-2Z' }
+        { label: 'ต่ำกว่าเกณฑ์', value: `${followUpCount} คน`, hint: 'นักเรียนที่คะแนนรวมต่ำกว่า 50', iconClass: 'bg-rose-50 text-rose-600', icon: 'M12 2 1 21h22L12 2Zm0 5 5.3 10H6.7L12 7Zm-1 3v4h2v-4h-2Zm0 5v2h2v-2h-2Z' }
       ]);
     }
 
@@ -400,7 +400,7 @@
             <span class="inline-flex min-w-14 items-center justify-center rounded-full ${row.total < 50 ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200'} px-3 py-1.5 text-xs font-semibold">${row.total}</span>
           </td>
           <td class="px-5 py-6 text-center">
-            <span class="inline-flex rounded-full ${row.status === 'ต้องติดตาม' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : row.status === 'ผ่านเกณฑ์ดี' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-sky-50 text-sky-700 ring-1 ring-sky-200'} px-3 py-1.5 text-xs font-semibold">${row.status}</span>
+            <span class="inline-flex rounded-full ${row.status === 'ต่ำกว่าเกณฑ์' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : row.status === 'ผ่านเกณฑ์ดี' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-sky-50 text-sky-700 ring-1 ring-sky-200'} px-3 py-1.5 text-xs font-semibold">${row.status}</span>
           </td>
         </tr>
       `).join('');
@@ -421,7 +421,7 @@
             <div class="rounded-2xl bg-slate-50 p-3"><div class="text-slate-400">กลาง</div><div class="mt-1 font-semibold text-slate-800">${row.midterm}</div></div>
             <div class="rounded-2xl bg-slate-50 p-3"><div class="text-slate-400">ปลาย</div><div class="mt-1 font-semibold text-slate-800">${row.final}</div></div>
           </div>
-          <div class="mt-4"><span class="inline-flex rounded-full ${row.status === 'ต้องติดตาม' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : row.status === 'ผ่านเกณฑ์ดี' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-sky-50 text-sky-700 ring-1 ring-sky-200'} px-3 py-1.5 text-xs font-semibold">${row.status}</span></div>
+          <div class="mt-4"><span class="inline-flex rounded-full ${row.status === 'ต่ำกว่าเกณฑ์' ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-200' : row.status === 'ผ่านเกณฑ์ดี' ? 'bg-emerald-50 text-emerald-700 ring-1 ring-emerald-200' : 'bg-sky-50 text-sky-700 ring-1 ring-sky-200'} px-3 py-1.5 text-xs font-semibold">${row.status}</span></div>
         </article>
       `).join('');
     }

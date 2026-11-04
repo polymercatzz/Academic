@@ -191,8 +191,56 @@ function buildSeed() {
     opts: { lowAbility: [4] },
   }), 'u2', 24 * 201, 24 * 198);
 
+  // ผลสอบซ่อมของภาคเรียนที่แล้ว: นักเรียนที่ได้ 0 สอบซ่อมครั้งแรกไม่ผ่าน ครั้งที่สองผ่าน (UC-20)
+  const p12 = sections.find((x) => x.id === 'p12');
+  p12.remedialAttempts = { [p12.students[4].id]: [
+    { no: 1, date: '2026-03-27', score: 38, note: 'สอบข้อเขียน', by: 'u1', at: hoursAgo(24 * 190) },
+    { no: 2, date: '2026-04-10', score: 56, note: 'สอบข้อเขียนและส่งแบบฝึกหัดเพิ่ม', by: 'u1', at: hoursAgo(24 * 176) },
+  ] };
+
   sections.forEach((sec) => sec.students.forEach((s) => delete s.ability));
-  const db = { version: 2, sections };
+  const db = { version: 2, sections, clubs: seedClubs(sections) };
   seedAttendance(db); // การเช็คชื่อรายคาบ (attendance-core.js)
   return db;
+}
+
+/* ชุมนุม (UC-27): สมาชิกคละห้องจากทุกระดับชั้น ครูที่ปรึกษากรอกเวลาเข้าร่วมเองและให้ ผ / มผ
+ * นักเรียนหนึ่งคนอยู่ได้หนึ่งกลุ่มต่อประเภทต่อภาคเรียน */
+const CLUB_TYPES = {
+  club: 'ชุมนุม',
+  scout: 'ลูกเสือ-เนตรนารี',
+  social_service: 'เพื่อสังคมและสาธารณประโยชน์',
+};
+function seedClubs(sections) {
+  const rand = mulberry32(2027);
+  const T = '2569-1';
+  const roster = [];
+  const seen = new Set();
+  sections.filter((x) => x.term === T).forEach((sec) => sec.students.forEach((s) => {
+    if (!seen.has(s.id)) { seen.add(s.id); roster.push({ id: s.id, room: sec.room }); }
+  }));
+  const pool = roster.map((x) => [rand(), x.id]).sort((a, b) => a[0] - b[0]).map((x) => x[1]);
+  const take = (n) => pool.splice(0, n);
+  const results = (ids, filled) => Object.fromEntries(ids.slice(0, Math.round(ids.length * filled)).map((sid, i) => {
+    const att = i % 9 === 4 ? 70 + Math.floor(rand() * 8) : 85 + Math.floor(rand() * 16);
+    return [sid, { att, result: att >= MIN_ATTENDANCE ? 'pass' : 'fail', remark: att < MIN_ATTENDANCE ? 'เวลาเข้าร่วมไม่ถึงร้อยละ 80' : '' }];
+  }));
+  const club = (id, name, type, advisorId, capacity, n, filled, state, extra = {}) => {
+    const members = take(n);
+    return {
+      id, term: T, name, type, advisorId, capacity, members, results: results(members, filled),
+      state, submittedAt: state === 'draft' ? null : hoursAgo(30), decidedAt: state === 'approved' ? hoursAgo(8) : null,
+      decidedBy: state === 'approved' ? 'u2' : null, returnReason: '', updatedAt: hoursAgo(30 + rand() * 100), ...extra,
+    };
+  };
+  return [
+    club('k1', 'ชุมนุมคณิตคิดสนุก', 'club', 'u1', 30, 24, 0.6, 'draft'),
+    club('k2', 'ชุมนุมหุ่นยนต์และโค้ดดิ้ง', 'club', 'u7', 25, 25, 1, 'pending'),
+    club('k3', 'ชุมนุมดนตรีไทย', 'club', 'u12', 30, 18, 1, 'approved'),
+    club('k4', 'ชุมนุมนักอ่านภาษาไทย', 'club', 'u3', 30, 20, 1, 'draft',
+      { returnReason: 'มีนักเรียน 2 คนได้ มผ แต่ไม่ได้ระบุเหตุผล', decidedAt: hoursAgo(12), decidedBy: 'u2', submittedAt: hoursAgo(40) }),
+    club('k5', 'ชุมนุมกีฬาฟุตซอล', 'club', 'u11', 30, 28, 0, 'draft'),
+    club('k6', 'ลูกเสือ-เนตรนารี ม.2', 'scout', 'u1', 40, 30, 0.3, 'draft'),
+    club('k7', 'จิตอาสาพัฒนาโรงเรียน', 'social_service', 'u8', 40, 32, 1, 'approved'),
+  ];
 }

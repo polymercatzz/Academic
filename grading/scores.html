@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ระบบบันทึกคะแนน</title>
+  <title>ระบบบันทึกคะแนน | Academic Report</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -43,7 +43,7 @@
   </script>
   <link rel="stylesheet" href="assets/css/style.css" />
   <link rel="stylesheet" href="assets/css/type-scale.css?v=1" />
-  <link rel="stylesheet" href="../shared/layout-compat.css?v=2" />
+  <link rel="stylesheet" href="../shared/layout-compat.css?v=3" />
   <link rel="stylesheet" href="assets/css/theme.css?v=3" />
 </head>
 <body class="ar-themed relative min-h-screen overflow-x-hidden bg-canvas font-body text-ink" data-grading-app="scores">
@@ -87,8 +87,8 @@
 
   <div class="relative lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=9"></script>
-    <script src="grading-layout.js?v=4"></script>
+    <script src="../shared/academic-layout.js?v=12"></script>
+    <script src="grading-layout.js?v=5"></script>
     <!-- stand-ins for the app's own sidebar/topbar: its scripts still write here (see grading-layout.js) -->
     <div hidden aria-hidden="true">
       <nav id="nav"></nav><span id="schoolName"></span><button id="resetDemo"></button><button id="menuBtn"></button><div id="scrim"></div>
@@ -103,9 +103,13 @@
   <div class="toasts" id="toasts"></div>
 
   <script src="assets/js/data.js"></script>
-  <script src="assets/js/seed.js"></script>
-  <script src="assets/js/attendance-core.js"></script>
-  <script src="assets/js/app.js"></script>
-  <script src="assets/js/academic.js"></script>
+  <script src="assets/js/seed.js?v=2"></script>
+  <script src="assets/js/attendance-core.js?v=3"></script>
+  <script src="assets/js/app.js?v=3"></script>
+  <!-- before academic.js: it calls boot(), and the router needs these pages -->
+  <script src="assets/js/remedial.js"></script>
+  <script src="assets/js/clubs.js"></script>
+  <script src="assets/js/holidays.js"></script>
+  <script src="assets/js/academic.js?v=2"></script>
 </body>
 </html>

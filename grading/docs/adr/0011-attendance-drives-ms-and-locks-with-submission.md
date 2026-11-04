@@ -21,4 +21,5 @@
 ## ผลที่ตามมา
 - `StudentSubjectResult.attendance_percent` กลายเป็นค่าที่คำนวณได้ ไม่ใช่ค่าที่กรอก
 - ครูที่ไม่เช็คบางคาบจะทำให้เวลาเรียน (%) สูงเกินจริงได้ จึงต้องแสดงจำนวนคาบที่ยังไม่เช็คให้เห็นชัด ทั้งในหน้าเช็คชื่อและตอนส่งผล
+- คาบในวันหยุดของโรงเรียน (`db.att.holidays`, UC-25) ไม่อยู่ในคาบที่ต้องเช็ค จึงไม่นับเป็นตัวหาร
 - ตารางที่เพิ่มใน ER: `HomeroomTeacher`, `AttendanceSession`, `AttendanceRecord` ([er-data-dictionary ข้อ 8](../er-data-dictionary.md))

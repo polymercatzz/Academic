@@ -240,7 +240,7 @@
     if (result.isIncomplete) return { label: "ข้อมูลผลการเรียนไม่ครบ", tone: "incomplete" };
     if (result.failedSubjects > 0) return { label: "มีรายวิชาไม่ผ่าน", tone: "failed" };
     if (result.missingCredits > 0) return { label: "หน่วยกิตไม่ครบ", tone: "credits" };
-    if (result.gpax != null && result.gpax < ACADEMIC_STATUS_RULES.warningGpax) return { label: "ควรติดตามผลการเรียน", tone: "warning" };
+    if (result.gpax != null && result.gpax < ACADEMIC_STATUS_RULES.warningGpax) return { label: "ผลสะสมต่ำกว่า " + ACADEMIC_STATUS_RULES.warningGpax.toFixed(2), tone: "warning" };
     return { label: "ปกติ", tone: "normal" };
   }
 
@@ -409,8 +409,8 @@
       metricCard("GPA เฉลี่ยภาคเรียนล่าสุด", data.avgLatestGpa == null ? "-" : data.avgLatestGpa.toFixed(2)),
       metricCard("หน่วยกิตผ่านเฉลี่ย", data.avgEarnedCredits == null ? "-" : data.avgEarnedCredits.toFixed(1)),
       metricCard("มีวิชาไม่ผ่าน", data.failed, data.failed > 0),
-      metricCard("ควรติดตาม", data.watch, data.watch > 0),
-      metricCard("ความครบถ้วนของข้อมูล", data.completeness + "%", data.completeness < 100)
+      metricCard("ผลสะสมต่ำกว่า " + ACADEMIC_STATUS_RULES.warningGpax.toFixed(2), data.belowThreshold, data.belowThreshold > 0),
+      metricCard("มีผลการเรียนครบทุกภาค", (data.total - data.incomplete) + "/" + data.total + " คน", data.incomplete > 0)
     ].join("");
   }
 
@@ -421,10 +421,10 @@
       metricCard("GPAX เฉลี่ย", data.avgGpax == null ? "-" : data.avgGpax.toFixed(2)),
       metricCard("GPAX สูงสุด", data.maxGpax == null ? "-" : data.maxGpax.toFixed(2)),
       metricCard("GPAX ต่ำสุด", data.minGpax == null ? "-" : data.minGpax.toFixed(2)),
-      metricCard("GPAX ต่ำกว่าเกณฑ์", data.belowThreshold, data.belowThreshold > 0),
+      metricCard("GPAX ต่ำกว่า " + ACADEMIC_STATUS_RULES.warningGpax.toFixed(2), data.belowThreshold, data.belowThreshold > 0),
       metricCard("มีวิชาไม่ผ่าน", data.failed, data.failed > 0),
       metricCard("หน่วยกิตไม่ครบ", data.missingCredits, data.missingCredits > 0),
-      metricCard("ความครบถ้วนของข้อมูล", data.completeness + "%", data.completeness < 100)
+      metricCard("มีผลการเรียนครบทุกภาค", (data.total - data.incomplete) + "/" + data.total + " คน", data.incomplete > 0)
     ].join("");
   }
 
@@ -590,7 +590,7 @@
       drawBarChart(els.chartTwo, GPAX_BINS.map(function (bin) { return bin.label; }), values);
     } else {
       els.chartOneTitle.textContent = "การกระจาย GPAX";
-      els.chartTwoTitle.textContent = "ความครบถ้วนของหน่วยกิตตามกลุ่มสาระ";
+      els.chartTwoTitle.textContent = "หน่วยกิตที่ได้แล้วเทียบกับที่ต้องได้ ตามกลุ่มสาระ (%)";
       drawBarChart(els.chartOne, GPAX_BINS.map(function (bin) { return bin.label; }), values);
       const groupValues = state.db.subjectGroups.map(function (group) {
         const earned = state.baseResults.reduce(function (sum, result) { return sum + result.creditsByGroup[group.id]; }, 0);
@@ -622,7 +622,7 @@
         avgGpax: data.avgGpax,
         avgLatestGpa: data.avgLatestGpa,
         avgEarnedCredits: data.avgEarnedCredits,
-        watch: data.watch,
+        belowThreshold: data.belowThreshold,
         failed: data.failed,
         missingCredits: data.missingCredits,
         incomplete: data.incomplete
@@ -645,9 +645,9 @@
     const rows = buildOverviewRows(state.visibleResults);
     els.toolbarTitle.textContent = "สรุปผลรายห้อง";
     els.resultCount.textContent = rows.length + " ห้อง";
-    els.thead.innerHTML = '<tr><th>ระดับชั้น</th><th>ห้องเรียน</th><th>แผนการเรียน</th><th>นักเรียน</th><th>' + (state.activeReportType === "record" ? "ผลสะสมเฉลี่ย" : "GPAX เฉลี่ย") + '</th><th>GPA ล่าสุดเฉลี่ย</th><th>หน่วยกิตผ่านเฉลี่ย</th><th>ควรติดตาม</th><th>มีวิชาไม่ผ่าน</th><th>หน่วยกิตไม่ครบ</th><th>ข้อมูลไม่ครบ</th><th>การดำเนินการ</th></tr>';
+    els.thead.innerHTML = '<tr><th>ระดับชั้น</th><th>ห้องเรียน</th><th>แผนการเรียน</th><th>นักเรียน</th><th>' + (state.activeReportType === "record" ? "ผลสะสมเฉลี่ย" : "GPAX เฉลี่ย") + '</th><th>GPA ล่าสุดเฉลี่ย</th><th>หน่วยกิตผ่านเฉลี่ย</th><th>ผลสะสมต่ำกว่า 2.00</th><th>มีวิชาไม่ผ่าน</th><th>หน่วยกิตไม่ครบ</th><th>ข้อมูลไม่ครบ</th><th>การดำเนินการ</th></tr>';
     els.tbody.innerHTML = rows.map(function (row) {
-      return '<tr><td>' + escapeHtml(row.grade.name) + '</td><td><strong>' + escapeHtml(row.classroom.name) + '</strong></td><td>' + escapeHtml(row.plan.name) + '</td><td>' + row.count + '</td><td>' + (row.avgGpax == null ? incompleteCell() : row.avgGpax.toFixed(2)) + '</td><td>' + (row.avgLatestGpa == null ? incompleteCell() : row.avgLatestGpa.toFixed(2)) + '</td><td>' + (row.avgEarnedCredits == null ? incompleteCell() : row.avgEarnedCredits.toFixed(1)) + '</td><td>' + row.watch + '</td><td>' + row.failed + '</td><td>' + row.missingCredits + '</td><td>' + row.incomplete + '</td><td><button class="btn btn-secondary record-row-action" type="button" data-room-detail="' + row.classroom.id + '">ดูรายละเอียด</button></td></tr>';
+      return '<tr><td>' + escapeHtml(row.grade.name) + '</td><td><strong>' + escapeHtml(row.classroom.name) + '</strong></td><td>' + escapeHtml(row.plan.name) + '</td><td>' + row.count + '</td><td>' + (row.avgGpax == null ? incompleteCell() : row.avgGpax.toFixed(2)) + '</td><td>' + (row.avgLatestGpa == null ? incompleteCell() : row.avgLatestGpa.toFixed(2)) + '</td><td>' + (row.avgEarnedCredits == null ? incompleteCell() : row.avgEarnedCredits.toFixed(1)) + '</td><td>' + row.belowThreshold + '</td><td>' + row.failed + '</td><td>' + row.missingCredits + '</td><td>' + row.incomplete + '</td><td><button class="btn btn-secondary record-row-action" type="button" data-room-detail="' + row.classroom.id + '">ดูรายละเอียด</button></td></tr>';
     }).join("");
   }
 

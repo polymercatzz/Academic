@@ -34,6 +34,7 @@ const els = {
   followUpCount: document.getElementById("scoreFollowUpCount"),
   lowSubjectCount: document.getElementById("scoreLowSubjectCount"),
   completionRate: document.getElementById("scoreCompletionRate"),
+  completionDesc: document.getElementById("scoreCompletionDesc"),
   subjectAverageChart: document.getElementById("scoreSubjectAverageChart"),
   followUpTbody: document.getElementById("scoreFollowUpTbody"),
   columnToggleBtn: document.getElementById("scoreColumnToggleBtn"),
@@ -414,7 +415,8 @@ function buildScoreSummary() {
 
   els.followUpCount.textContent = `${state.followUpRows.length} คน`;
   els.lowSubjectCount.textContent = `${lowSubjectCount} วิชา`;
-  els.completionRate.textContent = `${completionRate.toFixed(1)}%`;
+  els.completionRate.textContent = `${recordedScores.length}/${expectedScoreCount}`;
+  els.completionDesc.textContent = `ช่องคะแนน (${completionRate.toFixed(1)}%)`;
 }
 
 function renderSubjectAverageChart() {

@@ -5,6 +5,7 @@
  *   start:     วันจันทร์ของสัปดาห์แรกในภาคเรียน 'YYYY-MM-DD'
  *   timetable: [{ sec, day (1=จันทร์..5=ศุกร์), period }]       ตารางสอนรายสัปดาห์ของภาคเรียนปัจจุบัน
  *   records:   { 'secId|date|period': { t, ex: { sid: mark } } } คาบที่เช็คแล้ว (เก็บเฉพาะคนที่ไม่ใช่ “มา”)
+ *   holidays:  [{ date, name, by, at }]                       วันหยุดของโรงเรียน ฝ่ายวิชาการกำหนด (UC-25)
  * }
  */
 
@@ -54,6 +55,8 @@ function shiftSchoolDay(s, dir) {
 const termEnd = (db) => addDays(db.att.start, TERM_WEEKS * 7 - 3); // ศุกร์ของสัปดาห์สุดท้าย
 const inTerm = (db, date) => date >= db.att.start && date <= termEnd(db);
 const periodOf = (no) => PERIODS.find((p) => p.no === no);
+/* วันหยุดของโรงเรียนในวันนั้น (ไม่รวมเสาร์–อาทิตย์) — คาบในวันหยุดไม่ต้องเช็คและไม่นับเวลาเรียน */
+const holidayOn = (db, date) => (db.att.holidays || []).find((h) => h.date === date) || null;
 
 /* ---------- กฎ ---------- */
 const sessionKey = (secId, date, period) => `${secId}|${date}|${period}`;
@@ -91,7 +94,7 @@ function plannedSessions(db, sec, until) {
   for (let w = 0; w < TERM_WEEKS; w++) {
     slots.forEach((t) => {
       const date = addDays(db.att.start, w * 7 + t.day - 1);
-      if (date <= end) out.push({ sec, date, period: t.period, key: sessionKey(sec.id, date, t.period) });
+      if (date <= end && !holidayOn(db, date)) out.push({ sec, date, period: t.period, key: sessionKey(sec.id, date, t.period) });
     });
   }
   return out.sort((a, b) => (a.date === b.date ? a.period - b.period : a.date < b.date ? -1 : 1));
@@ -138,9 +141,32 @@ function studentAttendance(db, sec, sid) {
 
 /* ---------- ข้อมูลจำลอง ---------- */
 function ensureAttendance(db) {
-  if (db.att) return false;
+  if (db.att) {
+    if (db.att.holidays) return false;
+    db.att.holidays = []; // บันทึกไว้ก่อนมีวันหยุด: ไม่เติมวันหยุดตัวอย่าง เพราะจะเปลี่ยนเวลาเรียนที่ตรวจไปแล้ว
+    return true;
+  }
   seedAttendance(db);
   return true;
+}
+
+/* วันหยุดนักขัตฤกษ์ (เดือน-วัน) ที่ใช้สร้างวันหยุดตัวอย่าง */
+const PUBLIC_HOLIDAYS = [
+  ['01-01', 'วันขึ้นปีใหม่'], ['04-06', 'วันจักรี'], ['04-13', 'วันสงกรานต์'], ['04-14', 'วันสงกรานต์'], ['04-15', 'วันสงกรานต์'],
+  ['05-01', 'วันแรงงานแห่งชาติ'], ['05-04', 'วันฉัตรมงคล'], ['06-03', 'วันเฉลิมพระชนมพรรษาสมเด็จพระราชินี'],
+  ['07-28', 'วันเฉลิมพระชนมพรรษา ร.10'], ['08-12', 'วันแม่แห่งชาติ'], ['10-13', 'วันนวมินทรมหาราช'],
+  ['10-23', 'วันปิยมหาราช'], ['12-05', 'วันพ่อแห่งชาติ'], ['12-10', 'วันรัฐธรรมนูญ'], ['12-31', 'วันสิ้นปี'],
+];
+function seedHolidays(db) {
+  const out = [];
+  for (let d = db.att.start; d <= termEnd(db); d = addDays(d, 1)) {
+    const hit = PUBLIC_HOLIDAYS.find(([md]) => d.slice(5) === md);
+    if (hit && isSchoolDay(d)) out.push({ date: d, name: hit[1], by: null, at: null });
+  }
+  // กิจกรรมของโรงเรียน: กีฬาสีในสัปดาห์ที่ 18 (หลังวันนี้ ครูยังไม่ได้เช็คชื่อ)
+  const sport = addDays(db.att.start, 17 * 7 + 3);
+  if (!out.some((h) => h.date === sport)) out.push({ date: sport, name: 'กีฬาสีภายในโรงเรียน', by: 'u2', at: parseISO(db.att.start).getTime() - 7 * 86400000 });
+  return out.sort((a, b) => (a.date < b.date ? -1 : 1));
 }
 
 function seedAttendance(db) {
@@ -152,8 +178,9 @@ function seedAttendance(db) {
   // ให้วันนี้อยู่ในสัปดาห์ที่ 16 ของภาคเรียน เปิด Demo วันไหนก็มีคาบให้เช็ค
   const now = new Date();
   const monday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - ((now.getDay() + 6) % 7) - 15 * 7);
-  db.att = { start: isoDate(monday), timetable: [], records: {} };
+  db.att = { start: isoDate(monday), timetable: [], records: {}, holidays: [] };
   const att = db.att;
+  att.holidays = seedHolidays(db);
 
   /* ตารางสอน: ชั่วโมงตามหลักสูตร ÷ 20 สัปดาห์ = คาบต่อสัปดาห์ ห้องและครูต้องไม่ชนกัน */
   const busy = new Set();

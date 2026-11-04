@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Score Ranking</title>
+  <title>รายงานจัดอันดับคะแนนรายวิชา | Academic Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -96,7 +96,7 @@
 
   <div class="relative lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=9"></script>
+    <script src="../shared/academic-layout.js?v=12"></script>
     <script>AcademicLayout.mount({"active":"ranking","title":"รายงานจัดอันดับคะแนนรายวิชา"});</script>
     <div class="hidden" aria-hidden="true"><p id="contextTitle">พร้อมค้นหารายวิชา</p><p id="contextHint">-</p></div>
 
@@ -203,10 +203,10 @@
               <option value="lowRisk">เสี่ยงต่ำ</option>
             </select>
             <select id="tableSort" class="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-800 outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
-              <option value="default">เรียง: ค่าเริ่มต้น</option>
-              <option value="subjectAsc">รายวิชา</option>
-              <option value="riskDesc">เสี่ยงมากไปน้อย</option>
-              <option value="studentsDesc">จำนวนนักเรียนมากไปน้อย</option>
+              <option value="subjectRoom">เรียงตาม: รหัสวิชา แล้วห้อง</option>
+              <option value="subjectAsc">เรียงตาม: ชื่อวิชา (ก-ฮ)</option>
+              <option value="riskDesc">เรียงตาม: % คะแนนต่ำ มากไปน้อย</option>
+              <option value="studentsDesc">เรียงตาม: จำนวนนักเรียน มากไปน้อย</option>
             </select>
             <div class="relative">
               <button id="exportDropdownButton" type="button" class="inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-slate-50 px-5 py-3 text-sm font-semibold text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-blue-100 sm:w-auto" aria-expanded="false">
@@ -389,7 +389,7 @@
       rows: [],
       tableSearch: '',
       tableFilter: 'ทั้งหมด',
-      tableSort: 'default',
+      tableSort: 'subjectRoom',
       previewMode: 'all-pdf',
       advancedOpen: false
     };
@@ -566,7 +566,9 @@
         rows = rows.filter((item) => item.riskPercent < 15);
       }
 
-      if (state.tableSort === 'subjectAsc') {
+      if (state.tableSort === 'subjectRoom') {
+        rows.sort((a, b) => a.subjectCode.localeCompare(b.subjectCode, 'th') || a.classRoom.localeCompare(b.classRoom, 'th', { numeric: true }));
+      } else if (state.tableSort === 'subjectAsc') {
         rows.sort((a, b) => a.subjectLabel.localeCompare(b.subjectLabel, 'th'));
       } else if (state.tableSort === 'riskDesc') {
         rows.sort((a, b) => b.riskPercent - a.riskPercent || a.subjectLabel.localeCompare(b.subjectLabel, 'th'));
@@ -900,10 +902,10 @@
       initializeFilters();
       els.tableSearch.value = '';
       els.tableFilter.value = 'ทั้งหมด';
-      els.tableSort.value = 'default';
+      els.tableSort.value = 'subjectRoom';
       state.tableSearch = '';
       state.tableFilter = 'ทั้งหมด';
-      state.tableSort = 'default';
+      state.tableSort = 'subjectRoom';
       refreshView();
     });
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>รายชื่อนักเรียนสอบซ่อมรายห้อง</title>
+  <title>รายชื่อนักเรียนสอบซ่อมรายห้อง | Academic Report</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -78,7 +78,7 @@
 
   <div class="relative lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=9"></script>
+    <script src="../shared/academic-layout.js?v=12"></script>
     <script>AcademicLayout.mount({"active":"retake","title":"รายชื่อนักเรียนสอบซ่อม","rightHtml":"<button id=\"refreshButton\" type=\"button\" class=\"inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700\">\n            <svg class=\"h-4 w-4\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M17.7 6.3A8 8 0 1 0 20 12h-2a6 6 0 1 1-1.76-4.24L14 10h6V4l-2.3 2.3Z\"/></svg>\n            รีเฟรช\n          </button>"});</script>
 
     <main class="px-4 py-6 lg:px-8 lg:py-8">
@@ -222,7 +222,7 @@
           <div class="mt-4 flex flex-wrap gap-2">
             <button type="button" data-quick-filter="ทั้งหมด" class="chip">ทั้งหมด <span class="text-xs opacity-70" data-quick-count="ทั้งหมด">0</span></button>
             <button type="button" data-quick-filter="รอสอบซ่อม" class="chip">รอสอบซ่อม <span class="text-xs opacity-70" data-quick-count="รอสอบซ่อม">0</span></button>
-            <button type="button" data-quick-filter="ต้องติดตาม" class="chip">ต้องติดตาม <span class="text-xs opacity-70" data-quick-count="ต้องติดตาม">0</span></button>
+            <button type="button" data-quick-filter="มีงานค้าง" class="chip">มีงานค้าง <span class="text-xs opacity-70" data-quick-count="มีงานค้าง">0</span></button>
             <button type="button" data-quick-filter="ดำเนินการครบแล้ว" class="chip">ดำเนินการครบแล้ว <span class="text-xs opacity-70" data-quick-count="ดำเนินการครบแล้ว">0</span></button>
             <button type="button" data-quick-filter="หลายวิชา" class="chip">หลายวิชา <span class="text-xs opacity-70" data-quick-count="หลายวิชา">0</span></button>
             <button type="button" data-quick-filter="เกรด 0" class="chip">เกรด 0 <span class="text-xs opacity-70" data-quick-count="เกรด 0">0</span></button>
@@ -234,12 +234,11 @@
           <table class="min-w-[960px] w-full text-sm">
             <thead class="sticky top-0 z-10 bg-surfaceSoft">
               <tr class="border-b border-line text-muted">
-                <th class="px-4 py-4 text-left font-semibold">Student</th>
-                <th class="px-4 py-4 text-center font-semibold">Classroom</th>
-                <th class="px-4 py-4 text-left font-semibold">Subjects requiring retake</th>
-                <th class="px-4 py-4 text-center font-semibold">Overall status</th>
-                <th class="px-4 py-4 text-center font-semibold">Priority</th>
-                <th class="px-4 py-4 text-center font-semibold">Actions</th>
+                <th class="px-4 py-4 text-left font-semibold">นักเรียน</th>
+                <th class="px-4 py-4 text-center font-semibold">ห้อง</th>
+                <th class="px-4 py-4 text-left font-semibold">วิชาที่ต้องสอบซ่อมและสถานะ</th>
+                <th class="px-4 py-4 text-center font-semibold">ความเร่งด่วน</th>
+                <th class="px-4 py-4 text-center font-semibold">จัดการ</th>
               </tr>
             </thead>
             <tbody id="tableBody" class="divide-y divide-line bg-white"></tbody>
@@ -386,7 +385,7 @@
     const quickFilterLabels = {
       'ทั้งหมด': 'ทั้งหมด',
       'รอสอบซ่อม': 'รอสอบซ่อม',
-      'ต้องติดตาม': 'ต้องติดตาม',
+      'มีงานค้าง': 'มีงานค้าง',
       'ดำเนินการครบแล้ว': 'ดำเนินการครบแล้ว',
       'หลายวิชา': 'หลายวิชา',
       'เกรด 0': 'เกรด 0',
@@ -541,7 +540,7 @@
         return 'ดำเนินการครบแล้ว';
       }
       if (student.followUpCount > 0) {
-        return 'ต้องติดตาม';
+        return 'มีงานค้าง';
       }
       return 'รอสอบซ่อม';
     }
@@ -554,7 +553,7 @@
         return { label: 'เร่งด่วนสูง', tone: 'red', rank: 3 };
       }
       if (student.subjectCount >= 2 || student.followUpCount > 0) {
-        return { label: 'ต้องติดตาม', tone: 'amber', rank: 2 };
+        return { label: 'เร่งด่วนปานกลาง', tone: 'amber', rank: 2 };
       }
       return { label: 'ปกติ', tone: 'green', rank: 1 };
     }
@@ -646,8 +645,8 @@
         switch (state.quickFilter) {
           case 'รอสอบซ่อม':
             return student.waitingCount > 0;
-          case 'ต้องติดตาม':
-            return student.overallStatus === 'ต้องติดตาม';
+          case 'มีงานค้าง':
+            return student.overallStatus === 'มีงานค้าง';
           case 'ดำเนินการครบแล้ว':
             return student.overallStatus === 'ดำเนินการครบแล้ว';
           case 'หลายวิชา':
@@ -685,22 +684,25 @@
       return { grouped, searched, rows: sorted };
     }
 
-    function badgeClassForStatus(status) {
-      switch (status) {
-        case 'ดำเนินการครบแล้ว':
-          return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-        case 'ต้องติดตาม':
-          return 'border-amber-200 bg-amber-50 text-amber-700';
-        default:
-          return 'border-sky-200 bg-sky-50 text-sky-700';
-      }
+    // only the statuses this student actually has, so the cell is the single place showing status
+    function buildStatusChips(student) {
+      return [
+        { count: student.waitingCount, label: 'รอสอบซ่อม', classes: 'bg-sky-50 text-sky-700' },
+        { count: student.completedCount, label: 'สอบซ่อมแล้ว', classes: 'bg-emerald-50 text-emerald-700' },
+        { count: student.followUpCount, label: 'ติดตามงาน', classes: 'bg-amber-50 text-amber-700' },
+        { count: student.zeroCount, label: 'เกรด 0', classes: 'bg-slate-100 text-slate-600' },
+        { count: student.pendingGradeCount, label: 'เกรด ร', classes: 'bg-slate-100 text-slate-600' }
+      ]
+        .filter((chip) => chip.count > 0)
+        .map((chip) => `<span class="rounded-full ${chip.classes} px-3 py-1 text-xs font-semibold">${chip.label} ${formatCount(chip.count)}</span>`)
+        .join('');
     }
 
     function badgeClassForPriority(priority) {
       switch (priority) {
         case 'เร่งด่วนสูง':
           return 'border-rose-200 bg-rose-50 text-rose-700';
-        case 'ต้องติดตาม':
+        case 'เร่งด่วนปานกลาง':
           return 'border-amber-200 bg-amber-50 text-amber-700';
         case 'ดำเนินการครบแล้ว':
           return 'border-emerald-200 bg-emerald-50 text-emerald-700';
@@ -717,7 +719,7 @@
 
       els.summaryCards.innerHTML = [
         {
-          title: 'นักเรียนที่ต้องติดตาม',
+          title: 'นักเรียนที่ต้องสอบซ่อม',
           value: formatCount(uniqueStudents),
           hint: 'จำนวนรายชื่อนักเรียนแบบไม่ซ้ำ'
         },
@@ -788,7 +790,7 @@
       const counts = {
         'ทั้งหมด': groupedStudents.length,
         'รอสอบซ่อม': groupedStudents.filter((student) => student.waitingCount > 0).length,
-        'ต้องติดตาม': groupedStudents.filter((student) => student.overallStatus === 'ต้องติดตาม').length,
+        'มีงานค้าง': groupedStudents.filter((student) => student.overallStatus === 'มีงานค้าง').length,
         'ดำเนินการครบแล้ว': groupedStudents.filter((student) => student.overallStatus === 'ดำเนินการครบแล้ว').length,
         'หลายวิชา': groupedStudents.filter((student) => student.subjectCount >= 2).length,
         'เกรด 0': groupedStudents.filter((student) => student.zeroCount > 0).length,
@@ -811,7 +813,7 @@
       if (!rows.length) {
         els.tableBody.innerHTML = `
           <tr>
-            <td colspan="6" class="px-6 py-12 text-center text-sm text-muted">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td>
+            <td colspan="5" class="px-6 py-12 text-center text-sm text-muted">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</td>
           </tr>
         `;
         return;
@@ -836,17 +838,8 @@
             <td class="px-5 py-5 align-top">
               <div class="font-semibold text-ink">${formatCount(student.subjectCount)} วิชา</div>
               <div class="mt-2 flex flex-wrap gap-2">
-                <span class="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">รอสอบซ่อม ${formatCount(student.waitingCount)}</span>
-                <span class="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">สอบซ่อมแล้ว ${formatCount(student.completedCount)}</span>
-                <span class="rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700">ติดตามงาน ${formatCount(student.followUpCount)}</span>
+                ${buildStatusChips(student)}
               </div>
-              <div class="mt-2 flex flex-wrap gap-2 text-xs text-muted">
-                <span class="rounded-full bg-slate-100 px-3 py-1">เกรด 0 ${formatCount(student.zeroCount)}</span>
-                <span class="rounded-full bg-slate-100 px-3 py-1">เกรด ร ${formatCount(student.pendingGradeCount)}</span>
-              </div>
-            </td>
-            <td class="px-5 py-5 text-center align-top">
-              <span class="inline-flex rounded-full border px-3 py-1.5 text-xs font-semibold ${badgeClassForStatus(student.overallStatus)}">${escapeHTML(student.overallStatus)}</span>
             </td>
             <td class="px-5 py-5 text-center align-top">
               <span class="inline-flex rounded-full border px-3 py-1.5 text-xs font-semibold ${badgeClassForPriority(student.priority)}">${escapeHTML(student.priority)}</span>
