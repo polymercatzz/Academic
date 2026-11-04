@@ -416,7 +416,6 @@ function parseRoute(hash) {
     if (parts[1] === 'inbox') return { page: 'ainbox' };
     if (parts[1] === 'reports') return { page: 'areports' };
     if (parts[1] === 'clubs') return { page: 'aclubs' };
-    if (parts[1] === 'holidays') return { page: 'aholidays' };
     return { page: 'aoverview' };
   }
   if (parts[0] === 'followup') return { page: 'followup' };
@@ -500,7 +499,6 @@ function route() {
   else if (r.page === 'ainbox') renderAInbox();
   else if (r.page === 'areports') renderAReports();
   else if (r.page === 'aclubs') renderAClubs();
-  else if (r.page === 'aholidays') renderAHolidays();
   else if (r.page === 'remedial') renderRemedial();
   else if (r.page === 'clubs') renderClubs();
   else if (r.page === 'club') renderClub(r.id);

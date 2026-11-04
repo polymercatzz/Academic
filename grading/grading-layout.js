@@ -32,7 +32,6 @@
     if (hash.startsWith('#/a/inbox')) return 'g-ainbox';
     if (hash.startsWith('#/a/reports')) return 'g-areports';
     if (hash.startsWith('#/a/clubs')) return 'g-aclubs';
-    if (hash.startsWith('#/a/holidays')) return 'g-aholidays';
     if (hash.startsWith('#/a')) return 'g-aoverview';
     if (hash.startsWith('#/followup')) return 'g-followup';
     if (hash.startsWith('#/remedial')) return 'g-remedial';
@@ -41,9 +40,8 @@
     return 'g-home';
   }
 
-  // วันหยุดอยู่ในเมนูตารางเรียน ไม่ใช่เมนูผลการเรียน
   function group() {
-    return app === 'scores' && (location.hash || '').startsWith('#/a/holidays') ? 'ตารางเรียน' : GROUPS[app];
+    return GROUPS[app];
   }
 
   function title() {
