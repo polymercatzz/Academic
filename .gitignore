@@ -1,0 +1,3 @@
+# เล่มรายงาน Word — ไฟล์ binary ใหญ่ เก็บนอก git
+docs/*.docx
+~$*.docx
