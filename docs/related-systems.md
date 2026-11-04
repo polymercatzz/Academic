@@ -102,3 +102,26 @@
 | S15 | kruwandee.com. “SGS คืออะไร? คู่มือเริ่มต้นใช้งานระบบผลการเรียน สพฐ. ฉบับสมบูรณ์ [อัปเดต 2569].” 6 มี.ค. 2569. <https://www.kruwandee.com/news-id57600.html> |
 
 ก่อนใส่บรรณานุกรมให้แปลงเป็นรูปแบบ `[Online]` ตาม Rule §7 และใส่ปีที่สืบค้น (2569)
+
+## เลขอ้างอิงในเล่ม (ข้อ 2.3 — ใส่แล้ว 2026-11-04)
+
+เลข `[n]` เรียงตามลำดับที่อ้างครั้งแรกในข้อ 2.3 — ตอนนี้ยังไม่มีการอ้างอิงในข้อ 2.1–2.2 ถ้าเพิ่มภายหลัง (เช่น หลักสูตรแกนกลาง 2551) เลขในข้อ 2.3 จะต้องเลื่อนตาม ทำตอนจัดบรรณานุกรมในระยะ 8 · ไม่ได้ใช้ S4
+
+| ในเล่ม | โน้ต | รายการบรรณานุกรม (รูปแบบ Rule §7) |
+|---|---|---|
+| [1] | S1 | สำนักงบประมาณ. “บัญชีนวัตกรรมไทย: ซอฟต์แวร์บริหารสถานศึกษาดิจิตอล 4.0 (สคูล ไบร์ท).” [Online]. เข้าถึงได้จาก : https://innovation.bb.go.th/PDF/04020001.pdf  2569 |
+| [2] | S2 | School Bright. “School Bright School Management System.” [Online]. เข้าถึงได้จาก : https://www.schoolbright.co/en/post/school-bright-school-management-system-the-innovation-helping-32-432-thai-teachers-work-more-effect  2569 |
+| [3] | S10 | School Bright. “Product.” [Online]. เข้าถึงได้จาก : https://www.schoolbright.co/en/product  2569 |
+| [4] | S3 | School Bright. “Online timetable system : Elevating class schedule management with digital technology.” [Online]. เข้าถึงได้จาก : https://www.schoolbright.co/en/post/online-timetable-system-elevating-class-schedule-management-with-digital-technology  2566 |
+| [5] | S11 | School Bright. “ระบบตารางสอน School Bright จัดการตารางสอนได้ง่าย เพื่อการเรียนการสอนที่ลงตัว.” [Online]. เข้าถึงได้จาก : (URL ตาม S11)  2567 |
+| [6] | S12 | School Bright. “A Beginner’s Guide to Using School Bright’s Academic System for Teachers.” [Online]. เข้าถึงได้จาก : https://www.schoolbright.co/en/post/a-beginner-s-guide-to-using-school-bright-s-academic-system-for-teachers  2569 |
+| [7] | S13 | School Bright. “Say Goodbye to Manual Grading with School Bright Grade.” [Online]. เข้าถึงได้จาก : https://www.schoolbright.co/en/post/say-goodbye-to-manual-grading-with-school-bright-grade-the-education-technology-teachers-have-been  2569 |
+| [8] | S5 | (ตรวจชื่อโรงเรียนก่อน). “ขั้นตอนการกรอกคะแนนในระบบ SGS.” [Online]. เข้าถึงได้จาก : https://www.chomsurang.ac.th/eoffice/pdf/1.pdf  2569 |
+| [9] | S15 | kruwandee.com. “SGS คืออะไร? คู่มือเริ่มต้นใช้งานระบบผลการเรียน สพฐ. ฉบับสมบูรณ์.” [Online]. เข้าถึงได้จาก : https://www.kruwandee.com/news-id57600.html  2569 |
+| [10] | S14 | โรงเรียนพะลานวิทยาคม. “คู่มือการใช้งาน โปรแกรม SGS (Secondary Grading System) งานทะเบียน งานวัดผลและประเมินผล.” [Online]. เข้าถึงได้จาก : https://www.palanwit.ac.th/_files_school/34101391/data/34101391_1_20250627-165650.pdf  2568 |
+| [11] | S6 | Baibua Auto SGS. “Baibua Auto SGS (Chrome extension).” [Online]. เข้าถึงได้จาก : https://extscope.org/extension/jppfninlohakaolkiejgnfkefjmggkdm  2569 |
+| [12] | S7 | aSc TimeTables. “aSc TimeTables.” [Online]. เข้าถึงได้จาก : https://www.asctimetables.com/  2569 |
+| [13] | S8 | SourceForge. “aSc TimeTables.” [Online]. เข้าถึงได้จาก : https://sourceforge.net/app/asc-timetables/  2569 |
+| [14] | S9 | aSc TimeTables. “Constraints relaxation.” [Online]. เข้าถึงได้จาก : https://help.asctimetables.com/text.php?id=113  2569 |
+
+ปีท้ายรายการ = ปีที่เผยแพร่ถ้าทราบ ไม่งั้นใช้ปีที่สืบค้น (2569) ตาม Rule §7
