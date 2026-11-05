@@ -261,8 +261,7 @@ svg.chart { width: 100%; height: auto; display: block; overflow: visible; fill: 
   .att-page .key-hint { display: none; }
 }
 
-/* ---------- สอนแทน / เช็คย้อนหลัง / ขาด → มา / ปลด มส (ADR 0013) ---------- */
-.chip-sub { background: var(--primary-50); color: var(--primary); border-color: var(--primary-100); margin-left: 6px; }
+/* ---------- เช็คย้อนหลัง / ขาด → มา / ปลด มส (ADR 0013) ---------- */
 .backfill-opts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
 .strict-note { display: none; margin-left: 8px; font-size: 12px; font-weight: 600; color: var(--bad); }
 .strict-note svg { width: 13px; height: 13px; vertical-align: -2px; margin-right: 2px; }

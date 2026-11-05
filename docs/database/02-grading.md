@@ -199,6 +199,7 @@ erDiagram
         VARCHAR field_label
         TEXT old_value
         TEXT new_value
+        TEXT reason
         INTEGER changed_by FK
         TIMESTAMPTZ changed_at
     }
@@ -479,14 +480,15 @@ erDiagram
 | class_subject_id | INTEGER | FK → class_subject | Y | หน่วยส่งผล |
 | teaching_group_id | INTEGER | FK → teaching_group | Y | หน่วยส่งผล |
 | student_id | INTEGER | FK → student | Y | NULL ถ้าเป็นการแก้โครงสร้าง |
-| change_type | VARCHAR(20) | | N | `score` · `trait` · `structure` · `remedial` · `activity` · `attendance` (แก้การเช็คชื่อหลังบันทึก ขอบเขต 4) |
+| change_type | VARCHAR(20) | | N | `score` · `trait` · `structure` · `remedial` · `activity` · `attendance` (แก้การเช็คชื่อหลังบันทึก ขอบเขต 4) · `ms_waiver` (บันทึกหรือยกเลิกการปลด มส ขอบเขต 4) |
 | field_label | VARCHAR(150) | | N | สิ่งที่แก้ เช่น `ทดสอบย่อย 1` |
 | old_value | TEXT | | Y | ค่าเดิม |
 | new_value | TEXT | | Y | ค่าใหม่ |
+| reason | TEXT | | Y | เหตุผล · บังคับเมื่อแก้การเช็คชื่อจาก ขาด เป็น มา (อย่างน้อย 10 ตัวอักษร) และเมื่อบันทึกหรือยกเลิกการปลด มส ([grading ADR 0013](../../grading/docs/adr/0013-attendance-backfill-strict-edit-ms-waiver.md)) |
 | changed_by | INTEGER | FK → app_user | N | ผู้แก้ไข |
 | changed_at | TIMESTAMPTZ | | N | เวลา |
 | | | CHECK (`num_nonnulls(class_subject_id, teaching_group_id) = 1`) | | |
-| | | CHECK (`change_type IN ('score', 'trait', 'structure', 'remedial', 'activity', 'attendance')`) | | |
+| | | CHECK (`change_type IN ('score', 'trait', 'structure', 'remedial', 'activity', 'attendance', 'ms_waiver')`) | | |
 
 เพิ่มอย่างเดียว ไม่แก้และไม่ลบ
 

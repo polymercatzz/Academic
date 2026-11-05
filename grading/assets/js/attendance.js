@@ -316,13 +316,8 @@ function route() {
 /* =========================================================
  *  Page: คาบวันนี้ (ครูผู้สอน)
  * ========================================================= */
-/* คาบที่ครูคนนี้สอนแทนให้ครูอื่น */
-const mySubs = () => (db.att.subs || []).filter((x) => x.teacher === ME);
 function backlogOf() {
-  const today = todayISO();
-  const subbed = mySubs().filter((x) => x.date < today && !db.att.records[sessionKey(x.sec, x.date, x.period)])
-    .map((x) => ({ sec: sectionById(x.sec), date: x.date, period: x.period, sub: x }));
-  return [...mySections().flatMap((s) => sectionAttendance(db, s).unchecked), ...subbed]
+  return mySections().flatMap((s) => sectionAttendance(db, s).unchecked)
     .sort((a, b) => (a.date === b.date ? b.period - a.period : a.date < b.date ? 1 : -1));
 }
 
@@ -333,11 +328,10 @@ function renderToday(date) {
   $('#topbarTitle').textContent = 'คาบวันนี้';
   const mine = new Map(mySections().map((s) => [s.id, s]));
   const holiday = holidayOn(db, date);
-  // คาบของตนเอง + คาบที่สอนแทนครูอื่นในวันนั้น
-  const slots = !inTerm(db, date) || holiday ? [] : [
-    ...db.att.timetable.filter((t) => t.day === weekdayOf(date) && mine.has(t.sec)).map((t) => ({ sec: mine.get(t.sec), period: t.period, sub: subOf(db, t.sec, date, t.period) })),
-    ...mySubs().filter((x) => x.date === date).map((x) => ({ sec: sectionById(x.sec), period: x.period, sub: x })),
-  ].sort((a, b) => a.period - b.period);
+  const slots = !inTerm(db, date) || holiday ? [] : db.att.timetable
+    .filter((t) => t.day === weekdayOf(date) && mine.has(t.sec))
+    .map((t) => ({ sec: mine.get(t.sec), period: t.period }))
+    .sort((a, b) => a.period - b.period);
   const backlog = backlogOf();
   const doneN = slots.filter((t) => db.att.records[sessionKey(t.sec.id, date, t.period)]).length;
   let risk = 0, ms = 0;
@@ -349,9 +343,6 @@ function renderToday(date) {
 
   const row = (t) => {
     const sec = t.sec;
-    const subChip = !t.sub ? '' : t.sub.teacher === ME
-      ? `<span class="chip chip-sub">สอนแทน ${esc(userName(sec.teacherId))}</span>`
-      : `<span class="chip chip-sub">${esc(userName(t.sub.teacher))} สอนแทน</span>`;
     const rec = db.att.records[sessionKey(sec.id, date, t.period)];
     const future = date > today;
     let status, btn;
@@ -365,7 +356,7 @@ function renderToday(date) {
       <div class="period-row ${np === t.period ? 'now' : ''}">
         <div class="period-no"><b>${t.period}</b><span>${periodOf(t.period).start}</span></div>
         <div class="period-main">
-          <div class="period-title">${sec.code} ${esc(sec.name)} <span class="sec-room">${sec.room}</span>${subChip}${np === t.period ? '<span class="chip chip-primary">กำลังสอน</span>' : ''}</div>
+          <div class="period-title">${sec.code} ${esc(sec.name)} <span class="sec-room">${sec.room}</span>${np === t.period ? '<span class="chip chip-primary">กำลังสอน</span>' : ''}</div>
           <div class="period-sub">${periodOf(t.period).start}–${periodOf(t.period).end} · ${sec.students.length} คน · ${status}</div>
         </div>
         <div>${btn}</div>
@@ -396,7 +387,7 @@ function renderToday(date) {
       <div class="card list-wrap"><table class="list">
         <thead><tr><th>วันที่</th><th>คาบ</th><th>รายวิชา</th><th class="c">ห้อง</th><th></th></tr></thead>
         <tbody>${backlog.map((x) => `<tr>
-          <td>${thShort(x.date)}</td><td>${periodLabel(x.period)}</td><td>${x.sec.code} ${esc(x.sec.name)}${x.sub ? ` <span class="chip chip-sub">สอนแทน</span>` : ''}</td><td class="c">${x.sec.room}</td>
+          <td>${thShort(x.date)}</td><td>${periodLabel(x.period)}</td><td>${x.sec.code} ${esc(x.sec.name)}</td><td class="c">${x.sec.room}</td>
           <td class="r"><a class="btn btn-sm btn-primary" href="#/c/${x.sec.id}/${x.date}/${x.period}">${icon('check')}เช็คชื่อย้อนหลัง</a></td></tr>`).join('')}</tbody>
       </table></div>`
     : `<div class="card empty" style="padding:22px"><div>${icon('check')} เช็คชื่อครบทุกคาบที่ผ่านมาแล้ว</div></div>`}
@@ -429,12 +420,11 @@ const sessionHistory = (sec, key) => sec.history.filter((h) => h.att === key);
 
 function renderCheck(secId, date, period) {
   const sec = sectionById(secId);
-  if (!sec || !canCheck(db, sec, date, period, ME)) { toast('เปิดได้เฉพาะคาบของห้องเรียนที่ท่านสอนหรือสอนแทน', 'bad'); go('#/'); return; }
+  if (!sec || !canCheck(db, sec, date, period, ME)) { toast('เปิดได้เฉพาะคาบของห้องเรียนที่ท่านสอน', 'bad'); go('#/'); return; }
   const slot = inTerm(db, date) && !holidayOn(db, date) && db.att.timetable.find((t) => t.sec === secId && t.day === weekdayOf(date) && t.period === period);
   if (!slot) { toast('ไม่พบคาบนี้ในตารางสอน', 'bad'); go('#/'); return; }
   const key = sessionKey(secId, date, period);
   const rec = db.att.records[key];
-  const sub = subOf(db, secId, date, period);
   const today = todayISO();
   const readonly = date > today;
   const late = !rec && !readonly && date < today; // ลืมเช็ค: เลยวันสอนแล้ว
@@ -458,9 +448,6 @@ function renderCheck(secId, date, period) {
       </div>
       <div class="ws-kpis" id="kpis"></div>
     </div>
-    ${sub ? `<div class="callout" style="margin-bottom:12px">${icon('users')}<div>${sub.teacher === ME
-      ? `ท่านสอนแทน <b>${esc(userName(sec.teacherId))}</b> ในคาบนี้ (ฝ่ายวิชาการกำหนดโดย ${esc(userName(sub.by))}) การเช็คชื่อจะบันทึกในนามท่าน ครูผู้สอนประจำวิชาเห็นและแก้ไขต่อได้`
-      : `คาบนี้ <b>${esc(userName(sub.teacher))}</b> สอนแทน ${rec ? '' : 'และยังไม่ได้เช็คชื่อ '}ท่านยังแก้ไขการเช็คชื่อได้ในฐานะครูผู้สอนประจำวิชา`}</div></div>` : ''}
     ${readonly ? `<div class="callout" style="margin-bottom:12px">${icon('info')}<div>ยังไม่ถึงวันสอน เช็คชื่อล่วงหน้าไม่ได้</div></div>` : ''}
     ${late ? `<div class="callout warn backfill" style="margin-bottom:12px">${icon('clock')}<div style="flex:1">
       <b>คาบนี้เลยวันสอนแล้วแต่ยังไม่ได้เช็คชื่อ</b> เลือกข้อมูลเริ่มต้น แล้วตรวจแก้รายคนก่อนบันทึก
