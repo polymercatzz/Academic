@@ -18,7 +18,7 @@
 
 ## 2. ER
 
-ตารางที่มีแค่ PK อยู่ในขอบเขต 0 ใส่ไว้เพื่อให้เห็นความสัมพันธ์
+ตารางที่มีแค่ PK อยู่ในขอบเขต 0 ใส่ไว้เพื่อให้เห็นความสัมพันธ์ ยกเว้น `app_user` ที่เป็นของฝ่ายทะเบียน (นอกขอบเขต)
 
 ```mermaid
 erDiagram
@@ -149,7 +149,7 @@ erDiagram
         INTEGER semester_id PK
     }
     app_user {
-        INTEGER user_id PK
+        INTEGER user_id PK "ฝ่ายทะเบียน (นอกขอบเขต)"
     }
     student {
         INTEGER student_id PK

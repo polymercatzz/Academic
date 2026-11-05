@@ -32,7 +32,7 @@
 
 ## 2. ER
 
-ตารางที่มีแค่ PK มาจากขอบเขต 0–1
+ตารางที่มีแค่ PK มาจากขอบเขต 0–1 ยกเว้น `app_user` ที่เป็นของฝ่ายทะเบียน (นอกขอบเขต)
 
 ```mermaid
 erDiagram
@@ -238,7 +238,7 @@ erDiagram
         SMALLINT grade_level_id PK
     }
     app_user {
-        INTEGER user_id PK
+        INTEGER user_id PK "ฝ่ายทะเบียน (นอกขอบเขต)"
     }
 ```
 

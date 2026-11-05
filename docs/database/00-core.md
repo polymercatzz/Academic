@@ -2,7 +2,7 @@
 
 > **สถานะ:** ร่าง (2026-11-03) · ข้อตกลงการตั้งชื่อและชนิดข้อมูลอยู่ที่ [README.md](README.md#ข้อตกลง)
 
-ข้อมูลที่ทุกโมดูลอ้างถึง ได้แก่ ปีการศึกษา ภาคเรียน ระดับชั้น กลุ่มสาระ ครู นักเรียน และห้องเรียน ขอบเขตนี้ไม่มี FK ไปหาขอบเขตอื่น
+ข้อมูลที่ทุกโมดูลอ้างถึง ได้แก่ ปีการศึกษา ภาคเรียน ระดับชั้น กลุ่มสาระ นักเรียน และห้องเรียน ขอบเขตนี้ไม่มี FK ไปหาขอบเขตอื่น ยกเว้นตารางผู้ใช้ของฝ่ายทะเบียน (หัวข้อ 3.1)
 
 ## 1. ที่มาในระบบจำลอง
 
@@ -27,6 +27,10 @@ erDiagram
     student ||--o{ student_classroom : "อยู่ห้อง (ปีละ 1 ห้อง)"
     classroom ||--o{ homeroom_teacher : "มีครูประจำชั้น"
     app_user ||--o{ homeroom_teacher : "เป็นครูประจำชั้น"
+
+    %% ── ฝ่ายทะเบียน (นอกขอบเขต) ──
+    app_user ||--o{ user_role : "มีบทบาท"
+    role ||--o{ user_role : "มอบให้"
 
     academic_year {
         SMALLINT academic_year PK "พ.ศ."
@@ -58,13 +62,23 @@ erDiagram
         SMALLINT sequence
     }
     app_user {
-        INTEGER user_id PK
+        INTEGER user_id PK "ฝ่ายทะเบียน"
         VARCHAR prefix
         VARCHAR first_name
         VARCHAR last_name
         VARCHAR position
         INTEGER learning_area_id FK
         VARCHAR status
+    }
+    user_role {
+        INTEGER user_id PK,FK "ฝ่ายทะเบียน"
+        SMALLINT role_id PK,FK
+        TIMESTAMPTZ assigned_at
+    }
+    role {
+        SMALLINT role_id PK "ฝ่ายทะเบียน"
+        VARCHAR role_code UK
+        VARCHAR role_name
     }
     student {
         INTEGER student_id PK
@@ -152,20 +166,20 @@ erDiagram
 
 มี `activity` เพราะในระบบจำลองครูบางคนสังกัดกลุ่มกิจกรรมพัฒนาผู้เรียน (อ.สุนิสา ใน [personas.md](../personas.md)) และรายงานแยกกิจกรรมเป็นกลุ่มของตัวเอง ตัวอักษรนำหน้ารหัสวิชา (ท ค ว …) ไม่ได้เก็บเป็นรหัสกลุ่มสาระ เพราะกลุ่มภาษาต่างประเทศมีหลายตัวอักษร (อ จ ญ ฝ) เรื่องนี้ไปอยู่ในขอบเขต 1
 
-### `app_user` — ผู้ใช้ (แบบย่อ)
+### 3.1 ตารางของฝ่ายทะเบียน (นอกขอบเขต)
 
-**นอกขอบเขต:** บัญชีเข้าระบบ รหัสผ่าน บทบาท และสิทธิ์ ตารางนี้มีแค่ข้อมูลที่ตารางอื่นต้องใช้แสดงชื่อและสังกัด
+**ฝ่ายทะเบียนเป็นผู้ออกแบบและดูแล** `app_user`, `role`, `user_role` รวมถึงบัญชีเข้าระบบ รหัสผ่าน และสิทธิ์ ใน ER ทุกรูปตารางเหล่านี้อยู่ในกรอบเส้นประ "ฝ่ายทะเบียน (นอกขอบเขต)" ระบบของเราอ่านอย่างเดียว และอ้างผ่าน FK `user_id` เท่านั้น
 
-| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
-|---|---|---|---|---|
-| user_id | INTEGER | PK | N | รหัส |
-| prefix | VARCHAR(30) | | Y | คำนำหน้า เช่น `นาย`, `นางสาว`, `ว่าที่ร้อยตรี` |
-| first_name | VARCHAR(100) | | N | ชื่อ |
-| last_name | VARCHAR(100) | | N | นามสกุล |
-| position | VARCHAR(100) | | Y | ตำแหน่ง เช่น `ครูชำนาญการ` |
-| learning_area_id | INTEGER | FK → learning_area | Y | กลุ่มสาระที่สังกัด |
-| status | VARCHAR(20) | | N | `active` · `inactive` (ย้าย / เกษียณ) |
-| | | CHECK (`status IN ('active', 'inactive')`) | | |
+ฟิลด์ที่ระบบของเราต้องใช้ (ข้อตกลงกับฝ่ายทะเบียน ไม่ใช่นิยามตารางเต็ม)
+
+| ตาราง | ฟิลด์ | ใช้ทำอะไร |
+|---|---|---|
+| `app_user` | `user_id` (INTEGER, PK) | เป้าหมาย FK ของครูผู้สอน ครูประจำชั้น ผู้บันทึก ผู้อนุมัติ ในทุกขอบเขต |
+| `app_user` | `prefix`, `first_name`, `last_name` | แสดงชื่อครูในทุกหน้าและรายงาน |
+| `app_user` | `position` | แสดงตำแหน่งในหน้าโปรไฟล์และเอกสาร |
+| `app_user` | `learning_area_id` (FK → `learning_area`) | กรองครูตามกลุ่มสาระ |
+| `app_user` | `status` (`active` · `inactive`) | กฎข้อ 4 และการมอบหมายสอน (ขอบเขต 1) |
+| `role`, `user_role` | `role_code` เช่น `teacher` ครูผู้สอน · `academic` ครูฝ่ายวิชาการ | แยกสิทธิ์หน้าจอของครูผู้สอนกับฝ่ายวิชาการ |
 
 ### `student` — นักเรียน
 
@@ -238,8 +252,8 @@ erDiagram
 | `Semester` | `semester` + 🆕 `is_current` | ระบบจำลองต้องรู้ "ภาคปัจจุบัน" ทุกหน้า (`AcademicLayout.currentTerm`) |
 | `grade_level VARCHAR(10)` ใน `Classroom`, `CurriculumSubject` | 🆕 `grade_level` | ป้องกันพิมพ์ไม่ตรงกัน (`ม.2` / `ม. 2` / `M2`) และเก็บ ม.ต้น / ม.ปลาย ที่เกณฑ์การตัดสินผลใช้ (`GradingPolicy.education_level`) |
 | `LearningArea` | `learning_area` + 🆕 `area_code`, `area_type`, `sequence` | แยกกิจกรรมพัฒนาผู้เรียน และเรียงลำดับตามหลักสูตรแกนกลาง |
-| `User` | `app_user` · ตัด `username`, `password_hash` | การจัดการผู้ใช้อยู่นอกขอบเขต · `user` เป็นคำสงวนของ PostgreSQL |
-| `Role`, `UserRole` | ไม่อยู่ในรอบนี้ | นอกขอบเขต |
+| `User` | `app_user` (ฝ่ายทะเบียน) | การจัดการผู้ใช้เป็นงานของฝ่ายทะเบียน ขอบเขตนี้ระบุแค่ฟิลด์ที่ต้องใช้ · `user` เป็นคำสงวนของ PostgreSQL |
+| `Role`, `UserRole` | `role`, `user_role` (ฝ่ายทะเบียน) | วาดไว้ในกรอบของฝ่ายทะเบียนเพื่อให้เห็นว่าสิทธิ์มาจากไหน |
 | `Student.status` (`studying`, `moved_out`, `graduated`) | `studying`, `transferred`, `graduated` | ใช้คำตามตัวกรองในหน้าทะเบียนสะสม |
 | `Classroom.classroom_name` | `room_no` | ชื่อประกอบจากระดับชั้นกับเลขห้องได้ |
 | `Classroom.study_program_id` | ย้ายไปขอบเขต 1 | แผนการเรียนเป็นข้อมูลของหลักสูตร |
@@ -253,3 +267,4 @@ erDiagram
 - **ย้ายห้องกลางปี** ตอนนี้ย้ายห้องคือแก้ `classroom_id` ในแถวเดิม จึงไม่เหลือประวัติว่าเคยอยู่ห้องไหน ถ้าต้องการประวัติ ให้เพิ่ม `start_date` / `end_date` แต่ต้องเปลี่ยน UK "ปีละ 1 ห้อง" เป็นห้ามช่วงวันที่ทับกัน
 - **ชื่อห้องพิเศษ** ถ้าโรงเรียนเรียกห้องด้วยชื่อ เช่น "ห้อง EP" นอกจากเลขห้อง ต้องเพิ่ม `room_label`
 - **สถานะนักเรียนอื่น** เช่น พักการเรียน หรือ ลาออก ต้องเพิ่มในรายการ `status` หรือไม่
+- **กลุ่มสาระของครู** `app_user.learning_area_id` เป็นของฝ่ายทะเบียนแต่อ้าง `learning_area` ของเรา ทำให้ FK วิ่งย้อนเข้าขอบเขต 0 ต้องตกลงกับฝ่ายทะเบียนว่าจะใช้ตารางกลุ่มสาระของใคร หรือย้ายสังกัดมาเก็บฝั่งเราเป็นตาราง `teacher_learning_area`
