@@ -359,8 +359,9 @@
 
   /* ------------------------------------------------------------------ auto scheduler */
   function mulberry32(a) { return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
-  const STD_BLOCK = new Set(['teacher-clash', 'teacher-activity', 'room-clash', 'subject-day-std', 'outside', 'class-activity', 'no-teacher', 'not-in-plan']);
-  const SMART_BLOCK = new Set([...STD_BLOCK, 'teacher-unavailable', 'teacher-day', 'teacher-consecutive', 'room-type', 'room-unavailable', 'subject-day', 'forbidden']);
+  // เวลาไม่ว่างของครูที่อนุมัติแล้วเป็น Conflict (error) จึงต้องกันทั้งสองโหมด
+  const STD_BLOCK = new Set(['teacher-clash', 'teacher-activity', 'room-clash', 'subject-day-std', 'outside', 'class-activity', 'no-teacher', 'not-in-plan', 'teacher-unavailable']);
+  const SMART_BLOCK = new Set([...STD_BLOCK, 'teacher-day', 'teacher-consecutive', 'room-type', 'room-unavailable', 'subject-day', 'forbidden']);
   const REASON = {
     'teacher-clash': 'ครูผู้สอนติดสอนห้องอื่นในทุกช่องที่เหลือ', 'teacher-activity': 'ครูติดกิจกรรมล็อกเวลาในช่องที่เหลือ', 'room-clash': 'ห้องเรียนที่ใช้ได้ไม่ว่างในช่องที่เหลือ',
     'subject-day-std': 'วิชานี้ครบ 2 คาบต่อวันในทุกวันที่เหลือ', 'teacher-unavailable': 'ช่องที่เหลือตรงกับเวลาไม่ว่างของครู', 'teacher-day': 'ครูสอนครบจำนวนคาบสูงสุดต่อวันในวันที่เหลือ',
