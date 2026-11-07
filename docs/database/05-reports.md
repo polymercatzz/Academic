@@ -2,10 +2,11 @@
 
 > **สถานะ:** ร่าง (2026-11-03) · อ้างตารางจาก [ขอบเขต 0–4](README.md#ขอบเขต) · ข้อตกลงอยู่ที่ [README.md](README.md#ข้อตกลง)
 
-รายงานส่วนใหญ่ไม่ต้องมีตารางใหม่ เพราะเป็นการสรุปข้อมูลจากขอบเขต 0–4 ขอบเขตนี้จึงมี 3 อย่าง
-1. **ตารางเสริม 2 ตาราง และคอลัมน์ 1 คอลัมน์** สำหรับข้อมูลที่รายงานต้องใช้แต่ยังไม่มีที่เก็บ
-2. **view และ function** ที่หน้ารายงานทุกหน้าอ่าน เพื่อให้ตัวเลขเดียวกันออกมาเท่ากันทุกหน้า
-3. **กติกาการคำนวณ** ที่ตอนนี้แต่ละหน้าในระบบจำลองคิดไม่เหมือนกัน
+รายงานไม่มีตารางของตัวเอง เพราะเป็นการสรุปข้อมูลจากขอบเขต 0–4 ขอบเขตนี้จึงมี 2 อย่าง
+1. **view และ function** ที่หน้ารายงานทุกหน้าอ่าน เพื่อให้ตัวเลขเดียวกันออกมาเท่ากันทุกหน้า
+2. **กติกาการคำนวณ** ที่ตอนนี้แต่ละหน้าในระบบจำลองคิดไม่เหมือนกัน
+
+> **2026-11-07:** เดิมขอบเขตนี้มีตารางเสริม 2 ตาราง ตัด `report_threshold` ออก (เกณฑ์ของหน้ารายงานเป็นค่าคงที่ในแอป ดูข้อ 2) และย้าย `curriculum_credit_requirement` ไป[ขอบเขต 1](01-curriculum.md#curriculum_credit_requirement--หน่วยกิตขั้นต่ำตามหลักสูตร) ส่วนคอลัมน์ `semester.remedial_deadline` ย้ายไป[ขอบเขต 0](00-core.md#semester--ภาคเรียน)
 
 ## 1. ที่มาในระบบจำลอง
 
@@ -23,80 +24,23 @@
 | `#record-report` ระเบียนสะสม / GPAX | GPA รายภาค GPAX สะสมถึงปีที่เลือก หน่วยกิตลงทะเบียน / ผ่าน / ที่ยังขาดรายกลุ่มสาระ วิชาไม่ผ่าน | `fn_student_gpax()`, `v_credit_progress` |
 | ระบบเดิมที่ยังไม่มีหน้าใหม่ ([pain-points.md](../pain-points.md#รายหน้า)) | ผลสัมฤทธิ์ระดับ 3 ขึ้นไป · ประเมินพัฒนาผู้เรียน | `v_achievement_level3`, `v_student_development` |
 
-## 2. ตารางเสริม
+## 2. เกณฑ์ของหน้ารายงาน (ค่าคงที่ในแอป ไม่เก็บในฐานข้อมูล)
 
-```mermaid
-erDiagram
-    curriculum ||--o{ curriculum_credit_requirement : "หน่วยกิตขั้นต่ำ"
-    learning_area ||--o{ curriculum_credit_requirement : "ของกลุ่มสาระ"
+ตัวเลขเหล่านี้เป็นเกณฑ์การแสดงผลของหน้ารายงาน ไม่ใช่ข้อมูลของโรงเรียนและแทบไม่เปลี่ยน จึงเก็บเป็นค่าคงที่ในไฟล์ตั้งค่าของแอปที่เดียว ให้ทุกหน้าใช้ค่าเดียวกัน แทนที่จะเขียนตายตัวกระจายในโค้ดแต่ละหน้าอย่างในระบบจำลอง (เดิมออกแบบเป็นตาราง `report_threshold` แต่ตัดออก เพราะไม่มีหน้าจอหรือ use case สำหรับแก้ค่า และตาราง key–value ใส่ชนิดข้อมูลหรือ constraint รายค่าไม่ได้)
 
-    curriculum_credit_requirement {
-        INTEGER curriculum_credit_requirement_id PK
-        INTEGER curriculum_id FK
-        INTEGER learning_area_id FK
-        VARCHAR subject_type
-        NUMERIC required_credits
-    }
-    report_threshold {
-        VARCHAR threshold_key PK
-        NUMERIC threshold_value
-        VARCHAR description
-    }
-    semester {
-        INTEGER semester_id PK
-        DATE remedial_deadline "เพิ่มในขอบเขตนี้"
-    }
-    curriculum {
-        INTEGER curriculum_id PK
-    }
-    learning_area {
-        INTEGER learning_area_id PK
-    }
-```
-
-#### `curriculum_credit_requirement` — หน่วยกิตขั้นต่ำตามหลักสูตร
-
-| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
-|---|---|---|---|---|
-| curriculum_credit_requirement_id | INTEGER | PK | N | รหัส |
-| curriculum_id | INTEGER | FK → curriculum | N | หลักสูตร |
-| learning_area_id | INTEGER | FK → learning_area | N | กลุ่มสาระ |
-| subject_type | VARCHAR(20) | | N | `basic` · `additional` (ค่าชุดเดียวกับ `subject.subject_type`) |
-| required_credits | NUMERIC(4,1) | | N | หน่วยกิตขั้นต่ำตลอดหลักสูตร |
-| | | UK (curriculum_id, learning_area_id, subject_type) | | |
-| | | CHECK (`required_credits >= 0`) · CHECK (`subject_type IN ('basic', 'additional')`) | | |
-
-หน้าระเบียนสะสมแสดง "หน่วยกิตที่ยังขาด" รายกลุ่มสาระ (`subjectGroups[].requiredCredits` ใน `record-report.js`) และหน้าโครงสร้างหลักสูตรแสดงเกณฑ์จบ แต่ขอบเขต 1 ยังไม่มีที่เก็บตัวเลขนี้ ตารางนี้ผูกกับหลักสูตร จึงเป็นข้อมูลของขอบเขต 1 ที่ใส่ไว้ตรงนี้ เพราะมีแต่รายงานที่ใช้
-
-#### `report_threshold` — เกณฑ์ที่รายงานใช้ร่วมกัน
-
-| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
-|---|---|---|---|---|
-| threshold_key | VARCHAR(50) | PK | N | ชื่อเกณฑ์ |
-| threshold_value | NUMERIC(6,2) | | N | ค่า |
-| description | VARCHAR(200) | | N | คำอธิบายที่แสดงในหน้าตั้งค่า |
-
-ค่าตั้งต้นที่พบในระบบจำลอง (ตอนนี้เขียนตายตัวอยู่ในโค้ดของแต่ละหน้า)
-
-| threshold_key | ค่า | ใช้ที่ |
+| ค่าคงที่ | ค่า | ใช้ที่ |
 |---|---|---|
-| `low_score_percent` | 60 | คะแนนรายวิชา / คะแนนเฉลี่ยรายปี: ต่ำกว่าเกณฑ์ |
-| `ranking_follow_up_score` | 50 | ลำดับคะแนน: ต้องติดตาม และใช้นับร้อยละความเสี่ยง |
-| `ranking_risk_high_percent` | 25 | ลำดับคะแนน: เสี่ยงสูง |
-| `ranking_risk_medium_percent` | 15 | ลำดับคะแนน: เสี่ยงปานกลาง |
-| `subject_pass_grade` | 3 | ผลการเรียนรายวิชา: นับเป็น "ผ่านเกณฑ์" (≥ 3) |
-| `room_risk_pass_rate` | 50 | ภาพรวม: ห้องเสี่ยงเมื่ออัตราผ่านต่ำกว่านี้ |
-| `gpax_warning` | 2.00 | ระเบียนสะสม: ควรติดตาม |
-| `fail_risk_high_count` | 4 | นักเรียนต้องปรับปรุง: เสี่ยงสูงเมื่อนักเรียนต่ำกว่าเกณฑ์ในวิชาเดียวกันตั้งแต่ 4 คน |
-| `remedial_urgent_subjects` | 3 | สอบซ่อม: เร่งด่วนสูงเมื่อนักเรียนติดตั้งแต่ 3 วิชา |
+| `LOW_SCORE_PERCENT` | 60 | คะแนนรายวิชา / คะแนนเฉลี่ยรายปี: ต่ำกว่าเกณฑ์ |
+| `RANKING_FOLLOW_UP_SCORE` | 50 | ลำดับคะแนน: ต้องติดตาม และใช้นับร้อยละความเสี่ยง |
+| `RANKING_RISK_HIGH_PERCENT` | 25 | ลำดับคะแนน: เสี่ยงสูง |
+| `RANKING_RISK_MEDIUM_PERCENT` | 15 | ลำดับคะแนน: เสี่ยงปานกลาง |
+| `SUBJECT_PASS_GRADE` | 3 | ผลการเรียนรายวิชา: นับเป็น "ผ่านเกณฑ์" (≥ 3) |
+| `ROOM_RISK_PASS_RATE` | 50 | ภาพรวม: ห้องเสี่ยงเมื่ออัตราผ่านต่ำกว่านี้ |
+| `GPAX_WARNING` | 2.00 | ระเบียนสะสม: ควรติดตาม |
+| `FAIL_RISK_HIGH_COUNT` | 4 | นักเรียนต้องปรับปรุง: เสี่ยงสูงเมื่อนักเรียนต่ำกว่าเกณฑ์ในวิชาเดียวกันตั้งแต่ 4 คน |
+| `REMEDIAL_URGENT_SUBJECTS` | 3 | สอบซ่อม: เร่งด่วนสูงเมื่อนักเรียนติดตั้งแต่ 3 วิชา |
 
-เวลาเรียนขั้นต่ำไม่อยู่ที่นี่ ใช้ `grading_policy.min_attendance_percent` ([ขอบเขต 2](02-grading.md)) เพราะเป็นเกณฑ์ตัดสินผล ไม่ใช่เกณฑ์ของรายงาน
-
-#### เพิ่มใน `semester` (ขอบเขต 0)
-
-| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
-|---|---|---|---|---|
-| remedial_deadline | DATE | | Y | กำหนดสอบซ่อมของภาค หน้าภาพรวมใช้นับ "สอบซ่อมเกินกำหนด" |
+เกณฑ์ที่ใช้ตัดสินผลจริงไม่อยู่ที่นี่ เช่น เวลาเรียนขั้นต่ำใช้ `grading_policy.min_attendance_percent` ([ขอบเขต 2](02-grading.md)) หน่วยกิตขั้นต่ำใช้ `curriculum_credit_requirement` ([ขอบเขต 1](01-curriculum.md))
 
 ## 3. view และ function
 
@@ -187,13 +131,13 @@ function ที่คืนตาราง (student_id, gpax, registered_credits
 
 #### `v_credit_progress` — หน่วยกิตรายกลุ่มสาระเทียบกับเกณฑ์
 
-นักเรียน × กลุ่มสาระ × ประเภทวิชา: earned_credits จาก `v_student_result` (`is_final`, `grade_value >= 1`) เทียบกับ `curriculum_credit_requirement` ของหลักสูตรที่ห้องปัจจุบันของนักเรียนใช้ ได้ missing_credits
+นักเรียน × กลุ่มสาระ × ประเภทวิชา: earned_credits จาก `v_student_result` (`is_final`, `grade_value >= 1`) เทียบกับ `curriculum_credit_requirement` ([ขอบเขต 1](01-curriculum.md)) ของหลักสูตรที่ห้องปัจจุบันของนักเรียนใช้ ได้ missing_credits
 
 ### 3.3 สรุปรายวิชาและอันดับ
 
 #### `v_subject_grade_distribution` — การกระจายระดับผลการเรียน
 
-ต่อห้องเรียนที่สอน: students, จำนวนแต่ละระดับ (`g4`, `g35`, `g3`, `g25`, `g2`, `g15`, `g1`, `g0`), `r`, `ms`, avg_gpa, pass_count (≥ `subject_pass_grade`), pass_rate, prev_pass_rate และ trend (เทียบกับรายวิชาเดียวกันของระดับชั้นเดียวกันในภาคก่อน) ชุมนุมนับ `pass` / `fail` จาก `activity_result` แยกแถว
+ต่อห้องเรียนที่สอน: students, จำนวนแต่ละระดับ (`g4`, `g35`, `g3`, `g25`, `g2`, `g15`, `g1`, `g0`), `r`, `ms`, avg_gpa, pass_count (≥ `SUBJECT_PASS_GRADE`), pass_rate, prev_pass_rate และ trend (เทียบกับรายวิชาเดียวกันของระดับชั้นเดียวกันในภาคก่อน) ชุมนุมนับ `pass` / `fail` จาก `activity_result` แยกแถว
 
 หน้าผลการเรียนรายวิชาสรุปทั้งระดับชั้นด้วย ให้ `GROUP BY` subject_id + semester_id จาก view นี้อีกชั้น
 
@@ -228,7 +172,7 @@ function ที่คืนตาราง (student_id, gpax, registered_credits
 | category_type | `collect` / `midterm` / `final` จาก `assessment_category` · NULL = ทั้งรายวิชา |
 | is_overdue | `waiting` และวันนี้เลย `semester.remedial_deadline` |
 
-ความเร่งด่วนรายนักเรียน (เร่งด่วนสูง / ต้องติดตาม / ปกติ) คำนวณจากจำนวนวิชาใน view นี้ ตามเกณฑ์ใน `report_threshold`
+ความเร่งด่วนรายนักเรียน (เร่งด่วนสูง / ต้องติดตาม / ปกติ) คำนวณจากจำนวนวิชาใน view นี้ ตามค่าคงที่ในข้อ 2
 
 #### `v_unable_exam` — ผู้ไม่มีสิทธิ์สอบ
 
@@ -262,7 +206,7 @@ function ที่คืนตาราง (student_id, gpax, registered_credits
 | **สถานะการเข้าเรียน** | academic-report ใช้ป้ายภาษาไทย 7 แบบ (ตรงเวลา สาย ขาด ลากิจ ลาป่วย กิจกรรม วันหยุด) · teacher-attendance ใช้ `present` / `late` / `absent` / `leave` | 4 ค่าของ `attendance_record.status` · วันหยุดใช้ `school_holiday` · กิจกรรมใช้ `session_status = 'no_class'` · ลากิจ / ลาป่วยยังแยกไม่ได้ (ดูคำถามเปิด) |
 | **คะแนนเฉลี่ยของสอบซ่อม** | แปลง `ร` เป็น 0.5 ตอนหาค่าเฉลี่ย (`student-retake-management.html`) | ไม่นับ ร ในค่าเฉลี่ย |
 | **สถานะ "ต้องติดตาม / ดีเด่น"** | ในคะแนนเฉลี่ยรายปีเป็นค่าที่ใส่ไว้ในข้อมูลจำลอง ไม่ได้คำนวณ | ยังไม่มีนิยาม (ดูคำถามเปิด) |
-| **เกณฑ์** | ตัวเลขตายตัวกระจายอยู่ในโค้ดแต่ละหน้า | `report_threshold` ที่เดียว |
+| **เกณฑ์** | ตัวเลขตายตัวกระจายอยู่ในโค้ดแต่ละหน้า | ค่าคงที่ในไฟล์ตั้งค่าของแอปที่เดียว (ข้อ 2) |
 
 ## 5. ประสิทธิภาพ
 
@@ -278,6 +222,5 @@ function ที่คืนตาราง (student_id, gpax, registered_credits
 
 - **มส นับใน GPA ไหม** ตอนนี้นับเป็นวิชาไม่ผ่าน แต่ไม่นับใน GPA (เหมือน ร) เพราะไม่มีระดับใน `grade_scale` ระบบจำลองไม่มีกรณี มส ในระเบียนสะสมให้เทียบ ถ้าโรงเรียนนับ มส เป็น 0 ต้องเปลี่ยนสูตร
 - **ลากิจ / ลาป่วย** หน้ารายงานการเข้าเรียนแยกสองแบบ แต่การเช็คชื่อ (ขอบเขต 4, ADR 0011) มีแค่ "ลา" ถ้าต้องแยก ต้องเพิ่มค่าใน `attendance_record.status`
-- **สถานะ "ต้องติดตาม" และ "ผลการเรียนดีเด่น"** ในคะแนนเฉลี่ยรายปีจะคิดจากอะไร เช่น ต่ำกว่า `low_score_percent` และ GPA ≥ 3.50
+- **สถานะ "ต้องติดตาม" และ "ผลการเรียนดีเด่น"** ในคะแนนเฉลี่ยรายปีจะคิดจากอะไร เช่น ต่ำกว่า `LOW_SCORE_PERCENT` และ GPA ≥ 3.50
 - **สมรรถนะสำคัญ** ระบบเดิมประเมินพัฒนาผู้เรียน 3 ประเภท (คุณลักษณะ / อ่าน คิดวิเคราะห์ และเขียน / สมรรถนะ) แต่ `trait_item.trait_type` ในขอบเขต 2 มีแค่ 2 ประเภท ถ้าต้องมีรายงานนี้ ต้องเพิ่ม `competency`
-- **ใครแก้ `report_threshold` ได้** งานวิชาการทุกคน หรือเฉพาะหัวหน้า (เกี่ยวกับสิทธิ์ผู้ใช้ ซึ่งอยู่นอกขอบเขต)

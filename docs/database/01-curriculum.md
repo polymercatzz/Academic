@@ -9,6 +9,7 @@
 | ข้อมูล | หน้า | สิ่งที่หน้าทำ |
 |---|---|---|
 | รายวิชา | [course-management.html](../../curriculum/course-management.html) | รหัส ชื่อไทย / อังกฤษ / ชื่อย่อ กลุ่มสาระ ประเภท หน่วยกิต ชั่วโมงต่อสัปดาห์ ระดับชั้นที่เปิด · โครงสร้างคะแนน (ชื่อองค์ประกอบ คะแนนเต็ม คะแนนขั้นต่ำ รวม 100) และเกณฑ์ผ่าน (%) · ลบไม่ได้ถ้ามีห้องใช้อยู่ · แก้โครงสร้างคะแนนแล้วเตือนถ้ามีผลการเรียนแล้ว |
+| หน่วยกิตขั้นต่ำ | [curriculum-structure.html](../../curriculum/curriculum-structure.html), ระเบียนสะสม (`record-report.js`) | หน่วยกิตขั้นต่ำรายกลุ่มสาระตามหลักสูตร (เกณฑ์จบ) · ระเบียนสะสมแสดงหน่วยกิตที่ยังขาด |
 | หลักสูตร | [curriculum-management.html](../../curriculum/curriculum-management.html) | ชื่อ ปีที่เริ่มใช้ ระดับ (ม.ต้น / ม.ปลาย) สถานะ ฉบับร่าง / ใช้งานอยู่ / ปิดใช้งาน · ประกาศใช้แล้วหลักสูตรเดิมระดับเดียวกันถูกปิดอัตโนมัติ |
 | แผนการเรียน | หน้าเดียวกัน | แผนของหลักสูตร × ระดับชั้น เช่น "ห้องเรียนพิเศษวิทยาศาสตร์-คณิตศาสตร์" ม.1 ใช้กับห้อง ม.1/5 |
 | รายวิชาในแผน | หน้าเดียวกัน | เพิ่มรายวิชาเข้าแผนแยกภาค 1 / 2 · เปิด / ปิดสถานะวิชา · ย้ายภาคเรียน |
@@ -29,6 +30,8 @@ erDiagram
     subject ||--o{ indicator : "ตัวชี้วัด"
 
     academic_year ||--o{ curriculum : "เริ่มใช้ปี"
+    curriculum ||--o{ curriculum_credit_requirement : "หน่วยกิตขั้นต่ำ"
+    learning_area ||--o{ curriculum_credit_requirement : "ของกลุ่มสาระ"
     curriculum ||--o{ study_plan : "มีแผน"
     grade_level ||--o{ study_plan : "ของระดับชั้น"
     study_plan ||--o{ study_plan_subject : "เรียนวิชา"
@@ -89,6 +92,13 @@ erDiagram
         VARCHAR status
         TIMESTAMPTZ published_at
         INTEGER published_by FK
+    }
+    curriculum_credit_requirement {
+        INTEGER curriculum_credit_requirement_id PK
+        INTEGER curriculum_id FK
+        INTEGER learning_area_id FK
+        VARCHAR subject_type
+        NUMERIC required_credits
     }
     study_plan {
         INTEGER study_plan_id PK
@@ -236,6 +246,20 @@ erDiagram
 | | | UNIQUE INDEX (education_level) WHERE status = 'active' | | ใช้งานได้หลักสูตรเดียวต่อระดับ |
 | | | CHECK (`status IN ('draft', 'active', 'inactive')`) | | |
 | | | CHECK (`status = 'draft' OR published_at IS NOT NULL`) | | |
+
+#### `curriculum_credit_requirement` — หน่วยกิตขั้นต่ำตามหลักสูตร
+
+| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
+|---|---|---|---|---|
+| curriculum_credit_requirement_id | INTEGER | PK | N | รหัส |
+| curriculum_id | INTEGER | FK → curriculum | N | หลักสูตร |
+| learning_area_id | INTEGER | FK → learning_area | N | กลุ่มสาระ |
+| subject_type | VARCHAR(20) | | N | `basic` · `additional` (ค่าชุดเดียวกับ `subject.subject_type`) |
+| required_credits | NUMERIC(4,1) | | N | หน่วยกิตขั้นต่ำตลอดหลักสูตร |
+| | | UK (curriculum_id, learning_area_id, subject_type) | | |
+| | | CHECK (`required_credits >= 0`) · CHECK (`subject_type IN ('basic', 'additional')`) | | |
+
+เกณฑ์จบของหลักสูตร หน้าโครงสร้างหลักสูตรแสดงหน่วยกิตขั้นต่ำ และระเบียนสะสมใช้คำนวณ "หน่วยกิตที่ยังขาด" รายกลุ่มสาระ (`v_credit_progress` ใน [ขอบเขต 5](05-reports.md#32-ผลการเรียนและหน่วยกิต)) · เดิมอยู่ในขอบเขต 5 ย้ายมาเพราะเป็นข้อมูลของหลักสูตร ไม่ใช่ของรายงาน (2026-11-07)
 
 #### `study_plan` — แผนการเรียน
 

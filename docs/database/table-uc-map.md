@@ -36,7 +36,7 @@
 | G5 | ชุมนุม | `teaching_group`, `student_enrollment`, `activity_result` | △ ×2, ✗ ×1 | △ มีในหลักสูตรและตารางสอน (`curriculum-management.html`, `timetable.html`) แต่ไม่มีหน้าบันทึกผล ผ/มผ | ตัดสินว่าชุมนุมอยู่ในขอบเขตไหม — ถ้าใช่ **(ก)** เติมใน UC-3 และ UC-13; ถ้าไม่ **(ค)** · หมายเหตุ UC-8 ใช้คำว่า "กลุ่มการสอน" ซึ่งไม่ตรงกับตารางใด |
 | G6 | คุณลักษณะฯ / อ่านคิดเขียน / ตัวชี้วัด | `trait_item`, `student_trait_score`, `indicator`, `assessment_item_indicator` | ✗ ×4 | ✓ `scores.html` (มีในข้อมูลและหน้ากรอกคะแนน) | **(ก)** ขยาย UC-12 ให้รวมการประเมินคุณลักษณะฯ และผูกตัวชี้วัด หรือ **(ค)** ถ้าจะไม่สาธิตในบท 4 |
 | G7 | เช็คชื่อ + ครูประจำชั้น | `attendance_session`, `attendance_record`, `school_holiday`, `homeroom_teacher` | ✗ ×4 | ✓ `attendance.html`, `reports/teacher-attendance.html`, `academic-report.html#attendance` | **(ข) หรือ (ค)** ให้ตรงกับข้อ 1.3.4 — ⚠️ ถ้าตัด เกณฑ์ มส (`student_subject_result.attendance_percent`) และรายงานผู้ไม่มีสิทธิ์สอบต้องรับเวลาเรียนจากระบบอื่น/กรอกเอง |
-| G8 | ตารางเสริมของรายงาน | `curriculum_credit_requirement`, `report_threshold` | ✓ (เติมใน UC-16 แล้ว) | ✓ `academic-report.html#record-report`, `fail-student-detail.html` | ✅ เติมแล้ว — เติมใน UC-16 ว่ามีรายงานหน่วยกิตสะสม และเกณฑ์ของรายงาน |
+| G8 | ตารางเสริมของรายงาน | `curriculum_credit_requirement` (~~`report_threshold`~~) | ✓ UC-16 | ✓ `academic-report.html#record-report` | ✅ 2026-11-07: ตัด `report_threshold` (เกณฑ์ของหน้ารายงานเป็นค่าคงที่ในแอป) ย้าย `curriculum_credit_requirement` ไปขอบเขต 1 · ขอบเขต 5 ไม่มีตารางแล้ว |
 | G9 | ตารางอื่นที่ใช้โดยอ้อม | `subject_score_component` | ✓ (เติมใน UC-2, UC-11 แล้ว) | ✓ `course-management.html` (ตั้งองค์ประกอบคะแนนตั้งต้น) | ✅ เติมแล้ว — เติมใน UC-2 ว่าตั้งโครงสร้างคะแนนตั้งต้นของรายวิชาได้ และ UC-11 คัดลอกมาเป็นจุดเริ่ม |
 
 ถ้าเลือก (ก) ทุกกลุ่มยกเว้น G5–G7 → เพิ่ม UC ประมาณ 3–4 ตัว (G1, G2, G3) ตารางในเล่มคงเหลือ 58 − (ที่ตัด) ตารางทุกตัวมี UC รองรับ
@@ -58,7 +58,7 @@
 | student_classroom | ✓ | UC-11 pre, UC-12 | นักเรียนในห้อง |
 | homeroom_teacher | ✓ | UC-24 A-1 | ใช้ในเช็คชื่อและรายงาน (G7) |
 
-### ขอบเขต 1 หลักสูตร (11)
+### ขอบเขต 1 หลักสูตร (12)
 
 | ตาราง | สถานะ | UC | หมายเหตุ |
 |---|---|---|---|
@@ -67,6 +67,7 @@
 | subject_score_component | ✓ | UC-2, UC-11 | G9 |
 | indicator | ✓ | UC-2, UC-11 | G6 |
 | curriculum | ✓ | UC-3 | |
+| curriculum_credit_requirement | ✓ | UC-16 ข้อ 3 | G8 ย้ายมาจากขอบเขต 5 |
 | study_plan | ✓ | UC-3 | แผนการเรียน (สายวิทย์–คณิต / ศิลป์ ตามข้อ 1.3.2 ข้อ 4) |
 | study_plan_subject | ✓ | UC-3 | รายวิชาในแผน |
 | class_subject | ✓ | UC-3, 4, 11, 12 | รายวิชา × ห้อง × ภาค |
@@ -126,9 +127,6 @@
 | school_holiday | ✓ | UC-23 (ข้อมูลตั้งต้น ไม่มีหน้าจอ) | G7 |
 | ms_waiver | ✓ | UC-24 A-2 | ปลด มส (ADR 0013, เพิ่ม 2026-11-05) |
 
-### ขอบเขต 5 รายงาน (2)
+### ขอบเขต 5 รายงาน (0)
 
-| ตาราง | สถานะ | UC | หมายเหตุ |
-|---|---|---|---|
-| curriculum_credit_requirement | ✓ | UC-16 ข้อ 3 | G8 |
-| report_threshold | ✓ | UC-16 ข้อ 5 | G8 |
+ไม่มีตาราง รายงานคำนวณจาก view / function บนตารางขอบเขต 0–4

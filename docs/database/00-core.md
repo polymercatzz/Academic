@@ -44,6 +44,7 @@ erDiagram
         DATE start_date
         DATE end_date
         DATE grade_submission_deadline
+        DATE remedial_deadline
         BOOLEAN is_current
     }
     grade_level {
@@ -132,6 +133,7 @@ erDiagram
 | start_date | DATE | | N | วันเปิดภาค |
 | end_date | DATE | | N | วันปิดภาค |
 | grade_submission_deadline | DATE | | Y | กำหนดส่งผลการเรียน (ใช้ใน grading) |
+| remedial_deadline | DATE | | Y | กำหนดสอบซ่อมของภาค หน้าภาพรวมของรายงานใช้นับ "สอบซ่อมเกินกำหนด" (ย้ายมาจากขอบเขต 5) |
 | is_current | BOOLEAN | | N | ภาคเรียนปัจจุบันของระบบ ค่าเริ่มต้น `false` |
 | | | UK (academic_year, semester_no) | | |
 | | | UNIQUE INDEX (is_current) WHERE is_current | | มีภาคเรียนปัจจุบันได้ภาคเดียว |
