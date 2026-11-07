@@ -818,7 +818,7 @@
               <div class="flex items-center gap-1">
                 <button data-action="copy-curriculum" data-id="${c.id}" type="button" title="คัดลอกไปปีการศึกษาใหม่" aria-label="คัดลอกไปปีการศึกษาใหม่" class="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-blue-700">${icon(ICONS.copy)}</button>
                 <button data-action="export-curriculum" data-id="${c.id}" type="button" title="ส่งออก Excel" aria-label="ส่งออก Excel" class="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-emerald-700">${icon(ICONS.download)}</button>
-                <button data-action="delete-curriculum" data-id="${c.id}" type="button" title="ลบหลักสูตร" aria-label="ลบหลักสูตร" class="rounded-xl p-2 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600">${icon(ICONS.trash)}</button>
+                ${c.status === 'ฉบับร่าง' ? `<button data-action="delete-curriculum" data-id="${c.id}" type="button" title="ลบหลักสูตร" aria-label="ลบหลักสูตร" class="rounded-xl p-2 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600">${icon(ICONS.trash)}</button>` : ''}
                 <button data-action="open-curriculum" data-id="${c.id}" type="button" class="ml-1 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">จัดการแผนการเรียน ${icon(ICONS.open)}</button>
               </div>
             </div>
@@ -1472,10 +1472,14 @@
 
     function deleteCurriculum(id) {
       const c = curriculumOf(id);
-      const warn = c.status === 'ใช้งานอยู่' ? '<br><span class="font-semibold text-rose-600">หลักสูตรนี้กำลังใช้งานอยู่</span>' : '';
+      // ลบได้เฉพาะฉบับร่าง (UC-3 A-3, รูปที่ 3.13) — หลักสูตรที่ประกาศใช้แล้วมีผลการเรียนอ้างถึง
+      if (c.status !== 'ฉบับร่าง') {
+        showToast('ลบหลักสูตรนี้ไม่ได้', `หลักสูตรที่${c.status}ลบไม่ได้ ลบได้เฉพาะฉบับร่าง`, { tone: 'warning' });
+        return;
+      }
       confirmAction({
         title: 'ลบหลักสูตรนี้?',
-        message: `${escapeHTML(c.name)} (ปี ${c.year}) พร้อมแผนการเรียน ${plansOf(id).length} แผนจะถูกลบ${warn}`,
+        message: `${escapeHTML(c.name)} (ปี ${c.year}) พร้อมแผนการเรียน ${plansOf(id).length} แผนจะถูกลบ`,
         okLabel: 'ลบหลักสูตร',
         onConfirm: () => {
           const before = snapshot();
@@ -1688,6 +1692,8 @@
     }
 
     /* ---------- events ---------- */
+    const READONLY_ACTIONS = new Set(['edit-curriculum', 'add-plan', 'edit-plan', 'duplicate-plan', 'delete-plan', 'edit-teachers', 'add-subjects',
+      'auto-assign', 'toggle-open', 'move-term', 'remove-row', 'bulk-teacher', 'bulk-auto', 'bulk-open', 'bulk-move', 'bulk-remove', 'open-import']);
     document.addEventListener('click', (event) => {
       const closeBtn = event.target.closest('[data-close]');
       if (closeBtn && !closeBtn.onclick) { closeModal(closeBtn.dataset.close); return; }
@@ -1696,6 +1702,11 @@
       const el = event.target.closest('[data-action]');
       if (!el) return;
       const { action, id } = el.dataset;
+      // หลักสูตรที่ปิดใช้งานแล้วอ่านได้อย่างเดียว (รูปที่ 3.13)
+      if (READONLY_ACTIONS.has(action) && curriculumOf(state.curriculumId)?.status === 'ปิดใช้งาน') {
+        showToast('หลักสูตรนี้ปิดใช้งานแล้ว', 'หลักสูตรที่ปิดใช้งานอ่านได้อย่างเดียว', { tone: 'warning' });
+        return;
+      }
       switch (action) {
         case 'create-curriculum': openCurriculumModal('create'); break;
         case 'copy-curriculum': openCurriculumModal('create', id); break;
