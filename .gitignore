@@ -4,3 +4,6 @@ docs/*.docx
 
 # สไลด์นำเสนอ — ไม่เก็บใน git
 presentation/
+
+# skill ที่แพ็กไว้ส่งต่อ — ไม่เก็บใน git
+share/
