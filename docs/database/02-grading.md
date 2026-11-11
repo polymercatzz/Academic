@@ -1,6 +1,8 @@
 # ขอบเขต 2 — บันทึกคะแนน
 
 > **สถานะ:** ร่าง (2026-11-03) · อ้างตารางจาก [ขอบเขต 0](00-core.md) และ [ขอบเขต 1](01-curriculum.md) · ข้อตกลงอยู่ที่ [README.md](README.md#ข้อตกลง)
+>
+> **ฉบับที่ 2 (2026-11-11):** นักเรียน ผู้ใช้ และปีการศึกษา อ้างตารางของ Team B (`registry.*`) · `grading_policy.education_level` เปลี่ยนเป็น `education_stage_id` · **คุณลักษณะอันพึงประสงค์ใช้ของ Team C** (`care.desirable_characteristic`, `care.characteristic_evaluation` ฯลฯ) ขอบเขตนี้จึงเหลือแค่อ่าน คิดวิเคราะห์ และเขียน และตัด `student_subject_result.characteristic_level` ดู [cross-team.md](cross-team.md#3-คุณลักษณะอันพึงประสงค์ใช้ของ-team-c)
 
 ใช้ ER เดิมของระบบบันทึกคะแนน ([er-data-dictionary.md](../../grading/docs/er-data-dictionary.md) หัวข้อ 5.3–5.4) เกือบทั้งหมด ไฟล์นี้แปลงเป็น PostgreSQL ผูกกับขอบเขต 0–1 และแก้จุดที่ขัดกับระบบจำลองหรือกับการตัดสินใจใหม่ ความหมายของคำและเหตุผลเบื้องหลังอยู่ใน [grading/GLOSSARY.md](../../grading/GLOSSARY.md) และ [ADR 0001–0011](../../grading/docs/adr/)
 
@@ -16,7 +18,7 @@ CHECK (num_nonnulls(class_subject_id, teaching_group_id) = 1)
 |---|---|
 | โครงสร้างคะแนน (กลุ่ม เก็บ / กลางภาค / ปลายภาค, คะแนนเต็ม, สัดส่วน, ตัวชี้วัด) | `scores.html#/s/<id>` · `mathStructure()` ใน [data.js](../../grading/assets/js/data.js) |
 | คะแนน และ ร / ข แทนคะแนน | `SPECIAL_MARKS` ใน data.js · ตารางกรอกคะแนน |
-| คุณลักษณะอันพึงประสงค์ 8 ข้อ, อ่าน คิดวิเคราะห์ และเขียน 5 ด้าน, ระดับ 0–3 | `ATTRIBUTES`, `RTW`, `LEVELS` ใน data.js |
+| อ่าน คิดวิเคราะห์ และเขียน 5 ด้าน, ระดับ 0–3 (คุณลักษณะอันพึงประสงค์ `ATTRIBUTES` ย้ายไป Team C) | `RTW`, `LEVELS` ใน data.js |
 | เกณฑ์ระดับผลการเรียน 8 ระดับ, เวลาเรียนขั้นต่ำ 80% | `GRADE_SCALE`, `MIN_ATTENDANCE` · `scores.html#/criteria` |
 | สถานะห้อง ไม่มีโครงสร้าง → ร่าง → รอตรวจ → อนุมัติ | การ์ดใน `scores.html#/` · [ADR 0002](../../grading/docs/adr/0002-section-status-lifecycle.md) |
 | ส่งผล ตรวจ อนุมัติ ตีกลับ หมุดข้อสังเกต ตรวจงานตนเอง | `scores.html#/a`, `#/a/inbox`, `#/a/s/<id>` · ADR 0001, 0006, 0007 |
@@ -26,7 +28,7 @@ CHECK (num_nonnulls(class_subject_id, teaching_group_id) = 1)
 
 ## 2. ER
 
-ตารางที่มีแค่ PK มาจากขอบเขต 0–1 ใส่ไว้เพื่อให้เห็นความสัมพันธ์
+ตารางที่มีแค่ PK มาจากขอบเขต 1 หรือเป็นตารางของ Team B (ขึ้นต้นด้วย `registry_`) ใส่ไว้เพื่อให้เห็นความสัมพันธ์
 
 ```mermaid
 erDiagram
@@ -36,26 +38,27 @@ erDiagram
     assessment_item ||--o{ assessment_item_indicator : "วัดตัวชี้วัด"
     indicator ||--o{ assessment_item_indicator : "ถูกวัดโดย"
     assessment_item ||--o{ student_score : "คะแนน"
-    student ||--o{ student_score : "ได้คะแนน"
+    registry_student ||--o{ student_score : "ได้คะแนน"
 
     trait_item ||--o{ student_trait_score : "ข้อประเมิน"
     class_subject ||--o{ student_trait_score : "ประเมินใน"
-    student ||--o{ student_trait_score : "ได้ระดับ"
+    registry_student ||--o{ student_trait_score : "ได้ระดับ"
 
-    academic_year ||--o{ grading_policy : "ใช้ตั้งแต่ปี"
+    registry_academic_year ||--o{ grading_policy : "ใช้ตั้งแต่ปี"
+    registry_education_stage ||--o{ grading_policy : "ของช่วงชั้น"
     grading_policy ||--|{ grade_scale : "ช่วงคะแนน"
     class_subject ||--o{ student_subject_result : "ผลการเรียน"
-    student ||--o{ student_subject_result : "ได้ผล"
+    registry_student ||--o{ student_subject_result : "ได้ผล"
     grade_scale |o--o{ student_subject_result : "ตรงกับระดับ"
     student_subject_result ||--o{ remedial_attempt : "สอบซ่อม"
     assessment_category |o--o{ remedial_attempt : "ซ่อมหมวด"
     teaching_group ||--o{ activity_result : "ผลชุมนุม"
-    student ||--o{ activity_result : "ได้ ผ / มผ"
+    registry_student ||--o{ activity_result : "ได้ ผ / มผ"
 
     class_subject |o--o{ grade_submission : "ส่งผล"
     teaching_group |o--o{ grade_submission : "ส่งผล"
     grade_submission ||--o{ review_note : "หมุด"
-    student ||--o{ review_note : "ปักที่นักเรียน"
+    registry_student ||--o{ review_note : "ปักที่นักเรียน"
     assessment_item |o--o{ review_note : "ปักที่ช่องคะแนน"
     trait_item |o--o{ review_note : "ปักที่ช่องประเมิน"
     grade_submission ||--o{ unlock_request : "ขอปลดล็อก"
@@ -112,7 +115,7 @@ erDiagram
     grading_policy {
         INTEGER grading_policy_id PK
         SMALLINT academic_year FK
-        VARCHAR education_level
+        INTEGER education_stage_id FK
         NUMERIC min_attendance_percent
         NUMERIC activity_min_attendance_percent
         NUMERIC remedial_pass_score
@@ -136,7 +139,6 @@ erDiagram
         VARCHAR grade_result
         INTEGER grade_scale_id FK
         VARCHAR result_status
-        SMALLINT characteristic_level
         SMALLINT reading_level
         TIMESTAMPTZ calculated_at
     }
@@ -217,11 +219,14 @@ erDiagram
     indicator {
         INTEGER indicator_id PK
     }
-    student {
+    registry_student {
         INTEGER student_id PK
     }
-    academic_year {
+    registry_academic_year {
         SMALLINT academic_year PK
+    }
+    registry_education_stage {
+        INTEGER education_stage_id PK
     }
 ```
 
@@ -270,7 +275,7 @@ erDiagram
 | weight_percent | NUMERIC(5,2) | | N | สัดส่วนในคะแนนรวม 100 · **ผลรวมในหมวดต้องเท่ากับ weight ของหมวด** |
 | assessment_date | DATE | | Y | วันที่ประเมิน |
 | sequence | SMALLINT | | N | ลำดับคอลัมน์ |
-| created_by | INTEGER | FK → app_user | N | ผู้สร้าง |
+| created_by | INTEGER | FK → registry.app_user | N | ผู้สร้าง |
 | | | UK (assessment_category_id, sequence) | | |
 | | | CHECK (`max_score > 0`) · CHECK (`weight_percent > 0`) | | |
 
@@ -289,10 +294,10 @@ erDiagram
 |---|---|---|---|---|
 | student_score_id | BIGINT | PK | N | รหัส (BIGINT เพราะเป็นตารางที่ใหญ่ที่สุด: นักเรียน × องค์ประกอบ × ทุกห้อง × ทุกภาค) |
 | assessment_item_id | INTEGER | FK → assessment_item | N | องค์ประกอบ |
-| student_id | INTEGER | FK → student | N | นักเรียน |
+| student_id | INTEGER | FK → registry.student | N | นักเรียน |
 | score | NUMERIC(5,2) | | Y | 0 ถึง `max_score` · NULL เมื่อสถานะไม่ใช่ `scored` |
 | score_status | VARCHAR(20) | | N | `scored` · `pending_work` **ร** รอส่งงาน · `absent` **ข** ขาดสอบ |
-| updated_by | INTEGER | FK → app_user | N | ผู้บันทึกล่าสุด (ครูหลักหรือครูร่วมสอน) |
+| updated_by | INTEGER | FK → registry.app_user | N | ผู้บันทึกล่าสุด (ครูหลักหรือครูร่วมสอน) |
 | updated_at | TIMESTAMPTZ | | N | บันทึกล่าสุด |
 | | | UK (assessment_item_id, student_id) | | |
 | | | CHECK (`(score_status = 'scored') = (score IS NOT NULL)`) | | |
@@ -301,28 +306,30 @@ erDiagram
 
 ช่องที่ยังไม่กรอกไม่มีแถว ร่างที่ยังไม่กดบันทึกอยู่ฝั่งหน้าจอเท่านั้น ([ADR 0004](../../grading/docs/adr/0004-academic-sees-saved-data-live.md))
 
-#### `trait_item` — รายการประเมินคุณลักษณะฯ / อ่าน คิดวิเคราะห์ และเขียน
+#### `trait_item` — รายการประเมินอ่าน คิดวิเคราะห์ และเขียน
 
 | ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
 |---|---|---|---|---|
 | trait_item_id | SMALLINT | PK | N | รหัส (ข้อมูลตั้งต้น) |
-| trait_type | VARCHAR(30) | | N | `characteristic` คุณลักษณะอันพึงประสงค์ (8 ข้อ) · `reading_thinking` อ่าน คิดวิเคราะห์ และเขียน (5 ด้าน) |
+| trait_type | VARCHAR(30) | | N | `reading_thinking` อ่าน คิดวิเคราะห์ และเขียน (5 ด้าน) · เก็บคอลัมน์ไว้รองรับสมรรถนะสำคัญ (`competency`) ถ้าต้องเพิ่มภายหลัง |
 | item_no | SMALLINT | | N | ข้อที่ |
-| item_name | VARCHAR(200) | | N | เช่น `มีวินัย` |
+| item_name | VARCHAR(200) | | N | เช่น `การอ่าน` |
 | is_active | BOOLEAN | | N | ใช้งานอยู่ |
 | | | UK (trait_type, item_no) | | |
-| | | CHECK (`trait_type IN ('characteristic', 'reading_thinking')`) | | |
+| | | CHECK (`trait_type IN ('reading_thinking')`) | | |
 
-#### `student_trait_score` — ผลประเมินรายข้อ
+**ฉบับที่ 2 (2026-11-11):** ตัด `characteristic` (คุณลักษณะอันพึงประสงค์ 8 ข้อ) ออก เพราะตกลงให้ Team C เป็นเจ้าของการประเมินคุณลักษณะฯ ทั้งหมด ครูผู้สอนไม่ต้องประเมินคุณลักษณะฯ รายวิชาในหน้าบันทึกคะแนนอีก ผลคุณลักษณะฯ ที่รายงานของเราต้องใช้ดึงจาก C ผ่าน API ([cross-team.md ข้อ 3](cross-team.md#3-คุณลักษณะอันพึงประสงค์ใช้ของ-team-c))
+
+#### `student_trait_score` — ผลประเมินอ่าน คิดวิเคราะห์ และเขียนรายข้อ
 
 | ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
 |---|---|---|---|---|
 | student_trait_score_id | BIGINT | PK | N | รหัส |
 | class_subject_id | INTEGER | FK → class_subject | N | ห้องเรียนที่สอน |
-| student_id | INTEGER | FK → student | N | นักเรียน |
+| student_id | INTEGER | FK → registry.student | N | นักเรียน |
 | trait_item_id | SMALLINT | FK → trait_item | N | ข้อที่ประเมิน |
 | level | SMALLINT | | N | `3` ดีเยี่ยม · `2` ดี · `1` ผ่าน · `0` ไม่ผ่าน |
-| updated_by | INTEGER | FK → app_user | N | ผู้บันทึก |
+| updated_by | INTEGER | FK → registry.app_user | N | ผู้บันทึก |
 | updated_at | TIMESTAMPTZ | | N | บันทึกล่าสุด |
 | | | UK (class_subject_id, student_id, trait_item_id) | | |
 | | | CHECK (`level BETWEEN 0 AND 3`) | | |
@@ -334,15 +341,15 @@ erDiagram
 | ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
 |---|---|---|---|---|
 | grading_policy_id | INTEGER | PK | N | รหัส |
-| academic_year | SMALLINT | FK → academic_year | N | ปีการศึกษาที่เริ่มใช้ (ใช้ต่อไปจนมีชุดใหม่) |
-| education_level | VARCHAR(20) | | N | `lower_secondary` · `upper_secondary` |
+| academic_year | SMALLINT | FK → registry.academic_year | N | ปีการศึกษาที่เริ่มใช้ (ใช้ต่อไปจนมีชุดใหม่) |
+| education_stage_id | INTEGER | FK → registry.education_stage | N | ม.ต้น / ม.ปลาย (เดิม `education_level` ค่า `lower_secondary` · `upper_secondary`) |
 | min_attendance_percent | NUMERIC(5,2) | | N | เวลาเรียนขั้นต่ำของวิชาหลัก ค่าเริ่มต้น `80` (ต่ำกว่านี้ = มส) |
 | activity_min_attendance_percent | NUMERIC(5,2) | | N | เวลาเข้าร่วมขั้นต่ำของชุมนุม ค่าเริ่มต้น `80` (ต่ำกว่านี้ระบบเสนอ มผ) |
 | remedial_pass_score | NUMERIC(5,2) | | N | คะแนนผ่านสอบซ่อม (%) ค่าเริ่มต้น `50` |
 | remedial_max_grade | NUMERIC(2,1) | | N | ระดับสูงสุดหลังสอบซ่อม ค่าเริ่มต้น `1.0` |
 | rounding_method | VARCHAR(20) | | N | `round_half_up` · `floor` วิธีปัดคะแนนรวมก่อนเทียบช่วง |
-| created_by | INTEGER | FK → app_user | N | ผู้กำหนด |
-| | | UK (academic_year, education_level) | | |
+| created_by | INTEGER | FK → registry.app_user | N | ผู้กำหนด |
+| | | UK (academic_year, education_stage_id) | | |
 | | | CHECK ร้อยละทุกตัวอยู่ระหว่าง 0–100 · CHECK (`rounding_method IN ('round_half_up', 'floor')`) | | |
 
 #### `grade_scale` — ช่วงคะแนนของแต่ละระดับผลการเรียน
@@ -365,18 +372,17 @@ erDiagram
 |---|---|---|---|---|
 | student_subject_result_id | INTEGER | PK | N | รหัส |
 | class_subject_id | INTEGER | FK → class_subject | N | ห้องเรียนที่สอน |
-| student_id | INTEGER | FK → student | N | นักเรียน |
+| student_id | INTEGER | FK → registry.student | N | นักเรียน |
 | attendance_percent | NUMERIC(5,2) | | Y | เวลาเรียน (%) คำนวณจากการเช็คชื่อ (ขอบเขต 4) เก็บเป็น snapshot ตอนส่งผล |
 | total_score | NUMERIC(5,2) | | Y | คะแนนรวม 0–100 |
 | grade_result | VARCHAR(5) | | Y | `4` … `0`, `ร`, `มส` · NULL = ยังคำนวณไม่ได้ |
 | grade_scale_id | INTEGER | FK → grade_scale | Y | ระดับที่ตรงกับคะแนน · NULL เมื่อได้ ร / มส |
 | result_status | VARCHAR(20) | | N | `incomplete` คะแนนยังไม่ครบ · `pass` ผ่าน · `remedial` ได้ 0 รอสอบซ่อม · `remedial_pass` ผ่านหลังสอบซ่อม · `pending` ร · `no_exam_right` มส |
-| characteristic_level | SMALLINT | | Y | สรุปคุณลักษณะฯ 0–3 |
 | reading_level | SMALLINT | | Y | สรุปอ่าน คิดวิเคราะห์ และเขียน 0–3 |
 | calculated_at | TIMESTAMPTZ | | N | เวลาคำนวณล่าสุด |
 | | | UK (class_subject_id, student_id) | | |
 | | | CHECK (`result_status IN ('incomplete', 'pass', 'remedial', 'remedial_pass', 'pending', 'no_exam_right')`) | | |
-| | | CHECK (`characteristic_level BETWEEN 0 AND 3`) · CHECK (`reading_level BETWEEN 0 AND 3`) | | |
+| | | CHECK (`reading_level BETWEEN 0 AND 3`) | | |
 
 ทั้งตารางเป็นค่าที่คำนวณได้ แต่เก็บไว้เพราะเป็นหลักฐานของผลที่อนุมัติแล้ว ถ้าคะแนน เกณฑ์ หรือการเช็คชื่อเปลี่ยนภายหลัง ผลที่อนุมัติแล้วต้องไม่เปลี่ยนตาม (ER เดิมข้อ 4.4) และรายงานทุกหน้าอ่านจากตารางนี้
 
@@ -390,7 +396,7 @@ erDiagram
 | attempt_no | SMALLINT | | N | ครั้งที่ |
 | score | NUMERIC(5,2) | | Y | คะแนนที่ได้ (%) · NULL = ยังไม่ได้สอบ |
 | outcome | VARCHAR(20) | | N | `scheduled` รอสอบซ่อม · `passed` ผ่าน · `failed` ไม่ผ่าน · `follow_up` ติดตามงาน |
-| recorded_by | INTEGER | FK → app_user | Y | ผู้บันทึกผล |
+| recorded_by | INTEGER | FK → registry.app_user | Y | ผู้บันทึกผล |
 | recorded_at | TIMESTAMPTZ | | Y | เวลาบันทึกผล |
 | | | UK (student_subject_result_id, assessment_category_id, attempt_no) | | |
 | | | CHECK (`outcome IN ('scheduled', 'passed', 'failed', 'follow_up')`) | | |
@@ -404,11 +410,11 @@ erDiagram
 |---|---|---|---|---|
 | activity_result_id | INTEGER | PK | N | รหัส |
 | teaching_group_id | INTEGER | FK → teaching_group | N | ชุมนุม |
-| student_id | INTEGER | FK → student | N | นักเรียน (ต้องเป็นสมาชิกใน `student_enrollment`) |
+| student_id | INTEGER | FK → registry.student | N | นักเรียน (ต้องเป็นสมาชิกใน `student_enrollment`) |
 | attendance_percent | NUMERIC(5,2) | | Y | เวลาเข้าร่วม (%) ครูที่ปรึกษากรอกเอง เพราะชุมนุมไม่เช็คชื่อรายคาบ (ตัดสินแล้ว 2026-11-03) |
 | result | VARCHAR(10) | | Y | `pass` **ผ** · `fail` **มผ** · NULL = ยังไม่ประเมิน (ครูเป็นผู้เลือก) |
 | remark | TEXT | | Y | เช่น เหตุผลที่ให้ มผ ทั้งที่เวลาเข้าร่วมครบ |
-| updated_by | INTEGER | FK → app_user | N | ผู้บันทึก |
+| updated_by | INTEGER | FK → registry.app_user | N | ผู้บันทึก |
 | updated_at | TIMESTAMPTZ | | N | บันทึกล่าสุด |
 | | | UK (teaching_group_id, student_id) | | |
 | | | CHECK (`result IN ('pass', 'fail')`) | | |
@@ -423,9 +429,9 @@ erDiagram
 | class_subject_id | INTEGER | FK → class_subject | Y | หน่วยส่งผล: ห้องเรียนที่สอน |
 | teaching_group_id | INTEGER | FK → teaching_group | Y | หน่วยส่งผล: ชุมนุม |
 | round_no | SMALLINT | | N | รอบที่ 1, 2, 3 … ของหน่วยนั้น |
-| submitted_by | INTEGER | FK → app_user | N | ผู้ส่ง (ครูหลัก หรือครูที่ปรึกษาชุมนุม) |
+| submitted_by | INTEGER | FK → registry.app_user | N | ผู้ส่ง (ครูหลัก หรือครูที่ปรึกษาชุมนุม) |
 | submitted_at | TIMESTAMPTZ | | N | เวลาส่ง |
-| reviewer_id | INTEGER | FK → app_user | Y | ผู้ตรวจ |
+| reviewer_id | INTEGER | FK → registry.app_user | Y | ผู้ตรวจ |
 | decision | VARCHAR(20) | | Y | NULL รอตรวจ · `approved` · `returned` ตีกลับ · `unlocked` ปลดล็อกหลังอนุมัติ |
 | decision_reason | TEXT | | Y | **บังคับเมื่อ `returned`** |
 | decided_at | TIMESTAMPTZ | | Y | เวลาตัดสิน |
@@ -443,13 +449,13 @@ erDiagram
 |---|---|---|---|---|
 | review_note_id | INTEGER | PK | N | รหัส |
 | grade_submission_id | INTEGER | FK → grade_submission | N | รอบการตรวจ |
-| student_id | INTEGER | FK → student | N | นักเรียน |
+| student_id | INTEGER | FK → registry.student | N | นักเรียน |
 | assessment_item_id | INTEGER | FK → assessment_item | Y | ปักที่ช่องคะแนน |
 | trait_item_id | SMALLINT | FK → trait_item | Y | ปักที่ช่องประเมิน |
 | note_text | TEXT | | N | ข้อความ |
 | is_resolved | BOOLEAN | | N | ครูกด "แก้แล้ว" |
 | resolved_at | TIMESTAMPTZ | | Y | เวลาที่กดแก้แล้ว |
-| created_by | INTEGER | FK → app_user | N | ผู้ปักหมุด |
+| created_by | INTEGER | FK → registry.app_user | N | ผู้ปักหมุด |
 | created_at | TIMESTAMPTZ | | N | เวลาปักหมุด |
 | | | CHECK (`num_nonnulls(assessment_item_id, trait_item_id) <= 1`) | | ว่างทั้งคู่ = ปักทั้งแถว (ชุมนุมใช้แบบนี้เท่านั้น) |
 | | | CHECK (`is_resolved = (resolved_at IS NOT NULL)`) | | |
@@ -460,11 +466,11 @@ erDiagram
 |---|---|---|---|---|
 | unlock_request_id | INTEGER | PK | N | รหัส |
 | grade_submission_id | INTEGER | FK → grade_submission | N | รอบที่ได้รับอนุมัติและขอปลดล็อก (หน่วยส่งผลหาได้จากรอบนี้) |
-| requested_by | INTEGER | FK → app_user | N | ผู้ขอ (ครูหลัก) |
+| requested_by | INTEGER | FK → registry.app_user | N | ผู้ขอ (ครูหลัก) |
 | reason | TEXT | | N | เหตุผล |
 | requested_at | TIMESTAMPTZ | | N | เวลายื่น |
 | status | VARCHAR(20) | | N | `pending` · `approved` · `rejected` |
-| decided_by | INTEGER | FK → app_user | Y | ผู้พิจารณา |
+| decided_by | INTEGER | FK → registry.app_user | Y | ผู้พิจารณา |
 | decided_at | TIMESTAMPTZ | | Y | เวลาพิจารณา |
 | reject_reason | TEXT | | Y | **บังคับเมื่อ `rejected`** |
 | | | UNIQUE INDEX (grade_submission_id) WHERE status = 'pending' | | ค้างได้ทีละ 1 คำขอ |
@@ -479,13 +485,13 @@ erDiagram
 | change_log_id | BIGINT | PK | N | รหัส |
 | class_subject_id | INTEGER | FK → class_subject | Y | หน่วยส่งผล |
 | teaching_group_id | INTEGER | FK → teaching_group | Y | หน่วยส่งผล |
-| student_id | INTEGER | FK → student | Y | NULL ถ้าเป็นการแก้โครงสร้าง |
+| student_id | INTEGER | FK → registry.student | Y | NULL ถ้าเป็นการแก้โครงสร้าง |
 | change_type | VARCHAR(20) | | N | `score` · `trait` · `structure` · `remedial` · `activity` · `attendance` (แก้การเช็คชื่อหลังบันทึก ขอบเขต 4) · `ms_waiver` (บันทึกหรือยกเลิกการปลด มส ขอบเขต 4) |
 | field_label | VARCHAR(150) | | N | สิ่งที่แก้ เช่น `ทดสอบย่อย 1` |
 | old_value | TEXT | | Y | ค่าเดิม |
 | new_value | TEXT | | Y | ค่าใหม่ |
 | reason | TEXT | | Y | เหตุผล · บังคับเมื่อแก้การเช็คชื่อจาก ขาด เป็น มา (อย่างน้อย 10 ตัวอักษร) และเมื่อบันทึกหรือยกเลิกการปลด มส ([grading ADR 0013](../../grading/docs/adr/0013-attendance-backfill-strict-edit-ms-waiver.md)) |
-| changed_by | INTEGER | FK → app_user | N | ผู้แก้ไข |
+| changed_by | INTEGER | FK → registry.app_user | N | ผู้แก้ไข |
 | changed_at | TIMESTAMPTZ | | N | เวลา |
 | | | CHECK (`num_nonnulls(class_subject_id, teaching_group_id) = 1`) | | |
 | | | CHECK (`change_type IN ('score', 'trait', 'structure', 'remedial', 'activity', 'attendance', 'ms_waiver')`) | | |
@@ -495,7 +501,7 @@ erDiagram
 ## 4. กฎทางธุรกิจ (ใช้ constraint ไม่ได้)
 
 1. ผลรวม `assessment_category.weight_percent` ของ 1 ห้องเรียนที่สอน = 100 และผลรวม `assessment_item.weight_percent` ในหมวด = weight ของหมวด จึงจะเปลี่ยนจาก `no_structure` เป็น `draft` ได้
-2. `student_score.score` ไม่เกิน `assessment_item.max_score` และนักเรียนต้องอยู่ใน `student_classroom` ของห้องนั้น
+2. `student_score.score` ไม่เกิน `assessment_item.max_score` และนักเรียนต้องอยู่ในห้องนั้น (`registry.student_class_history` ที่ช่วงวันที่ครอบคลุมภาคเรียน)
 3. **ผู้กรอกและแก้คะแนน** ต้องเป็นครูใน `class_subject_teacher` ของห้องนั้น ทั้งครูหลักและครูร่วมสอน ([ขอบเขต 1](01-curriculum.md#class_subject_teacher--ครูผู้สอนของห้องเรียนที่สอน)) หรือ `teaching_group.advisor_id` สำหรับชุมนุม ฝ่ายวิชาการดูได้แต่แก้ไม่ได้ ([ADR 0001](../../grading/docs/adr/0001-academic-view-only-and-return.md))
 4. **ผู้ส่งผลและผู้ขอปลดล็อก** ต้องเป็นครูหลัก (`is_primary`) หรือครูที่ปรึกษาชุมนุม
 5. แก้ข้อมูลของหน่วยส่งผลได้เฉพาะเมื่อ `grading_status` เป็น `no_structure` หรือ `draft`
@@ -504,9 +510,9 @@ erDiagram
 8. อนุมัติหลายหน่วยพร้อมกันได้เฉพาะหน่วยที่ `pending` ไม่มีคำขอปลดล็อกค้าง และ `is_self_review = false` ([ADR 0009](../../grading/docs/adr/0009-remove-automated-observations.md))
 9. ส่งผลชุมนุมได้เมื่อสมาชิกที่ `enrolled` ทุกคนมี `activity_result.result` แล้ว
 10. `grade_scale` ของชุดเกณฑ์ต้องครอบคลุม 0–100 ไม่มีช่องว่าง (EXCLUDE กันแค่การทับกัน)
-11. ผลการเรียนใช้ `grading_policy` ที่ `academic_year` มากที่สุดซึ่งไม่เกินปีของห้อง และ `education_level` ตรงกับระดับชั้นของห้อง
+11. ผลการเรียนใช้ `grading_policy` ที่ `academic_year` มากที่สุดซึ่งไม่เกินปีของห้อง และ `education_stage_id` ตรงกับช่วงชั้นของระดับชั้นของห้อง
 12. คะแนนหลังสอบซ่อมทั้งรายวิชาให้ระดับได้ไม่เกิน `remedial_max_grade`
-13. ทุกการแก้คะแนน คุณลักษณะ โครงสร้าง ผลสอบซ่อม และผลชุมนุม ต้องเพิ่มแถวใน `grade_change_log`
+13. ทุกการแก้คะแนน ผลอ่าน คิดวิเคราะห์ และเขียน โครงสร้าง ผลสอบซ่อม และผลชุมนุม ต้องเพิ่มแถวใน `grade_change_log`
 
 ## 5. เทียบกับ ER เดิม
 
@@ -526,9 +532,12 @@ erDiagram
 | `TINYINT`, `DATETIME`, `VARCHAR(500)` | `SMALLINT`, `TIMESTAMPTZ`, `TEXT` | PostgreSQL ไม่มี `TINYINT` / `DATETIME` |
 | CHECK หน่วยส่งผลแบบ AND / OR | `num_nonnulls(...) = 1` | สั้นกว่าและอ่านง่ายกว่า ความหมายเดิม |
 | `HomeroomTeacher`, `AttendanceSession`, `AttendanceRecord` (หัวข้อ 8) | ขอบเขต 0 และ 4 | ไม่ใช่ข้อมูลการบันทึกคะแนน |
+| `TraitItem` คุณลักษณะอันพึงประสงค์ 8 ข้อ, `StudentSubjectResult.characteristic_level` | ❌ ใช้ของ Team C (ฉบับที่ 2) | ตกลงให้ C เป็นเจ้าของการประเมินคุณลักษณะฯ |
+| `GradingPolicy.education_level` | `education_stage_id` FK → `registry.education_stage` (ฉบับที่ 2) | ระดับชั้นและช่วงชั้นเป็นของ Team B |
 
 ## 6. คำถามที่ยังเปิดอยู่
 
 - **สอบซ่อมรายหมวด** `remedial_attempt` รองรับการซ่อมเฉพาะหมวด (เช่น ขาดสอบกลางภาค) ตามหน้ารายงาน แต่ระบบบันทึกคะแนนในระบบจำลองยังไม่มีหน้าจอนี้ ต้องยืนยันว่าการซ่อมรายหมวดเป็นงานจริงของโรงเรียน หรือเป็นแค่การแก้คะแนนช่อง ข ทีหลัง
 - **ผู้บันทึกผลสอบซ่อม** เป็นครูผู้สอนหรือฝ่ายวิชาการ และต้องผ่านการตรวจอนุมัติรอบใหม่ไหม
+- **ข้อมูลที่ทีมอื่นดึงไป** `student_subject_result`, `activity_result`, `grade_submission` ถูก Team B (ปพ.1 เลื่อนชั้น) และ Team C (ปพ.3–7) ดึงไปใช้ผ่าน API ([cross-team.md ข้อ 4](cross-team.md#4-ข้อมูลของเราที่ทีมอื่นดึงไปใช้)) ถ้าเปลี่ยนโครงสร้างต้องแจ้งทั้งสองทีม
 - **เกณฑ์ผ่านรายวิชา** `subject.pass_percent` (ขอบเขต 1) ซ้ำกับระดับ 1 ใน `grade_scale` (50 คะแนน) ควรใช้ค่าไหนเป็นหลัก หรือวิชาบางวิชามีเกณฑ์ผ่านต่างจากชุดเกณฑ์จริง

@@ -1,6 +1,8 @@
 # ขอบเขต 1 — หลักสูตร
 
 > **สถานะ:** ร่าง (2026-11-03) · อ้างตารางจาก [ขอบเขต 0](00-core.md) · ข้อตกลงอยู่ที่ [README.md](README.md#ข้อตกลง)
+>
+> **ฉบับที่ 2 (2026-11-11):** ระดับชั้น ห้องเรียน ภาคเรียน นักเรียน และผู้ใช้ เปลี่ยนไปอ้างตารางของ Team B (`registry.*`) ตาม [cross-team.md](cross-team.md) · ห้องรู้แผนการเรียนจาก `registry.classroom.study_program_id` ของ B แทน `classroom.study_plan_id` เดิม จึงเพิ่ม `study_plan.study_program_id` · `curriculum.education_level` เปลี่ยนเป็น `education_stage_id` · `subject` และ `curriculum_credit_requirement` เป็นข้อมูลที่ B ใช้ออก ปพ.1 และตัดสินจบ
 
 รายวิชา หลักสูตร แผนการเรียน และสิ่งที่ได้จากการนำแผนไปใช้กับห้องในแต่ละภาค คือ **ห้องเรียนที่สอน** กับครูผู้สอน รวมถึงชุมนุม ขอบเขตนี้เป็นจุดเริ่มของทั้งการบันทึกคะแนน (ขอบเขต 2) และตารางสอน (ขอบเขต 3)
 
@@ -19,36 +21,38 @@
 
 ## 2. ER
 
-ตารางที่มีแค่ PK อยู่ในขอบเขต 0 ใส่ไว้เพื่อให้เห็นความสัมพันธ์ ยกเว้น `app_user` ที่เป็นของฝ่ายทะเบียน (นอกขอบเขต)
+ตารางที่ขึ้นต้นด้วย `registry_` เป็นตารางของ Team B (`registry.<ชื่อ>`, [ขอบเขต 0 หัวข้อ 3.2](00-core.md#32-ตารางของ-team-b-ที่เราอ่าน)) ใส่ไว้เพื่อให้เห็นความสัมพันธ์
 
 ```mermaid
 erDiagram
     learning_area ||--o{ subject : "กลุ่มสาระของ"
     subject ||--o{ subject_grade_level : "เปิดในระดับ"
-    grade_level ||--o{ subject_grade_level : "ระดับชั้น"
+    registry_education_level ||--o{ subject_grade_level : "ระดับชั้น"
     subject ||--o{ subject_score_component : "โครงสร้างคะแนนตั้งต้น"
     subject ||--o{ indicator : "ตัวชี้วัด"
 
-    academic_year ||--o{ curriculum : "เริ่มใช้ปี"
+    registry_academic_year ||--o{ curriculum : "เริ่มใช้ปี"
+    registry_education_stage ||--o{ curriculum : "ระดับ ม.ต้น / ม.ปลาย"
     curriculum ||--o{ curriculum_credit_requirement : "หน่วยกิตขั้นต่ำ"
     learning_area ||--o{ curriculum_credit_requirement : "ของกลุ่มสาระ"
     curriculum ||--o{ study_plan : "มีแผน"
-    grade_level ||--o{ study_plan : "ของระดับชั้น"
+    registry_education_level ||--o{ study_plan : "ของระดับชั้น"
     study_plan ||--o{ study_plan_subject : "เรียนวิชา"
     subject ||--o{ study_plan_subject : "อยู่ในแผน"
-    study_plan |o--o{ classroom : "ห้องใช้แผน"
+    registry_study_program ||--o{ study_plan : "ประเภทแผน"
+    registry_study_program |o--o{ registry_classroom : "ห้องใช้แผน"
 
     study_plan_subject ||--o{ class_subject : "เปิดสอนเป็น"
-    classroom ||--o{ class_subject : "ห้อง / ภาค"
-    semester ||--o{ class_subject : "ห้อง / ภาค"
+    registry_classroom ||--o{ class_subject : "ห้อง / ภาค"
+    registry_semester ||--o{ class_subject : "ห้อง / ภาค"
     class_subject ||--|{ class_subject_teacher : "ครูผู้สอน"
-    app_user ||--o{ class_subject_teacher : "สอน"
+    registry_app_user ||--o{ class_subject_teacher : "สอน"
 
-    semester ||--o{ teaching_group : "เปิดชุมนุม"
+    registry_semester ||--o{ teaching_group : "เปิดชุมนุม"
     subject |o--o{ teaching_group : "นับเป็นวิชา"
-    app_user ||--o{ teaching_group : "ครูที่ปรึกษา"
+    registry_app_user ||--o{ teaching_group : "ครูที่ปรึกษา"
     teaching_group ||--o{ student_enrollment : "สมาชิก"
-    student ||--o{ student_enrollment : "สมัคร"
+    registry_student ||--o{ student_enrollment : "สมัคร"
 
     subject {
         INTEGER subject_id PK
@@ -66,7 +70,7 @@ erDiagram
     }
     subject_grade_level {
         INTEGER subject_id PK,FK
-        SMALLINT grade_level_id PK,FK
+        INTEGER education_level_id PK,FK
     }
     subject_score_component {
         INTEGER subject_score_component_id PK
@@ -88,7 +92,7 @@ erDiagram
         INTEGER curriculum_id PK
         VARCHAR curriculum_name
         SMALLINT start_year FK
-        VARCHAR education_level
+        INTEGER education_stage_id FK
         VARCHAR status
         TIMESTAMPTZ published_at
         INTEGER published_by FK
@@ -103,7 +107,8 @@ erDiagram
     study_plan {
         INTEGER study_plan_id PK
         INTEGER curriculum_id FK
-        SMALLINT grade_level_id FK
+        INTEGER education_level_id FK
+        INTEGER study_program_id FK
         VARCHAR plan_name
         SMALLINT sequence
     }
@@ -142,26 +147,32 @@ erDiagram
         VARCHAR enrollment_status
         TIMESTAMPTZ enrolled_at
     }
-    classroom {
+    registry_classroom {
         INTEGER classroom_id PK
-        INTEGER study_plan_id FK "เพิ่มในขอบเขตนี้"
+        INTEGER study_program_id FK
+    }
+    registry_study_program {
+        INTEGER study_program_id PK
+    }
+    registry_education_stage {
+        INTEGER education_stage_id PK
     }
     learning_area {
         INTEGER learning_area_id PK
     }
-    grade_level {
-        SMALLINT grade_level_id PK
+    registry_education_level {
+        INTEGER education_level_id PK
     }
-    academic_year {
+    registry_academic_year {
         SMALLINT academic_year PK
     }
-    semester {
+    registry_semester {
         INTEGER semester_id PK
     }
-    app_user {
+    registry_app_user {
         INTEGER user_id PK "ฝ่ายทะเบียน (นอกขอบเขต)"
     }
-    student {
+    registry_student {
         INTEGER student_id PK
     }
 ```
@@ -197,7 +208,7 @@ erDiagram
 | ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
 |---|---|---|---|---|
 | subject_id | INTEGER | PK, FK → subject | N | รายวิชา |
-| grade_level_id | SMALLINT | PK, FK → grade_level | N | ระดับชั้น |
+| education_level_id | INTEGER | PK, FK → registry.education_level | N | ระดับชั้น |
 
 หน้ารายวิชาให้เลือกได้หลายระดับชั้น (`levels[]`) เช่น วิชาเพิ่มเติมที่เปิดให้ ม.4–ม.6 เลือกเรียน วิชาพื้นฐานส่วนใหญ่จะมีแถวเดียว
 
@@ -237,13 +248,13 @@ erDiagram
 |---|---|---|---|---|
 | curriculum_id | INTEGER | PK | N | รหัส |
 | curriculum_name | VARCHAR(200) | | N | เช่น `หลักสูตรสถานศึกษา ระดับมัธยมศึกษาตอนต้น` |
-| start_year | SMALLINT | FK → academic_year | N | ปีการศึกษาที่เริ่มใช้ |
-| education_level | VARCHAR(20) | | N | `lower_secondary` · `upper_secondary` (ค่าชุดเดียวกับ `grade_level.education_level`) |
+| start_year | SMALLINT | FK → registry.academic_year | N | ปีการศึกษาที่เริ่มใช้ |
+| education_stage_id | INTEGER | FK → registry.education_stage | N | ม.ต้น / ม.ปลาย (เดิมคอลัมน์ `education_level` ค่า `lower_secondary` · `upper_secondary`) |
 | status | VARCHAR(20) | | N | `draft` ฉบับร่าง · `active` ใช้งานอยู่ · `inactive` ปิดใช้งาน |
 | published_at | TIMESTAMPTZ | | Y | เวลาที่ประกาศใช้ |
-| published_by | INTEGER | FK → app_user | Y | ผู้ประกาศใช้ |
-| updated_by | INTEGER | FK → app_user | Y | ผู้แก้ไขล่าสุด (หน้ารายการหลักสูตรแสดง "แก้ไขล่าสุดโดย") |
-| | | UNIQUE INDEX (education_level) WHERE status = 'active' | | ใช้งานได้หลักสูตรเดียวต่อระดับ |
+| published_by | INTEGER | FK → registry.app_user | Y | ผู้ประกาศใช้ |
+| updated_by | INTEGER | FK → registry.app_user | Y | ผู้แก้ไขล่าสุด (หน้ารายการหลักสูตรแสดง "แก้ไขล่าสุดโดย") |
+| | | UNIQUE INDEX (education_stage_id) WHERE status = 'active' | | ใช้งานได้หลักสูตรเดียวต่อระดับ |
 | | | CHECK (`status IN ('draft', 'active', 'inactive')`) | | |
 | | | CHECK (`status = 'draft' OR published_at IS NOT NULL`) | | |
 
@@ -267,10 +278,12 @@ erDiagram
 |---|---|---|---|---|
 | study_plan_id | INTEGER | PK | N | รหัส |
 | curriculum_id | INTEGER | FK → curriculum | N | หลักสูตร |
-| grade_level_id | SMALLINT | FK → grade_level | N | ระดับชั้น |
+| education_level_id | INTEGER | FK → registry.education_level | N | ระดับชั้น |
+| study_program_id | INTEGER | FK → registry.study_program | N | ประเภทแผนของ B ที่แผนนี้ตรงกับ 🆕 ฉบับที่ 2 |
 | plan_name | VARCHAR(150) | | N | เช่น `ห้องเรียนปกติ`, `แผนการเรียนวิทยาศาสตร์-คณิตศาสตร์` |
 | sequence | SMALLINT | | N | ลำดับในระดับชั้น |
-| | | UK (curriculum_id, grade_level_id, plan_name) | | |
+| | | UK (curriculum_id, education_level_id, plan_name) | | |
+| | | UK (curriculum_id, education_level_id, study_program_id) | | ห้องหาแผนของตัวเองได้แผนเดียว |
 
 #### `study_plan_subject` — รายวิชาในแผน
 
@@ -284,13 +297,13 @@ erDiagram
 | | | UK (study_plan_id, subject_id, semester_no) | | |
 | | | CHECK (`semester_no IN (1, 2)`) | | |
 
-#### เพิ่มใน `classroom` (ขอบเขต 0)
+#### ห้องเรียนใช้แผนไหน (ฉบับที่ 2)
 
-| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
-|---|---|---|---|---|
-| study_plan_id | INTEGER | FK → study_plan | Y | แผนที่ห้องนี้เรียนในปีการศึกษานั้น · NULL = ยังไม่กำหนด |
+ฉบับที่ 1 เพิ่ม `study_plan_id` ใน `classroom` ของเรา แต่ฉบับที่ 2 ห้องเรียนเป็นของ B (`registry.classroom`) ซึ่งเก็บแค่ `study_program_id` (ประเภทแผนแบบถาวร เช่น "วิทย์-คณิต") จึงหาแผนของห้องแบบนี้
 
-ระบบจำลองเก็บห้องไว้ในแผน (`plan.rooms = ['ม.1/5']`) แต่ห้องเป็นของแต่ละปี ส่วนแผนเป็นของหลักสูตรที่ใช้หลายปี จึงให้ห้องชี้ไปที่แผนแทน หน้าหลักสูตรได้รายการห้องของแผนจาก `classroom` ที่ `study_plan_id` ตรงกัน ในปีที่เลือก
+> แผนของห้อง = `study_plan` ที่ `study_program_id` = `registry.classroom.study_program_id` · `education_level_id` ตรงกับห้อง · และ `curriculum_id` เป็นหลักสูตร `active` ของช่วงชั้นของระดับนั้น
+
+ห้องที่ `study_program_id` เป็น NULL หรือหาแผนไม่เจอ ถือว่ายังไม่กำหนดแผน หน้าหลักสูตรได้รายการห้องของแผนจาก `registry.classroom` ในปีที่เลือกตามเงื่อนไขเดียวกัน (ระบบจำลองเก็บห้องไว้ในแผน `plan.rooms = ['ม.1/5']`)
 
 ### 3.3 ห้องเรียนที่สอนและครูผู้สอน
 
@@ -300,12 +313,12 @@ erDiagram
 |---|---|---|---|---|
 | class_subject_id | INTEGER | PK | N | รหัส |
 | study_plan_subject_id | INTEGER | FK → study_plan_subject | N | รายวิชาในแผน (ได้ทั้งรายวิชาและแผน) |
-| classroom_id | INTEGER | FK → classroom | N | ห้อง |
-| semester_id | INTEGER | FK → semester | N | ภาคเรียน |
+| classroom_id | INTEGER | FK → registry.classroom | N | ห้อง |
+| semester_id | INTEGER | FK → registry.semester | N | ภาคเรียน |
 | | | UK (study_plan_subject_id, classroom_id, semester_id) | | |
 | | | UK (class_subject_id, classroom_id) | | ให้ `timetable_entry` (ขอบเขต 3) อ้างแบบ composite FK |
 
-- สร้างเมื่อนำแผนไปใช้กับห้องในภาคนั้น: ทุก `study_plan_subject` ที่ `is_open` × ทุกห้องที่ `study_plan_id` ตรงกัน × ภาคที่ `semester_no` ตรงกัน
+- สร้างเมื่อนำแผนไปใช้กับห้องในภาคนั้น: ทุก `study_plan_subject` ที่ `is_open` × ทุกห้องที่ใช้แผนนี้ (หัวข้อ "ห้องเรียนใช้แผนไหน") × ภาคที่ `semester_no` ตรงกัน
 - วิชากิจกรรม ผ / มผ ที่สอนทั้งห้อง (แนะแนว) ก็เป็น `class_subject` ส่วนชุมนุมที่คละห้องใช้ `teaching_group`
 - **ขอบเขต 2 จะเพิ่ม** `grading_status`, `status_updated_at`
 
@@ -315,7 +328,7 @@ erDiagram
 |---|---|---|---|---|
 | class_subject_teacher_id | INTEGER | PK | N | รหัส |
 | class_subject_id | INTEGER | FK → class_subject | N | ห้องเรียนที่สอน |
-| user_id | INTEGER | FK → app_user | N | ครู |
+| user_id | INTEGER | FK → registry.app_user | N | ครู |
 | is_primary | BOOLEAN | | N | ครูหลัก (ผู้ส่งผลการเรียนและขอปลดล็อก) · ครูคนอื่นในห้องเดียวกัน = ครูร่วมสอน (กรอกคะแนนได้) |
 | | | UK (class_subject_id, user_id) | | |
 | | | UNIQUE INDEX (class_subject_id) WHERE is_primary | | มีครูหลักได้คนเดียว |
@@ -331,9 +344,9 @@ ER เดิมมี `ClassSubject.teacher_id` คนเดียว แต่�
 | ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
 |---|---|---|---|---|
 | teaching_group_id | INTEGER | PK | N | รหัส |
-| semester_id | INTEGER | FK → semester | N | ภาคเรียน |
+| semester_id | INTEGER | FK → registry.semester | N | ภาคเรียน |
 | subject_id | INTEGER | FK → subject | Y | รายวิชากิจกรรมที่ชุมนุมนี้นับเป็น เช่น `ก22903 ชุมนุม` (ใช้ออกรายงานและระเบียนสะสม) |
-| advisor_id | INTEGER | FK → app_user | N | ครูที่ปรึกษา |
+| advisor_id | INTEGER | FK → registry.app_user | N | ครูที่ปรึกษา |
 | group_name | VARCHAR(100) | | N | ชื่อชุมนุม |
 | group_type | VARCHAR(20) | | N | `club` ชุมนุม · `scout` ลูกเสือ-เนตรนารี · `social_service` เพื่อสังคมและสาธารณประโยชน์ |
 | capacity | SMALLINT | | Y | จำนวนรับ |
@@ -347,7 +360,7 @@ ER เดิมมี `ClassSubject.teacher_id` คนเดียว แต่�
 |---|---|---|---|---|
 | enrollment_id | INTEGER | PK | N | รหัส |
 | teaching_group_id | INTEGER | FK → teaching_group | N | ชุมนุม |
-| student_id | INTEGER | FK → student | N | นักเรียน |
+| student_id | INTEGER | FK → registry.student | N | นักเรียน |
 | enrollment_status | VARCHAR(20) | | N | `enrolled` · `withdrawn` |
 | enrolled_at | TIMESTAMPTZ | | N | เวลาสมัคร |
 | | | UK (teaching_group_id, student_id) | | |
@@ -358,12 +371,12 @@ ER เดิมมี `ClassSubject.teacher_id` คนเดียว แต่�
 1. ผลรวม `subject_score_component.full_score` ของรายวิชาที่เป็น `basic` / `additional` ต้องเท่ากับ 100 (หน้ารายวิชาบังคับก่อนบันทึก)
 2. แก้โครงสร้างคะแนนตั้งต้นได้เสมอ แต่ไม่กระทบห้องเรียนที่สอนที่คัดลอกไปแล้ว ถ้ามีห้องที่บันทึกคะแนนแล้ว ระบบต้องเตือน (หน้ารายวิชาแสดงคำเตือนนี้)
 3. ลบรายวิชาไม่ได้ถ้ามีแถวใน `study_plan_subject` ให้เปลี่ยน `status` เป็น `inactive` แทน
-4. `study_plan_subject`: ระดับชั้นของแผนต้องอยู่ใน `subject_grade_level` ของรายวิชา และ `curriculum.education_level` ต้องตรงกับ `grade_level.education_level` ของแผน
+4. `study_plan_subject`: ระดับชั้นของแผนต้องอยู่ใน `subject_grade_level` ของรายวิชา และ `curriculum.education_stage_id` ต้องตรงกับ `registry.education_level.education_stage_id` ของแผน
 5. แก้แผนได้เฉพาะเมื่อ `curriculum.status = 'draft'` หรือ `active` (หลักสูตร `inactive` อ่านอย่างเดียว)
 6. ประกาศใช้หลักสูตร: เปลี่ยนหลักสูตร `active` เดิมของระดับเดียวกันเป็น `inactive` ใน transaction เดียวกัน
-7. `classroom.study_plan_id`: ระดับชั้นของแผนต้องตรงกับห้อง และหลักสูตรของแผนต้องไม่ใช่ `draft`
-8. `class_subject`: `study_plan_subject.semester_no` = `semester.semester_no` · ห้องต้องใช้แผนเดียวกัน (`classroom.study_plan_id`) · `semester.academic_year` = `classroom.academic_year`
-9. ห้องเรียนที่สอนต้องมีครูหลัก 1 คนก่อนเริ่มบันทึกคะแนน (ขอบเขต 2) และครูต้องเป็น `app_user.status = 'active'`
+7. `study_plan.study_program_id`: ช่วงชั้นของ `registry.study_program` ต้องตรงกับ `curriculum.education_stage_id` · ห้องใช้แผนได้เฉพาะหลักสูตรที่ไม่ใช่ `draft`
+8. `class_subject`: `study_plan_subject.semester_no` = `registry.semester.semester_no` · ห้องต้องใช้แผนเดียวกัน (ตามหัวข้อ "ห้องเรียนใช้แผนไหน") · `registry.semester.academic_year` = `registry.classroom.academic_year`
+9. ห้องเรียนที่สอนต้องมีครูหลัก 1 คนก่อนเริ่มบันทึกคะแนน (ขอบเขต 2) และครูต้องยังทำงานอยู่ (`registry.app_user.is_active` และ `registry.job_detail.work_status`)
 10. นักเรียน 1 คนอยู่ได้ 1 ชุมนุมต่อ `group_type` ต่อภาคเรียน (นับเฉพาะ `enrolled`) และจำนวน `enrolled` ต้องไม่เกิน `capacity`
 
 ## 5. เทียบกับ ER เดิม
@@ -374,7 +387,7 @@ ER เดิมมี `ClassSubject.teacher_id` คนเดียว แต่�
 | `CurriculumSubject` | `study_plan_subject` | เหลือแค่ "วิชานี้อยู่ในแผนไหน ภาคไหน เปิดหรือไม่" ซึ่งเป็นสิ่งที่หน้าหลักสูตรจัดการ · ER เดิมไม่มี FK ไปหาหลักสูตรหรือแผนเลย |
 | — | 🆕 `curriculum` | หน้าหลักสูตรมีปี ระดับ สถานะ และการประกาศใช้ |
 | `StudyProgram` (ข้ามระดับชั้น) | `study_plan` (หลักสูตร × ระดับชั้น) | ในระบบจำลองแผนเป็นของแต่ละระดับชั้นและแต่ละหลักสูตร |
-| `Classroom.study_program_id` | `classroom.study_plan_id` | ชี้ไปที่แผนของระดับชั้นนั้น |
+| `Classroom.study_program_id` | ฉบับที่ 1: `classroom.study_plan_id` · ฉบับที่ 2: ใช้ `registry.classroom.study_program_id` + 🆕 `study_plan.study_program_id` | ห้องเรียนเป็นของ B แล้ว |
 | — | 🆕 `subject_grade_level` | หน้ารายวิชาเลือกได้หลายระดับชั้น |
 | `AssessmentCategoryTemplate` (ต่อ `CurriculumSubject`, `weight_percent`) | `subject_score_component` (ต่อ `subject`, `full_score`, `min_score`) | หน้ารายวิชาตั้งโครงสร้างคะแนนที่ตัวรายวิชา และมีคะแนนขั้นต่ำรายองค์ประกอบ · `full_score` รวม 100 จึงเท่ากับสัดส่วน |
 | `Indicator.curriculum_subject_id` | `indicator.subject_id` | ตัวชี้วัดเป็นของรายวิชา ไม่ได้เปลี่ยนตามแผน |

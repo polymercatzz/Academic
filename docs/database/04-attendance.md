@@ -1,6 +1,8 @@
 # ขอบเขต 4 — เช็คชื่อ
 
 > **สถานะ:** ร่าง (2026-11-03, เพิ่ม `fill_method` และ `ms_waiver` 2026-11-05 ตาม [ADR 0013](../../grading/docs/adr/0013-attendance-backfill-strict-edit-ms-waiver.md)) · อ้างตารางจาก [ขอบเขต 0](00-core.md), [1](01-curriculum.md), [2](02-grading.md) และ [3](03-timetable.md) · ข้อตกลงอยู่ที่ [README.md](README.md#ข้อตกลง)
+>
+> **ฉบับที่ 2 (2026-11-11):** ตัด `school_holiday` ออก อ่านวันหยุดจาก `registry.school_calendar` ของ Team B · นักเรียนในห้องอ่านจาก `registry.student_class_history` (หาห้องตามวันที่) · `attendance_record` และ `v_attendance_summary` เป็นข้อมูลที่ Team C ใช้ออก ปพ. ดู [cross-team.md](cross-team.md)
 
 การเช็คชื่อรายคาบของห้องเรียนที่สอน เวลาเรียน (%) ที่ใช้ตัดสิน มส คำนวณจากข้อมูลในขอบเขตนี้เท่านั้น ([ADR 0011](../../grading/docs/adr/0011-attendance-drives-ms-and-locks-with-submission.md))
 
@@ -23,18 +25,18 @@
 
 ## 2. ER
 
-ตารางที่มีแค่ PK มาจากขอบเขตก่อนหน้า ยกเว้น `app_user` ที่เป็นของฝ่ายทะเบียน (นอกขอบเขต)
+ตารางที่มีแค่ PK มาจากขอบเขตก่อนหน้า ตารางที่ขึ้นต้นด้วย `registry_` เป็นของ Team B
 
 ```mermaid
 erDiagram
     timetable_entry ||--o{ attendance_session : "เช็คชื่อในวันที่"
     class_subject ||--o{ attendance_session : "ของห้องเรียนที่สอน"
-    app_user ||--o{ attendance_session : "ผู้เช็ค"
+    registry_app_user ||--o{ attendance_session : "ผู้เช็ค"
     attendance_session ||--o{ attendance_record : "สถานะรายคน"
-    student ||--o{ attendance_record : "เข้าเรียน"
-    academic_year ||--o{ school_holiday : "วันหยุดของปี"
+    registry_student ||--o{ attendance_record : "เข้าเรียน"
+    registry_academic_year ||--o{ registry_school_calendar : "วันหยุดของปี"
     student_subject_result ||--o| ms_waiver : "ปลด มส"
-    app_user ||--o{ ms_waiver : "ผู้บันทึก"
+    registry_app_user ||--o{ ms_waiver : "ผู้บันทึก"
 
     attendance_session {
         BIGINT attendance_session_id PK
@@ -53,11 +55,13 @@ erDiagram
         INTEGER student_id FK
         VARCHAR status
     }
-    school_holiday {
-        INTEGER school_holiday_id PK
+    registry_school_calendar {
+        INTEGER school_calendar_id PK
         SMALLINT academic_year FK
-        DATE holiday_date
-        VARCHAR holiday_name
+        VARCHAR event_name
+        DATE event_start_date
+        DATE event_end_date
+        VARCHAR event_type
     }
     ms_waiver {
         INTEGER ms_waiver_id PK
@@ -77,13 +81,13 @@ erDiagram
     class_subject {
         INTEGER class_subject_id PK
     }
-    app_user {
-        INTEGER user_id PK "ฝ่ายทะเบียน (นอกขอบเขต)"
+    registry_app_user {
+        INTEGER user_id PK
     }
-    student {
+    registry_student {
         INTEGER student_id PK
     }
-    academic_year {
+    registry_academic_year {
         SMALLINT academic_year PK
     }
 ```
@@ -103,7 +107,7 @@ erDiagram
 | session_status | VARCHAR(20) | | N | `checked` เช็คชื่อแล้ว · `no_class` คาบนี้ไม่มีการเรียน (เช่น ไปทัศนศึกษา สอบกลางภาค) |
 | note | TEXT | | Y | เหตุผล บังคับเมื่อ `no_class` |
 | fill_method | VARCHAR(20) | | Y | วิธีเติมข้อมูลเมื่อเช็คชื่อย้อนหลัง: `previous` อิงคาบก่อนหน้า · `morning` อิงคาบเช้า · `all_present` ให้ทุกคนมา · NULL = เช็คตามปกติ |
-| checked_by | INTEGER | FK → app_user | N | ผู้เช็คชื่อ |
+| checked_by | INTEGER | FK → registry.app_user | N | ผู้เช็คชื่อ |
 | checked_at | TIMESTAMPTZ | | N | เวลาที่บันทึกล่าสุด |
 | | | UK (timetable_entry_id, class_date) | | |
 | | | CHECK (`session_status IN ('checked', 'no_class')`) | | |
@@ -120,7 +124,7 @@ erDiagram
 |---|---|---|---|---|
 | attendance_record_id | BIGINT | PK | N | รหัส |
 | attendance_session_id | BIGINT | FK → attendance_session | N | คาบ |
-| student_id | INTEGER | FK → student | N | นักเรียน |
+| student_id | INTEGER | FK → registry.student | N | นักเรียน |
 | status | VARCHAR(10) | | N | `present` มา · `late` สาย · `leave` ลา · `absent` ขาด (มา และ สาย นับเป็นเวลาเรียน) |
 | | | UK (attendance_session_id, student_id) | | |
 | | | CHECK (`status IN ('present', 'late', 'leave', 'absent')`) | | |
@@ -130,16 +134,18 @@ erDiagram
 - query เวลาเรียนเป็น `COUNT ... FILTER (WHERE status IN ('present', 'late'))` ตรง ๆ ไม่ต้องรู้รายชื่อห้องตอนนั้น
 - ขนาด: นักเรียน 1,500 คน × ประมาณ 30 คาบต่อสัปดาห์ × 20 สัปดาห์ ≈ 900,000 แถวต่อภาค ยังเล็กสำหรับ PostgreSQL (จึงใช้ BIGINT)
 
-#### `school_holiday` — วันหยุดของโรงเรียน
+#### วันหยุด — ใช้ `registry.school_calendar` ของ Team B
 
-| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
-|---|---|---|---|---|
-| school_holiday_id | INTEGER | PK | N | รหัส |
-| academic_year | SMALLINT | FK → academic_year | N | ปีการศึกษา |
-| holiday_date | DATE | UK | N | วันที่ |
-| holiday_name | VARCHAR(100) | | N | เช่น `วันจักรี`, `กีฬาสี` |
+ฉบับที่ 1 มีตาราง `school_holiday` ของเราเอง ฉบับที่ 2 ตัดออก เพราะ B มีปฏิทินโรงเรียน (`SchoolCalendar`) อยู่แล้ว ฟิลด์ที่เราใช้
 
-🆕 ไม่มีในระบบจำลอง (ซึ่งรู้แค่ว่าเสาร์–อาทิตย์ไม่มีเรียน) แต่ต้องมี ไม่อย่างนั้นทุกคาบในวันหยุดนักขัตฤกษ์จะขึ้นเป็น "ยังไม่เช็ค" และครูต้องกดบันทึก `no_class` เองทีละคาบ
+| ฟิลด์ใน `registry.school_calendar` | ใช้ทำอะไร |
+|---|---|
+| academic_year | ปีการศึกษา |
+| event_name | ชื่อวันหยุด เช่น `วันจักรี`, `กีฬาสี` |
+| event_start_date, event_end_date | ช่วงวันหยุด ต้องกระจายเป็นรายวันตอนหาคาบที่ต้องเช็ค (`generate_series`) |
+| event_type | ใช้เฉพาะแถวที่เป็นวันหยุด (ค่าที่ B ใช้ต้องตกลงกัน) |
+
+วันหยุดจำเป็น เพราะระบบจำลองรู้แค่ว่าเสาร์–อาทิตย์ไม่มีเรียน ถ้าไม่มีปฏิทิน ทุกคาบในวันหยุดนักขัตฤกษ์จะขึ้นเป็น "ยังไม่เช็ค" และครูต้องกดบันทึก `no_class` เองทีละคาบ
 
 #### `ms_waiver` — การปลด มส
 
@@ -150,7 +156,7 @@ erDiagram
 | waiver_type | VARCHAR(20) | | N | `force_majeure` มีเหตุสุดวิสัย ได้รับอนุมัติให้มีสิทธิ์สอบ (ตัดสินผลตามปกติ) · `makeup` เรียนหรือทำงานชดเชยจนครบเวลา (ระดับผลการเรียนไม่เกิน 1) |
 | approval_ref | VARCHAR(50) | | N | เลขที่บันทึกอนุมัติของผู้บริหาร |
 | reason | TEXT | | N | เหตุผล |
-| recorded_by | INTEGER | FK → app_user | N | ครูผู้สอนที่บันทึก |
+| recorded_by | INTEGER | FK → registry.app_user | N | ครูผู้สอนที่บันทึก |
 | recorded_at | TIMESTAMPTZ | | N | เวลาที่บันทึก |
 | | | UK (student_subject_result_id) | | |
 | | | CHECK (`waiver_type IN ('force_majeure', 'makeup')`) | | |
@@ -162,12 +168,12 @@ erDiagram
 
 | สิ่งที่หน้าจอแสดง | คำนวณจาก |
 |---|---|
-| คาบที่ต้องเช็ค | ทุกวันในภาคเรียน (`semester.start_date`–`end_date`) ที่ไม่ใช่ `school_holiday` × `timetable_entry` ของฉบับที่เผยแพร่อยู่ในวันนั้น ที่ `day_of_week` = `ISODOW` ของวันที่ |
+| คาบที่ต้องเช็ค | ทุกวันในภาคเรียน (`registry.semester.start_date`–`end_date`) ที่ไม่อยู่ในช่วงวันหยุดของ `registry.school_calendar` × `timetable_entry` ของฉบับที่เผยแพร่อยู่ในวันนั้น ที่ `day_of_week` = `ISODOW` ของวันที่ |
 | คาบที่ยังไม่เช็ค | คาบที่ต้องเช็ค ที่วันที่ไม่เกินวันนี้ และยังไม่มี `attendance_session` |
 | เวลาเรียน (%) รายนักเรียน × ห้องเรียนที่สอน | `attendance_record` ของ session `checked` · (present + late) ÷ จำนวนแถว |
 | ขาดได้อีก | `subject.hours_per_week` × จำนวนสัปดาห์ × (100 − `grading_policy.min_attendance_percent`)% ลบด้วยคาบที่ขาดและลาแล้ว |
 | ใกล้ มส / มส | เทียบเวลาเรียน (%) กับ `grading_policy.min_attendance_percent` · กลุ่มเสี่ยง = ขาดถึงครึ่งหนึ่งของจำนวนที่ขาดได้ · ไม่เป็น มส ถ้ามีแถวใน `ms_waiver` |
-| ห้องประจำชั้น: ตารางรายวัน | `attendance_record` ของนักเรียนใน `student_classroom` ของห้อง ในวันนั้น ทุกวิชา |
+| ห้องประจำชั้น: ตารางรายวัน | `attendance_record` ของนักเรียนที่อยู่ในห้องในวันนั้น (`registry.student_class_history`) ทุกวิชา |
 | แจ้งเตือนขาดทั้งวัน | นักเรียนที่มีแถวในวันนั้น และทุกแถวเป็น `absent` |
 
 **ฉบับที่เผยแพร่อยู่ในวันนั้น** คือฉบับที่ `published_at` ล่าสุดซึ่งไม่เกินวันนั้น เมื่ออนุมัติคำร้องเปลี่ยนตารางกลางภาค (ADR 0001) คาบเดิมจะยังอ้างถึง `timetable_entry` ของฉบับเก่าได้ เพราะฉบับเก่าไม่ถูกลบ
@@ -180,10 +186,10 @@ erDiagram
 2. เช็คชื่อหรือแก้ได้เฉพาะเมื่อ `class_subject.grading_status` เป็น `no_structure` หรือ `draft` หลังส่งผลต้องใช้คำขอปลดล็อก
 3. `class_date` ต้องอยู่ในภาคเรียนของห้องเรียนที่สอน ไม่ใช่วันหยุด ไม่เกินวันนี้ และ `ISODOW(class_date)` ต้องเท่ากับ `timetable_entry.day_of_week`
 4. `timetable_entry` ต้องเป็นของฉบับที่เผยแพร่อยู่ในวันที่ `class_date`
-5. `attendance_record.student_id` ต้องอยู่ใน `student_classroom` ของห้องนั้นในวันที่สอน
+5. `attendance_record.student_id` ต้องอยู่ในห้องนั้นในวันที่สอน (`registry.student_class_history` ที่ `start_date <= class_date` และ `end_date` ว่างหรือไม่ก่อน `class_date`)
 6. บันทึก session `checked` ต้องมี `attendance_record` ครบทุกคนในห้องใน transaction เดียวกัน (ค่าเริ่มต้นบนหน้าจอคือมาทุกคน)
 7. การแก้สถานะหลังบันทึกครั้งแรกต้องเพิ่มแถวใน `grade_change_log` ที่ `change_type = 'attendance'` ([ขอบเขต 2](02-grading.md)) · แก้จาก `absent` เป็น `present` ต้องมี `reason` อย่างน้อย 10 ตัวอักษร
-8. ครูประจำชั้นดูได้ทุกวิชาของห้องตน แต่แก้ไม่ได้
+8. ครูประจำชั้น (`registry.classroom_homeroom_teacher`) ดูได้ทุกวิชาของห้องตน แต่แก้ไม่ได้
 9. เช็คชื่อย้อนหลังด้วย `fill_method` คัดลอกได้เฉพาะสถานะ `leave` และ `absent` จากคาบอื่นของห้องเดียวกันในวันเดียวกัน แล้วครูต้องยืนยันก่อนบันทึก
 10. บันทึกหรือยกเลิก `ms_waiver` ได้เฉพาะเมื่อ `class_subject.grading_status` เป็น `no_structure` หรือ `draft` · `makeup` จำกัดระดับผลการเรียนไม่เกิน 1
 
@@ -191,15 +197,15 @@ erDiagram
 
 | ER เดิม | ขอบเขตนี้ | เหตุผล |
 |---|---|---|
-| `HomeroomTeacher` | ย้ายไป [ขอบเขต 0](00-core.md) เป็น `homeroom_teacher` | ใช้ทั้งเช็คชื่อและรายงาน |
+| `HomeroomTeacher` | ฉบับที่ 1: ย้ายไปขอบเขต 0 · ฉบับที่ 2: ใช้ `registry.classroom_homeroom_teacher` ของ B | ใช้ทั้งเช็คชื่อและรายงาน |
 | `AttendanceSession` | `attendance_session` + 🆕 `class_subject_id`, `session_status`, `note` | คำนวณเวลาเรียนรายห้องเรียนที่สอนได้ข้ามฉบับตาราง · บันทึกคาบที่ไม่มีการเรียนได้ (ระบบเดิมมีสถานะ "ไม่มีการเรียนในคาบนั้น" ในหน้าตรวจสอบการเช็กชื่อ ดู [pain-points.md](../pain-points.md)) |
 | `AttendanceRecord` | `attendance_record` | คงเดิม เปลี่ยนเป็น BIGINT |
-| — | 🆕 `school_holiday` | ไม่ให้วันหยุดขึ้นเป็นคาบที่ยังไม่เช็ค |
+| — | ฉบับที่ 1: 🆕 `school_holiday` · ฉบับที่ 2: ❌ ใช้ `registry.school_calendar` ของ B | ไม่ให้วันหยุดขึ้นเป็นคาบที่ยังไม่เช็ค · B มีปฏิทินโรงเรียนอยู่แล้ว |
 | — | 🆕 `attendance_session.fill_method` | รู้ว่าคาบไหนเป็นข้อมูลที่เติมย้อนหลัง (ADR 0013) |
 | — | 🆕 `ms_waiver` | ปลด มส ที่ผู้บริหารอนุมัติ (ADR 0013) |
 
 ## 7. คำถามที่ยังเปิดอยู่
 
 - **`no_class` ต้องมีใครอนุมัติไหม** ตอนนี้ครูผู้สอนบันทึกเองพร้อมเหตุผล ถ้าใช้บ่อยจะทำให้ตัวหารเล็กลงและเวลาเรียนสูงขึ้น อาจต้องให้งานวิชาการเห็นรายการนี้
-- **วันหยุดเฉพาะบางระดับ** เช่น ม.6 สอบ O-NET ทั้งวัน ตอนนี้ `school_holiday` ใช้กับทั้งโรงเรียน ถ้าต้องการรายระดับ ต้องเพิ่ม `grade_level_id`
+- **วันหยุดเฉพาะบางระดับ** เช่น ม.6 สอบ O-NET ทั้งวัน `registry.school_calendar` ใช้กับทั้งโรงเรียน ถ้าต้องการรายระดับ ต้องขอ B เพิ่มระดับชั้นในปฏิทิน
 - **ครูสอนแทน** ยังไม่ทำในรอบนี้ (2026-11-05) และยังไม่ตัดสินว่าใครเช็คชื่อในคาบสอนแทน ([grading/GLOSSARY.md](../../grading/GLOSSARY.md#-ยังไม่ชัดเจน)) ถ้าให้ครูสอนแทนเช็ค กฎข้อ 1 ต้องยอมรับผู้ที่ไม่อยู่ใน `timetable_entry_teacher`

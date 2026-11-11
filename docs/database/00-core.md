@@ -1,112 +1,123 @@
 # ขอบเขต 0 — ข้อมูลหลักที่ใช้ร่วมกัน
 
-> **สถานะ:** ร่าง (2026-11-03) · ข้อตกลงการตั้งชื่อและชนิดข้อมูลอยู่ที่ [README.md](README.md#ข้อตกลง)
+> **สถานะ:** ร่าง (2026-11-03) · **ฉบับที่ 2 (2026-11-11)** เปลี่ยนไปใช้ข้อมูลหลักของ Team B ตาม [cross-team.md](cross-team.md) · ข้อตกลงการตั้งชื่อและชนิดข้อมูลอยู่ที่ [README.md](README.md#ข้อตกลง)
 
-ข้อมูลที่ทุกโมดูลอ้างถึง ได้แก่ ปีการศึกษา ภาคเรียน ระดับชั้น กลุ่มสาระ นักเรียน และห้องเรียน ขอบเขตนี้ไม่มี FK ไปหาขอบเขตอื่น ยกเว้นตารางผู้ใช้ของฝ่ายทะเบียน (หัวข้อ 3.1)
+ข้อมูลที่ทุกโมดูลอ้างถึง ได้แก่ ปีการศึกษา ภาคเรียน ระดับชั้น กลุ่มสาระ นักเรียน ห้องเรียน ครูประจำชั้น และผู้ใช้
+
+**ตั้งแต่ฉบับที่ 2 ข้อมูลส่วนใหญ่ในขอบเขตนี้เป็นของ Team B** (schema `registry`) ระบบของเราอ่านอย่างเดียว ขอบเขตนี้เหลือตารางของเราเอง 2 ตาราง คือ `learning_area` และ `semester_setting` ส่วนตารางของ B ระบุไว้ในหัวข้อ 3.2 เฉพาะฟิลด์ที่เราใช้ (ไม่ใช่นิยามเต็ม นิยามเต็มอยู่ในรายงานของ B)
 
 ## 1. ที่มาในระบบจำลอง
 
-| ข้อมูล | ใช้ที่ |
-|---|---|
-| ปีการศึกษาและภาคเรียนปัจจุบัน | `AcademicLayout.currentTerm` ใน [shared/academic-layout.js](../../shared/academic-layout.js), ตัวกรองปี / ภาคของทุกหน้ารายงาน, กำหนดส่งผลการเรียนใน grading |
-| ระดับชั้น และ ม.ต้น / ม.ปลาย | ตัวกรองระดับชั้นทุกหน้า, หลักสูตรแยกตามระดับ ([curriculum-management.html](../../curriculum/curriculum-management.html)), เกณฑ์การตัดสินผลแยกตามระดับ |
-| กลุ่มสาระ | ตัวกรองกลุ่มสาระในหน้ารายวิชาและรายงาน, สังกัดของครู |
-| ครู | ครูผู้สอนในหลักสูตรและตารางสอน (`t01`–`t55`), ผู้ใช้ใน grading (`u1`–`u13`) |
-| นักเรียน สถานะนักเรียน | grading (`seed.js`), ตัวกรองสถานะนักเรียนในทะเบียนสะสม (กำลังศึกษา / ย้ายสถานศึกษา / สำเร็จการศึกษา) |
-| ห้องเรียน เลขที่ ครูประจำชั้น | ตารางกรอกคะแนนเรียงตามเลขที่, ห้องประจำชั้นในหน้าเช็คชื่อ (`HOMEROOM` ใน `attendance-core.js`) |
+| ข้อมูล | ใช้ที่ | ต้นทาง |
+|---|---|---|
+| ปีการศึกษาและภาคเรียนปัจจุบัน | `AcademicLayout.currentTerm` ใน [shared/academic-layout.js](../../shared/academic-layout.js), ตัวกรองปี / ภาคของทุกหน้ารายงาน, กำหนดส่งผลการเรียนใน grading | B (`registry.academic_year`, `registry.semester`) + `semester_setting` |
+| ระดับชั้น และ ม.ต้น / ม.ปลาย | ตัวกรองระดับชั้นทุกหน้า, หลักสูตรแยกตามระดับ ([curriculum-management.html](../../curriculum/curriculum-management.html)), เกณฑ์การตัดสินผลแยกตามระดับ | B (`registry.education_level`, `registry.education_stage`) |
+| กลุ่มสาระ | ตัวกรองกลุ่มสาระในหน้ารายวิชาและรายงาน | `learning_area` (ของเรา) |
+| ครู | ครูผู้สอนในหลักสูตรและตารางสอน (`t01`–`t55`), ผู้ใช้ใน grading (`u1`–`u13`) | B (`registry.app_user`, `registry.employee`) |
+| นักเรียน สถานะนักเรียน | grading (`seed.js`), ตัวกรองสถานะนักเรียนในทะเบียนสะสม (กำลังศึกษา / ย้ายสถานศึกษา / สำเร็จการศึกษา) | B (`registry.student`) |
+| ห้องเรียน เลขที่ ครูประจำชั้น | ตารางกรอกคะแนนเรียงตามเลขที่, ห้องประจำชั้นในหน้าเช็คชื่อ (`HOMEROOM` ใน `attendance-core.js`) | B (`registry.classroom`, `registry.student_class_history`, `registry.classroom_homeroom_teacher`) |
 
 ## 2. ER
 
+ตารางที่ขึ้นต้นด้วย `registry_` คือตารางของ Team B (`registry.<ชื่อ>`) Mermaid ใช้จุดในชื่อไม่ได้ จึงเขียนด้วยขีดล่าง
+
 ```mermaid
 erDiagram
-    academic_year ||--o{ semester : "แบ่งเป็น"
-    academic_year ||--o{ classroom : "เปิดห้อง"
-    grade_level ||--o{ classroom : "ระดับชั้นของ"
-    learning_area |o--o{ app_user : "สังกัด"
-    classroom ||--o{ student_classroom : "มีนักเรียน"
-    student ||--o{ student_classroom : "อยู่ห้อง (ปีละ 1 ห้อง)"
-    classroom ||--o{ homeroom_teacher : "มีครูประจำชั้น"
-    app_user ||--o{ homeroom_teacher : "เป็นครูประจำชั้น"
+    registry_academic_year ||--o{ registry_semester : "แบ่งเป็น"
+    registry_semester ||--o| semester_setting : "ค่าตั้งค่างานวิชาการ"
+    registry_academic_year ||--o{ registry_classroom : "เปิดห้อง"
+    registry_education_stage ||--o{ registry_education_level : "ช่วงชั้นของ"
+    registry_education_level ||--o{ registry_classroom : "ระดับชั้นของ"
+    registry_classroom ||--o{ registry_student_class_history : "มีนักเรียน"
+    registry_student ||--o{ registry_student_class_history : "อยู่ห้อง"
+    registry_classroom ||--o{ registry_classroom_homeroom_teacher : "มีครูประจำชั้น"
+    registry_employee ||--o{ registry_classroom_homeroom_teacher : "เป็นครูประจำชั้น"
+    registry_employee ||--o| registry_app_user : "บัญชีผู้ใช้"
+    registry_department |o--o{ learning_area : "สังกัด (รอตกลง)"
 
-    %% ── ฝ่ายทะเบียน (นอกขอบเขต) ──
-    app_user ||--o{ user_role : "มีบทบาท"
-    role ||--o{ user_role : "มอบให้"
-
-    academic_year {
-        SMALLINT academic_year PK "พ.ศ."
-        DATE start_date
-        DATE end_date
-    }
-    semester {
-        INTEGER semester_id PK
-        SMALLINT academic_year FK
-        SMALLINT semester_no
-        DATE start_date
-        DATE end_date
-        DATE grade_submission_deadline
-        DATE remedial_deadline
-        BOOLEAN is_current
-    }
-    grade_level {
-        SMALLINT grade_level_id PK
-        VARCHAR level_code UK
-        VARCHAR short_name
-        VARCHAR full_name
-        VARCHAR education_level
-        SMALLINT sequence
-    }
     learning_area {
         INTEGER learning_area_id PK
         VARCHAR area_code UK
         VARCHAR area_name UK
         VARCHAR area_type
         SMALLINT sequence
+        INTEGER department_id FK "รอตกลง"
     }
-    app_user {
-        INTEGER user_id PK "ฝ่ายทะเบียน"
-        VARCHAR prefix
-        VARCHAR first_name
-        VARCHAR last_name
-        VARCHAR position
-        INTEGER learning_area_id FK
-        VARCHAR status
+    semester_setting {
+        INTEGER semester_id PK,FK
+        DATE grade_submission_deadline
+        DATE remedial_deadline
+        DATE unavailability_deadline
     }
-    user_role {
-        INTEGER user_id PK,FK "ฝ่ายทะเบียน"
-        SMALLINT role_id PK,FK
-        TIMESTAMPTZ assigned_at
+    registry_academic_year {
+        SMALLINT academic_year PK "พ.ศ."
+        BOOLEAN is_active
     }
-    role {
-        SMALLINT role_id PK "ฝ่ายทะเบียน"
-        VARCHAR role_code UK
-        VARCHAR role_name
+    registry_semester {
+        INTEGER semester_id PK
+        SMALLINT academic_year FK
+        SMALLINT semester_no
+        DATE start_date
+        DATE end_date
+        BOOLEAN is_current "B เพิ่ม"
     }
-    student {
+    registry_education_stage {
+        INTEGER education_stage_id PK
+        VARCHAR stage_code UK
+        VARCHAR th_stage_name
+    }
+    registry_education_level {
+        INTEGER education_level_id PK
+        VARCHAR level_code UK
+        VARCHAR th_level_name
+        INTEGER education_stage_id FK
+        INTEGER next_education_level_id FK
+    }
+    registry_student {
         INTEGER student_id PK
         VARCHAR student_code UK
         VARCHAR prefix
-        VARCHAR first_name
-        VARCHAR last_name
+        VARCHAR first_name_th
+        VARCHAR last_name_th
         VARCHAR status
-        DATE status_changed_on
+        DATE status_effective_date
     }
-    classroom {
+    registry_classroom {
         INTEGER classroom_id PK
         SMALLINT academic_year FK
-        SMALLINT grade_level_id FK
+        INTEGER education_level_id FK
         SMALLINT room_no
+        INTEGER study_program_id FK
+        INTEGER school_room_id FK
     }
-    student_classroom {
-        INTEGER student_classroom_id PK
+    registry_student_class_history {
+        INTEGER history_id PK
         INTEGER student_id FK
         INTEGER classroom_id FK
-        SMALLINT academic_year FK
         SMALLINT class_no
+        DATE start_date
+        DATE end_date
     }
-    homeroom_teacher {
-        INTEGER homeroom_teacher_id PK
+    registry_classroom_homeroom_teacher {
+        INTEGER classroom_homeroom_teacher_id PK
         INTEGER classroom_id FK
-        INTEGER user_id FK
+        INTEGER employee_id FK
+    }
+    registry_employee {
+        INTEGER employee_id PK
+        VARCHAR th_title
+        VARCHAR th_first_name
+        VARCHAR th_last_name
+    }
+    registry_app_user {
+        INTEGER user_id PK
+        INTEGER employee_id UK
+        VARCHAR access_role
+        BOOLEAN is_active
+    }
+    registry_department {
+        INTEGER department_id PK
+        VARCHAR department_code UK
     }
 ```
 
@@ -114,48 +125,11 @@ erDiagram
 
 รูปแบบคอลัมน์: **ฟิลด์ · ชนิดข้อมูล · คีย์ · Null · คำอธิบาย / ค่าที่เป็นไปได้** · ทุกตารางที่แก้ไขได้มี `created_at`, `updated_at` (`TIMESTAMPTZ NOT NULL DEFAULT now()`) ซึ่งไม่ได้เขียนซ้ำในแต่ละตาราง
 
-### `academic_year` — ปีการศึกษา
+FK ที่ชี้ไป `registry.*` เขียนเป็น FK ปกติ ถ้าตกลงว่าเรียก API แทนการ sync สำเนา (คำถามเปิดข้อ 4 ใน [cross-team.md](cross-team.md#5-คำถามที่ยังเปิดอยู่)) FK เหล่านี้จะกลายเป็นการตรวจในแอป
 
-| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
-|---|---|---|---|---|
-| academic_year | SMALLINT | PK | N | ปีการศึกษา พ.ศ. เช่น `2569` (ใช้ค่าจริงเป็น PK เพราะเป็นค่าที่ทุกคนรู้จักและไม่เปลี่ยน) |
-| start_date | DATE | | N | วันเริ่มปีการศึกษา |
-| end_date | DATE | | N | วันสิ้นปีการศึกษา |
-| | | CHECK (`start_date < end_date`) | | |
+### 3.1 ตารางของเรา
 
-### `semester` — ภาคเรียน
-
-| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
-|---|---|---|---|---|
-| semester_id | INTEGER | PK | N | รหัส |
-| academic_year | SMALLINT | FK → academic_year | N | ปีการศึกษา |
-| semester_no | SMALLINT | | N | `1`, `2` |
-| start_date | DATE | | N | วันเปิดภาค |
-| end_date | DATE | | N | วันปิดภาค |
-| grade_submission_deadline | DATE | | Y | กำหนดส่งผลการเรียน (ใช้ใน grading) |
-| remedial_deadline | DATE | | Y | กำหนดสอบซ่อมของภาค หน้าภาพรวมของรายงานใช้นับ "สอบซ่อมเกินกำหนด" (ย้ายมาจากขอบเขต 5) |
-| is_current | BOOLEAN | | N | ภาคเรียนปัจจุบันของระบบ ค่าเริ่มต้น `false` |
-| | | UK (academic_year, semester_no) | | |
-| | | UNIQUE INDEX (is_current) WHERE is_current | | มีภาคเรียนปัจจุบันได้ภาคเดียว |
-| | | CHECK (`semester_no IN (1, 2)`) · CHECK (`start_date < end_date`) | | |
-
-ภาคเรียนปัจจุบันเลือกด้วย `is_current` ไม่ได้คำนวณจากวันที่ เพราะช่วงปิดภาคระหว่างภาค 1 กับภาค 2 ไม่อยู่ในภาคไหนเลย และงานวิชาการต้องเป็นคนตัดสินว่าจะเปลี่ยนภาคเมื่อไร ค่านี้ใช้แทน `CURRENT_TERM` ในระบบจำลอง
-
-### `grade_level` — ระดับชั้น
-
-| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
-|---|---|---|---|---|
-| grade_level_id | SMALLINT | PK | N | รหัส (กำหนดเอง ไม่ใช่ IDENTITY เพราะเป็นข้อมูลตั้งต้นที่แทบไม่เปลี่ยน) |
-| level_code | VARCHAR(10) | UK | N | `M1`–`M6` |
-| short_name | VARCHAR(10) | UK | N | `ม.1` |
-| full_name | VARCHAR(50) | | N | `มัธยมศึกษาปีที่ 1` |
-| education_level | VARCHAR(20) | | N | `lower_secondary` ม.ต้น · `upper_secondary` ม.ปลาย (ใช้แยกหลักสูตรและเกณฑ์การตัดสินผล) |
-| sequence | SMALLINT | UK | N | ลำดับการเรียง |
-| | | CHECK (`education_level IN ('lower_secondary', 'upper_secondary')`) | | |
-
-ช่วงชั้นของตารางสอน (ชุดระดับชั้นที่ใช้โครงสร้างเวลาเดียวกัน) ไม่เก็บที่นี่ เพราะในระบบจำลองตั้งแยกได้ในแต่ละฉบับตาราง (`timeStructures[].levels`) จึงไปอยู่ในขอบเขต 3
-
-### `learning_area` — กลุ่มสาระการเรียนรู้
+#### `learning_area` — กลุ่มสาระการเรียนรู้
 
 | ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
 |---|---|---|---|---|
@@ -164,109 +138,87 @@ erDiagram
 | area_name | VARCHAR(100) | UK | N | `ภาษาไทย`, `คณิตศาสตร์`, `วิทยาศาสตร์และเทคโนโลยี`, … |
 | area_type | VARCHAR(20) | | N | `learning_area` 8 กลุ่มสาระ · `activity` กิจกรรมพัฒนาผู้เรียน |
 | sequence | SMALLINT | | N | ลำดับการแสดงผล |
+| department_id | INTEGER | FK → registry.department | Y | กลุ่มสาระ / แผนกของ B ที่ตรงกัน ใช้กรองครูตามกลุ่มสาระ **(รอตกลงกับ B)** |
 | | | CHECK (`area_type IN ('learning_area', 'activity')`) | | |
 
-มี `activity` เพราะในระบบจำลองครูบางคนสังกัดกลุ่มกิจกรรมพัฒนาผู้เรียน (อ.สุนิสา ใน [personas.md](../personas.md)) และรายงานแยกกิจกรรมเป็นกลุ่มของตัวเอง ตัวอักษรนำหน้ารหัสวิชา (ท ค ว …) ไม่ได้เก็บเป็นรหัสกลุ่มสาระ เพราะกลุ่มภาษาต่างประเทศมีหลายตัวอักษร (อ จ ญ ฝ) เรื่องนี้ไปอยู่ในขอบเขต 1
+- ใช้จัดหมวด `subject` ตามหลักสูตรแกนกลาง จึงยังเป็นของเรา แม้ B จะมี `registry.department` (แผนก/กลุ่มสาระที่ครูสังกัด)
+- มี `activity` เพราะในระบบจำลองครูบางคนสังกัดกลุ่มกิจกรรมพัฒนาผู้เรียน (อ.สุนิสา ใน [personas.md](../personas.md)) และรายงานแยกกิจกรรมเป็นกลุ่มของตัวเอง
+- ตัวอักษรนำหน้ารหัสวิชา (ท ค ว …) ไม่ได้เก็บเป็นรหัสกลุ่มสาระ เพราะกลุ่มภาษาต่างประเทศมีหลายตัวอักษร (อ จ ญ ฝ) เรื่องนี้อยู่ในขอบเขต 1
+- สังกัดของครูอ่านจาก `registry.job_detail.department_id` ไม่ได้เก็บฝั่งเรา (เดิมเป็น `app_user.learning_area_id`)
 
-### 3.1 ตารางของฝ่ายทะเบียน (นอกขอบเขต)
+#### `semester_setting` — ค่าตั้งค่างานวิชาการของภาคเรียน
 
-**ฝ่ายทะเบียนเป็นผู้ออกแบบและดูแล** `app_user`, `role`, `user_role` รวมถึงบัญชีเข้าระบบ รหัสผ่าน และสิทธิ์ ใน ER ทุกรูปตารางเหล่านี้อยู่ในกรอบเส้นประ "ฝ่ายทะเบียน (นอกขอบเขต)" ระบบของเราอ่านอย่างเดียว และอ้างผ่าน FK `user_id` เท่านั้น
-
-ฟิลด์ที่ระบบของเราต้องใช้ (ข้อตกลงกับฝ่ายทะเบียน ไม่ใช่นิยามตารางเต็ม)
-
-| ตาราง | ฟิลด์ | ใช้ทำอะไร |
-|---|---|---|
-| `app_user` | `user_id` (INTEGER, PK) | เป้าหมาย FK ของครูผู้สอน ครูประจำชั้น ผู้บันทึก ผู้อนุมัติ ในทุกขอบเขต |
-| `app_user` | `prefix`, `first_name`, `last_name` | แสดงชื่อครูในทุกหน้าและรายงาน |
-| `app_user` | `position` | แสดงตำแหน่งในหน้าโปรไฟล์และเอกสาร |
-| `app_user` | `learning_area_id` (FK → `learning_area`) | กรองครูตามกลุ่มสาระ |
-| `app_user` | `status` (`active` · `inactive`) | กฎข้อ 4 และการมอบหมายสอน (ขอบเขต 1) |
-| `role`, `user_role` | `role_code` เช่น `teacher` ครูผู้สอน · `academic` ครูฝ่ายวิชาการ | แยกสิทธิ์หน้าจอของครูผู้สอนกับฝ่ายวิชาการ |
-
-### `student` — นักเรียน
+🆕 ฉบับที่ 2 รวมคอลัมน์ที่เดิมอยู่ใน `semester` ของเรา แต่ `registry.semester` ของ B ไม่มี
 
 | ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
 |---|---|---|---|---|
-| student_id | INTEGER | PK | N | รหัสภายในระบบ |
-| student_code | VARCHAR(20) | UK | N | เลขประจำตัวนักเรียน |
-| prefix | VARCHAR(20) | | N | `เด็กชาย`, `เด็กหญิง`, `นาย`, `นางสาว` |
-| first_name | VARCHAR(100) | | N | ชื่อ |
-| last_name | VARCHAR(100) | | N | นามสกุล |
-| status | VARCHAR(20) | | N | `studying` กำลังศึกษา · `transferred` ย้ายสถานศึกษา · `graduated` สำเร็จการศึกษา |
-| status_changed_on | DATE | | Y | วันที่สถานะเปลี่ยนครั้งล่าสุด (ย้ายออก / จบ) |
-| | | CHECK (`status IN ('studying', 'transferred', 'graduated')`) | | |
+| semester_id | INTEGER | PK, FK → registry.semester | N | ภาคเรียน (1:1) |
+| grade_submission_deadline | DATE | | Y | กำหนดส่งผลการเรียน (ใช้ใน grading) |
+| remedial_deadline | DATE | | Y | กำหนดสอบซ่อมของภาค หน้าภาพรวมของรายงานใช้นับ "สอบซ่อมเกินกำหนด" |
+| unavailability_deadline | DATE | | Y | วันปิดรับเวลาไม่ว่างของครู (ใช้ในขอบเขต 3) |
 
-ไม่เก็บเลขประจำตัวประชาชน วันเกิด และที่อยู่ เพราะไม่มีหน้าจอไหนใช้ และเป็นข้อมูลส่วนบุคคลที่ไม่ควรเก็บโดยไม่จำเป็น
+ภาคเรียนที่ยังไม่มีแถวในตารางนี้ถือว่ายังไม่ได้ตั้งค่า (ทุกค่าเป็น NULL) ฝ่ายวิชาการตั้งค่าได้หลัง B สร้างภาคเรียนแล้ว
 
-### `classroom` — ห้องเรียน (ห้องประจำชั้นของแต่ละปี)
+### 3.2 ตารางของ Team B ที่เราอ่าน
 
-| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
-|---|---|---|---|---|
-| classroom_id | INTEGER | PK | N | รหัส |
-| academic_year | SMALLINT | FK → academic_year | N | ปีการศึกษา |
-| grade_level_id | SMALLINT | FK → grade_level | N | ระดับชั้น |
-| room_no | SMALLINT | | N | ห้องที่ เช่น `1` ใน ม.2/1 |
-| | | UK (academic_year, grade_level_id, room_no) | | |
-| | | UK (classroom_id, academic_year) | | ให้ `student_classroom` อ้างแบบ composite FK ได้ |
-| | | CHECK (`room_no > 0`) | | |
+ข้อตกลงกับ B ไม่ใช่นิยามตารางเต็ม ชื่อเขียนตามรูปแบบที่ตกลง (snake_case) ในวงเล็บคือชื่อเดิมในรายงานของ B
 
-- ห้องเรียนเป็นของปีการศึกษา ม.2/1 ปี 2569 กับ ม.2/1 ปี 2570 เป็นคนละแถว เพราะนักเรียนและครูประจำชั้นเปลี่ยนทุกปี
-- ชื่อที่แสดง `ม.2/1` ประกอบจาก `grade_level.short_name` + `/` + `room_no` ไม่ได้เก็บซ้ำ
-- **[ขอบเขต 1](01-curriculum.md#เพิ่มใน-classroom-ขอบเขต-0) เพิ่ม** `study_plan_id` (FK → แผนการเรียน) เพราะในระบบจำลองแผนการเรียนเป็นตัวกำหนดว่าห้องไหนเรียนรายวิชาอะไร
+| ตารางของ B | ฟิลด์ที่เราใช้ | ใช้ทำอะไร | แทนตารางเดิมของเรา |
+|---|---|---|---|
+| `registry.academic_year` (`AcademicYears`) | `academic_year` (SMALLINT, PK = ปี พ.ศ. ตามที่ B ตกลงเปลี่ยน), `is_active` | เป้าหมาย FK `academic_year` ในทุกขอบเขต · B ไม่มี `start_date` / `end_date` ให้คำนวณจาก `MIN(start_date)` / `MAX(end_date)` ของ `registry.semester` ในปีนั้น | `academic_year` |
+| `registry.semester` (`Semesters`) | `semester_id`, `academic_year`, `semester_no`, `start_date`, `end_date`, `is_current` (B เพิ่ม) | เป้าหมาย FK `semester_id` · ภาคเรียนปัจจุบันของทุกระบบ (แทน `CURRENT_TERM` ในระบบจำลอง) | `semester` |
+| `registry.education_level` (`EducationLevels`) | `education_level_id`, `level_code`, `th_level_name` (`ม.1`), `education_stage_id`, `next_education_level_id` | ระดับชั้น · เป้าหมาย FK `education_level_id` (เดิม `grade_level_id`) | `grade_level` |
+| `registry.education_stage` (`EducationStage`) | `education_stage_id`, `stage_code` (`LOWER_SECONDARY`, `UPPER_SECONDARY`), `th_stage_name` | ม.ต้น / ม.ปลาย · แยกหลักสูตรและเกณฑ์การตัดสินผล (เดิมคอลัมน์ `grade_level.education_level`) | คอลัมน์ `education_level` |
+| `registry.student` (`Student`) | `student_id`, `student_code`, `prefix`, `first_name_th`, `last_name_th`, `status`, `status_effective_date` | ชื่อนักเรียนในทุกหน้า · สถานะใช้กรองทะเบียนสะสม | `student` |
+| `registry.classroom` (`Classroom`) | `classroom_id`, `academic_year`, `education_level_id`, `room_no`, `study_program_id`, `school_room_id` | ห้องเรียนของปีการศึกษา · ชื่อที่แสดง `ม.2/1` = `th_level_name` + `/` + `room_no` · `study_program_id` ใช้หาแผนการเรียน (ขอบเขต 1) · `school_room_id` คือห้องประจำ (ขอบเขต 3) | `classroom` |
+| `registry.student_class_history` (`StudentClassHistory`) | `student_id`, `classroom_id`, `class_no`, `start_date`, `end_date` | นักเรียนในห้องและเลขที่ · **หาห้องตามวันที่** (ห้องของนักเรียน ณ วันที่ X = แถวที่ `start_date <= X` และ `end_date IS NULL OR end_date >= X`) | `student_classroom` |
+| `registry.classroom_homeroom_teacher` (`ClassroomHomeroomTeacher`) | `classroom_id`, `employee_id` | ครูประจำชั้น · หน้าเช็คชื่อและรายงานการเข้าเรียน | `homeroom_teacher` |
+| `registry.app_user` (`User`) | `user_id`, `employee_id`, `access_role`, `is_active` | เป้าหมาย FK ของครูผู้สอน ผู้บันทึก ผู้อนุมัติ ในทุกขอบเขต (คอลัมน์ฝั่งเรายังชื่อ `user_id`) | `app_user` |
+| `registry.employee` (`Employees`) | `th_title`, `th_first_name`, `th_last_name` | ชื่อครูในทุกหน้าและรายงาน | `app_user.prefix`, `first_name`, `last_name` |
+| `registry.job_detail` (`JobDetails`) + `registry.position` + `registry.department` | `position_id`, `department_id`, `work_status` | ตำแหน่ง สังกัด และสถานะการทำงานของครู (ครูที่ออกแล้วมอบหมายสอนไม่ได้) | `app_user.position`, `learning_area_id`, `status` |
+| `registry.permission` + `registry.user_permission` | `permission_key` | แยกสิทธิ์ครูผู้สอนกับครูฝ่ายวิชาการ **(วิธี map รอตกลง)** | `role`, `user_role` |
 
-### `student_classroom` — นักเรียนในห้อง
-
-| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
-|---|---|---|---|---|
-| student_classroom_id | INTEGER | PK | N | รหัส |
-| student_id | INTEGER | FK → student | N | นักเรียน |
-| classroom_id | INTEGER | FK (classroom_id, academic_year) → classroom | N | ห้อง |
-| academic_year | SMALLINT | (ส่วนหนึ่งของ FK ข้างบน) | N | ปีการศึกษาของห้อง ซ้ำจาก `classroom` เพื่อบังคับ UK ข้างล่าง |
-| class_no | SMALLINT | | N | เลขที่ในห้อง |
-| | | UK (classroom_id, class_no) | | เลขที่ไม่ซ้ำในห้อง |
-| | | UK (student_id, academic_year) | | นักเรียน 1 คนอยู่ได้ห้องเดียวต่อปี |
-| | | CHECK (`class_no > 0`) | | |
-
-ถ้าไม่มี `academic_year` ในตารางนี้ จะบังคับ "ปีละ 1 ห้อง" ด้วย constraint ไม่ได้ composite FK `(classroom_id, academic_year)` ทำให้ค่านี้ตรงกับปีของห้องเสมอ
-
-### `homeroom_teacher` — ครูประจำชั้น
-
-| ฟิลด์ | ชนิดข้อมูล | คีย์ | Null | คำอธิบาย |
-|---|---|---|---|---|
-| homeroom_teacher_id | INTEGER | PK | N | รหัส |
-| classroom_id | INTEGER | FK → classroom | N | ห้อง |
-| user_id | INTEGER | FK → app_user | N | ครูประจำชั้น (ห้องหนึ่งมีได้มากกว่า 1 คน) |
-| | | UK (classroom_id, user_id) | | |
+**ชนิดของ FK:** PK ของ B เป็น `SERIAL` (INTEGER) ยกเว้น `registry.academic_year` ที่เป็นปี พ.ศ. (SMALLINT) FK ฝั่งเราจึงเป็น INTEGER ทั้งหมด ยกเว้น `academic_year` · เดิม `grade_level_id` เป็น SMALLINT เปลี่ยนเป็น `education_level_id INTEGER`
 
 ## 4. กฎทางธุรกิจ (ใช้ constraint ไม่ได้)
 
-1. ช่วงวันที่ของ `semester` ต้องอยู่ใน `academic_year` และภาคเรียนในปีเดียวกันต้องไม่ทับกัน
-2. `grade_submission_deadline` ต้องอยู่ระหว่าง `start_date` กับ `end_date` ของภาค หรือไม่เกินกี่วันหลังปิดภาคตามที่งานวิชาการกำหนด
-3. เพิ่มนักเรียนเข้าห้องได้เฉพาะเมื่อ `student.status = 'studying'`
-4. ครูประจำชั้นต้องเป็น `app_user.status = 'active'`
-5. เปลี่ยน `student.status` เป็น `transferred` หรือ `graduated` แล้ว ห้ามลบแถวใน `student_classroom` ของปีเก่า เพราะผลการเรียนย้อนหลังอ้างถึง
+1. ตั้ง `semester_setting` ได้เฉพาะภาคเรียนที่มีใน `registry.semester` · `grade_submission_deadline` ต้องอยู่ระหว่าง `start_date` กับ `end_date` ของภาค หรือไม่เกินกี่วันหลังปิดภาคตามที่งานวิชาการกำหนด
+2. ข้อมูลของ B แก้จากระบบเราไม่ได้ ถ้าพบข้อมูลผิด (เช่น เลขที่ซ้ำ) ต้องแจ้ง B
+3. ครูผู้สอน ครูประจำชั้น และผู้บันทึกต้องมี `registry.app_user.is_active` และ `registry.job_detail.work_status` เป็นทำงานอยู่
+4. นักเรียนที่ย้ายออกหรือจบแล้ว แถวใน `registry.student_class_history` ของปีเก่าต้องไม่ถูกลบ เพราะผลการเรียนย้อนหลังอ้างถึง (ต้องตกลงกับ B)
 
-## 5. เทียบกับ ER เดิม
+## 5. เทียบกับฉบับก่อน
 
-| ER เดิม | ขอบเขตนี้ | เหตุผล |
+### ฉบับที่ 2 (2026-11-11) เทียบกับฉบับที่ 1
+
+| ฉบับที่ 1 | ฉบับที่ 2 | เหตุผล |
 |---|---|---|
-| — | 🆕 `academic_year` | ER เดิมเก็บ `academic_year INT` ซ้ำใน `Semester`, `Classroom`, `GradingPolicy` โดยไม่มีที่ตรวจว่าปีนั้นมีจริง |
-| `Semester` | `semester` + 🆕 `is_current` | ระบบจำลองต้องรู้ "ภาคปัจจุบัน" ทุกหน้า (`AcademicLayout.currentTerm`) |
-| `grade_level VARCHAR(10)` ใน `Classroom`, `CurriculumSubject` | 🆕 `grade_level` | ป้องกันพิมพ์ไม่ตรงกัน (`ม.2` / `ม. 2` / `M2`) และเก็บ ม.ต้น / ม.ปลาย ที่เกณฑ์การตัดสินผลใช้ (`GradingPolicy.education_level`) |
+| `academic_year` | ❌ ใช้ `registry.academic_year` | B มีอยู่แล้ว และตกลงเปลี่ยน PK เป็นปี พ.ศ. FK ของเราจึงไม่ต้องแก้ |
+| `semester` | ❌ ใช้ `registry.semester` + 🆕 `semester_setting` | คอลัมน์งานวิชาการ 3 ตัวที่ B ไม่มีย้ายมาตารางเสริม · `is_current` ขอ B เพิ่ม |
+| `grade_level` (+ `education_level`) | ❌ ใช้ `registry.education_level` + `registry.education_stage` | FK `grade_level_id` ทุกตัว → `education_level_id` · `education_level` → `education_stage_id` |
+| `student` | ❌ ใช้ `registry.student` | |
+| `classroom` (+ `study_plan_id`, `home_room_id` จากขอบเขต 1, 3) | ❌ ใช้ `registry.classroom` | แผนการเรียนใช้ `study_program_id` ของ B · ห้องประจำใช้ `school_room_id` ของ B |
+| `student_classroom` | ❌ ใช้ `registry.student_class_history` | ของ B มีช่วงวันที่ ตอบคำถามเรื่องย้ายห้องกลางปีที่เคยเปิดไว้ |
+| `homeroom_teacher` | ❌ ใช้ `registry.classroom_homeroom_teacher` | |
+| `app_user`, `role`, `user_role` | ❌ ใช้ `registry.app_user` + `employee` + `job_detail` + `permission` | |
+| `learning_area` | `learning_area` + 🆕 `department_id` (รอตกลง) | ยังเป็นของเรา สังกัดครูอ่านจาก B |
+
+### ฉบับที่ 1 เทียบกับ ER เดิม
+
+| ER เดิม | ฉบับที่ 1 | เหตุผล |
+|---|---|---|
+| `academic_year INT` ซ้ำใน `Semester`, `Classroom`, `GradingPolicy` | 🆕 `academic_year` | ไม่มีที่ตรวจว่าปีนั้นมีจริง |
+| `Semester` | `semester` + 🆕 `is_current` | ระบบจำลองต้องรู้ "ภาคปัจจุบัน" ทุกหน้า |
+| `grade_level VARCHAR(10)` | 🆕 `grade_level` | ป้องกันพิมพ์ไม่ตรงกัน และเก็บ ม.ต้น / ม.ปลาย |
 | `LearningArea` | `learning_area` + 🆕 `area_code`, `area_type`, `sequence` | แยกกิจกรรมพัฒนาผู้เรียน และเรียงลำดับตามหลักสูตรแกนกลาง |
-| `User` | `app_user` (ฝ่ายทะเบียน) | การจัดการผู้ใช้เป็นงานของฝ่ายทะเบียน ขอบเขตนี้ระบุแค่ฟิลด์ที่ต้องใช้ · `user` เป็นคำสงวนของ PostgreSQL |
-| `Role`, `UserRole` | `role`, `user_role` (ฝ่ายทะเบียน) | วาดไว้ในกรอบของฝ่ายทะเบียนเพื่อให้เห็นว่าสิทธิ์มาจากไหน |
-| `Student.status` (`studying`, `moved_out`, `graduated`) | `studying`, `transferred`, `graduated` | ใช้คำตามตัวกรองในหน้าทะเบียนสะสม |
-| `Classroom.classroom_name` | `room_no` | ชื่อประกอบจากระดับชั้นกับเลขห้องได้ |
-| `Classroom.study_program_id` | ย้ายไปขอบเขต 1 | แผนการเรียนเป็นข้อมูลของหลักสูตร |
-| `StudyProgram` | ย้ายไปขอบเขต 1 | เหมือนข้างบน |
+| `User`, `Role`, `UserRole` | `app_user`, `role`, `user_role` (ฝ่ายทะเบียน) | `user` เป็นคำสงวนของ PostgreSQL |
 | `StudentClassroom` | `student_classroom` + 🆕 `academic_year` | บังคับปีละ 1 ห้อง |
-| `HomeroomTeacher` (หัวข้อ 8 ใน er-data-dictionary.md) | `homeroom_teacher` | ใช้ทั้งเช็คชื่อและรายงาน จึงย้ายมาเป็นข้อมูลหลัก |
+| `HomeroomTeacher` | `homeroom_teacher` | ใช้ทั้งเช็คชื่อและรายงาน |
 
 ## 6. คำถามที่ยังเปิดอยู่
 
-- **ภาคฤดูร้อน** มีไหม ถ้ามี `semester_no` ต้องรับ `3` และตัดสินว่าภาคฤดูร้อนนับเป็นภาคเรียนปกติในการคำนวณ GPA หรือไม่
-- **ย้ายห้องกลางปี** ตอนนี้ย้ายห้องคือแก้ `classroom_id` ในแถวเดิม จึงไม่เหลือประวัติว่าเคยอยู่ห้องไหน ถ้าต้องการประวัติ ให้เพิ่ม `start_date` / `end_date` แต่ต้องเปลี่ยน UK "ปีละ 1 ห้อง" เป็นห้ามช่วงวันที่ทับกัน
-- **ชื่อห้องพิเศษ** ถ้าโรงเรียนเรียกห้องด้วยชื่อ เช่น "ห้อง EP" นอกจากเลขห้อง ต้องเพิ่ม `room_label`
-- **สถานะนักเรียนอื่น** เช่น พักการเรียน หรือ ลาออก ต้องเพิ่มในรายการ `status` หรือไม่
-- **กลุ่มสาระของครู** `app_user.learning_area_id` เป็นของฝ่ายทะเบียนแต่อ้าง `learning_area` ของเรา ทำให้ FK วิ่งย้อนเข้าขอบเขต 0 ต้องตกลงกับฝ่ายทะเบียนว่าจะใช้ตารางกลุ่มสาระของใคร หรือย้ายสังกัดมาเก็บฝั่งเราเป็นตาราง `teacher_learning_area`
+- **ภาคฤดูร้อน** มีไหม ถ้ามี `registry.semester.semester_no` ต้องรับ `3` และตัดสินว่านับในการคำนวณ GPA หรือไม่
+- **สถานะนักเรียน** ค่าใน `registry.student.status` ตรงกับ `studying` / `transferred` / `graduated` ที่รายงานของเราใช้หรือไม่ และมีพักการเรียน / ลาออกหรือไม่
+- **สังกัดครู** ตกลงใช้ `registry.department` และ `learning_area.department_id` หรือไม่
+- **บทบาทผู้ใช้** ครูผู้สอน / ครูฝ่ายวิชาการ map กับ `access_role` หรือ `permission` ของ B อย่างไร
+- **ชื่อห้องพิเศษ** ถ้าโรงเรียนเรียกห้องด้วยชื่อ เช่น "ห้อง EP" ต้องขอ B เพิ่มใน `registry.classroom`

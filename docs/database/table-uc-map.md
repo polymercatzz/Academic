@@ -35,7 +35,7 @@
 | G4 | รายละเอียดการจัดตาราง | `teacher_subject`, `time_structure_grade_level`, `locked_activity`, `locked_activity_teacher`, `room_unavailability`, `timetable_entry_teacher` | ✓ (เติมใน UC-4–7 แล้ว 2026-11-04) | ✓ `timetable.html` | ✅ เติมแล้ว — เดิม: ไม่ต้องเพิ่ม UC — เติมคำใน UC-4 ข้อ 5–6 (ช่วงชั้น, กิจกรรมล็อกเวลา), UC-5 (ครูร่วมสอน), UC-6/UC-7 (วิชาที่ครูสอนได้, ห้องไม่พร้อมใช้) |
 | G5 | ชุมนุม | `teaching_group`, `student_enrollment`, `activity_result` | △ ×2, ✗ ×1 | △ มีในหลักสูตรและตารางสอน (`curriculum-management.html`, `timetable.html`) แต่ไม่มีหน้าบันทึกผล ผ/มผ | ตัดสินว่าชุมนุมอยู่ในขอบเขตไหม — ถ้าใช่ **(ก)** เติมใน UC-3 และ UC-13; ถ้าไม่ **(ค)** · หมายเหตุ UC-8 ใช้คำว่า "กลุ่มการสอน" ซึ่งไม่ตรงกับตารางใด |
 | G6 | คุณลักษณะฯ / อ่านคิดเขียน / ตัวชี้วัด | `trait_item`, `student_trait_score`, `indicator`, `assessment_item_indicator` | ✗ ×4 | ✓ `scores.html` (มีในข้อมูลและหน้ากรอกคะแนน) | **(ก)** ขยาย UC-12 ให้รวมการประเมินคุณลักษณะฯ และผูกตัวชี้วัด หรือ **(ค)** ถ้าจะไม่สาธิตในบท 4 |
-| G7 | เช็คชื่อ + ครูประจำชั้น | `attendance_session`, `attendance_record`, `school_holiday`, `homeroom_teacher` | ✗ ×4 | ✓ `attendance.html`, `reports/teacher-attendance.html`, `academic-report.html#attendance` | **(ข) หรือ (ค)** ให้ตรงกับข้อ 1.3.4 — ⚠️ ถ้าตัด เกณฑ์ มส (`student_subject_result.attendance_percent`) และรายงานผู้ไม่มีสิทธิ์สอบต้องรับเวลาเรียนจากระบบอื่น/กรอกเอง |
+| G7 | เช็คชื่อ + ครูประจำชั้น | `attendance_session`, `attendance_record`, `school_holiday`*, `homeroom_teacher`* | ✗ ×4 | ✓ `attendance.html`, `reports/teacher-attendance.html`, `academic-report.html#attendance` | **(ข) หรือ (ค)** ให้ตรงกับข้อ 1.3.4 — ⚠️ ถ้าตัด เกณฑ์ มส (`student_subject_result.attendance_percent`) และรายงานผู้ไม่มีสิทธิ์สอบต้องรับเวลาเรียนจากระบบอื่น/กรอกเอง |
 | G8 | ตารางเสริมของรายงาน | `curriculum_credit_requirement` (~~`report_threshold`~~) | ✓ UC-16 | ✓ `academic-report.html#record-report` | ✅ 2026-11-07: ตัด `report_threshold` (เกณฑ์ของหน้ารายงานเป็นค่าคงที่ในแอป) ย้าย `curriculum_credit_requirement` ไปขอบเขต 1 · ขอบเขต 5 ไม่มีตารางแล้ว |
 | G9 | ตารางอื่นที่ใช้โดยอ้อม | `subject_score_component` | ✓ (เติมใน UC-2, UC-11 แล้ว) | ✓ `course-management.html` (ตั้งองค์ประกอบคะแนนตั้งต้น) | ✅ เติมแล้ว — เติมใน UC-2 ว่าตั้งโครงสร้างคะแนนตั้งต้นของรายวิชาได้ และ UC-11 คัดลอกมาเป็นจุดเริ่ม |
 
@@ -46,17 +46,19 @@
 
 ### ขอบเขต 0 ข้อมูลหลัก (8 + app_user ของฝ่ายทะเบียน)
 
+> **2026-11-11 (ฉบับที่ 2 ของฐานข้อมูล):** ตารางที่มี * ตัดออกจากฐานข้อมูลของเราแล้ว ใช้ตารางของ Team B แทน (`registry.*`) แต่ use case ยังต้องใช้ข้อมูลเหมือนเดิม และเพิ่ม `semester_setting` · `trait_item` / `student_trait_score` เหลือแค่อ่าน คิดวิเคราะห์ และเขียน (คุณลักษณะฯ ใช้ของ Team C) ดู [cross-team.md](cross-team.md)
+
 | ตาราง | สถานะ | UC | หมายเหตุ |
 |---|---|---|---|
-| academic_year | ✓ | UC-1, 4, 15, 16 | เลือกปีการศึกษา |
-| semester | ✓ | UC-4, 12, 15 | เลือกภาคเรียน |
-| grade_level | ✓ | UC-1, 3 | ระดับชั้น |
+| academic_year* → `registry.academic_year` | ✓ | UC-1, 4, 15, 16 | เลือกปีการศึกษา |
+| semester* → `registry.semester` + `semester_setting` | ✓ | UC-4, 12, 15 | เลือกภาคเรียน |
+| grade_level* → `registry.education_level` | ✓ | UC-1, 3 | ระดับชั้น |
 | learning_area | ✓ | UC-2 | กลุ่มสาระ |
-| app_user | ✓ | ทุก UC | ครูผู้สอน / ครูฝ่ายวิชาการ · ตารางของฝ่ายทะเบียน (นอกขอบเขต) |
-| student | ✓ | UC-12, 15 | รายชื่อนักเรียน |
-| classroom | ✓ | UC-4, 12 | ห้องเรียน |
-| student_classroom | ✓ | UC-11 pre, UC-12 | นักเรียนในห้อง |
-| homeroom_teacher | ✓ | UC-24 A-1 | ใช้ในเช็คชื่อและรายงาน (G7) |
+| app_user* → `registry.app_user` | ✓ | ทุก UC | ครูผู้สอน / ครูฝ่ายวิชาการ · ตารางของฝ่ายทะเบียน (นอกขอบเขต) |
+| student* → `registry.student` | ✓ | UC-12, 15 | รายชื่อนักเรียน |
+| classroom* → `registry.classroom` | ✓ | UC-4, 12 | ห้องเรียน |
+| student_classroom* → `registry.student_class_history` | ✓ | UC-11 pre, UC-12 | นักเรียนในห้อง |
+| homeroom_teacher* → `registry.classroom_homeroom_teacher` | ✓ | UC-24 A-1 | ใช้ในเช็คชื่อและรายงาน (G7) |
 
 ### ขอบเขต 1 หลักสูตร (12)
 
@@ -99,7 +101,7 @@
 
 | ตาราง | สถานะ | UC | หมายเหตุ |
 |---|---|---|---|
-| room | ✓ | UC-4, 6, 7, 8 | ห้องที่ใช้สอน, ห้องเฉพาะ |
+| room* → `registry.school_room` | ✓ | UC-4, 6, 7, 8 | ห้องที่ใช้สอน, ห้องเฉพาะ |
 | teacher_subject | ✓ | UC-7 | G4 |
 | timetable_version | ✓ | UC-4 A-1, UC-9 | ฉบับร่าง / ฉบับแก้ไข |
 | time_structure | ✓ | UC-4 ข้อ 5–6 | วัน เวลาเรียน เวลาพัก จำนวนคาบ |
@@ -124,7 +126,7 @@
 |---|---|---|---|
 | attendance_session | ✓ | UC-23 | G7 นอกขอบเขตตามข้อ 1.3.4 |
 | attendance_record | ✓ | UC-23, 24 | G7 |
-| school_holiday | ✓ | UC-23 (ข้อมูลตั้งต้น ไม่มีหน้าจอ) | G7 |
+| school_holiday* → `registry.school_calendar` | ✓ | UC-23 (ข้อมูลตั้งต้น ไม่มีหน้าจอ) | G7 |
 | ms_waiver | ✓ | UC-24 A-2 | ปลด มส (ADR 0013, เพิ่ม 2026-11-05) |
 
 ### ขอบเขต 5 รายงาน (0)

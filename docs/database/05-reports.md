@@ -6,7 +6,9 @@
 1. **view และ function** ที่หน้ารายงานทุกหน้าอ่าน เพื่อให้ตัวเลขเดียวกันออกมาเท่ากันทุกหน้า
 2. **กติกาการคำนวณ** ที่ตอนนี้แต่ละหน้าในระบบจำลองคิดไม่เหมือนกัน
 
-> **2026-11-07:** เดิมขอบเขตนี้มีตารางเสริม 2 ตาราง ตัด `report_threshold` ออก (เกณฑ์ของหน้ารายงานเป็นค่าคงที่ในแอป ดูข้อ 2) และย้าย `curriculum_credit_requirement` ไป[ขอบเขต 1](01-curriculum.md#curriculum_credit_requirement--หน่วยกิตขั้นต่ำตามหลักสูตร) ส่วนคอลัมน์ `semester.remedial_deadline` ย้ายไป[ขอบเขต 0](00-core.md#semester--ภาคเรียน)
+> **2026-11-07:** เดิมขอบเขตนี้มีตารางเสริม 2 ตาราง ตัด `report_threshold` ออก (เกณฑ์ของหน้ารายงานเป็นค่าคงที่ในแอป ดูข้อ 2) และย้าย `curriculum_credit_requirement` ไป[ขอบเขต 1](01-curriculum.md#curriculum_credit_requirement--หน่วยกิตขั้นต่ำตามหลักสูตร) ส่วนคอลัมน์ `semester.remedial_deadline` ย้ายไป[ขอบเขต 0](00-core.md#semester_setting--ค่าตั้งค่างานวิชาการของภาคเรียน) (ฉบับที่ 2 อยู่ใน `semester_setting`)
+
+> **ฉบับที่ 2 (2026-11-11):** ปี ภาค ระดับชั้น และห้อง อ่านจากตารางของ Team B (`registry.*`) · กำหนดส่งผลและกำหนดสอบซ่อมอ่านจาก `semester_setting` · view ในขอบเขตนี้เป็นต้นทางของข้อมูลที่ทีมอื่นดึงไปใช้ด้วย ได้แก่ Team B (`v_student_result`, `fn_student_gpax()`, `v_credit_progress`, `v_grading_progress` สำหรับ ปพ.1 ตัดสินจบ และเลื่อนชั้น) และ Team C (`v_student_result`, `v_student_term_gpa`, `v_attendance_summary` สำหรับ ปพ.3–7) ดู [cross-team.md ข้อ 4](cross-team.md#4-ข้อมูลของเราที่ทีมอื่นดึงไปใช้) · คุณลักษณะอันพึงประสงค์ใช้ของ Team C แล้ว `v_student_development` ส่วนคุณลักษณะฯ ต้องดึงจาก C ([ข้อ 3](cross-team.md#3-คุณลักษณะอันพึงประสงค์ใช้ของ-team-c))
 
 ## 1. ที่มาในระบบจำลอง
 
@@ -52,7 +54,8 @@ flowchart LR
         AR[activity_result]
         S[student_score / assessment_item]
         AT[attendance_session / record]
-        TS[student_trait_score]
+        TS[student_trait_score<br/>อ่าน คิดวิเคราะห์ เขียน]
+        CC["คุณลักษณะฯ จาก Team C (API)"]
         CS[class_subject + grading_status]
         GS[grade_submission]
     end
@@ -82,6 +85,7 @@ flowchart LR
     REM --> FU
     SR --> ACH[v_achievement_level3]
     TS --> DEV[v_student_development]
+    CC -.-> DEV
 ```
 
 ### 3.1 view พื้นฐาน
@@ -93,9 +97,9 @@ flowchart LR
 | คอลัมน์ | ที่มา |
 |---|---|
 | class_subject_id, grading_status | `class_subject` |
-| academic_year, semester_id, semester_no | `semester` |
-| grade_level_id, grade_short_name, education_level | `classroom` → `grade_level` |
-| classroom_id, classroom_name (`ม.2/1`) | `classroom` |
+| academic_year, semester_id, semester_no | `registry.semester` |
+| education_level_id, level_name (`ม.2`), education_stage_id | `registry.classroom` → `registry.education_level` |
+| classroom_id, classroom_name (`ม.2/1`) | `registry.classroom` |
 | study_plan_id, plan_name | `study_plan_subject` → `study_plan` |
 | subject_id, subject_code, subject_name, subject_type, credit, learning_area_id | `subject` |
 | primary_teacher_id, teacher_ids (array) | `class_subject_teacher` |
@@ -170,7 +174,7 @@ function ที่คืนตาราง (student_id, gpax, registered_credits
 |---|---|
 | remedial_status | `waiting` รอสอบซ่อม (ยังไม่มีครั้งไหน หรือครั้งล่าสุดเป็น `scheduled`) · `done` สอบซ่อมแล้ว (`passed` / `failed`) · `follow_up` ติดตามงาน |
 | category_type | `collect` / `midterm` / `final` จาก `assessment_category` · NULL = ทั้งรายวิชา |
-| is_overdue | `waiting` และวันนี้เลย `semester.remedial_deadline` |
+| is_overdue | `waiting` และวันนี้เลย `semester_setting.remedial_deadline` |
 
 ความเร่งด่วนรายนักเรียน (เร่งด่วนสูง / ต้องติดตาม / ปกติ) คำนวณจากจำนวนวิชาใน view นี้ ตามค่าคงที่ในข้อ 2
 
@@ -186,7 +190,7 @@ function ที่คืนตาราง (student_id, gpax, registered_credits
 
 #### `v_grading_progress` — ความคืบหน้าการส่งและอนุมัติผล
 
-ต่อภาคเรียน (และแยกตามระดับชั้น / ห้อง / ครู ได้): จำนวนห้องเรียนที่สอนตาม `grading_status`, submitted_percent (`pending` + `approved`), approved_percent, รอบที่รอตรวจ (`grade_submission.decision IS NULL`), overdue (ยังไม่ส่งและเลย `semester.grade_submission_deadline`)
+ต่อภาคเรียน (และแยกตามระดับชั้น / ห้อง / ครู ได้): จำนวนห้องเรียนที่สอนตาม `grading_status`, submitted_percent (`pending` + `approved`), approved_percent, รอบที่รอตรวจ (`grade_submission.decision IS NULL`), overdue (ยังไม่ส่งและเลย `semester_setting.grade_submission_deadline`)
 
 ### 3.6 รายงานของระบบเดิมที่ยังไม่มีหน้าใหม่
 
@@ -196,14 +200,14 @@ function ที่คืนตาราง (student_id, gpax, registered_credits
 
 #### `v_student_development` — ผลการประเมินพัฒนาผู้เรียน
 
-`student_trait_score` สรุปเป็นระดับ ดีเยี่ยม / ดี / ผ่าน / ไม่ผ่าน แบ่ง 3 ชั้นตามที่ระบบเดิมแยก (ภาพรวม → ห้อง → นักเรียน) ใน view เดียว ใช้ `GROUPING SETS` เพื่อ drill-down ได้โดยไม่ต้อง query ใหม่ (pain point P4 ใน [pain-points.md](../pain-points.md#ปัญหาที่ซ้ำกันหลายหน้า))
+ผลอ่าน คิดวิเคราะห์ และเขียน (`student_trait_score`) สรุปเป็นระดับ ดีเยี่ยม / ดี / ผ่าน / ไม่ผ่าน แบ่ง 3 ชั้นตามที่ระบบเดิมแยก (ภาพรวม → ห้อง → นักเรียน) ใน view เดียว ใช้ `GROUPING SETS` เพื่อ drill-down ได้โดยไม่ต้อง query ใหม่ (pain point P4 ใน [pain-points.md](../pain-points.md#ปัญหาที่ซ้ำกันหลายหน้า)) · **ฉบับที่ 2:** ส่วนคุณลักษณะอันพึงประสงค์ไม่อยู่ในฐานข้อมูลเรา ต้องดึงผลจาก Team C (`care.characteristic_evaluation`) ผ่าน API มารวมตอนแสดงผล view นี้จึงมีแค่อ่าน คิดวิเคราะห์ และเขียน
 
 ## 4. กติกาการคำนวณที่ระบบจำลองยังคิดไม่ตรงกัน
 
 | เรื่อง | ระบบจำลอง | ในฐานข้อมูล |
 |---|---|---|
 | **เวลาเรียน (%)** | `script.js` (#attendance) ใช้เพดานจำนวนครั้งที่ขาด · `unable-exam-report.js` นับลาเป็นไม่มาเรียน · `teacher-attendance.html` นับลาเป็นมาเรียน (บรรทัด 525) | (มา + สาย) ÷ คาบที่เช็คแล้ว ตาม ADR 0011 ทุกหน้าอ่านจาก `v_attendance_summary` |
-| **สถานะการเข้าเรียน** | academic-report ใช้ป้ายภาษาไทย 7 แบบ (ตรงเวลา สาย ขาด ลากิจ ลาป่วย กิจกรรม วันหยุด) · teacher-attendance ใช้ `present` / `late` / `absent` / `leave` | 4 ค่าของ `attendance_record.status` · วันหยุดใช้ `school_holiday` · กิจกรรมใช้ `session_status = 'no_class'` · ลากิจ / ลาป่วยยังแยกไม่ได้ (ดูคำถามเปิด) |
+| **สถานะการเข้าเรียน** | academic-report ใช้ป้ายภาษาไทย 7 แบบ (ตรงเวลา สาย ขาด ลากิจ ลาป่วย กิจกรรม วันหยุด) · teacher-attendance ใช้ `present` / `late` / `absent` / `leave` | 4 ค่าของ `attendance_record.status` · วันหยุดใช้ `registry.school_calendar` ของ Team B · กิจกรรมใช้ `session_status = 'no_class'` · ลากิจ / ลาป่วยยังแยกไม่ได้ (ดูคำถามเปิด) |
 | **คะแนนเฉลี่ยของสอบซ่อม** | แปลง `ร` เป็น 0.5 ตอนหาค่าเฉลี่ย (`student-retake-management.html`) | ไม่นับ ร ในค่าเฉลี่ย |
 | **สถานะ "ต้องติดตาม / ดีเด่น"** | ในคะแนนเฉลี่ยรายปีเป็นค่าที่ใส่ไว้ในข้อมูลจำลอง ไม่ได้คำนวณ | ยังไม่มีนิยาม (ดูคำถามเปิด) |
 | **เกณฑ์** | ตัวเลขตายตัวกระจายอยู่ในโค้ดแต่ละหน้า | ค่าคงที่ในไฟล์ตั้งค่าของแอปที่เดียว (ข้อ 2) |
@@ -214,7 +218,7 @@ function ที่คืนตาราง (student_id, gpax, registered_credits
 - **index ที่รายงานต้องใช้** (นอกเหนือจาก PK / UK)
   - `student_subject_result (student_id)` สำหรับ GPA / GPAX รายคน
   - `attendance_record (student_id)` และ `attendance_session (class_subject_id, class_date)`
-  - `class_subject (semester_id)`, `classroom (academic_year, grade_level_id)`
+  - `class_subject (semester_id)`, (ห้องเรียนเป็นของ Team B ถ้า sync สำเนาเข้ามา ต้องมี index `(academic_year, education_level_id)`)
   - `remedial_attempt (student_subject_result_id, attempt_no DESC)` สำหรับหาครั้งล่าสุด
 - การจำตัวกรองที่ค้นล่าสุดอยู่ในเบราว์เซอร์ (`AcademicLayout.lastSearch()`) ไม่ต้องเก็บในฐานข้อมูล
 
@@ -223,4 +227,4 @@ function ที่คืนตาราง (student_id, gpax, registered_credits
 - **มส นับใน GPA ไหม** ตอนนี้นับเป็นวิชาไม่ผ่าน แต่ไม่นับใน GPA (เหมือน ร) เพราะไม่มีระดับใน `grade_scale` ระบบจำลองไม่มีกรณี มส ในระเบียนสะสมให้เทียบ ถ้าโรงเรียนนับ มส เป็น 0 ต้องเปลี่ยนสูตร
 - **ลากิจ / ลาป่วย** หน้ารายงานการเข้าเรียนแยกสองแบบ แต่การเช็คชื่อ (ขอบเขต 4, ADR 0011) มีแค่ "ลา" ถ้าต้องแยก ต้องเพิ่มค่าใน `attendance_record.status`
 - **สถานะ "ต้องติดตาม" และ "ผลการเรียนดีเด่น"** ในคะแนนเฉลี่ยรายปีจะคิดจากอะไร เช่น ต่ำกว่า `LOW_SCORE_PERCENT` และ GPA ≥ 3.50
-- **สมรรถนะสำคัญ** ระบบเดิมประเมินพัฒนาผู้เรียน 3 ประเภท (คุณลักษณะ / อ่าน คิดวิเคราะห์ และเขียน / สมรรถนะ) แต่ `trait_item.trait_type` ในขอบเขต 2 มีแค่ 2 ประเภท ถ้าต้องมีรายงานนี้ ต้องเพิ่ม `competency`
+- **สมรรถนะสำคัญ** ระบบเดิมประเมินพัฒนาผู้เรียน 3 ประเภท (คุณลักษณะ / อ่าน คิดวิเคราะห์ และเขียน / สมรรถนะ) ฉบับที่ 2 คุณลักษณะฯ เป็นของ Team C และ `trait_item.trait_type` ในขอบเขต 2 เหลือแค่ `reading_thinking` ถ้าต้องมีรายงานสมรรถนะ ต้องเพิ่ม `competency` (และตกลงกับ C ว่าใครประเมิน)

@@ -1,3 +1,6 @@
 # เล่มรายงาน Word — ไฟล์ binary ใหญ่ เก็บนอก git
 docs/*.docx
 ~$*.docx
+
+# สไลด์นำเสนอ — ไม่เก็บใน git
+presentation/
