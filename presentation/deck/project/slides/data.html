@@ -1,0 +1,22 @@
+<section id="data" style="background:#FBFBF9;color:#1F2328;font-family:'Sarabun', Tahoma, sans-serif;padding:96px 128px 140px;display:flex;flex-direction:column;gap:40px">
+<h2 style="font-size:56px;font-weight:700;line-height:1.3">ฐานข้อมูลเก็บสถานะของผลการเรียน<br>ระบบจึงล็อกคะแนนทันทีที่ครูส่งผล</h2>
+<div style="display:flex;flex-direction:row;gap:72px;align-items:start">
+<img src="/_blob/3b10019bafb9c6450effd2b091c8c2f5" alt="State Diagram สถานะผลการเรียนของห้องเรียนที่สอน: ยังไม่ตั้งโครงสร้างคะแนน กำลังบันทึก รอตรวจ และอนุมัติแล้ว" style="width:652px;height:642px;object-fit:contain;background:#FFFFFF">
+<div style="flex:1;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;line-height:1.4">ผลการเรียนของห้องหนึ่งมี 4 สถานะ</h3>
+<p style="font-size:32px;line-height:1.55">แก้ไขได้เฉพาะสถานะ “กำลังบันทึก” เมื่อครูส่งผล ระบบล็อกคะแนน ข้อมูลการเช็คชื่อ และการปลด มส ของห้องนั้น <span style="color:#B8440B">จนกว่าฝ่ายวิชาการจะตีกลับหรืออนุมัติคำขอปลดล็อก</span></p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;line-height:1.4">ข้อมูลที่มีวงจรสถานะมี 4 ชนิด</h3>
+<p style="font-size:32px;line-height:1.55">ผลการเรียน ฉบับตารางสอน คำร้องขอเปลี่ยนการจัดตารางสอน และหลักสูตร</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px;border-top:1px solid #D4D4CF;padding:24px 0 0 0">
+<p style="font-size:32px;line-height:1.55;color:#6B7280">ตารางทั้งหมดอยู่ใน schema academic ของ PostgreSQL แบ่งเป็น 5 กลุ่ม คือข้อมูลหลักที่ใช้ร่วมกัน 1 กลุ่ม และกลุ่มของระบบย่อย 4 กลุ่ม ออกแบบตามหลัก 3NF</p>
+</div>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1400px;font-size:24px;color:#6B7280">ที่มา: รายงานรูปที่ 3.31 และข้อ 3.4.1</p>
+<p style="position:absolute;right:128px;bottom:64px;width:100px;text-align:right;font-size:24px;color:#6B7280">10</p>
+<aside>I 1:30 — ขั้นส่ง ตรวจ อนุมัติ ที่เพิ่งเห็น ถูกเก็บเป็นสถานะในฐานข้อมูล ผลการเรียนของห้องหนึ่งมีสี่สถานะ แก้ได้เฉพาะตอนกำลังบันทึก พอครูส่งผล คะแนน การเช็คชื่อ และการปลด มส ของห้องนั้นจะถูกล็อก ตามกรอบสีส้ม จนกว่าฝ่ายวิชาการจะตีกลับหรืออนุมัติคำขอปลดล็อก การตีกลับไม่ใช่สถานะใหม่ แต่กลับไปกำลังบันทึกพร้อมเหตุผล และทุกการเปลี่ยนสถานะถูกเก็บเป็นประวัติ ฐานข้อมูลทั้งหมดมี 58 ตาราง แบ่งห้ากลุ่ม ออกแบบตาม 3NF [ถ้าถูกถามเรื่อง ER] ER เต็มอยู่ในเล่มรูปที่ 3.35 ถึง 3.40</aside>
+</section>

@@ -1,0 +1,18 @@
+{
+  "v": 4,
+  "createdOnFiles": {"v": 1, "at": "2026-11-11T10:30:00Z"},
+  "lists": "css",
+  "title": "สอบโครงงาน ระบบงานวิชาการ",
+  "cover": "cover",
+  "order": ["cover", "problem", "persona", "compare", "gap", "scope", "arch", "flow", "approve", "data", "autosched", "conflict", "grade", "demo", "ai", "progress", "plan", "commit"],
+  "sections": {
+    "research": {"description": "ปัญหาของงานวิชาการในโรงเรียน ผู้ใช้ และช่องว่างของระบบที่มีอยู่", "start": "cover"},
+    "design": {"description": "ขอบเขต สถาปัตยกรรม ฐานข้อมูล และกฎการประมวลผลที่ออกแบบไว้", "start": "scope"},
+    "prototype": {"description": "เดโมระบบต้นแบบหน้าจอ และวิธีใช้ AI ในการทำงาน", "start": "demo"},
+    "status": {"description": "ความคืบหน้าเทอม 1 แผนเทอม 2 และเกณฑ์ที่ทีมรับปากจะส่งมอบ", "start": "progress"}
+  },
+  "faces": {
+    "sarabun": {"family": "Sarabun", "href": "https://fonts.googleapis.com/css2?family=Sarabun:wght@400;700&display=swap"}
+  },
+  "designSystems": []
+}

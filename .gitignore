@@ -2,8 +2,8 @@
 docs/*.docx
 ~$*.docx
 
-# สไลด์นำเสนอ — ไม่เก็บใน git
-presentation/
+# สไลด์นำเสนอ — เก็บทุกอย่างใน git ยกเว้นไฟล์ .pptx
+presentation/**/*.pptx
 
 # skill ที่แพ็กไว้ส่งต่อ — ไม่เก็บใน git
 share/

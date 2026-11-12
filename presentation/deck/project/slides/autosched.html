@@ -1,0 +1,24 @@
+<section id="autosched" style="background:#FBFBF9;color:#1F2328;font-family:'Sarabun', Tahoma, sans-serif;padding:96px 128px 140px;display:flex;flex-direction:column;gap:40px">
+<h2 style="font-size:56px;font-weight:700;line-height:1.3">การจัดตารางอัตโนมัติวางคาบที่จัดยากก่อน<br>แล้วใช้ Soft constraint ให้คะแนนช่องเวลาที่เหลือ</h2>
+<div style="display:flex;flex-direction:row;gap:72px;align-items:start">
+<img src="/_blob/41b6ac0d1263653ca8aad4c9e6a5597f" alt="ขั้นตอนการจัดตารางสอนอัตโนมัติ: ตรวจความพร้อมของข้อมูล แตกภาระสอนเป็นงานทีละคาบ เรียงงานจากยากไปง่าย หยิบงานถัดไปหาช่องเวลาและห้องที่ผ่านเงื่อนไขบังคับทุกข้อ ให้คะแนนแต่ละช่องตามเงื่อนไขที่ควรทำตาม แล้ววางคาบลงในช่องที่ได้คะแนนสูงสุด" style="width:522px;height:642px;object-fit:contain;background:#FFFFFF">
+<div style="flex:1;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;line-height:1.4;color:#B8440B">จัดจากยากไปง่าย</h3>
+<p style="font-size:32px;line-height:1.55">คาบคู่ วิชาที่ต้องใช้ห้องเฉพาะทาง และวิชาที่มีความสำคัญสูงถูกจัดก่อน เพราะมีช่องเวลาที่เป็นไปได้น้อยกว่า</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;line-height:1.4">เงื่อนไขบังคับ (Hard) 13 ข้อ</h3>
+<p style="font-size:32px;line-height:1.55">ช่องเวลาต้องผ่านทุกข้อ เช่น ครูคนเดียวกันไม่สอนซ้อนเวลา และวิชาเดียวกันไม่เกิน 2 คาบต่อวัน</p>
+</div>
+<div style="display:flex;flex-direction:column;gap:8px">
+<h3 style="font-size:32px;font-weight:700;line-height:1.4">เงื่อนไขที่ควรทำตาม (Soft) 4 ข้อ</h3>
+<p style="font-size:32px;line-height:1.55">ใช้ให้คะแนนช่องเวลา เช่น กระจายวิชาเดียวกันไม่ให้อยู่วันเดียวกันหลายคาบ</p>
+</div>
+<p style="font-size:32px;line-height:1.5;color:#6B7280">คาบที่วางไม่ได้ ระบบสรุปเป็นรายการให้ครูฝ่ายวิชาการจัดเอง</p>
+</div>
+</div>
+<p style="position:absolute;left:128px;bottom:64px;width:1400px;font-size:24px;color:#6B7280">ที่มา: รายงานข้อ 3.5.1 รูปที่ 3.41 และตารางที่ 3.4</p>
+<p style="position:absolute;right:128px;bottom:64px;width:100px;text-align:right;font-size:24px;color:#6B7280">11</p>
+<aside>P 2:00 — การจัดตารางคือการจับครู ห้อง และเวลาเข้าด้วยกัน ระบบเช็กก่อนว่าข้อมูลพร้อม แล้วแตกภาระสอนออกเป็นงานทีละคาบ คาบที่ยากถูกจัดก่อน เช่น คาบคู่และวิชาที่ต้องใช้ห้องเฉพาะ เพราะมีช่องให้ลงน้อย แต่ละคาบต้องผ่านเงื่อนไขบังคับทั้ง 13 ข้อ เช่น ครูคนเดียวห้ามสอนซ้อนเวลา จากนั้นใช้เงื่อนไขที่ควรทำตาม 4 ข้อให้คะแนน แล้วเลือกช่องที่คะแนนสูงสุด คาบคู่ที่วางติดกันไม่ได้จะถูกแตกเป็นคาบเดี่ยว ส่วนคาบที่ยังวางไม่ได้ ระบบสรุปให้ฝ่ายวิชาการจัดเอง ทั้งหมดนี้ทำเบื้องหลังผ่าน Celery</aside>
+</section>
