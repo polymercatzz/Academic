@@ -1,4 +1,4 @@
-# Academic_Report-
+# Academic
 เปิดผ่าน `python3 -m http.server 8765` แล้วเข้า `http://localhost:8765/`
 
 อ่านภาพรวมของระบบ (โมดูล หน้า actor ข้อมูล และวิธีเพิ่มหน้า) ได้ที่ [docs/](docs/README.md)
