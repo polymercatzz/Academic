@@ -16,6 +16,7 @@
 | [04-qa-prep.md](04-qa-prep.md) | คำถามที่กรรมการน่าจะถาม + แนวตอบ |
 | [05-assets-checklist.md](05-assets-checklist.md) | รายการรูปที่มีแล้ว/ต้องทำเพิ่ม |
 | [06-rehearsal-log.md](06-rehearsal-log.md) | บันทึกการซ้อม จับเวลา |
+| [07-speaker-script.md](07-speaker-script.md) | บทพูดรายสไลด์ พร้อมข้อมูลเพิ่มเติมนอกสไลด์และเลขหน้าในเล่ม |
 | [not-ai-decks-guide.pdf](not-ai-decks-guide.pdf) | คู่มือหลีกเลี่ยงสไลด์ที่ดูเหมือน AI ทำ — สรุปเป็น skill ที่ `.claude/skills/slide-design/` |
 
 ## ประเด็นที่ยังต้องตัดสินใจ (คุยกันก่อนลงมือทำสไลด์)
