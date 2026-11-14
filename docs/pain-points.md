@@ -26,11 +26,11 @@
 
 | ระบบเดิม | ผู้ใช้ | ปัญหา | หน้าในระบบใหม่ |
 |---|---|---|---|
-| รายงานการเข้าเรียน | งานวิชาการ | P1 เลือกประเภทการค้นหา (เดือน / ปี / ช่วงเวลา) ก่อนแล้วสับสน · P4 · P5 | [academic-report.html#attendance](../reports/academic-report.html#attendance) |
-| รายงานผู้ไม่มีสิทธิ์สอบ | งานวิชาการ | P1 · P2 · ไม่ตรวจค่าที่จำเป็นก่อนค้นหา และไม่บอกเหตุผลเมื่อไม่พบข้อมูล · P5 | [academic-report.html#unable-exam](../reports/academic-report.html#unable-exam) |
+| รายงานการเข้าเรียน | งานวิชาการ | P1 เลือกประเภทการค้นหา (เดือน / ปี / ช่วงเวลา) ก่อนแล้วสับสน · P4 · P5 | [attendance-report.html](../reports/attendance-report.html) |
+| รายงานผู้ไม่มีสิทธิ์สอบ | งานวิชาการ | P1 · P2 · ไม่ตรวจค่าที่จำเป็นก่อนค้นหา และไม่บอกเหตุผลเมื่อไม่พบข้อมูล · P5 | [unable-exam-report.html](../reports/unable-exam-report.html) |
 | รายงานผลการเรียนของนักเรียน | งานวิชาการ | P9 แสดง 13 วิชาต่อหน้า · P6 เลือกภาษาหลัง Preview · P5 ส่งออกแยกกว่า 6 แบบ | ยังไม่มีหน้าตรง |
-| ทะเบียนสะสม / GPA, GPAX | งานวิชาการ | P2 ค้นด้วยรหัสหรือชื่อนักเรียนไม่ได้ · P6 · P5 ได้แค่ PDF | [academic-report.html#record-report](../reports/academic-report.html#record-report) |
-| คะแนนเฉลี่ยรายปี | งานวิชาการ | P2 ไม่มีภาคเรียน แผน สถานะนักเรียน · P3 | [academic-report.html#average-score-year](../reports/academic-report.html#average-score-year) |
+| ทะเบียนสะสม / GPA, GPAX | งานวิชาการ | P2 ค้นด้วยรหัสหรือชื่อนักเรียนไม่ได้ · P6 · P5 ได้แค่ PDF | [record-report.html](../reports/record-report.html) |
+| คะแนนเฉลี่ยรายปี | งานวิชาการ | P2 ไม่มีภาคเรียน แผน สถานะนักเรียน · P3 | [average-score-year-report.html](../reports/average-score-year-report.html) |
 | ผลการเรียนรายวิชา | งานวิชาการ | P2 ไม่มีห้อง ครูผู้สอน แผน · P3 | [subject-results.html](../reports/subject-results.html) |
 | นักเรียนไม่ผ่านเกณฑ์รายวิชา | งานวิชาการ | P2 รวมช่วงคะแนน · P4 ต้องเปิดดูทีละวิชา | [fail-student-detail.html](../reports/fail-student-detail.html) |
 | สอบซ่อมแยกตามรายวิชา | งานวิชาการ | P2 รวมสถานะการสอบซ่อม · P3 | [student-retake-management.html?view=subject](../reports/student-retake-management.html) |

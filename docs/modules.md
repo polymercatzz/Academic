@@ -82,17 +82,25 @@ nostructure ──▶ draft ──ส่งผล──▶ pending ──อน�
 | ↳ [student-score-ranking-detail.html](../reports/student-score-ranking-detail.html) | (หน้าย่อย) | อันดับคะแนนของรายวิชาที่เลือก |
 | [subject-results.html](../reports/subject-results.html) | admin · รายงานสรุปผลการเรียนรู้ | สรุปผลการเรียนรายวิชา ส่งข้อมูลไปหน้ารายละเอียดผ่าน `localStorage['studentResultsData']` |
 | ↳ [student-results-detail.html](../reports/student-results-detail.html) | (หน้าย่อย) | รายละเอียดผลการเรียนของรายวิชา |
-| [academic-report.html](../reports/academic-report.html) | admin · 5 เมนู · ครู · รายงานผู้ไม่มีสิทธิ์สอบ | หน้าเดียวที่สลับรายงานด้วย hash (ดูด้านล่าง) · บทบาทครูเปิดได้เฉพาะ `#unable-exam` และเห็นเฉพาะห้องและรายวิชาที่ตนสอน (ครู persona คือ อ.อนุชา สอนคณิตฯ ม.1/1 ม.1/2 ม.2/1) |
+| [attendance-report.html](../reports/attendance-report.html) | admin · รายงานการเข้าเรียน | การมาเรียน ขาด สาย ลา รายห้องและรายวิชา |
+| [unable-exam-report.html](../reports/unable-exam-report.html) | admin · ครู · รายงานผู้ไม่มีสิทธิ์สอบ | นักเรียนที่เวลาเรียนไม่ถึงเกณฑ์ · บทบาทครูเห็นเฉพาะห้องที่สอน |
+| [score-subject-report.html](../reports/score-subject-report.html) | admin · รายงานคะแนนรายวิชา | คะแนนรายวิชาของแต่ละห้อง |
+| [average-score-year-report.html](../reports/average-score-year-report.html) | admin · รายงานคะแนนเฉลี่ยรายปี | คะแนนเฉลี่ยและเกรดเฉลี่ยรายห้องตลอดปี |
+| [record-report.html](../reports/record-report.html) | admin · รายงานระเบียนสะสม / GPAX | ผลการเรียนสะสมและ GPAX |
 | [teacher-attendance.html](../reports/teacher-attendance.html) | ครู · รายงานการเข้าเรียน | รายงานการเข้าเรียนในมุมมองครูคณิตศาสตร์ |
 
-`academic-report.html` ใช้ไฟล์ใน [assets/academic-report/](../assets/academic-report/)
+รายงาน 5 หน้าข้างบนใช้ไฟล์ใน [assets/academic-report/](../assets/academic-report/) แต่ละหน้าโหลดเฉพาะ module ของตัวเอง บทบาทครูเปิดได้เฉพาะรายงานผู้ไม่มีสิทธิ์สอบ หน้าอื่นจะส่งครูไปหน้านั้น
 
-| hash | รายงาน | module |
+| หน้า | module | ใช้ร่วม |
 |---|---|---|
-| `#attendance` | การเข้าเรียน | `js/core/script.js` |
-| `#unable-exam` | ผู้ไม่มีสิทธิ์สอบ | `js/modules/unable-exam-report.js` |
-| `#score-subject` | คะแนนรายวิชา | `js/modules/score-per-subject.js` |
-| `#average-score-year` | คะแนนเฉลี่ยรายปี | `js/modules/average-score-year.js` |
-| `#record-report` | ระเบียนสะสม / GPAX | `js/modules/record-report.js` |
+| `attendance-report.html` | `js/modules/attendance-report.js` | `report-data.js`, `report-preview.js` |
+| `unable-exam-report.html` | `js/modules/unable-exam-report.js` | `report-data.js`, `report-preview.js` |
+| `score-subject-report.html` | `js/modules/score-per-subject.js` | `report-data.js`, `report-preview.js` |
+| `average-score-year-report.html` | `js/modules/average-score-year.js` | `report-data.js`, Chart.js |
+| `record-report.html` | `js/modules/record-report.js` | `report-data.js`, Chart.js |
+
+`js/core/report-data.js` คือชุดข้อมูลจำลองกลาง (ดู [data.md](data.md)) ส่วน `js/core/report-preview.js` คือหน้าต่างตัวอย่างก่อนส่งออกหรือพิมพ์ หน้าที่ใช้ต้องมี markup `#attendancePdfModal` และ `#toast`
+
+**Tailwind** — ทั้ง 5 หน้าและ `teacher-attendance.html` ใช้ Tailwind ล้วนแบบเดียวกับ `subject-results.html` ไม่มีสไตล์ชีตของตัวเองแล้ว class ของส่วนที่สคริปต์วาดอยู่ในออบเจ็กต์ `UI` ของแต่ละ module ส่วน toast บอก class ของตัวเองผ่าน `data-base-class` และ `data-visible-class` โฟลเดอร์ `assets/academic-report/css/` ถูกลบแล้ว ส่วน `shared/layout-compat.css` ยังจำเป็นสำหรับหน้า grading
 
 [scope-chip.js](../assets/academic-report/js/scope-chip.js) คัดลอกข้อความจากการ์ดขอบเขตข้อมูล (เช่น "ภาคการเรียนปัจจุบัน") ในหน้า ไปแสดงเป็น chip บน header กลาง ใช้ใน `academic-report.html` และ `teacher-attendance.html`

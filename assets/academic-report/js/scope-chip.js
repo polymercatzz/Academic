@@ -1,6 +1,6 @@
 // Shows a report's scope card (".academic-card", e.g. "ภาคการเรียนปัจจุบัน") as a chip in the
 // shared top header, next to "ข้อมูลล่าสุด", like the Tailwind pages. The card stays in the page
-// (hidden by theme.css) because the module scripts keep writing into it; this mirrors its text.
+// (with the class hidden) because the module scripts keep writing into it; this mirrors its text.
 (function () {
   const chipHtml = `
     <div data-scope-chip class="flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">

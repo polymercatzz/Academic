@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>รายงานคะแนนเฉลี่ยรายปี | Academic Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // same theme as the other Tailwind report pages (subject-results.html)
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#f7f8fc',
+            ink: '#1e293b',
+            muted: '#64748b',
+            brand: '#2563eb'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          fontSize: {
+            xs: ['1.15vh', { lineHeight: '1.55' }],
+            sm: ['1.35vh', { lineHeight: '1.6' }],
+            base: ['1.55vh', { lineHeight: '1.6' }],
+            lg: ['1.75vh', { lineHeight: '1.45' }],
+            xl: ['2vh', { lineHeight: '1.35' }],
+            '2xl': ['2.45vh', { lineHeight: '1.25' }],
+            '3xl': ['3vh', { lineHeight: '1.18' }],
+            '4xl': ['3.6vh', { lineHeight: '1.12' }],
+            '5xl': ['4.2vh', { lineHeight: '1.08' }]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="relative min-h-screen overflow-x-hidden bg-[#F7F9FC] font-body text-ink">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden">
+    <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl"></div>
+    <div class="absolute right-0 top-20 h-80 w-80 rounded-full bg-sky-100/60 blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-100/50 blur-3xl"></div>
+  </div>
+  <div id="layoutSidebar"></div>
+
+  <div class="relative lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="../shared/academic-layout.js?v=14"></script>
+    <script src="../assets/academic-report/js/scope-chip.js?v=3"></script>
+    <script>
+      // academic-office report: a teacher is sent to the one report they can use
+      if (AcademicLayout.role() === 'teacher') window.location.replace('unable-exam-report.html');
+    </script>
+
+    <!-- text source of the scope chip in the shared header (scope-chip.js mirrors it) -->
+    <aside class="academic-card hidden" aria-hidden="true">
+      <span class="meta-label">ค่าตั้งต้นที่ใช้งาน</span>
+      <strong class="meta-value" id="averageYearCurrentAcademicLabel">กำลังโหลด...</strong>
+    </aside>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8">
+      <div class="space-y-6">
+        <section>
+          <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
+            <a href="overview.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">หน้าหลัก</a>
+            <span class="text-slate-300">&gt;</span>
+            <span>รายงานวิชาการ</span>
+            <span class="text-slate-300">&gt;</span>
+            <span class="font-medium text-slate-800">รายงานคะแนนเฉลี่ยรายปี</span>
+          </nav>
+          <h1 id="averageYearPageTitle" class="text-3xl font-semibold tracking-tight text-slate-900 lg:text-4xl">รายงานคะแนนเฉลี่ยรายปี</h1>
+          <p class="mt-3 max-w-4xl text-sm leading-6 text-slate-500">เปรียบเทียบคะแนนเฉลี่ยและเกรดเฉลี่ยของแต่ละห้องตลอดปีการศึกษา</p>
+        </section>
+
+        <!-- summary tiles -->
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6" aria-labelledby="averageYearSummaryTitle">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ผลลัพธ์รายงาน</p>
+              <h2 class="mt-2 text-xl font-semibold text-slate-900" id="averageYearSummaryTitle">สรุปคะแนนเฉลี่ยรายปี</h2>
+              <p class="mt-1 text-sm text-slate-500" id="averageYearSummaryScope">กำลังโหลด...</p>
+            </div>
+            <button class="hidden self-start rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="averageYearBackOverviewBtn" type="button">กลับภาพรวม</button>
+          </div>
+          <div class="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" id="averageYearSummaryGrid" aria-label="ตัวเลขสรุปคะแนนเฉลี่ยรายปี"></div>
+        </section>
+
+        <!-- charts -->
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6" id="averageYearVisualizationPanel" aria-labelledby="averageYearVisualizationTitle">
+          <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ผลการเรียน</p>
+              <h2 class="mt-2 text-xl font-semibold text-slate-900" id="averageYearVisualizationTitle">ภาพรวมผลการเรียน</h2>
+            </div>
+            <div class="hidden flex items-center gap-2.5 self-start rounded-xl border border-blue-200 bg-blue-50 py-1.5 pl-3 pr-2 text-xs font-bold text-brand sm:self-auto" id="averageYearRangeFilter" role="status">
+              <span id="averageYearRangeFilterLabel"></span>
+              <button class="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50" id="averageYearClearRangeFilterBtn" type="button">ล้างการกรอง</button>
+            </div>
+          </div>
+          <div class="mt-5 grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(320px,0.85fr)]">
+            <section class="min-w-0 rounded-2xl border border-slate-200 p-5" aria-labelledby="averageYearComparisonTitle">
+              <div class="flex min-h-[30px] items-center justify-between gap-3">
+                <h3 class="text-base font-semibold text-slate-900" id="averageYearComparisonTitle">เกรดเฉลี่ยแยกตามห้องเรียน</h3>
+                <span class="flex-none text-xs font-bold text-amber-700" id="averageYearThresholdLabel">เกณฑ์ GPA 2</span>
+              </div>
+              <!-- data-mode="detail" (set by the script) makes room for one box plot row per subject -->
+              <div class="relative mt-3 h-[330px] data-[mode=detail]:h-[500px]" id="averageYearComparisonWrap">
+                <canvas id="averageYearComparisonChart" role="img" aria-label="กราฟเปรียบเทียบเกรดเฉลี่ยและคะแนนรายวิชา"></canvas>
+                <div class="absolute inset-0 hidden grid place-items-center text-sm text-slate-400" id="averageYearComparisonEmpty">ไม่มีข้อมูลเพียงพอสำหรับสร้างกราฟ</div>
+              </div>
+              <div class="mt-3 hidden flex flex-wrap gap-x-3 gap-y-2 border-t border-slate-200 pt-3" id="averageYearSubjectLegend" aria-label="คำอธิบายสีรายวิชา"></div>
+            </section>
+            <section class="min-w-0 rounded-2xl border border-slate-200 p-5" aria-labelledby="averageYearDistributionTitle">
+              <div class="flex min-h-[30px] items-center justify-between gap-3">
+                <h3 class="text-base font-semibold text-slate-900" id="averageYearDistributionTitle">การกระจายช่วงคะแนนเฉลี่ยของนักเรียน</h3>
+              </div>
+              <div class="relative mt-3 h-[330px]" id="averageYearDistributionWrap">
+                <canvas id="averageYearDistributionChart" role="img" aria-label="กราฟการกระจายช่วงคะแนนเฉลี่ยของนักเรียน"></canvas>
+                <div class="absolute inset-0 hidden grid place-items-center text-sm text-slate-400" id="averageYearDistributionEmpty">ไม่มีข้อมูลเพียงพอสำหรับสร้างกราฟ</div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <!-- filters -->
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6" aria-labelledby="averageYearFilterTitle">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ค้นหารายงาน</p>
+            <h2 class="mt-2 text-xl font-semibold text-slate-900" id="averageYearFilterTitle">เงื่อนไขการค้นหา</h2>
+          </div>
+          <form id="averageYearFiltersForm" aria-label="เงื่อนไขการค้นหารายงานคะแนนเฉลี่ยรายปี"
+            class="[&_input]:w-full [&_input]:rounded-2xl [&_input]:border [&_input]:border-slate-200 [&_input]:bg-white [&_input]:px-4 [&_input]:py-3 [&_input]:text-sm [&_input]:outline-none [&_input]:transition focus:[&_input]:border-brand focus:[&_input]:ring-4 focus:[&_input]:ring-blue-100 [&_select]:w-full [&_select]:rounded-2xl [&_select]:border [&_select]:border-slate-200 [&_select]:bg-white [&_select]:px-4 [&_select]:py-3 [&_select]:text-sm [&_select]:outline-none [&_select]:transition focus:[&_select]:border-brand focus:[&_select]:ring-4 focus:[&_select]:ring-blue-100">
+            <section class="mt-5" aria-labelledby="averageYearMainFilterTitle">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">ตัวกรองหลัก</p>
+              <h3 class="mt-1 text-base font-semibold text-slate-900" id="averageYearMainFilterTitle">ปีการศึกษาและห้องเรียน</h3>
+              <div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+                <div><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearAcademicYear">ปีการศึกษา</label><select id="averageYearAcademicYear" name="academicYear"></select></div>
+                <div><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearSemester">ภาคเรียน</label><select id="averageYearSemester" name="semester"></select></div>
+                <div><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearGrade">ระดับชั้น</label><select id="averageYearGrade" name="grade"></select></div>
+                <div><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearPlan">แผนการเรียน</label><select id="averageYearPlan" name="plan"></select></div>
+                <div><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearClassroom">ห้องเรียน</label><select id="averageYearClassroom" name="classroom"></select></div>
+                <div><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearStatus">สถานะนักเรียน</label><select id="averageYearStatus" name="status"><option value="active">กำลังศึกษา</option><option value="all">ทุกสถานะ</option><option value="watch">คะแนนต่ำกว่าเกณฑ์</option><option value="excellent">ผลการเรียนดีเด่น</option></select></div>
+                <div class="md:col-span-2"><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearKeyword">คำค้นหา</label><input id="averageYearKeyword" name="keyword" type="text" placeholder="รหัสนักเรียน ชื่อ หรือนามสกุล" /></div>
+              </div>
+            </section>
+            <div class="mt-5 flex flex-wrap justify-end gap-3" aria-label="คำสั่งค้นหารายงานคะแนนเฉลี่ยรายปี">
+              <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="averageYearResetFiltersBtn" type="button">ล้างเงื่อนไข</button>
+              <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" id="averageYearSearchBtn" type="submit">ค้นหาข้อมูล</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- table: one row per room, or one row per student once a room is picked -->
+        <section class="rounded-3xl border border-slate-200 bg-white shadow-sm" aria-labelledby="averageYearTableTitle">
+          <div class="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6">
+            <div><strong class="text-xl font-semibold text-slate-900" id="averageYearTableTitle">ภาพรวมรายห้อง</strong></div>
+            <div class="flex flex-wrap items-center gap-3" aria-label="คำสั่งจัดการตารางคะแนนเฉลี่ยรายปี">
+              <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="averageYearSubjectBtn" type="button" disabled>เลือกวิชา</button>
+              <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="averageYearExportBtn" type="button" disabled>ส่งออก</button>
+              <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="averageYearPrintBtn" type="button" disabled>พิมพ์รายงาน</button>
+            </div>
+          </div>
+          <div class="hidden border-b border-slate-200 bg-slate-50/60 p-5 lg:px-6" id="averageYearSubjectPanel"></div>
+          <!-- wide table: scrolls inside this box, header rows and the first columns stay in place -->
+          <div class="max-h-[68vh] overflow-auto rounded-b-3xl" id="averageYearTableWrap">
+            <table id="averageYearTable" class="w-max min-w-full border-separate border-spacing-0 text-center text-sm [&_small]:block [&_small]:text-xs [&_small]:font-medium [&_small]:text-slate-500 [&_tbody_td]:border-t [&_tbody_td]:border-slate-100 [&_tbody_tr:hover_td]:bg-slate-50 [&_td]:px-4 [&_td]:py-3 [&_td]:align-middle [&_td]:text-slate-700 [&_th]:whitespace-nowrap [&_th]:bg-slate-50 [&_th]:px-4 [&_th]:py-2.5 [&_th]:align-middle [&_th]:text-xs [&_th]:font-semibold [&_th]:text-slate-500 [&_thead]:sticky [&_thead]:top-0 [&_thead]:z-20"><thead id="averageYearThead"></thead><tbody id="averageYearTbody"><tr><td><div class="py-10 text-center text-sm text-slate-400">กำลังประมวลผลคะแนนเฉลี่ยรายปี...</div></td></tr></tbody></table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- print settings; the form's method="dialog" buttons close it -->
+  <dialog class="m-auto max-h-[calc(100vh-32px)] w-[min(760px,calc(100vw-32px))] overflow-y-auto rounded-3xl border border-slate-200 bg-white p-0 text-ink shadow-2xl backdrop:bg-slate-900/50" id="averageYearPrintDialog" aria-labelledby="averageYearPrintTitle">
+    <form method="dialog" id="averageYearPrintForm" class="p-6 [&_select]:w-full [&_select]:rounded-2xl [&_select]:border [&_select]:border-slate-200 [&_select]:bg-white [&_select]:px-4 [&_select]:py-3 [&_select]:text-sm [&_select]:outline-none [&_select]:transition focus:[&_select]:border-brand focus:[&_select]:ring-4 focus:[&_select]:ring-blue-100">
+      <div class="flex items-start justify-between gap-4">
+        <div><p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">พิมพ์รายงาน</p><h2 class="mt-1 text-xl font-semibold text-slate-900" id="averageYearPrintTitle">ตั้งค่ารายงาน</h2></div>
+        <button class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 text-xl text-slate-500 transition hover:bg-slate-50" value="cancel" aria-label="ปิด">×</button>
+      </div>
+      <div class="mt-5 grid gap-4 sm:grid-cols-2">
+        <div><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearPrintType">ประเภท</label><select id="averageYearPrintType"><option value="class">รายงานทั้งห้อง</option><option value="individual">รายงานรายบุคคล</option></select></div>
+        <div><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearPrintPeriod">ช่วงข้อมูล</label><select id="averageYearPrintPeriod"><option value="all">ทั้งปี</option><option value="semester1">ภาคเรียน 1</option><option value="semester2">ภาคเรียน 2</option></select></div>
+        <div><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearPrintSubjects">รายวิชา</label><select id="averageYearPrintSubjects"><option value="all">ทุกวิชา</option><option value="visible">เฉพาะวิชาที่แสดง</option><option value="custom">เลือกวิชาเอง</option></select></div>
+        <div><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearPrintPaper">กระดาษ</label><select id="averageYearPrintPaper"><option value="a3">A3 แนวนอน</option><option value="a4">A4 แนวตั้ง</option></select></div>
+        <div><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearPrintLanguage">ภาษา</label><select id="averageYearPrintLanguage"><option value="th">ไทย</option><option value="th-en">ไทย / English</option></select></div>
+        <div><label class="mb-2 block text-sm font-medium text-slate-700" for="averageYearPrintTemplate">Template</label><select id="averageYearPrintTemplate"><option value="standard">มาตรฐานโรงเรียน</option></select></div>
+      </div>
+      <div class="mt-4 min-h-[76px]" id="averageYearPrintPreview"></div>
+      <div class="mt-5 flex flex-wrap justify-end gap-3"><button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" value="cancel">ยกเลิก</button><button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="averageYearBuildPreviewBtn" value="default" type="button">ดูตัวอย่าง</button><button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" value="default">พิมพ์รายงาน</button></div>
+    </form>
+  </dialog>
+
+  <!-- the gradebook's rooms, subjects, teachers and name lists; report-data.js builds one data set for all five reports from them -->
+  <script src="../grading/assets/js/data.js"></script>
+  <script src="../assets/academic-report/js/core/report-data.js?v=2"></script>
+  <script src="../assets/academic-report/vendor/chart.umd.min.js"></script>
+  <script>Chart.defaults.font.family = '"Noto Sans Thai", system-ui, sans-serif'; Chart.defaults.color = '#64748b';</script>
+  <script src="../assets/academic-report/js/modules/average-score-year.js?v=tw-1"></script>
+  <script>
+    AcademicLayout.mount({ active: 'ar-average-score-year', title: 'รายงานคะแนนเฉลี่ยรายปี', rightHtml: ScopeChip.html });
+    ScopeChip.follow(document.querySelector('.academic-card'));
+  </script>
+</body>
+</html>

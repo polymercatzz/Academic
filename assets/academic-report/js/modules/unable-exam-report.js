@@ -1,14 +1,6 @@
 (() => {
 const STORAGE_KEY = "unableExamReport:index:lastSearch";
 
-const statusProfiles = {
-  steady: ["ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "สาย", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
-  late: ["สาย", "ตรงเวลา", "สาย", "ตรงเวลา", "ตรงเวลา", "สาย", "ตรงเวลา", "ตรงเวลา"],
-  absence: ["ขาด", "ตรงเวลา", "ตรงเวลา", "ขาด", "ตรงเวลา", "สาย", "ขาด", "ตรงเวลา"],
-  leave: ["ลากิจ", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
-  activity: ["กิจกรรม", "ตรงเวลา", "กิจกรรม", "ตรงเวลา", "ตรงเวลา", "กิจกรรม", "ตรงเวลา", "ตรงเวลา"]
-};
-
 const statusNotes = {
   unable: "ต่ำกว่าเกณฑ์สิทธิ์สอบ",
   eligible: "ยังคงสิทธิ์สอบ"
@@ -89,197 +81,26 @@ const state = {
   }
 };
 
+// rooms, subjects, students and attendance come from the shared report data set (report-data.js)
 function buildInlineMockDatabase() {
-  const academicYears = [
-    { id: "ay-2569", name: "2569", startDate: "2026-05-01", endDate: "2027-03-31", isCurrent: true }
-  ];
-
-  const semesters = [
-    { id: "sem-2569-1", academicYearId: "ay-2569", term: 1, name: "ภาคเรียนที่ 1/2569", startDate: "2026-05-01", endDate: "2026-10-31" },
-    { id: "sem-2569-2", academicYearId: "ay-2569", term: 2, name: "ภาคเรียนที่ 2/2569", startDate: "2026-11-01", endDate: "2027-03-31" }
-  ];
-
-  const grades = [
-    { id: "grade-m1", code: "m1", name: "ม.1", order: 1 },
-    { id: "grade-m2", code: "m2", name: "ม.2", order: 2 },
-    { id: "grade-m3", code: "m3", name: "ม.3", order: 3 },
-    { id: "grade-m4", code: "m4", name: "ม.4", order: 4 },
-    { id: "grade-m5", code: "m5", name: "ม.5", order: 5 },
-    { id: "grade-m6", code: "m6", name: "ม.6", order: 6 }
-  ];
-
-  const classrooms = [
-    { id: "room-m1-1", gradeId: "grade-m1", code: "m1-1", name: "ม.1/1", homeroomTeacherId: "teacher-anong" },
-    { id: "room-m1-2", gradeId: "grade-m1", code: "m1-2", name: "ม.1/2", homeroomTeacherId: "teacher-krit" },
-    { id: "room-m2-1", gradeId: "grade-m2", code: "m2-1", name: "ม.2/1", homeroomTeacherId: "teacher-sunee" },
-    { id: "room-m2-2", gradeId: "grade-m2", code: "m2-2", name: "ม.2/2", homeroomTeacherId: "teacher-mali" },
-    { id: "room-m3-1", gradeId: "grade-m3", code: "m3-1", name: "ม.3/1", homeroomTeacherId: "teacher-preecha" },
-    { id: "room-m3-2", gradeId: "grade-m3", code: "m3-2", name: "ม.3/2", homeroomTeacherId: "teacher-niran" },
-    { id: "room-m4-1", gradeId: "grade-m4", code: "m4-1", name: "ม.4/1", homeroomTeacherId: "teacher-anong" },
-    { id: "room-m4-2", gradeId: "grade-m4", code: "m4-2", name: "ม.4/2", homeroomTeacherId: "teacher-krit" },
-    { id: "room-m5-1", gradeId: "grade-m5", code: "m5-1", name: "ม.5/1", homeroomTeacherId: "teacher-sunee" },
-    { id: "room-m5-2", gradeId: "grade-m5", code: "m5-2", name: "ม.5/2", homeroomTeacherId: "teacher-preecha" },
-    { id: "room-m6-1", gradeId: "grade-m6", code: "m6-1", name: "ม.6/1", homeroomTeacherId: "teacher-mali" },
-    { id: "room-m6-2", gradeId: "grade-m6", code: "m6-2", name: "ม.6/2", homeroomTeacherId: "teacher-niran" }
-  ];
-
-  const teachers = [
-    { id: "teacher-anong", name: "อ.อนงค์นาถ ศรีสวัสดิ์", shortName: "อ.อนงค์นาถ" },
-    { id: "teacher-krit", name: "อ.กฤตภาส วัฒนชัย", shortName: "อ.กฤตภาส" },
-    { id: "teacher-sunee", name: "อ.สุนีย์ พิพัฒน์ผล", shortName: "อ.สุนีย์" },
-    { id: "teacher-preecha", name: "อ.ปรีชา ธรรมวงศ์", shortName: "อ.ปรีชา" },
-    { id: "teacher-mali", name: "อ.มะลิ กาญจนกิจ", shortName: "อ.มะลิ" },
-    { id: "teacher-niran", name: "อ.นิรันดร์ บุญมาก", shortName: "อ.นิรันดร์" },
-    // the teacher-role persona in shared/academic-layout.js
-    { id: "teacher-anucha", name: "อ.อนุชา แสงทอง", shortName: "อ.อนุชา" }
-  ];
-
-  const subjects = [
-    { id: "subject-thai", code: "th21102", name: "ภาษาไทย", shortName: "ไทย", learningArea: "ภาษาไทย" },
-    { id: "subject-math", code: "ma21101", name: "คณิตศาสตร์", shortName: "คณิต", learningArea: "คณิตศาสตร์" },
-    { id: "subject-science", code: "sc21103", name: "วิทยาศาสตร์", shortName: "วิทย์", learningArea: "วิทยาศาสตร์และเทคโนโลยี" },
-    { id: "subject-computer", code: "cs21101", name: "วิทยาการคำนวณ", shortName: "คอมพิวเตอร์", learningArea: "วิทยาศาสตร์และเทคโนโลยี" },
-    { id: "subject-design", code: "ds21101", name: "การออกแบบและเทคโนโลยี", shortName: "ออกแบบ", learningArea: "วิทยาศาสตร์และเทคโนโลยี" },
-    { id: "subject-robotics", code: "rb21101", name: "หุ่นยนต์เบื้องต้น", shortName: "หุ่นยนต์", learningArea: "วิทยาศาสตร์และเทคโนโลยี" },
-    { id: "subject-social", code: "so21104", name: "สังคมศึกษา", shortName: "สังคม", learningArea: "สังคมศึกษา ศาสนา และวัฒนธรรม" },
-    { id: "subject-history", code: "hi21101", name: "ประวัติศาสตร์", shortName: "ประวัติ", learningArea: "สังคมศึกษา ศาสนา และวัฒนธรรม" },
-    { id: "subject-civics", code: "ci21101", name: "หน้าที่พลเมือง", shortName: "พลเมือง", learningArea: "สังคมศึกษา ศาสนา และวัฒนธรรม" },
-    { id: "subject-environment", code: "ev21101", name: "สิ่งแวดล้อมศึกษา", shortName: "สิ่งแวดล้อม", learningArea: "สังคมศึกษา ศาสนา และวัฒนธรรม" },
-    { id: "subject-health", code: "he21101", name: "สุขศึกษา", shortName: "สุขศึกษา", learningArea: "สุขศึกษาและพลศึกษา" },
-    { id: "subject-physical", code: "pe21101", name: "พลศึกษา", shortName: "พละ", learningArea: "สุขศึกษาและพลศึกษา" },
-    { id: "subject-art", code: "ar21101", name: "ศิลปะ", shortName: "ศิลปะ", learningArea: "ศิลปะ" },
-    { id: "subject-music", code: "mu21101", name: "ดนตรี", shortName: "ดนตรี", learningArea: "ศิลปะ" },
-    { id: "subject-career", code: "oc21101", name: "การงานอาชีพ", shortName: "การงาน", learningArea: "การงานอาชีพ" },
-    { id: "subject-english", code: "en21101", name: "ภาษาอังกฤษ", shortName: "อังกฤษ", learningArea: "ภาษาต่างประเทศ" },
-    { id: "subject-chinese", code: "ch21101", name: "ภาษาจีน", shortName: "จีน", learningArea: "ภาษาต่างประเทศ" },
-    { id: "subject-japanese", code: "jp21101", name: "ภาษาญี่ปุ่น", shortName: "ญี่ปุ่น", learningArea: "ภาษาต่างประเทศ" },
-    { id: "subject-guidance", code: "gu21101", name: "แนะแนว", shortName: "แนะแนว", learningArea: "กิจกรรมพัฒนาผู้เรียน" },
-    { id: "subject-research", code: "is21101", name: "การศึกษาค้นคว้า", shortName: "IS", learningArea: "กิจกรรมพัฒนาผู้เรียน" }
-  ];
-
-  const schedules = [
-    { id: "schedule-m11-math", classroomId: "room-m1-1", subjectId: "subject-math", teacherId: "teacher-anucha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 1 }, { dayOfWeek: 3, period: 4 }, { dayOfWeek: 5, period: 2 }] },
-    { id: "schedule-m11-thai", classroomId: "room-m1-1", subjectId: "subject-thai", teacherId: "teacher-sunee", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 2 }, { dayOfWeek: 4, period: 1 }] },
-    { id: "schedule-m11-english", classroomId: "room-m1-1", subjectId: "subject-english", teacherId: "teacher-mali", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 5 }, { dayOfWeek: 4, period: 6 }] },
-    { id: "schedule-m12-math", classroomId: "room-m1-2", subjectId: "subject-math", teacherId: "teacher-anucha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 2 }, { dayOfWeek: 3, period: 1 }, { dayOfWeek: 5, period: 3 }] },
-    { id: "schedule-m12-thai", classroomId: "room-m1-2", subjectId: "subject-thai", teacherId: "teacher-sunee", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 4 }, { dayOfWeek: 4, period: 2 }] },
-    { id: "schedule-m12-english", classroomId: "room-m1-2", subjectId: "subject-english", teacherId: "teacher-preecha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 3, period: 5 }, { dayOfWeek: 5, period: 5 }] },
-    { id: "schedule-m21-science", classroomId: "room-m2-1", subjectId: "subject-science", teacherId: "teacher-niran", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 3 }, { dayOfWeek: 5, period: 4 }] },
-    { id: "schedule-m21-social", classroomId: "room-m2-1", subjectId: "subject-social", teacherId: "teacher-preecha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 4 }, { dayOfWeek: 4, period: 3 }] },
-    { id: "schedule-m21-math", classroomId: "room-m2-1", subjectId: "subject-math", teacherId: "teacher-anucha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 3, period: 2 }, { dayOfWeek: 5, period: 1 }] },
-    { id: "schedule-m31-math", classroomId: "room-m3-1", subjectId: "subject-math", teacherId: "teacher-anong", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 1 }, { dayOfWeek: 3, period: 3 }, { dayOfWeek: 5, period: 2 }] },
-    { id: "schedule-m31-thai", classroomId: "room-m3-1", subjectId: "subject-thai", teacherId: "teacher-sunee", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 1 }, { dayOfWeek: 4, period: 2 }] },
-    { id: "schedule-m31-science", classroomId: "room-m3-1", subjectId: "subject-science", teacherId: "teacher-niran", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 5 }, { dayOfWeek: 4, period: 5 }] }
-  ];
-
-  // the persona teacher keeps only their explicit math sections above
-  const rotationTeachers = teachers.filter((teacher) => teacher.id !== "teacher-anucha");
-  const existingScheduleKeys = new Set(schedules.map((schedule) => `${schedule.classroomId}:${schedule.subjectId}`));
-  classrooms.forEach((classroom, roomIndex) => {
-    subjects.forEach((subject, subjectIndex) => {
-      const key = `${classroom.id}:${subject.id}`;
-      if (existingScheduleKeys.has(key)) return;
-      const firstDay = (subjectIndex % 5) + 1;
-      const secondDay = ((subjectIndex + 2) % 5) + 1;
-      schedules.push({
-        id: `schedule-${classroom.code}-${subject.id.replace("subject-", "")}`,
-        classroomId: classroom.id,
-        subjectId: subject.id,
-        teacherId: rotationTeachers[(roomIndex + subjectIndex) % rotationTeachers.length].id,
-        semesterId: "sem-2569-1",
-        weeklySlots: [
-          { dayOfWeek: firstDay, period: (subjectIndex % 6) + 1 },
-          { dayOfWeek: secondDay, period: ((subjectIndex + 2) % 6) + 1 }
-        ]
-      });
-    });
-  });
-
-  const students = [
-    { id: "student-66001", studentCode: "66001", name: "กานต์ธิดา สุขผล", classroomId: "room-m1-1", profile: "steady" },
-    { id: "student-66002", studentCode: "66002", name: "ธนกฤต แซ่ตั้ง", classroomId: "room-m1-1", profile: "late" },
-    { id: "student-66003", studentCode: "66003", name: "ปวีณ์นุช อินทรา", classroomId: "room-m1-1", profile: "leave" },
-    { id: "student-66004", studentCode: "66004", name: "ภูริณัฐ ขยันดี", classroomId: "room-m1-1", profile: "activity" },
-    { id: "student-66005", studentCode: "66005", name: "ศุภวิชญ์ เจริญผล", classroomId: "room-m1-2", profile: "steady" },
-    { id: "student-66006", studentCode: "66006", name: "ณิชกานต์ พูลทรัพย์", classroomId: "room-m1-2", profile: "late" },
-    { id: "student-66007", studentCode: "66007", name: "พชรพล สุขใจ", classroomId: "room-m1-2", profile: "absence" },
-    { id: "student-66008", studentCode: "66008", name: "อริศรา วงศ์อรุณ", classroomId: "room-m1-2", profile: "steady" },
-    { id: "student-65001", studentCode: "65001", name: "กมลชนก พรหมมา", classroomId: "room-m2-1", profile: "steady" },
-    { id: "student-65002", studentCode: "65002", name: "พีรพัฒน์ วงศ์ดี", classroomId: "room-m2-1", profile: "late" },
-    { id: "student-65003", studentCode: "65003", name: "ณัฐวรา แซ่ลี้", classroomId: "room-m2-1", profile: "absence" },
-    { id: "student-65004", studentCode: "65004", name: "ธนโชติ อินทร์รักษ์", classroomId: "room-m2-1", profile: "leave" },
-    { id: "student-64001", studentCode: "64001", name: "ปวริศา ศรีสวัสดิ์", classroomId: "room-m3-1", profile: "activity" },
-    { id: "student-64002", studentCode: "64002", name: "ชยพล แสงทอง", classroomId: "room-m3-1", profile: "steady" },
-    { id: "student-64003", studentCode: "64003", name: "รวิภา ตั้งเจริญ", classroomId: "room-m3-1", profile: "leave" },
-    { id: "student-64004", studentCode: "64004", name: "กิตติพงษ์ สุขสำราญ", classroomId: "room-m3-1", profile: "late" }
-  ];
-
-  let generatedStudentIndex = 1;
-  classrooms.forEach((classroom, roomIndex) => {
-    const currentCount = students.filter((student) => student.classroomId === classroom.id).length;
-    for (let index = currentCount; index < 6; index += 1) {
-      const serial = 70000 + (roomIndex * 10) + index + 1;
-      const profiles = ["steady", "absence", "late", "leave", "activity", "steady"];
-      students.push({
-        id: `student-generated-${generatedStudentIndex}`,
-        studentCode: String(serial),
-        name: `นักเรียนตัวอย่าง ${classroom.name}-${index + 1}`,
-        classroomId: classroom.id,
-        profile: profiles[(roomIndex + index) % profiles.length]
-      });
-      generatedStudentIndex += 1;
-    }
-  });
-
-  const attendance = [];
-  let recordIndex = 1;
-
-  const studentsByRoom = new Map();
-  students.forEach((student) => {
-    if (!studentsByRoom.has(student.classroomId)) {
-      studentsByRoom.set(student.classroomId, []);
-    }
-    studentsByRoom.get(student.classroomId).push(student);
-  });
-
-  schedules.forEach((schedule) => {
-    const sessions = buildScheduleSessions(schedule.weeklySlots, 2026, 7);
-    const roomStudents = studentsByRoom.get(schedule.classroomId) || [];
-    roomStudents.forEach((student) => {
-      const pattern = statusProfiles[student.profile] || statusProfiles.steady;
-      sessions.forEach((session, index) => {
-        attendance.push({
-          id: `att-${String(recordIndex).padStart(4, "0")}`,
-          scheduleId: schedule.id,
-          studentId: student.id,
-          date: session.date,
-          period: session.period,
-          status: pattern[index % pattern.length]
-        });
-        recordIndex += 1;
-      });
-    });
-  });
-
-  return { academicYears, semesters, grades, classrooms, teachers, subjects, schedules, students, attendance };
+  const data = window.ReportData;
+  return {
+    // attendance is kept for the current academic year only
+    academicYears: data.academicYears.filter((year) => year.isCurrent),
+    semesters: data.semesters.filter((semester) => semester.academicYearId === data.currentYear().id),
+    grades: data.grades,
+    classrooms: data.classrooms,
+    teachers: data.teachers,
+    subjects: data.subjects,
+    schedules: data.schedules,
+    students: data.students,
+    attendance: data.attendance
+  };
 }
 
-function buildScheduleSessions(weeklySlots, year, month) {
-  const sessions = [];
-  const lastDay = new Date(year, month, 0).getDate();
-  for (let day = 1; day <= lastDay; day += 1) {
-    const current = new Date(year, month - 1, day);
-    const dayOfWeek = current.getDay() === 0 ? 7 : current.getDay();
-    weeklySlots.forEach((slot) => {
-      if (slot.dayOfWeek === dayOfWeek) {
-        sessions.push({
-          date: current.toISOString().slice(0, 10),
-          period: slot.period
-        });
-      }
-    });
-  }
-  return sessions;
+// the code of a subject depends on the grade; without a grade or room picked only the name is shown
+function getSelectedGradeId() {
+  return state.maps.classrooms.get(els.classroom.value)?.gradeId || els.grade.value || "";
 }
 
 function buildMap(items) {
@@ -290,10 +111,9 @@ function getCurrentAcademicYear() {
   return state.db.academicYears.find((item) => item.isCurrent) || state.db.academicYears[0];
 }
 
+// the term the whole system treats as "now" (AcademicLayout.currentTerm), not today's date
 function getCurrentSemester() {
-  const today = new Date().toISOString().slice(0, 10);
-  return state.db.semesters.find((semester) => semester.startDate <= today && semester.endDate >= today)
-    || state.db.semesters[0];
+  return window.ReportData.currentSemester() || state.db.semesters[0];
 }
 
 // Filters open on the current semester only when it has attendance records;
@@ -306,13 +126,25 @@ function getDefaultSemester() {
   return state.db.semesters.find((semester) => semester.startDate <= latest && semester.endDate >= latest) || current;
 }
 
+// Tailwind classes for the pieces this script draws; the page (unable-exam-report.html) has no stylesheet of its own
+const UI = {
+  tabActive: ["bg-white", "text-blue-700", "shadow-sm"],
+  tabIdle: ["text-slate-500", "hover:text-slate-700"],
+  barTone: { danger: "bg-rose-500", success: "bg-emerald-500" },
+  statusChip: { unable: "bg-rose-50 text-rose-700 ring-rose-200", eligible: "bg-emerald-50 text-emerald-700 ring-emerald-200" },
+  groupHeading: "flex items-center justify-between text-xs font-semibold uppercase tracking-wide text-slate-400",
+  empty: "rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-400"
+};
+
 function setToast(message, variant = "info") {
-  els.toast.className = `toast ${variant}`;
-  els.toast.innerHTML = `<strong>${variant === "success" ? "สำเร็จ" : "แจ้งเตือน"}</strong><span>${message}</span>`;
-  els.toast.classList.add("is-visible");
+  const toast = els.toast;
+  toast.className = toast.dataset.baseClass;
+  toast.innerHTML = `<strong class="font-semibold">${variant === "success" ? "สำเร็จ" : "แจ้งเตือน"}</strong><span class="text-slate-200">${message}</span>`;
+  const visible = toast.dataset.visibleClass.split(" ");
+  toast.classList.add(...visible);
   window.clearTimeout(setToast.timer);
   setToast.timer = window.setTimeout(() => {
-    els.toast.classList.remove("is-visible");
+    toast.classList.remove(...visible);
   }, 2200);
 }
 
@@ -343,7 +175,7 @@ function populateSemesters() {
 }
 
 // a teacher only sees the sections they teach; admin sees the whole school
-const TEACHER_PERSONA_ID = "teacher-anucha";
+const TEACHER_PERSONA_ID = window.ReportData.teacherPersona.id;
 
 function getScopedSchedules() {
   return state.teacherId
@@ -414,7 +246,7 @@ function syncSubjects() {
       const areaSubjects = subjects.filter((subject) => subject.learningArea === area);
       if (!areaSubjects.length) return "";
       return `<optgroup label="${area}">${areaSubjects
-        .map((subject) => `<option value="${subject.id}">${subject.code} - ${subject.name}</option>`)
+        .map((subject) => `<option value="${subject.id}">${window.ReportData.subjectLabel(subject, getSelectedGradeId())}</option>`)
         .join("")}</optgroup>`;
     })
     .join("");
@@ -489,7 +321,7 @@ function buildReportRows(filters) {
     const grade = state.maps.grades.get(classroom.gradeId);
     const subject = state.maps.subjects.get(schedule.subjectId);
     const students = state.db.students.filter((student) => student.classroomId === classroom.id);
-    const scheduleRecords = state.db.attendance.filter((record) => record.scheduleId === schedule.id);
+    const scheduleRecords = window.ReportData.attendanceOf(schedule.id);
     const recordsByStudent = new Map(students.map((student) => [student.id, []]));
     scheduleRecords.forEach((record) => recordsByStudent.get(record.studentId)?.push(record));
 
@@ -521,7 +353,7 @@ function buildReportRows(filters) {
         teacherRemark: getRemark({ statusKey, absentCount }, filters.threshold),
         searchText: `${student.studentCode} ${student.name}`.toLowerCase(),
         totalSessions,
-        subjectLabel: `${subject.code} - ${subject.name}`
+        subjectLabel: `${schedule.subjectCode} - ${subject.name}`
       });
     });
   });
@@ -548,7 +380,7 @@ function getFilenameBase() {
   const date = new Date().toISOString().slice(0, 10);
   const gradeText = grade?.name.replace(/\./g, "") || "ระดับชั้น";
   const roomText = classroom?.name.replace(/[/.]/g, "_") || "ห้อง";
-  const subjectText = subject?.code || "วิชา";
+  const subjectText = subject ? window.ReportData.subjectCode(subject, getSelectedGradeId()) : "วิชา";
   return `UnableExam_${gradeText}_${roomText}_${subjectText}_${date}`;
 }
 
@@ -557,7 +389,7 @@ function getScopeLabel() {
   const classroom = state.maps.classrooms.get(els.classroom.value);
   const subject = state.maps.subjects.get(els.subject.value);
   const allSubjects = state.teacherId ? "ทุกวิชาที่สอน" : "ทุกวิชา";
-  return [grade?.name || "ทุกระดับชั้น", classroom?.name || "ทุกห้อง", subject ? `${subject.code} - ${subject.name}` : allSubjects].join(" | ");
+  return [grade?.name || "ทุกระดับชั้น", classroom?.name || "ทุกห้อง", subject ? window.ReportData.subjectLabel(subject, getSelectedGradeId()) : allSubjects].join(" | ");
 }
 
 function getUniqueStudentCount(rows, statusKey) {
@@ -572,10 +404,10 @@ function renderStatusChart(rows) {
   const max = Math.max(1, ...items.map((item) => rows.filter((row) => row.statusKey === item.key).length));
   els.statusChart.innerHTML = items.map((item) => {
     const count = rows.filter((row) => row.statusKey === item.key).length;
-    return `<div class="unable-chart-row">
-      <span>${item.label}</span>
-      <div class="unable-chart-track"><span data-tone="${item.tone}" style="width:${Math.round((count / max) * 100)}%"></span></div>
-      <strong>${count}</strong>
+    return `<div class="grid grid-cols-[8rem_1fr_3.5rem] items-center gap-3 text-sm">
+      <span class="text-slate-600">${item.label}</span>
+      <div class="h-3 overflow-hidden rounded-full bg-slate-100"><span class="block h-full rounded-full ${UI.barTone[item.tone]}" style="width:${Math.round((count / max) * 100)}%"></span></div>
+      <strong class="text-right font-semibold text-slate-900">${count}</strong>
     </div>`;
   }).join("");
 }
@@ -597,20 +429,22 @@ function renderBreakdown(element, rows, key, labelKey, drillType) {
     .filter((group) => group.items.length);
 
   element.innerHTML = areas.length ? areas.map((group) => `
-    <section class="unable-grade-room-group">
-      <div class="unable-grade-room-heading">
+    <section>
+      <div class="${UI.groupHeading}">
         <span>${group.area}</span>
-        <strong>${group.items.reduce((sum, item) => sum + item.unable, 0)}</strong>
+        <strong class="text-slate-600">${group.items.reduce((sum, item) => sum + item.unable, 0)}</strong>
       </div>
+      <div class="mt-2 space-y-1">
       ${group.items.map((item) => `
-        <button class="unable-breakdown-row" type="button" data-drill-type="${drillType}" data-drill-id="${item.id}">
-          <span>${item.label}</span>
-          <span class="unable-breakdown-counts"><strong>${item.unable}</strong> ไม่มีสิทธิ์</span>
-          <span class="unable-drill-arrow" aria-hidden="true">›</span>
+        <button class="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left text-sm text-slate-700 transition hover:bg-blue-50 hover:text-blue-700" type="button" data-drill-type="${drillType}" data-drill-id="${item.id}">
+          <span class="flex-1">${item.label}</span>
+          <span class="text-slate-500"><strong class="font-semibold text-rose-600">${item.unable}</strong> ไม่มีสิทธิ์</span>
+          <span class="text-slate-300" aria-hidden="true">›</span>
         </button>
       `).join("")}
+      </div>
     </section>
-  `).join("") : `<div class="unable-breakdown-empty">ไม่มีนักเรียนที่ไม่มีสิทธิ์สอบ</div>`;
+  `).join("") : `<div class="${UI.empty}">ไม่มีนักเรียนที่ไม่มีสิทธิ์สอบ</div>`;
 }
 
 function renderGradeRoomBreakdown(rows) {
@@ -636,33 +470,34 @@ function renderGradeRoomBreakdown(rows) {
     .filter((grade) => grade.rooms.length);
 
   els.gradeRoomBreakdown.innerHTML = grades.length ? grades.map((grade) => `
-    <section class="unable-grade-room-group">
-      <div class="unable-grade-room-heading">
+    <section>
+      <div class="${UI.groupHeading}">
         <span>${grade.name}</span>
-        <strong>${grade.rooms.reduce((sum, room) => sum + room.unable, 0)}</strong>
+        <strong class="text-slate-600">${grade.rooms.reduce((sum, room) => sum + room.unable, 0)}</strong>
       </div>
-      <div class="unable-room-chip-list">
+      <div class="mt-2 flex flex-wrap gap-2">
         ${grade.rooms.map((room) => `
-          <button class="unable-room-chip" type="button" data-drill-type="classroom" data-drill-id="${room.id}">
+          <button class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 transition hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700" type="button" data-drill-type="classroom" data-drill-id="${room.id}">
             <span>${room.label}</span>
-            <strong>${room.unable}</strong>
+            <strong class="rounded-full bg-rose-50 px-2 py-0.5 text-xs font-semibold text-rose-600">${room.unable}</strong>
           </button>
         `).join("")}
       </div>
     </section>
-  `).join("") : `<div class="unable-breakdown-empty">ไม่มีนักเรียนที่ไม่มีสิทธิ์สอบ</div>`;
+  `).join("") : `<div class="${UI.empty}">ไม่มีนักเรียนที่ไม่มีสิทธิ์สอบ</div>`;
 }
 
 function setBreakdownTab(tabKey) {
   document.querySelectorAll("[data-breakdown-tab]").forEach((button) => {
     const isActive = button.dataset.breakdownTab === tabKey;
-    button.classList.toggle("is-active", isActive);
+    UI.tabActive.forEach((name) => button.classList.toggle(name, isActive));
+    UI.tabIdle.forEach((name) => button.classList.toggle(name, !isActive));
     button.setAttribute("aria-selected", String(isActive));
   });
   document.querySelectorAll("[data-breakdown-panel]").forEach((panel) => {
     panel.classList.toggle("hidden", panel.dataset.breakdownPanel !== tabKey);
   });
-  document.querySelector(".unable-breakdown-viewport").scrollTop = 0;
+  document.getElementById("unableBreakdownViewport").scrollTop = 0;
 }
 
 function renderOverview(rows) {
@@ -697,17 +532,17 @@ function renderTableHeader() {
     <tr>
       ${columns.map((column) => {
         if (!column.sortable) {
-          return `<th class="sticky-top">${column.label}</th>`;
+          return `<th>${column.label}</th>`;
         }
         const isActive = state.sort.key === column.key;
         const sortIcon = isActive ? (state.sort.dir === "asc" ? "↑" : "↓") : "↕";
         const ariaSort = isActive ? (state.sort.dir === "asc" ? "ascending" : "descending") : "none";
         const title = column.tooltip ? ` title="${column.tooltip}"` : "";
         return `
-          <th class="sticky-top" aria-sort="${ariaSort}">
-            <button class="sort-button ${isActive ? "is-active" : ""}" type="button" data-sort-key="${column.key}"${title}>
+          <th aria-sort="${ariaSort}">
+            <button class="inline-flex items-center gap-1 font-semibold uppercase tracking-wide transition hover:text-blue-700 ${isActive ? "text-blue-700" : ""}" type="button" data-sort-key="${column.key}"${title}>
               <span>${column.label}</span>
-              <span aria-hidden="true">${sortIcon}</span>
+              <span class="${isActive ? "" : "text-slate-300"}" aria-hidden="true">${sortIcon}</span>
             </button>
           </th>
         `;
@@ -720,14 +555,9 @@ function renderEmptyState() {
   els.unableTbody.innerHTML = `
     <tr>
       <td colspan="9">
-        <div class="unable-empty-state">
-          <div class="unable-empty-illustration" aria-hidden="true">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-          <p class="unable-empty-title">ไม่พบนักเรียนตามเงื่อนไข</p>
-          <p class="unable-empty-text">ลองปรับห้องเรียน รายวิชา หรือขยายเงื่อนไขในตัวกรองเพิ่มเติมแล้วค้นหาอีกครั้ง</p>
+        <div class="py-12 text-center">
+          <p class="text-base font-semibold text-slate-700">ไม่พบนักเรียนตามเงื่อนไข</p>
+          <p class="mt-1 text-sm text-slate-400">ลองปรับห้องเรียน รายวิชา หรือขยายเงื่อนไขในตัวกรองเพิ่มเติมแล้วค้นหาอีกครั้ง</p>
         </div>
       </td>
     </tr>
@@ -756,25 +586,25 @@ function renderRows() {
         <td>${rowNumber}</td>
         <td>${row.studentId}</td>
         <td>
-          <div class="student-cell">
-            <strong>${row.studentName}</strong>
-            <span>${row.subjectLabel}</span>
+          <div class="flex flex-col whitespace-nowrap">
+            <strong class="font-semibold text-slate-900">${row.studentName}</strong>
+            <span class="text-xs text-slate-400">${row.subjectLabel}</span>
           </div>
         </td>
         <td>${row.gradeClass}</td>
         <td>
-          <span class="rate-chip ${lowAttendance ? "rate-chip-danger" : ""}" title="จาก ${row.totalSessions} คาบเรียนจริง">
+          <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold ${lowAttendance ? "bg-rose-50 text-rose-700" : "bg-slate-100 text-slate-700"}" title="จาก ${row.totalSessions} คาบเรียนจริง">
             ${row.attendancePercent}%
           </span>
         </td>
         <td>${row.absentCount}</td>
         <td>${row.lateCount}</td>
         <td>
-          <span class="status-chip unable-status-chip" data-tone="${row.statusKey}" title="${statusNotes[row.statusKey]}">
+          <span class="inline-flex whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset ${UI.statusChip[row.statusKey]}" title="${statusNotes[row.statusKey]}">
             ${row.statusLabel}
           </span>
         </td>
-        <td>${row.teacherRemark}</td>
+        <td class="min-w-[16rem]">${row.teacherRemark}</td>
       </tr>
     `;
   }).join("");
@@ -898,23 +728,23 @@ function handleExport(type) {
         ? "Mockup: พิมพ์รายงานผู้ไม่มีสิทธิ์สอบยังไม่ถูกเชื่อมต่อ"
         : "Mockup: ดาวน์โหลด PDF รายงานผู้ไม่มีสิทธิ์สอบยังไม่ถูกเชื่อมต่อ",
       sheetHtml: `
-        <div class="pdf-document-head">
+        <div class="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
           <div>
-            <p>ระบบติดตามสิทธิ์สอบ</p>
-            <h3>รายงานผู้ไม่มีสิทธิ์สอบ</h3>
+            <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">ระบบติดตามสิทธิ์สอบ</p>
+            <h3 class="mt-1 text-lg font-semibold text-slate-900">รายงานผู้ไม่มีสิทธิ์สอบ</h3>
           </div>
-          <span>${type === "print" ? "Print" : "PDF"}</span>
+          <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">${type === "print" ? "Print" : "PDF"}</span>
         </div>
-        <div class="pdf-document-meta">
+        <div class="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-slate-500">
           <span>${els.detailScope.textContent}</span>
           <span>เกณฑ์เข้าเรียน: ${normalizeThreshold(els.threshold.value)}%</span>
           <span>สถานะ: ${els.status.options[els.status.selectedIndex].text}</span>
         </div>
-        <div class="pdf-summary-strip">
+        <div class="mt-3 flex flex-wrap gap-6 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 [&_strong]:font-semibold [&_strong]:text-slate-900">
           <span>พบทั้งหมด <strong>${state.filteredRows.length}</strong></span>
           <span>ไม่มีสิทธิ์สอบ <strong>${getUniqueStudentCount(state.filteredRows, "unable")}</strong></span>
         </div>
-        <table class="pdf-preview-table">
+        <table class="mt-4 w-full text-left text-sm [&_td]:border-b [&_td]:border-slate-100 [&_td]:px-2 [&_td]:py-2 [&_td]:text-slate-700 [&_th]:border-b [&_th]:border-slate-300 [&_th]:px-2 [&_th]:py-2 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-slate-500">
           <thead>
             <tr>
               <th>No.</th>
@@ -932,7 +762,7 @@ function handleExport(type) {
               <tr>
                 <td>${index + 1}</td>
                 <td>${row.studentId}</td>
-                <td class="pdf-name-cell">${row.studentName}</td>
+                <td class="font-medium text-slate-900">${row.studentName}</td>
                 <td>${row.gradeClass}</td>
                 <td>${row.attendancePercent}%</td>
                 <td>${row.absentCount}</td>
@@ -1026,7 +856,7 @@ function attachEvents() {
     toggleSort(button.dataset.sortKey);
   });
 
-  document.querySelector(".unable-overview-grid").addEventListener("click", (event) => {
+  document.getElementById("unableOverviewGrid").addEventListener("click", (event) => {
     const button = event.target.closest("[data-drill-type]");
     if (!button) return;
     const { drillType, drillId } = button.dataset;
@@ -1048,7 +878,7 @@ function attachEvents() {
     target.scrollIntoView({ behavior: "smooth", block: "start" });
   });
 
-  document.querySelector(".unable-breakdown-tabs").addEventListener("click", (event) => {
+  document.getElementById("unableBreakdownTabs").addEventListener("click", (event) => {
     const button = event.target.closest("[data-breakdown-tab]");
     if (button) setBreakdownTab(button.dataset.breakdownTab);
   });
@@ -1077,8 +907,8 @@ function attachEvents() {
 }
 
 function applyTeacherScopeText() {
-  document.querySelector('[data-page="unable-exam"] .subtitle').textContent = "นักเรียนที่เวลาเรียนไม่ถึงเกณฑ์ เฉพาะรายวิชาและห้องที่คุณสอน";
-  const breadcrumbHome = document.querySelector('[data-page="unable-exam"] .ar-breadcrumb a');
+  document.getElementById("unablePageSubtitle").textContent = "นักเรียนที่เวลาเรียนไม่ถึงเกณฑ์ เฉพาะรายวิชาและห้องที่คุณสอน";
+  const breadcrumbHome = document.getElementById("unableBreadcrumbHome");
   if (breadcrumbHome) {
     breadcrumbHome.textContent = "งานของฉัน";
     breadcrumbHome.href = "../timetable/my-timetable.html";
@@ -1111,6 +941,7 @@ function init() {
   restoreLastSearch();
   renderTableHeader();
   attachEvents();
+  setBreakdownTab("gradeRoom");
 
   const currentYear = getCurrentAcademicYear();
   const currentSemester = getCurrentSemester();

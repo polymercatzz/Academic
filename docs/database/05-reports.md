@@ -19,7 +19,7 @@
 | [fail-student-detail.html](../../reports/fail-student-detail.html) นักเรียนต้องปรับปรุง | นักเรียนที่ได้ 0 / ร / มส ต่อห้องเรียนที่สอน ช่วงคะแนน สาเหตุหลัก ระดับความเสี่ยง | `v_fail_student` |
 | [student-score-ranking.html](../../reports/student-score-ranking.html) + รายละเอียด | อันดับคะแนนรวม คะแนนตามหมวด ร้อยละที่ต่ำกว่า 50 | `v_score_ranking`, `v_category_score` |
 | [subject-results.html](../../reports/subject-results.html) + รายละเอียด | จำนวนต่อระดับผลการเรียน 8 ระดับ + ร / มส / ผ / มผ, GPA เฉลี่ย, อัตราผ่าน ≥ 3, แนวโน้มเทียบภาคก่อน | `v_subject_grade_distribution` |
-| `academic-report.html#attendance`, [teacher-attendance.html](../../reports/teacher-attendance.html) | มา / สาย / ขาด / ลา รายนักเรียน ร้อยละ ใกล้ มส | `v_attendance_summary` ([ขอบเขต 4](04-attendance.md#4-ค่าที่คำนวณ-ไม่เก็บ)) |
+| `attendance-report.html`, [teacher-attendance.html](../../reports/teacher-attendance.html) | มา / สาย / ขาด / ลา รายนักเรียน ร้อยละ ใกล้ มส | `v_attendance_summary` ([ขอบเขต 4](04-attendance.md#4-ค่าที่คำนวณ-ไม่เก็บ)) |
 | `#unable-exam` ผู้ไม่มีสิทธิ์สอบ | นักเรียน × วิชา ที่เวลาเรียนต่ำกว่าเกณฑ์ | `v_unable_exam` |
 | `#score-subject` คะแนนรายวิชา | คะแนนรวมรายวิชาของนักเรียนในห้อง ต่ำกว่า 60% คะแนนที่ยังไม่บันทึก | `v_student_result` |
 | `#average-score-year` คะแนนเฉลี่ยรายปี | คะแนนเฉลี่ยและระดับเฉลี่ยรายนักเรียน / ห้อง อันดับ สูงสุด / ต่ำสุด | `v_student_result`, `v_student_term_gpa` |
@@ -206,7 +206,7 @@ function ที่คืนตาราง (student_id, gpax, registered_credits
 
 | เรื่อง | ระบบจำลอง | ในฐานข้อมูล |
 |---|---|---|
-| **เวลาเรียน (%)** | `script.js` (#attendance) ใช้เพดานจำนวนครั้งที่ขาด · `unable-exam-report.js` นับลาเป็นไม่มาเรียน · `teacher-attendance.html` นับลาเป็นมาเรียน (บรรทัด 525) | (มา + สาย) ÷ คาบที่เช็คแล้ว ตาม ADR 0011 ทุกหน้าอ่านจาก `v_attendance_summary` |
+| **เวลาเรียน (%)** | `attendance-report.js` ใช้เพดานจำนวนครั้งที่ขาด · `unable-exam-report.js` นับลาเป็นไม่มาเรียน · `teacher-attendance.html` นับลาเป็นมาเรียน (บรรทัด 525) | (มา + สาย) ÷ คาบที่เช็คแล้ว ตาม ADR 0011 ทุกหน้าอ่านจาก `v_attendance_summary` |
 | **สถานะการเข้าเรียน** | academic-report ใช้ป้ายภาษาไทย 7 แบบ (ตรงเวลา สาย ขาด ลากิจ ลาป่วย กิจกรรม วันหยุด) · teacher-attendance ใช้ `present` / `late` / `absent` / `leave` | 4 ค่าของ `attendance_record.status` · วันหยุดใช้ `registry.school_calendar` ของ Team B · กิจกรรมใช้ `session_status = 'no_class'` · ลากิจ / ลาป่วยยังแยกไม่ได้ (ดูคำถามเปิด) |
 | **คะแนนเฉลี่ยของสอบซ่อม** | แปลง `ร` เป็น 0.5 ตอนหาค่าเฉลี่ย (`student-retake-management.html`) | ไม่นับ ร ในค่าเฉลี่ย |
 | **สถานะ "ต้องติดตาม / ดีเด่น"** | ในคะแนนเฉลี่ยรายปีเป็นค่าที่ใส่ไว้ในข้อมูลจำลอง ไม่ได้คำนวณ | ยังไม่มีนิยาม (ดูคำถามเปิด) |

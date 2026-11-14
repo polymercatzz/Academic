@@ -8,25 +8,22 @@ const attendanceOptions = [
   "วันหยุด"
 ];
 
-const moduleLabels = {
-  attendance: "รายงานการเข้าเรียน",
-  "score-subject": "รายงานคะแนนรายวิชา",
-  "average-score-year": "รายงานคะแนนเฉลี่ยรายปี",
-  "record-report": "รายงานผลการเรียนระเบียนสะสม / GPAX",
-  "unable-exam": "รายงานผู้ไม่มีสิทธิ์สอบ",
-  grade: "ผลการเรียน",
-  behavior: "บันทึกพฤติกรรม",
-  schedule: "ตารางเรียน",
-  settings: "ตั้งค่าระบบ"
-};
-
 const viewModeDetails = {
   report: {
     label: "รายละเอียดรายคาบ",
     summaryTitle: "สรุปผลการเข้าเรียน",
     tableTitle: "รายละเอียดการเข้าเรียนรายคาบ"
+  },
+  // used when the per-period matrix would be too large to draw (see MAX_MATRIX_CELLS)
+  quick: {
+    label: "สรุปรายคน",
+    summaryTitle: "สรุปผลการเข้าเรียน",
+    tableTitle: "สรุปการเข้าเรียนรายคน · เลือกห้องเรียนเพื่อดูรายคาบ"
   }
 };
+
+// students × periods the per-period table can show before the browser slows down
+const MAX_MATRIX_CELLS = 40000;
 
 const els = {
   room: document.getElementById("room"),
@@ -53,7 +50,7 @@ const els = {
   tableTitle: document.getElementById("tableTitle"),
   attendanceThead: document.getElementById("attendanceThead"),
   attendanceTbody: document.getElementById("attendanceTbody"),
-  tableWrap: document.querySelector(".table-wrap"),
+  tableWrap: document.getElementById("attendanceTableWrap"),
   totalStudents: document.getElementById("totalStudents"),
   absentRate: document.getElementById("absentRate"),
   lateCount: document.getElementById("lateCount"),
@@ -81,20 +78,8 @@ const els = {
   saveBtn: document.getElementById("saveBtn"),
   exportExcelBtn: document.getElementById("exportExcelBtn"),
   exportPdfBtn: document.getElementById("exportPdfBtn"),
-  attendancePdfModal: document.getElementById("attendancePdfModal"),
-  attendancePdfScope: document.getElementById("attendancePdfScope"),
-  attendancePdfSheet: document.getElementById("attendancePdfSheet"),
-  attendancePdfCloseBtn: document.getElementById("attendancePdfCloseBtn"),
-  attendancePdfDownloadBtn: document.getElementById("attendancePdfDownloadBtn"),
   currentAcademicLabel: document.getElementById("currentAcademicLabel"),
-  toast: document.getElementById("toast"),
-  activeModuleLabel: document.getElementById("activeModuleLabel"),
-  navItems: document.querySelectorAll(".nav-item"),
-  appPages: document.querySelectorAll(".app-page"),
-  placeholderPageTitle: document.getElementById("placeholderPageTitle"),
-  placeholderPageSubtitle: document.getElementById("placeholderPageSubtitle"),
-  placeholderModuleTitle: document.getElementById("placeholderModuleTitle"),
-  placeholderModuleText: document.getElementById("placeholderModuleText")
+  toast: document.getElementById("toast")
 };
 
 const state = {
@@ -113,220 +98,100 @@ const state = {
 };
 
 const trendSeries = [
-  { key: "presentRate", countKey: "presentPeriods", label: "เข้าเรียน", className: "present" },
-  { key: "absentRate", countKey: "absentPeriods", label: "ขาดเรียน", className: "absent" },
-  { key: "lateRate", countKey: "lateTimes", label: "มาสาย", className: "late" }
+  { key: "presentRate", countKey: "presentPeriods", label: "เข้าเรียน", stroke: "stroke-blue-600" },
+  { key: "absentRate", countKey: "absentPeriods", label: "ขาดเรียน", stroke: "stroke-red-600" },
+  { key: "lateRate", countKey: "lateTimes", label: "มาสาย", stroke: "stroke-amber-600" }
 ];
 
-function buildInlineMockDatabase() {
-  const academicYears = [
-    { id: "ay-2569", name: "2569", startDate: "2026-05-01", endDate: "2027-03-31", isCurrent: true }
-  ];
-
-  const semesters = [
-    { id: "sem-2569-1", academicYearId: "ay-2569", term: 1, name: "ภาคเรียนที่ 1/2569", startDate: "2026-05-01", endDate: "2026-10-31" },
-    { id: "sem-2569-2", academicYearId: "ay-2569", term: 2, name: "ภาคเรียนที่ 2/2569", startDate: "2026-11-01", endDate: "2027-03-31" }
-  ];
-
-  const grades = [
-    { id: "grade-m1", code: "m1", name: "ม.1", order: 1 },
-    { id: "grade-m2", code: "m2", name: "ม.2", order: 2 },
-    { id: "grade-m3", code: "m3", name: "ม.3", order: 3 },
-    { id: "grade-m4", code: "m4", name: "ม.4", order: 4 },
-    { id: "grade-m5", code: "m5", name: "ม.5", order: 5 },
-    { id: "grade-m6", code: "m6", name: "ม.6", order: 6 }
-  ];
-
-  const classrooms = [
-    { id: "room-m1-1", gradeId: "grade-m1", code: "m1-1", name: "ม.1/1", homeroomTeacherId: "teacher-anong" },
-    { id: "room-m1-2", gradeId: "grade-m1", code: "m1-2", name: "ม.1/2", homeroomTeacherId: "teacher-krit" },
-    { id: "room-m2-1", gradeId: "grade-m2", code: "m2-1", name: "ม.2/1", homeroomTeacherId: "teacher-sunee" },
-    { id: "room-m3-1", gradeId: "grade-m3", code: "m3-1", name: "ม.3/1", homeroomTeacherId: "teacher-preecha" },
-    { id: "room-m4-1", gradeId: "grade-m4", code: "m4-1", name: "ม.4/1", homeroomTeacherId: "teacher-mali" },
-    { id: "room-m5-1", gradeId: "grade-m5", code: "m5-1", name: "ม.5/1", homeroomTeacherId: "teacher-niran" },
-    { id: "room-m6-1", gradeId: "grade-m6", code: "m6-1", name: "ม.6/1", homeroomTeacherId: "teacher-anong" }
-  ];
-
-  const teachers = [
-    { id: "teacher-anong", name: "อ.อนงค์นาถ ศรีสวัสดิ์", shortName: "อ.อนงค์นาถ", subjectIds: ["subject-math", "subject-thai"] },
-    { id: "teacher-krit", name: "อ.กฤตภาส วัฒนชัย", shortName: "อ.กฤตภาส", subjectIds: ["subject-math", "subject-science"] },
-    { id: "teacher-sunee", name: "อ.สุนีย์ พิพัฒน์ผล", shortName: "อ.สุนีย์", subjectIds: ["subject-thai", "subject-social"] },
-    { id: "teacher-preecha", name: "อ.ปรีชา ธรรมวงศ์", shortName: "อ.ปรีชา", subjectIds: ["subject-english", "subject-social"] },
-    { id: "teacher-mali", name: "อ.มะลิ กาญจนกิจ", shortName: "อ.มะลิ", subjectIds: ["subject-english"] },
-    { id: "teacher-niran", name: "อ.นิรันดร์ บุญมาก", shortName: "อ.นิรันดร์", subjectIds: ["subject-science"] }
-  ];
-
-  const subjects = [
-    { id: "subject-math", code: "ma21101", name: "คณิตศาสตร์", shortName: "คณิต" },
-    { id: "subject-thai", code: "th21102", name: "ภาษาไทย", shortName: "ไทย" },
-    { id: "subject-english", code: "en21101", name: "ภาษาอังกฤษ", shortName: "อังกฤษ" },
-    { id: "subject-science", code: "sc21103", name: "วิทยาศาสตร์", shortName: "วิทย์" },
-    { id: "subject-social", code: "so21104", name: "สังคมศึกษา", shortName: "สังคม" }
-  ];
-
-  const schedules = [
-    { id: "schedule-m11-math", classroomId: "room-m1-1", subjectId: "subject-math", teacherId: "teacher-anong", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 1 }, { dayOfWeek: 3, period: 4 }, { dayOfWeek: 5, period: 2 }] },
-    { id: "schedule-m11-thai", classroomId: "room-m1-1", subjectId: "subject-thai", teacherId: "teacher-sunee", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 2 }, { dayOfWeek: 4, period: 1 }] },
-    { id: "schedule-m11-english", classroomId: "room-m1-1", subjectId: "subject-english", teacherId: "teacher-mali", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 5 }, { dayOfWeek: 4, period: 6 }] },
-    { id: "schedule-m12-math", classroomId: "room-m1-2", subjectId: "subject-math", teacherId: "teacher-krit", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 2 }, { dayOfWeek: 3, period: 1 }, { dayOfWeek: 5, period: 3 }] },
-    { id: "schedule-m12-thai", classroomId: "room-m1-2", subjectId: "subject-thai", teacherId: "teacher-sunee", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 4 }, { dayOfWeek: 4, period: 2 }] },
-    { id: "schedule-m12-english", classroomId: "room-m1-2", subjectId: "subject-english", teacherId: "teacher-preecha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 3, period: 5 }, { dayOfWeek: 5, period: 5 }] },
-    { id: "schedule-m21-science", classroomId: "room-m2-1", subjectId: "subject-science", teacherId: "teacher-niran", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 3 }, { dayOfWeek: 5, period: 4 }] },
-    { id: "schedule-m21-social", classroomId: "room-m2-1", subjectId: "subject-social", teacherId: "teacher-preecha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 4 }, { dayOfWeek: 4, period: 3 }] },
-    { id: "schedule-m21-math", classroomId: "room-m2-1", subjectId: "subject-math", teacherId: "teacher-krit", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 3, period: 2 }, { dayOfWeek: 5, period: 1 }] },
-    { id: "schedule-m31-math", classroomId: "room-m3-1", subjectId: "subject-math", teacherId: "teacher-anong", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 1 }, { dayOfWeek: 3, period: 3 }, { dayOfWeek: 5, period: 2 }] },
-    { id: "schedule-m31-thai", classroomId: "room-m3-1", subjectId: "subject-thai", teacherId: "teacher-sunee", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 1 }, { dayOfWeek: 4, period: 2 }] },
-    { id: "schedule-m31-science", classroomId: "room-m3-1", subjectId: "subject-science", teacherId: "teacher-niran", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 5 }, { dayOfWeek: 4, period: 5 }] },
-    { id: "schedule-m41-math", classroomId: "room-m4-1", subjectId: "subject-math", teacherId: "teacher-krit", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 3 }, { dayOfWeek: 3, period: 2 }] },
-    { id: "schedule-m41-english", classroomId: "room-m4-1", subjectId: "subject-english", teacherId: "teacher-mali", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 5 }, { dayOfWeek: 5, period: 4 }] },
-    { id: "schedule-m41-science", classroomId: "room-m4-1", subjectId: "subject-science", teacherId: "teacher-niran", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 4, period: 1 }] },
-    { id: "schedule-m51-math", classroomId: "room-m5-1", subjectId: "subject-math", teacherId: "teacher-anong", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 4 }, { dayOfWeek: 4, period: 3 }] },
-    { id: "schedule-m51-social", classroomId: "room-m5-1", subjectId: "subject-social", teacherId: "teacher-preecha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 2 }, { dayOfWeek: 5, period: 1 }] },
-    { id: "schedule-m51-science", classroomId: "room-m5-1", subjectId: "subject-science", teacherId: "teacher-niran", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 3, period: 6 }] },
-    { id: "schedule-m61-math", classroomId: "room-m6-1", subjectId: "subject-math", teacherId: "teacher-krit", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 2, period: 1 }, { dayOfWeek: 4, period: 4 }] },
-    { id: "schedule-m61-english", classroomId: "room-m6-1", subjectId: "subject-english", teacherId: "teacher-mali", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 1, period: 6 }, { dayOfWeek: 5, period: 2 }] },
-    { id: "schedule-m61-social", classroomId: "room-m6-1", subjectId: "subject-social", teacherId: "teacher-preecha", semesterId: "sem-2569-1", weeklySlots: [{ dayOfWeek: 3, period: 4 }] }
-  ];
-
-  const students = [
-    { id: "student-66001", studentCode: "66001", name: "กานต์ธิดา สุขผล", classroomId: "room-m1-1", number: 1, profile: "perfect" },
-    { id: "student-66002", studentCode: "66002", name: "ธนกฤต แซ่ตั้ง", classroomId: "room-m1-1", number: 2, profile: "late" },
-    { id: "student-66003", studentCode: "66003", name: "ปวีณ์นุช อินทรา", classroomId: "room-m1-1", number: 3, profile: "leave" },
-    { id: "student-66004", studentCode: "66004", name: "ภูริณัฐ ขยันดี", classroomId: "room-m1-1", number: 4, profile: "highAbsence" },
-    { id: "student-66009", studentCode: "66009", name: "วรัญญา พรประเสริฐ", classroomId: "room-m1-1", number: 5, profile: "occasionalAbsence" },
-    { id: "student-66010", studentCode: "66010", name: "ชนนท์ มีสุข", classroomId: "room-m1-1", number: 6, profile: "severeAbsence" },
-    { id: "student-66011", studentCode: "66011", name: "พิมพ์ชนก แสงแก้ว", classroomId: "room-m1-1", number: 7, profile: "mixedRisk" },
-    { id: "student-66012", studentCode: "66012", name: "ศิรวิชญ์ คำดี", classroomId: "room-m1-1", number: 8, profile: "sickLeave" },
-    { id: "student-66013", studentCode: "66013", name: "ณัฐณิชา วัฒนะ", classroomId: "room-m1-1", number: 9, profile: "activity" },
-    { id: "student-66014", studentCode: "66014", name: "ธีรภัทร บุญช่วย", classroomId: "room-m1-1", number: 10, profile: "steady" },
-    { id: "student-66015", studentCode: "66015", name: "อชิรญา รุ่งเรือง", classroomId: "room-m1-1", number: 11, profile: "personalLeave" },
-    { id: "student-66016", studentCode: "66016", name: "ปุณณภพ เกียรติไพบูลย์", classroomId: "room-m1-1", number: 12, profile: "borderlineAbsence" },
-    { id: "student-66005", studentCode: "66005", name: "ศุภวิชญ์ เจริญผล", classroomId: "room-m1-2", number: 1, profile: "steady" },
-    { id: "student-66006", studentCode: "66006", name: "ณิชกานต์ พูลทรัพย์", classroomId: "room-m1-2", number: 2, profile: "late" },
-    { id: "student-66007", studentCode: "66007", name: "พชรพล สุขใจ", classroomId: "room-m1-2", number: 3, profile: "absence" },
-    { id: "student-66008", studentCode: "66008", name: "อริศรา วงศ์อรุณ", classroomId: "room-m1-2", number: 4, profile: "steady" },
-    { id: "student-65001", studentCode: "65001", name: "กมลชนก พรหมมา", classroomId: "room-m2-1", number: 1, profile: "steady" },
-    { id: "student-65002", studentCode: "65002", name: "พีรพัฒน์ วงศ์ดี", classroomId: "room-m2-1", number: 2, profile: "late" },
-    { id: "student-65003", studentCode: "65003", name: "ณัฐวรา แซ่ลี้", classroomId: "room-m2-1", number: 3, profile: "absence" },
-    { id: "student-65004", studentCode: "65004", name: "ธนโชติ อินทร์รักษ์", classroomId: "room-m2-1", number: 4, profile: "leave" },
-    { id: "student-64001", studentCode: "64001", name: "ปวริศา ศรีสวัสดิ์", classroomId: "room-m3-1", number: 1, profile: "activity" },
-    { id: "student-64002", studentCode: "64002", name: "ชยพล แสงทอง", classroomId: "room-m3-1", number: 2, profile: "steady" },
-    { id: "student-64003", studentCode: "64003", name: "รวิภา ตั้งเจริญ", classroomId: "room-m3-1", number: 3, profile: "leave" },
-    { id: "student-64004", studentCode: "64004", name: "กิตติพงษ์ สุขสำราญ", classroomId: "room-m3-1", number: 4, profile: "late" },
-    { id: "student-63001", studentCode: "63001", name: "ภัทรพล ตั้งมั่น", classroomId: "room-m4-1", number: 1, profile: "steady" },
-    { id: "student-63002", studentCode: "63002", name: "ณิชาภา แสงทอง", classroomId: "room-m4-1", number: 2, profile: "occasionalAbsence" },
-    { id: "student-63003", studentCode: "63003", name: "ชยุตม์ วัฒนชัย", classroomId: "room-m4-1", number: 3, profile: "late" },
-    { id: "student-63004", studentCode: "63004", name: "อริสรา พงษ์ดี", classroomId: "room-m4-1", number: 4, profile: "personalLeave" },
-    { id: "student-62001", studentCode: "62001", name: "กฤติน ภูวดล", classroomId: "room-m5-1", number: 1, profile: "borderlineAbsence" },
-    { id: "student-62002", studentCode: "62002", name: "ปาณิศา จันทร์สุข", classroomId: "room-m5-1", number: 2, profile: "steady" },
-    { id: "student-62003", studentCode: "62003", name: "ธันวา ศรีนวล", classroomId: "room-m5-1", number: 3, profile: "highAbsence" },
-    { id: "student-62004", studentCode: "62004", name: "สิรินทรา ธรรมวงศ์", classroomId: "room-m5-1", number: 4, profile: "sickLeave" },
-    { id: "student-61001", studentCode: "61001", name: "นภัสกร อินทรา", classroomId: "room-m6-1", number: 1, profile: "mixedRisk" },
-    { id: "student-61002", studentCode: "61002", name: "ภคินี สุขใจ", classroomId: "room-m6-1", number: 2, profile: "activity" },
-    { id: "student-61003", studentCode: "61003", name: "ธนภัทร เกียรติไพบูลย์", classroomId: "room-m6-1", number: 3, profile: "severeAbsence" },
-    { id: "student-61004", studentCode: "61004", name: "กัญญาณัฐ บุญมาก", classroomId: "room-m6-1", number: 4, profile: "leave" }
-  ];
-
-  const statusProfiles = {
-    perfect: ["ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
-    steady: ["ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "สาย", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
-    late: ["สาย", "ตรงเวลา", "สาย", "ตรงเวลา", "ตรงเวลา", "สาย", "ตรงเวลา", "ตรงเวลา"],
-    absence: ["ขาด", "ตรงเวลา", "ตรงเวลา", "ขาด", "ตรงเวลา", "สาย", "ขาด", "ตรงเวลา"],
-    leave: ["ลากิจ", "ตรงเวลา", "ลาป่วย", "ตรงเวลา", "ตรงเวลา", "ลากิจ", "ตรงเวลา", "ตรงเวลา"],
-    activity: ["กิจกรรม", "ตรงเวลา", "กิจกรรม", "ตรงเวลา", "ตรงเวลา", "กิจกรรม", "ตรงเวลา", "ตรงเวลา"],
-    occasionalAbsence: ["ตรงเวลา", "ตรงเวลา", "ขาด", "ตรงเวลา", "ตรงเวลา", "สาย", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
-    borderlineAbsence: ["ขาด", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "สาย", "ขาด", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
-    highAbsence: ["ขาด", "ตรงเวลา", "ขาด", "ตรงเวลา", "สาย", "ขาด", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
-    severeAbsence: ["ขาด", "ขาด", "ตรงเวลา", "ขาด", "สาย", "ขาด", "ตรงเวลา", "ขาด", "ตรงเวลา", "ตรงเวลา"],
-    mixedRisk: ["ขาด", "สาย", "ลากิจ", "ขาด", "ตรงเวลา", "ลาป่วย", "ขาด", "สาย", "ตรงเวลา", "ตรงเวลา"],
-    sickLeave: ["ลาป่วย", "ตรงเวลา", "ตรงเวลา", "ลาป่วย", "สาย", "ตรงเวลา", "ลาป่วย", "ตรงเวลา", "ตรงเวลา", "ตรงเวลา"],
-    personalLeave: ["ลากิจ", "ตรงเวลา", "ลากิจ", "ตรงเวลา", "ตรงเวลา", "สาย", "ตรงเวลา", "ลากิจ", "ตรงเวลา", "ตรงเวลา"]
-  };
-
-  const statusRemarks = {
-    "ตรงเวลา": "เข้าชั้นเรียนตามเวลา",
-    "สาย": "เข้าชั้นเรียนช้ากว่ากำหนด",
-    "ขาด": "ไม่พบการเข้าเรียนตามตาราง",
-    "ลากิจ": "มีการยื่นใบลา",
-    "ลาป่วย": "แจ้งลาป่วยกับครูประจำวิชา",
-    "กิจกรรม": "เข้าร่วมกิจกรรมที่ได้รับมอบหมาย"
-  };
-
-  const studentsByClassroom = new Map();
-  students.forEach((student) => {
-    if (!studentsByClassroom.has(student.classroomId)) {
-      studentsByClassroom.set(student.classroomId, []);
-    }
-    studentsByClassroom.get(student.classroomId).push(student);
-  });
-
-  const attendance = [];
-  let recordIndex = 1;
-
-  schedules.forEach((schedule) => {
-    const scheduleStudents = studentsByClassroom.get(schedule.classroomId) || [];
-    const sessions = [5, 6, 7, 8, 9, 10].flatMap((month) => buildScheduleSessions(schedule.weeklySlots, 2026, month));
-
-    scheduleStudents.forEach((student) => {
-      const pattern = statusProfiles[student.profile] || statusProfiles.steady;
-      sessions.forEach((session, index) => {
-        const status = pattern[index % pattern.length];
-        attendance.push({
-          id: `att-${String(recordIndex).padStart(4, "0")}`,
-          scheduleId: schedule.id,
-          studentId: student.id,
-          date: session.date,
-          period: session.period,
-          status,
-          remark: statusRemarks[status]
-        });
-        recordIndex += 1;
-      });
-    });
-  });
-
-  return {
-    academicYears,
-    semesters,
-    grades,
-    classrooms,
-    teachers,
-    subjects,
-    schedules,
-    students,
-    attendance
-  };
-}
-
-function buildScheduleSessions(weeklySlots, year, month) {
-  const sessions = [];
-  const lastDay = new Date(year, month, 0).getDate();
-  for (let day = 1; day <= lastDay; day += 1) {
-    const current = new Date(year, month - 1, day);
-    const dayOfWeek = current.getDay() === 0 ? 7 : current.getDay();
-    weeklySlots.forEach((slot) => {
-      if (slot.dayOfWeek === dayOfWeek) {
-        sessions.push({
-          date: formatDateInput(current),
-          period: slot.period
-        });
-      }
-    });
+// Tailwind classes for the pieces this script draws; the page (attendance-report.html) has no stylesheet of its own.
+// Shared cell styling (padding, borders, the round status dot, sticky header) sits on the <table> there,
+// so a matrix cell only carries what differs from its neighbours.
+const UI = {
+  btnIdle: ["border-slate-200", "bg-white", "text-slate-700", "hover:bg-slate-50"],
+  btnActive: ["border-blue-300", "bg-blue-50", "text-blue-700"],
+  empty: "py-10 text-center text-sm text-slate-400",
+  // status dot and cell tint, by tone
+  dot: { present: "bg-emerald-600", late: "bg-amber-600", absent: "bg-rose-600", leave: "bg-blue-600", empty: "bg-slate-400" },
+  highlight: { late: "!bg-amber-50", absent: "!bg-rose-50", leave: "!bg-blue-50" },
+  mutedCell: "bg-slate-50",
+  statusChip: "inline-flex items-center whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ring-1 ring-inset",
+  statusTone: {
+    present: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+    late: "bg-amber-50 text-amber-700 ring-amber-200",
+    absent: "bg-rose-50 text-rose-700 ring-rose-200",
+    leave: "bg-blue-50 text-blue-700 ring-blue-200",
+    empty: "bg-slate-100 text-slate-500 ring-slate-200"
+  },
+  rateChip: "inline-flex min-w-[58px] justify-center rounded-full px-2.5 py-1 text-xs font-bold ring-1 ring-inset",
+  rateTone: {
+    normal: "bg-slate-100 text-slate-700 ring-slate-200",
+    alert: "bg-amber-50 text-amber-700 ring-amber-300",
+    danger: "bg-rose-50 text-rose-700 ring-rose-200"
+  },
+  // coloured left edge of an at-risk row, drawn on its first cell
+  riskEdge: { normal: "", alert: "shadow-[inset_3px_0_0_#d97706]", danger: "shadow-[inset_3px_0_0_#e11d48]" },
+  // sticky columns: explicit widths so the offsets add up
+  headId: "left-0 !z-[6] w-[120px] min-w-[120px] max-w-[120px]",
+  headName: "left-[120px] !z-[6] min-w-[230px] shadow-[1px_0_0_#e2e8f0]",
+  cellId: "sticky left-0 z-[3] w-[120px] min-w-[120px] max-w-[120px] bg-white",
+  cellName: "sticky left-[120px] z-[3] min-w-[230px] bg-white shadow-[1px_0_0_#e2e8f0]",
+  headSummary: {
+    present: "right-[274px] !z-[6] w-[62px] min-w-[62px] text-center shadow-[-1px_0_0_#e2e8f0]",
+    late: "right-[212px] !z-[6] w-[62px] min-w-[62px] text-center",
+    absent: "right-[150px] !z-[6] w-[62px] min-w-[62px] text-center",
+    leave: "right-[88px] !z-[6] w-[62px] min-w-[62px] text-center",
+    rate: "right-0 !z-[6] w-[88px] min-w-[88px] text-center"
+  },
+  cellSummary: {
+    present: "sticky right-[274px] z-[3] w-[62px] min-w-[62px] bg-white text-center font-semibold shadow-[-1px_0_0_#e2e8f0]",
+    late: "sticky right-[212px] z-[3] w-[62px] min-w-[62px] bg-white text-center font-semibold",
+    absent: "sticky right-[150px] z-[3] w-[62px] min-w-[62px] bg-white text-center font-semibold",
+    leave: "sticky right-[88px] z-[3] w-[62px] min-w-[62px] bg-white text-center font-semibold",
+    rate: "sticky right-0 z-[3] w-[88px] min-w-[88px] bg-white text-center"
+  },
+  studentCell: "flex flex-col whitespace-nowrap",
+  studentName: "font-semibold text-slate-900",
+  studentMeta: "text-xs text-slate-400",
+  // trend chart (SVG)
+  axisLabel: "fill-slate-500 text-[11px]",
+  xLabel: "fill-slate-500 text-[10px]",
+  xLabelSelected: "fill-blue-600 text-[10px] font-bold",
+  pdfTable: "mt-4 w-full text-left text-sm [&_td]:border-b [&_td]:border-slate-100 [&_td]:px-2 [&_td]:py-2 [&_td]:text-slate-700 [&_th]:border-b [&_th]:border-slate-300 [&_th]:px-2 [&_th]:py-2 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-slate-500 [&_th_span]:font-normal",
+  pdfStatus: {
+    present: "font-semibold text-emerald-700",
+    late: "font-semibold text-amber-700",
+    absent: "font-semibold text-rose-700",
+    leave: "font-semibold text-blue-700",
+    empty: "font-semibold text-slate-400"
   }
+};
 
-  return sessions.sort((a, b) => {
-    if (a.date !== b.date) return a.date.localeCompare(b.date);
-    return a.period - b.period;
-  });
+// rooms, subjects, students and attendance come from the shared report data set (report-data.js)
+function buildInlineMockDatabase() {
+  const data = window.ReportData;
+  return {
+    // attendance is kept for the current academic year only
+    academicYears: data.academicYears.filter((year) => year.isCurrent),
+    semesters: data.semesters.filter((semester) => semester.academicYearId === data.currentYear().id),
+    grades: data.grades,
+    classrooms: data.classrooms,
+    teachers: data.teachers,
+    subjects: data.subjects,
+    schedules: data.schedules,
+    students: data.students,
+    attendance: data.attendance
+  };
 }
 
 function setToast(message, variant = "info") {
-  els.toast.className = `toast ${variant}`;
-  els.toast.innerHTML = `<strong>${variant === "success" ? "สำเร็จ" : "แจ้งเตือน"}</strong><span>${message}</span>`;
-  els.toast.classList.add("is-visible");
+  const toast = els.toast;
+  toast.className = toast.dataset.baseClass;
+  toast.innerHTML = `<strong class="font-semibold">${variant === "success" ? "สำเร็จ" : "แจ้งเตือน"}</strong><span class="text-slate-200">${message}</span>`;
+  const visible = toast.dataset.visibleClass.split(" ");
+  toast.classList.add(...visible);
   window.clearTimeout(setToast.timer);
   setToast.timer = window.setTimeout(() => {
-    els.toast.classList.remove("is-visible");
+    toast.classList.remove(...visible);
   }, 2200);
 }
 
@@ -364,10 +229,7 @@ function getCurrentAcademicYear() {
 }
 
 function getCurrentSemester() {
-  const today = new Date();
-  const todayText = formatDateInput(today);
-  return state.db.semesters.find((semester) => semester.startDate <= todayText && semester.endDate >= todayText)
-    || state.db.semesters[0];
+  return window.ReportData.currentSemester() || state.db.semesters[0];
 }
 
 // Filters open on the current semester only when it has attendance records;
@@ -458,7 +320,7 @@ function syncSubjectOptions() {
     .sort((a, b) => a.name.localeCompare(b.name, "th"));
 
   els.subject.innerHTML = `<option value="all">ทุกวิชา</option>${subjects
-    .map((subject) => `<option value="${subject.id}">${subject.code} - ${subject.name}</option>`)
+    .map((subject) => `<option value="${subject.id}">${window.ReportData.subjectLabel(subject, state.maps.classrooms.get(selectedRoom)?.gradeId)}</option>`)
     .join("")}`;
 
   els.subject.value = subjects.some((subject) => subject.id === previous) ? previous : "all";
@@ -606,17 +468,27 @@ function getStatusAbbr(status) {
   return map[status] || status;
 }
 
+// toLocaleDateString builds a new formatter on every call, which is slow over thousands of cells:
+// keep one formatter per format and remember each date's text
+const thaiWeekdayFormat = new Intl.DateTimeFormat("th-TH", { weekday: "short" });
+const thaiShortDateFormat = new Intl.DateTimeFormat("th-TH", { day: "numeric", month: "short" });
+const thaiDateCache = new Map();
+function cachedThaiDate(kind, format, dateString) {
+  const key = `${kind}|${dateString}`;
+  let text = thaiDateCache.get(key);
+  if (text === undefined) {
+    text = format.format(new Date(`${dateString}T00:00:00`));
+    thaiDateCache.set(key, text);
+  }
+  return text;
+}
+
 function getThaiWeekday(dateString) {
-  const date = new Date(`${dateString}T00:00:00`);
-  return date.toLocaleDateString("th-TH", { weekday: "short" });
+  return cachedThaiDate("weekday", thaiWeekdayFormat, dateString);
 }
 
 function formatThaiShortDate(dateString) {
-  const date = new Date(`${dateString}T00:00:00`);
-  return date.toLocaleDateString("th-TH", {
-    day: "numeric",
-    month: "short"
-  });
+  return cachedThaiDate("short", thaiShortDateFormat, dateString);
 }
 
 function buildSearchResult(dateRange = getDateRangeForType()) {
@@ -648,7 +520,7 @@ function buildSearchResult(dateRange = getDateRangeForType()) {
 
   const sessionMap = new Map();
   records.forEach((record) => {
-    const key = `${record.scheduleId}|${record.date}|${record.period}`;
+    const key = record.key;
     if (sessionMap.has(key)) return;
     const schedule = state.maps.schedules.get(record.scheduleId);
     const subject = state.maps.subjects.get(schedule.subjectId);
@@ -659,7 +531,7 @@ function buildSearchResult(dateRange = getDateRangeForType()) {
       date: record.date,
       period: record.period,
       subjectName: subject.name,
-      subjectCode: subject.code,
+      subjectCode: schedule.subjectCode,
       teacherName: teacher.shortName,
       classroomId: schedule.classroomId
     });
@@ -702,11 +574,11 @@ function buildSearchResult(dateRange = getDateRangeForType()) {
       const riskThreshold = getAbsenceRiskThreshold(absenceLimit);
       const needsAttention = isAbsenceRisk(counts.absent, absenceLimit, riskThreshold);
       const examBlocked = isExamBlocked(counts.absent, absenceLimit);
-      const sessionStatusMap = new Map(studentRecords.map((record) => [`${record.scheduleId}|${record.date}|${record.period}`, record]));
+      const sessionStatusMap = new Map(studentRecords.map((record) => [record.key, record]));
       const scheduleLabels = [...new Set(studentRecords.map((record) => {
         const schedule = state.maps.schedules.get(record.scheduleId);
         const subject = state.maps.subjects.get(schedule.subjectId);
-        return `${subject.code} - ${subject.name}`;
+        return `${schedule.subjectCode} - ${subject.name}`;
       }))];
 
       return {
@@ -952,12 +824,26 @@ function getSessionDateRange(sessions) {
   };
 }
 
+// records of the given students grouped by period, built once per student list:
+// the trend chart asks for one month (or one day) at a time, so scanning every record each time was slow
+const recordsBySessionCache = new WeakMap();
+function getRecordsBySession(students) {
+  let index = recordsBySessionCache.get(students);
+  if (!index) {
+    index = new Map();
+    students.forEach((student) => student.studentRecords.forEach((record) => {
+      const list = index.get(record.key);
+      if (list) list.push(record);
+      else index.set(record.key, [record]);
+    }));
+    recordsBySessionCache.set(students, index);
+  }
+  return index;
+}
+
 function getRecordsForSessions(students, sessions) {
-  const sessionKeys = new Set(sessions.map((session) => session.key));
-  return students.flatMap((student) => student.studentRecords.filter((record) => {
-    const key = `${record.scheduleId}|${record.date}|${record.period}`;
-    return sessionKeys.has(key);
-  }));
+  const index = getRecordsBySession(students);
+  return sessions.flatMap((session) => index.get(session.key) || []);
 }
 
 function buildTrendPointFromSessions(label, sessions, students, options = {}) {
@@ -998,7 +884,6 @@ function getSelectedOptionText(element, fallback) {
 }
 
 function getSummarySubjectLabel() {
-  if (els.subject.value === "subject-math") return "คณิตศาสตร์พื้นฐาน";
   const subjectText = getSelectedOptionText(els.subject, "ทุกวิชา");
   return subjectText.includes(" - ") ? subjectText.split(" - ").slice(1).join(" - ") : subjectText;
 }
@@ -1044,7 +929,7 @@ function renderAttendanceTrend(points) {
   syncTrendDrilldownControls();
 
   if (!points.length) {
-    els.attendanceTrendChart.innerHTML = `<text class="trend-axis-label" x="360" y="172" text-anchor="middle">ไม่มีข้อมูลคาบเรียนในเงื่อนไขที่เลือก</text>`;
+    els.attendanceTrendChart.innerHTML = `<text class="${UI.axisLabel}" x="360" y="172" text-anchor="middle">ไม่มีข้อมูลคาบเรียนในเงื่อนไขที่เลือก</text>`;
     els.trendAverage.textContent = "-";
     els.trendMax.textContent = "-";
     els.trendMin.textContent = "-";
@@ -1104,40 +989,40 @@ function renderAttendanceTrend(points) {
 
   els.attendanceTrendChart.setAttribute("viewBox", `0 0 ${width} ${height}`);
   els.attendanceTrendChart.innerHTML = `
-    <g class="trend-legend" transform="translate(${padding.left}, 14)">
+    <g transform="translate(${padding.left}, 14)">
       ${trendSeries.map((series, index) => `
         <g transform="translate(${index * 104}, 0)">
-          <line class="trend-line-swatch trend-line-${series.className}" x1="0" y1="0" x2="18" y2="0"></line>
-          <text class="trend-axis-label" x="25" y="4">${series.label}</text>
+          <line class="stroke-[3] ${series.stroke}" stroke-linecap="round" x1="0" y1="0" x2="18" y2="0"></line>
+          <text class="${UI.axisLabel}" x="25" y="4">${series.label}</text>
         </g>
       `).join("")}
     </g>
     ${pointCoords.filter((point) => point.isSelected).map((point) => `
-      <rect class="trend-selected-band" x="${point.x - bandWidth / 2}" y="${chartTop - 8}" width="${bandWidth}" height="${chartBottom - chartTop + 16}" rx="6"></rect>
+      <rect class="fill-blue-50" x="${point.x - bandWidth / 2}" y="${chartTop - 8}" width="${bandWidth}" height="${chartBottom - chartTop + 16}" rx="6"></rect>
     `).join("")}
     ${panels.map((panel) => `
-      <text class="trend-panel-title" x="${padding.left}" y="${panel.top - 12}">${panel.title} (%)</text>
+      <text class="fill-slate-800 text-xs font-bold" x="${padding.left}" y="${panel.top - 12}">${panel.title} (%)</text>
       ${[0, panel.max / 2, panel.max].map((tick) => {
         const y = panel.yFor(tick);
         return `
-          <line class="trend-grid-line" x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}"></line>
-          <text class="trend-axis-label" x="${padding.left - 10}" y="${y + 4}" text-anchor="end">${formatRate(tick)}%</text>
+          <line class="stroke-slate-200" x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}"></line>
+          <text class="${UI.axisLabel}" x="${padding.left - 10}" y="${y + 4}" text-anchor="end">${formatRate(tick)}%</text>
         `;
       }).join("")}
-      ${panel.series.map((series) => `<path class="trend-line trend-line-${series.className}" d="${buildPath(series)}"></path>`).join("")}
+      ${panel.series.map((series) => `<path class="fill-none stroke-[3] ${series.stroke}" stroke-linecap="round" stroke-linejoin="round" d="${buildPath(series)}"></path>`).join("")}
     `).join("")}
     ${pointCoords.map((point, index) => `
-      <g class="trend-point-group ${point.isDrillable ? "is-drillable" : ""}" data-index="${index}" ${point.isDrillable ? `tabindex="0" role="button" aria-label="ดูรายวัน ${point.drilldownLabel}"` : ""}>
-        <rect class="trend-hit-area" x="${point.x - Math.max(xStep / 2, 24)}" y="${chartTop}" width="${Math.max(xStep, 48)}" height="${chartBottom - chartTop}"></rect>
+      <g class="group touch-manipulation outline-none ${point.isDrillable ? "cursor-zoom-in" : ""}" data-index="${index}" ${point.isDrillable ? `tabindex="0" role="button" aria-label="ดูรายวัน ${point.drilldownLabel}"` : ""}>
+        <rect class="fill-transparent" x="${point.x - Math.max(xStep / 2, 24)}" y="${chartTop}" width="${Math.max(xStep, 48)}" height="${chartBottom - chartTop}"></rect>
         ${trendSeries.map((series) => `
-          <circle class="trend-point trend-point-${series.className}" cx="${point.x}" cy="${point.series[series.key].y}" r="5"></circle>
+          <circle class="fill-white stroke-[2.5] group-hover:stroke-[3.5] group-focus:stroke-[3.5] ${series.stroke}" cx="${point.x}" cy="${point.series[series.key].y}" r="5"></circle>
         `).join("")}
-        <text class="trend-axis-label trend-x-label${point.isSelected ? " is-selected" : ""}" x="${point.x}" y="${height - 16}" text-anchor="middle">${point.label}</text>
+        <text class="${point.isSelected ? UI.xLabelSelected : UI.xLabel}" x="${point.x}" y="${height - 16}" text-anchor="middle">${point.label}</text>
       </g>
     `).join("")}
   `;
 
-  els.attendanceTrendChart.querySelectorAll(".trend-point-group").forEach((node) => {
+  els.attendanceTrendChart.querySelectorAll("g[data-index]").forEach((node) => {
     const point = { ...pointCoords[Number(node.dataset.index)], chartWidth: width };
     node.addEventListener("pointerenter", () => showTrendTooltip(point));
     node.addEventListener("pointermove", () => showTrendTooltip(point));
@@ -1208,30 +1093,30 @@ function renderAttendanceInsights(priorityStudents) {
   els.priorityInsightCount.textContent = `${priorityStudents.length} คน`;
 
   if (!priorityStudents.length) {
-    els.priorityList.innerHTML = `<div class="priority-empty">ไม่พบนักเรียนกลุ่มเสี่ยง</div>`;
+    els.priorityList.innerHTML = `<div class="py-4 text-sm text-slate-400">ไม่พบนักเรียนกลุ่มเสี่ยง</div>`;
     return;
   }
 
   els.priorityList.innerHTML = priorityStudents.map((student) => {
     return `
-      <a class="priority-item priority-item-link" href="#attendance-student-${student.id}" data-student-id="${student.id}">
-        <div class="priority-student">
-          <strong>${student.name}</strong>
-          <span>${student.classroomName} · เลขที่ ${student.number}</span>
+      <a class="grid items-center gap-3 border-b border-slate-100 px-2 py-3 text-sm text-slate-700 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-400 md:grid-cols-[minmax(190px,1fr)_auto_minmax(96px,auto)] md:gap-5" href="#attendance-student-${student.id}" data-student-id="${student.id}">
+        <div class="min-w-0">
+          <strong class="block truncate font-semibold text-slate-900">${student.name}</strong>
+          <span class="block text-xs text-slate-500">${student.classroomName} · เลขที่ ${student.number}</span>
         </div>
-        <div class="priority-metrics" aria-label="ข้อมูลการเข้าเรียนของ ${student.name}">
-          <span class="priority-metric priority-metric-rate"><small>ขาด</small><strong>${student.absentPeriods}/${student.absenceLimit} คาบ</strong></span>
-          <span class="priority-metric"><small>ทั้งหมด</small><strong>${student.totalPeriods} คาบ</strong></span>
-          <span class="priority-metric"><small>เริ่มเสี่ยง</small><strong>${student.riskThreshold} คาบ</strong></span>
+        <div class="grid grid-cols-3 gap-4 [&_small]:block [&_small]:text-xs [&_small]:text-slate-400 [&_strong]:block [&_strong]:whitespace-nowrap [&_strong]:font-semibold" aria-label="ข้อมูลการเข้าเรียนของ ${student.name}">
+          <span class="min-w-[72px]"><small>ขาด</small><strong class="text-base text-rose-600">${student.absentPeriods}/${student.absenceLimit} คาบ</strong></span>
+          <span class="min-w-[72px]"><small>ทั้งหมด</small><strong>${student.totalPeriods} คาบ</strong></span>
+          <span class="min-w-[72px]"><small>เริ่มเสี่ยง</small><strong>${student.riskThreshold} คาบ</strong></span>
         </div>
-        <span class="priority-link-label">ดูในตาราง <span aria-hidden="true">→</span></span>
+        <span class="whitespace-nowrap text-xs font-semibold text-brand md:justify-self-end">ดูในตาราง <span aria-hidden="true">→</span></span>
       </a>
     `;
   }).join("");
 }
 
 function jumpToAttendanceStudent(event) {
-  const link = event.target.closest(".priority-item-link");
+  const link = event.target.closest("[data-student-id]");
   if (!link) return;
   event.preventDefault();
 
@@ -1262,50 +1147,46 @@ function syncResultsMeta() {
 function renderQuickHeader() {
   els.attendanceThead.innerHTML = `
     <tr>
-      <th class="sticky-col sticky-col-id sticky-top">รหัสนักเรียน</th>
-      <th class="sticky-col sticky-col-name sticky-top">ชื่อ-สกุล</th>
-      <th class="sticky-top">ห้อง</th>
-      <th class="sticky-top">วิชาที่พบ</th>
-      <th class="sticky-top">วันที่/คาบล่าสุด</th>
-      <th class="sticky-top">สถานะล่าสุด</th>
-      <th class="sticky-top">มาเรียน</th>
-      <th class="sticky-top">สาย</th>
-      <th class="sticky-top">ขาด</th>
-      <th class="sticky-top">ลา/อื่นๆ</th>
-      <th class="sticky-top">% ขาดเรียน</th>
+      <th class="${UI.headId}">รหัสนักเรียน</th>
+      <th class="${UI.headName}">ชื่อ-สกุล</th>
+      <th>ห้อง</th>
+      <th>วิชาที่พบ</th>
+      <th>วันที่/คาบล่าสุด</th>
+      <th>สถานะล่าสุด</th>
+      <th>มาเรียน</th>
+      <th>สาย</th>
+      <th>ขาด</th>
+      <th>ลา/อื่นๆ</th>
+      <th>% ขาดเรียน</th>
     </tr>
   `;
 }
 
 function renderReportHeader() {
   const sessionHeaders = state.visibleSessions.map((session, index) => `
-    <th class="sticky-top matrix-date-head report-session-date" data-col-key="session-${index}">
-      <div class="session-head">
-        <strong>${formatThaiShortDate(session.date)}</strong>
-        <span>${getThaiWeekday(session.date)}</span>
-      </div>
+    <th class="!border-b-0" data-col-key="session-${index}">
+      <strong class="block text-slate-700">${formatThaiShortDate(session.date)}</strong>
+      <span class="block font-medium text-slate-400">${getThaiWeekday(session.date)}</span>
     </th>
   `).join("");
   const sessionDetailHeaders = state.visibleSessions.map((session, index) => `
-    <th class="sticky-top sticky-top-second matrix-date-head report-session-detail" data-col-key="session-${index}" title="${session.subjectCode} ${session.subjectName} / ${session.teacherName}">
-      <div class="session-head session-head-compact">
-        <strong>คาบ ${session.period}</strong>
-        <span>${session.subjectCode}</span>
-      </div>
+    <th class="!top-12" data-col-key="session-${index}" title="${session.subjectCode} ${session.subjectName} / ${session.teacherName}">
+      <strong class="block text-slate-700">คาบ ${session.period}</strong>
+      <span class="block font-medium text-slate-400">${session.subjectCode}</span>
     </th>
   `).join("");
 
   els.attendanceThead.innerHTML = `
     <tr>
-      <th class="sticky-col sticky-col-id sticky-top report-rowspan-head" rowspan="2">รหัสนักเรียน</th>
-      <th class="sticky-col sticky-col-name sticky-top report-rowspan-head" rowspan="2">ชื่อ-สกุล</th>
-      <th class="sticky-top report-rowspan-head report-room-head" rowspan="2">ห้อง</th>
+      <th class="${UI.headId}" rowspan="2">รหัสนักเรียน</th>
+      <th class="${UI.headName}" rowspan="2">ชื่อ-สกุล</th>
+      <th class="min-w-[96px]" rowspan="2">ห้อง</th>
       ${sessionHeaders}
-      <th class="sticky-top sticky-summary sticky-summary-present report-rowspan-head" rowspan="2">มา</th>
-      <th class="sticky-top sticky-summary sticky-summary-late report-rowspan-head" rowspan="2">สาย</th>
-      <th class="sticky-top sticky-summary sticky-summary-absent report-rowspan-head" rowspan="2">ขาด</th>
-      <th class="sticky-top sticky-summary sticky-summary-leave report-rowspan-head" rowspan="2">ลา</th>
-      <th class="sticky-top sticky-summary sticky-summary-rate report-rowspan-head" rowspan="2">% ขาดเรียน</th>
+      <th class="${UI.headSummary.present}" rowspan="2">มา</th>
+      <th class="${UI.headSummary.late}" rowspan="2">สาย</th>
+      <th class="${UI.headSummary.absent}" rowspan="2">ขาด</th>
+      <th class="${UI.headSummary.leave}" rowspan="2">ลา</th>
+      <th class="${UI.headSummary.rate}" rowspan="2">% ขาดเรียน</th>
     </tr>
     <tr>
       ${sessionDetailHeaders}
@@ -1317,7 +1198,7 @@ function renderEmptyState(message, colSpan) {
   els.attendanceTbody.innerHTML = `
     <tr>
       <td colspan="${colSpan}">
-        <div class="empty-state">${message}</div>
+        <div class="${UI.empty}">${message}</div>
       </td>
     </tr>
   `;
@@ -1339,10 +1220,11 @@ function getStudentAttendanceHighlights(student) {
   };
 }
 
-function getAbsenceRateChipClass(student) {
-  if (student.examBlocked) return "rate-chip-danger";
-  if (student.needsAttention) return "rate-chip-alert";
-  return "";
+// tone of the absence-rate chip: over the limit, close to it, or fine
+function getAbsenceRateTone(student) {
+  if (student.examBlocked) return "danger";
+  if (student.needsAttention) return "alert";
+  return "normal";
 }
 
 function renderQuickRows() {
@@ -1355,36 +1237,36 @@ function renderQuickRows() {
   els.attendanceTbody.innerHTML = tableStudents.map((student) => {
     const index = state.visibleStudents.indexOf(student);
     const highlights = getStudentAttendanceHighlights(student);
-    const rateChipClass = getAbsenceRateChipClass(student);
+    const rateTone = getAbsenceRateTone(student);
     const latestStatus = student.latestRecord ? student.latestRecord.status : "-";
     const latestLabel = student.latestRecord
       ? `${formatThaiShortDate(student.latestRecord.date)} / คาบ ${student.latestRecord.period}`
       : "-";
 
     const statusCell = state.editMode
-      ? `<select class="status-select" data-index="${index}" aria-label="เปลี่ยนสถานะล่าสุดของ ${student.name}">
+      ? `<select data-index="${index}" aria-label="เปลี่ยนสถานะล่าสุดของ ${student.name}">
           ${attendanceOptions.map((status) => `<option value="${status}" ${status === latestStatus ? "selected" : ""}>${status}</option>`).join("")}
         </select>`
-      : `<span class="status-chip" data-status="${latestStatus}">${latestStatus}</span>`;
+      : `<span class="${UI.statusChip} ${UI.statusTone[getStatusTone(latestStatus)]}" data-status="${latestStatus}">${latestStatus}</span>`;
 
     return `
-      <tr id="attendance-student-${student.id}" class="attendance-student-row">
-        <td class="sticky-col sticky-col-id">${student.studentCode}</td>
-        <td class="sticky-col sticky-col-name">
-          <div class="student-cell">
-            <strong>${student.name}</strong>
-            <span>${student.gradeName}</span>
+      <tr id="attendance-student-${student.id}">
+        <td class="${UI.cellId} ${UI.riskEdge[rateTone]}">${student.studentCode}</td>
+        <td class="${UI.cellName}">
+          <div class="${UI.studentCell}">
+            <strong class="${UI.studentName}">${student.name}</strong>
+            <span class="${UI.studentMeta}">${student.gradeName}</span>
           </div>
         </td>
         <td>${student.classroomName}</td>
-        <td>${student.scheduleLabels.join("<br />")}</td>
+        <td>${student.scheduleLabels.length > 3 ? `${student.scheduleLabels.length} วิชา` : student.scheduleLabels.join("<br />")}</td>
         <td>${latestLabel}</td>
         <td>${statusCell}</td>
         <td>${student.counts.present}</td>
-        <td class="${highlights.late ? "attendance-cell-highlight-late" : ""}">${student.counts.late}</td>
-        <td class="${highlights.absent ? "attendance-cell-highlight-absent" : ""}">${student.counts.absent}</td>
-        <td class="${highlights.leave ? "attendance-cell-highlight-leave" : ""}">${student.counts.leave}</td>
-        <td><span class="rate-chip ${rateChipClass}">${student.absentRate}%</span></td>
+        <td class="${highlights.late ? UI.highlight.late : ""}">${student.counts.late}</td>
+        <td class="${highlights.absent ? UI.highlight.absent : ""}">${student.counts.absent}</td>
+        <td class="${highlights.leave ? UI.highlight.leave : ""}">${student.counts.leave}</td>
+        <td><span class="${UI.rateChip} ${UI.rateTone[rateTone]}" data-rate-tone="${rateTone}">${student.absentRate}%</span></td>
       </tr>
     `;
   }).join("");
@@ -1397,23 +1279,26 @@ function renderReportRows() {
     return;
   }
 
+  // Thai date formatting is slow; a room with all subjects has ~14,000 cells but only ~400 periods, so format each period once
+  const sessionLabels = state.visibleSessions.map((session) => `${formatThaiShortDate(session.date)} คาบ ${session.period}`);
+
   els.attendanceTbody.innerHTML = tableStudents.map((student) => {
     const highlights = getStudentAttendanceHighlights(student);
-    const rateChipClass = getAbsenceRateChipClass(student);
+    const rateTone = getAbsenceRateTone(student);
     const sessionCells = state.visibleSessions.map((session, index) => {
       const record = student.sessionStatusMap.get(session.key);
       const isApplicable = session.classroomId === student.classroomId;
       const status = record ? record.status : "-";
       const displayTitle = record
-        ? `${formatThaiShortDate(record.date)} คาบ ${record.period}: ${record.status}`
+        ? `${sessionLabels[index]}: ${record.status}`
         : isApplicable
-          ? `${formatThaiShortDate(session.date)} คาบ ${session.period}: ยังไม่มีข้อมูล`
+          ? `${sessionLabels[index]}: ยังไม่มีข้อมูล`
           : "ไม่มีคาบเรียนของห้องนี้";
 
       if (state.bulkEditMode && record) {
         return `
-          <td class="matrix-cell matrix-cell-edit" data-col-key="session-${index}">
-            <select class="status-select matrix-status-select" data-record-id="${record.id}" aria-label="เปลี่ยนสถานะ ${student.name} ${formatThaiShortDate(session.date)} คาบ ${session.period}">
+          <td data-col-key="session-${index}">
+            <select data-record-id="${record.id}" aria-label="เปลี่ยนสถานะ ${student.name} ${sessionLabels[index]}">
               ${attendanceOptions.map((option) => `<option value="${option}" ${option === status ? "selected" : ""}>${option}</option>`).join("")}
             </select>
           </td>
@@ -1421,35 +1306,32 @@ function renderReportRows() {
       }
 
       const tone = getStatusTone(status);
-      const highlightClass = tone === "late"
-        ? "attendance-cell-highlight-late"
+      // only what differs per cell: the tint of a late / leave / over-limit absent cell, or the grey of a cell without a period
+      const cellClass = tone === "late"
+        ? UI.highlight.late
         : tone === "leave"
-          ? "attendance-cell-highlight-leave"
-          : tone === "absent" && highlights.absent ? "attendance-cell-highlight-absent" : "";
+          ? UI.highlight.leave
+          : tone === "absent" && highlights.absent ? UI.highlight.absent : isApplicable ? "" : UI.mutedCell;
 
-      return `
-        <td class="matrix-cell ${isApplicable ? "" : "matrix-cell-muted"} ${highlightClass}" data-col-key="session-${index}">
-          <span class="status-dot status-dot-${getStatusTone(status)}" title="${displayTitle}" aria-label="${displayTitle}">${getStatusAbbr(status)}</span>
-        </td>
-      `;
+      return `<td${cellClass ? ` class="${cellClass}"` : ""} data-col-key="session-${index}"><span class="${UI.dot[tone]}" title="${displayTitle}">${getStatusAbbr(status)}</span></td>`;
     }).join("");
 
     return `
-      <tr id="attendance-student-${student.id}" class="attendance-student-row">
-        <td class="sticky-col sticky-col-id">${student.studentCode}</td>
-        <td class="sticky-col sticky-col-name">
-          <div class="student-cell">
-            <strong>${student.name}</strong>
-            <span>${student.classroomName}</span>
+      <tr id="attendance-student-${student.id}">
+        <td class="${UI.cellId} ${UI.riskEdge[rateTone]}">${student.studentCode}</td>
+        <td class="${UI.cellName}">
+          <div class="${UI.studentCell}">
+            <strong class="${UI.studentName}">${student.name}</strong>
+            <span class="${UI.studentMeta}">${student.classroomName}</span>
           </div>
         </td>
         <td>${student.classroomName}</td>
         ${sessionCells}
-        <td class="report-summary-cell sticky-summary-present">${student.counts.present}</td>
-        <td class="report-summary-cell sticky-summary-late ${highlights.late ? "attendance-cell-highlight-late" : ""}">${student.counts.late}</td>
-        <td class="report-summary-cell sticky-summary-absent ${highlights.absent ? "attendance-cell-highlight-absent" : ""}">${student.counts.absent}</td>
-        <td class="report-summary-cell sticky-summary-leave ${highlights.leave ? "attendance-cell-highlight-leave" : ""}">${student.counts.leave}</td>
-        <td class="report-summary-cell sticky-summary-rate"><span class="rate-chip ${rateChipClass}">${student.absentRate}%</span></td>
+        <td class="${UI.cellSummary.present}">${student.counts.present}</td>
+        <td class="${UI.cellSummary.late} ${highlights.late ? UI.highlight.late : ""}">${student.counts.late}</td>
+        <td class="${UI.cellSummary.absent} ${highlights.absent ? UI.highlight.absent : ""}">${student.counts.absent}</td>
+        <td class="${UI.cellSummary.leave} ${highlights.leave ? UI.highlight.leave : ""}">${student.counts.leave}</td>
+        <td class="${UI.cellSummary.rate}"><span class="${UI.rateChip} ${UI.rateTone[rateTone]}" data-rate-tone="${rateTone}">${student.absentRate}%</span></td>
       </tr>
     `;
   }).join("");
@@ -1462,10 +1344,16 @@ function renderTable() {
   if (!state.visibleSessions.length) {
     els.attendanceThead.innerHTML = `
       <tr>
-        <th class="sticky-top">ไม่พบคาบเรียนจริงในช่วงเวลาที่เลือก</th>
+        <th>ไม่พบคาบเรียนจริงในช่วงเวลาที่เลือก</th>
       </tr>
     `;
     renderEmptyState("ช่วงเวลานี้ยังไม่มีคาบเรียนของห้องและวิชาที่เลือก", 1);
+    return;
+  }
+
+  if (state.viewMode === "quick") {
+    renderQuickHeader();
+    renderQuickRows();
     return;
   }
 
@@ -1481,7 +1369,8 @@ function syncModeControls() {
   els.saveBtn.hidden = !state.bulkEditMode;
   els.bulkEditBtn.disabled = state.viewMode !== "report";
   els.bulkEditBtn.textContent = state.bulkEditMode ? "ยกเลิกแก้ไขกลุ่ม" : "แก้ไขแบบกลุ่ม";
-  els.bulkEditBtn.classList.toggle("is-active", state.bulkEditMode);
+  UI.btnActive.forEach((name) => els.bulkEditBtn.classList.toggle(name, state.bulkEditMode));
+  UI.btnIdle.forEach((name) => els.bulkEditBtn.classList.toggle(name, !state.bulkEditMode));
 }
 
 function searchData() {
@@ -1489,6 +1378,7 @@ function searchData() {
   const result = buildSearchResult();
   state.visibleSessions = result.sessions;
   state.visibleStudents = result.students;
+  state.viewMode = result.students.length * result.sessions.length > MAX_MATRIX_CELLS ? "quick" : "report";
   state.currentScopeText = buildScopeText();
   state.editMode = false;
   state.bulkEditMode = false;
@@ -1531,7 +1421,7 @@ function toggleEditMode(force) {
 
 function saveChanges() {
   if (state.bulkEditMode) {
-    const selects = els.attendanceTbody.querySelectorAll("select.matrix-status-select");
+    const selects = els.attendanceTbody.querySelectorAll("select[data-record-id]");
     let updatedCount = 0;
     selects.forEach((select) => {
       const sourceRecord = state.maps.attendance.get(select.dataset.recordId);
@@ -1547,7 +1437,7 @@ function saveChanges() {
     return;
   }
 
-  const selects = els.attendanceTbody.querySelectorAll("select.status-select");
+  const selects = els.attendanceTbody.querySelectorAll("select[data-index]");
   selects.forEach((select) => {
     const index = Number(select.dataset.index);
     const student = state.visibleStudents[index];
@@ -1599,14 +1489,14 @@ function buildPdfPreviewRows() {
       const cells = previewSessions.map((session) => {
         const record = student.sessionStatusMap.get(session.key);
         const status = record ? record.status : "-";
-        return `<td><span class="pdf-status pdf-status-${getStatusTone(status)}">${getStatusAbbr(status)}</span></td>`;
+        return `<td><span class="${UI.pdfStatus[getStatusTone(status)]}">${getStatusAbbr(status)}</span></td>`;
       }).join("");
 
       return `
         <tr>
           <td>${index + 1}</td>
           <td>${student.studentCode}</td>
-          <td class="pdf-name-cell">${student.name}</td>
+          <td class="font-medium text-slate-900">${student.name}</td>
           <td>${student.classroomName}</td>
           ${cells}
           <td>${student.absentRate}%</td>
@@ -1615,7 +1505,7 @@ function buildPdfPreviewRows() {
     }).join("");
 
     return `
-      <table class="pdf-preview-table pdf-preview-table-report">
+      <div class="overflow-x-auto"><table class="${UI.pdfTable} [&_td]:whitespace-nowrap">
         <thead>
           <tr>
             <th>ลำดับ</th>
@@ -1627,7 +1517,7 @@ function buildPdfPreviewRows() {
           </tr>
         </thead>
         <tbody>${rows}</tbody>
-      </table>
+      </table></div>
     `;
   }
 
@@ -1638,17 +1528,17 @@ function buildPdfPreviewRows() {
       <tr>
         <td>${index + 1}</td>
         <td>${student.studentCode}</td>
-        <td class="pdf-name-cell">${student.name}</td>
+        <td class="font-medium text-slate-900">${student.name}</td>
         <td>${student.classroomName}</td>
         <td>${latestLabel}</td>
-        <td><span class="pdf-status pdf-status-${getStatusTone(latestStatus)}">${latestStatus}</span></td>
+        <td><span class="${UI.pdfStatus[getStatusTone(latestStatus)]}">${latestStatus}</span></td>
         <td>${student.absentRate}%</td>
       </tr>
     `;
   }).join("");
 
   return `
-    <table class="pdf-preview-table">
+    <table class="${UI.pdfTable}">
       <thead>
         <tr>
           <th>ลำดับ</th>
@@ -1678,46 +1568,28 @@ function openAttendancePdfPreview() {
     confirmText: "ดาวน์โหลด PDF",
     mockMessage: "Mockup: ขั้นตอนดาวน์โหลด PDF จะถูกเชื่อมต่อภายหลัง",
     sheetHtml: `
-    <div class="pdf-document-head">
+    <div class="flex items-start justify-between gap-4 border-b border-slate-200 pb-4">
       <div>
-        <p>ระบบรายงานการเข้าเรียน</p>
-        <h3>รายงานการเข้าเรียนของนักเรียน</h3>
+        <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">ระบบรายงานการเข้าเรียน</p>
+        <h3 class="mt-1 text-lg font-semibold text-slate-900">รายงานการเข้าเรียนของนักเรียน</h3>
       </div>
-      <span>${modeLabel}</span>
+      <span class="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600">${modeLabel}</span>
     </div>
-    <div class="pdf-document-meta">
+    <div class="mt-4 flex flex-wrap gap-x-6 gap-y-1 text-sm text-slate-500">
       <span>ช่วงข้อมูล: ${state.currentScopeText}</span>
       <span>คาบเรียนจริง: ${state.visibleSessions.length} คาบ</span>
       <span>นักเรียน: ${state.visibleStudents.length} คน</span>
     </div>
-    <div class="pdf-summary-strip">
+    <div class="mt-3 flex flex-wrap gap-6 rounded-xl bg-slate-50 px-4 py-3 text-sm text-slate-600 [&_strong]:font-semibold [&_strong]:text-slate-900">
       <span>นักเรียนทั้งหมด <strong>${els.totalStudents.textContent}</strong></span>
       <span>% ขาดเรียน <strong>${els.absentRate.textContent}</strong></span>
       <span>ขาดเรียน <strong>${els.absentCount.textContent}</strong></span>
       <span>มาสาย <strong>${els.lateCount.textContent}</strong></span>
     </div>
     ${buildPdfPreviewRows()}
-    <p class="pdf-preview-note">ตัวอย่างนี้แสดงบางรายการเพื่อดูรูปแบบตารางก่อนดาวน์โหลดจริง</p>
+    <p class="mt-4 text-xs text-slate-400">ตัวอย่างนี้แสดงบางรายการเพื่อดูรูปแบบตารางก่อนดาวน์โหลดจริง</p>
     `
   });
-}
-
-function openReportPreviewModal(options) {
-  const {
-    title,
-    scope,
-    sheetHtml,
-    confirmText = "ดำเนินการ",
-    mockMessage = "Mockup: ยังไม่เชื่อมต่อการทำงานจริง"
-  } = options;
-  document.getElementById("attendancePdfTitle").textContent = title;
-  els.attendancePdfScope.textContent = scope;
-  els.attendancePdfSheet.innerHTML = sheetHtml;
-  els.attendancePdfDownloadBtn.textContent = confirmText;
-  els.attendancePdfDownloadBtn.dataset.mockMessage = mockMessage;
-  els.attendancePdfModal.hidden = false;
-  document.body.classList.add("modal-open");
-  els.attendancePdfCloseBtn.focus();
 }
 
 function syncAttendanceThresholdControls() {
@@ -1752,38 +1624,6 @@ function applyAttendanceThreshold() {
   closeAttendanceThresholdSettings();
   searchData();
   setToast(`ปรับเกณฑ์การเข้าเรียนเป็น ${state.attendanceThreshold}% แล้ว`, "info");
-}
-
-function closeAttendancePdfPreview() {
-  els.attendancePdfModal.hidden = true;
-  document.body.classList.remove("modal-open");
-}
-
-function mockPdfDownload() {
-  const message = els.attendancePdfDownloadBtn.dataset.mockMessage || "Mockup: ขั้นตอนดาวน์โหลด PDF จะถูกเชื่อมต่อภายหลัง";
-  closeAttendancePdfPreview();
-  setToast(message, "info");
-}
-
-window.openReportPreviewModal = openReportPreviewModal;
-
-function setActiveModule(system) {
-  state.activeModule = system;
-  els.navItems.forEach((item) => {
-    item.classList.toggle("is-active", item.dataset.system === system);
-  });
-  els.activeModuleLabel.textContent = moduleLabels[system] || system;
-  const targetPage = ["attendance", "score-subject", "average-score-year", "record-report", "unable-exam"].includes(system) ? system : "placeholder";
-  els.appPages.forEach((page) => {
-    page.classList.toggle("is-active", page.dataset.page === targetPage);
-  });
-
-  if (targetPage === "placeholder") {
-    els.placeholderPageTitle.textContent = moduleLabels[system] || "โมดูลอื่น";
-    els.placeholderPageSubtitle.textContent = `หน้าสำหรับ ${moduleLabels[system] || system} ยังไม่ได้ถูกออกแบบใน prototype นี้`;
-    els.placeholderModuleTitle.textContent = `${moduleLabels[system] || system} ยังไม่พร้อมใช้งาน`;
-    els.placeholderModuleText.textContent = "ตอนนี้มีหน้ารายงานการเข้าเรียน รายงานคะแนนรายวิชา รายงานคะแนนเฉลี่ยรายปี รายงานผลการเรียนระเบียนสะสม / GPAX และรายงานผู้ไม่มีสิทธิ์สอบที่ใช้งานได้ภายใน sidebar เดียวกัน";
-  }
 }
 
 function setViewMode(viewMode) {
@@ -1880,26 +1720,8 @@ function attachEvents() {
   els.saveBtn.addEventListener("click", saveChanges);
   els.exportExcelBtn.addEventListener("click", () => mockExport("excel"));
   els.exportPdfBtn.addEventListener("click", openAttendancePdfPreview);
-  els.attendancePdfDownloadBtn.addEventListener("click", mockPdfDownload);
-  els.attendancePdfModal.querySelectorAll("[data-pdf-close]").forEach((node) => {
-    node.addEventListener("click", closeAttendancePdfPreview);
-  });
   document.addEventListener("keydown", (event) => {
-    if (event.key !== "Escape") return;
-    if (!els.attendanceThresholdModal.hidden) {
-      closeAttendanceThresholdSettings();
-    } else if (!els.attendancePdfModal.hidden) {
-      closeAttendancePdfPreview();
-    }
-  });
-
-  els.navItems.forEach((item) => {
-    item.addEventListener("click", () => {
-      setActiveModule(item.dataset.system);
-      if (!["attendance", "score-subject", "average-score-year", "record-report", "unable-exam"].includes(item.dataset.system)) {
-        setToast(`กำลังเตรียมโมดูล ${moduleLabels[item.dataset.system]}`, "info");
-      }
-    });
+    if (event.key === "Escape" && !els.attendanceThresholdModal.hidden) closeAttendanceThresholdSettings();
   });
 }
 
@@ -1909,7 +1731,11 @@ async function init() {
     populateFilters();
     updateFieldVisibility();
     syncModeControls();
-    setActiveModule("attendance");
+    // wait for one paint so the sidebar and empty cards show first; the timer covers background tabs, where frames do not run
+    await new Promise((resolve) => {
+      requestAnimationFrame(() => setTimeout(resolve, 0));
+      setTimeout(resolve, 100);
+    });
     searchData();
     bindMatrixHover();
     attachEvents();

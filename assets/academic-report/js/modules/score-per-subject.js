@@ -8,6 +8,34 @@ const exportLabels = {
   pdf: "PDF"
 };
 
+// Tailwind classes of the markup this script builds (the CDN only sees complete literal names)
+const UI = {
+  empty: "rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-400",
+  rowButton: "whitespace-nowrap rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50",
+  barFill: { normal: "block h-full rounded bg-blue-600", low: "block h-full rounded bg-amber-600" },
+  barValue: { normal: "text-right text-sm font-semibold text-slate-900", low: "text-right text-sm font-semibold text-amber-600" },
+  headCell: "sticky top-0 z-10",
+  // the three frozen columns: fixed widths so the left offsets line up
+  stickyHead: {
+    no: "sticky left-0 top-0 z-30 w-[88px] min-w-[88px]",
+    id: "sticky left-[88px] top-0 z-30 w-[130px] min-w-[130px]",
+    name: "sticky left-[218px] top-0 z-30 w-[220px] min-w-[220px] shadow-[1px_0_0_#e2e8f0]"
+  },
+  stickyCell: {
+    no: "sticky left-0 z-20 w-[88px] min-w-[88px] bg-white group-hover:bg-slate-50 group-data-[focused=true]:bg-blue-50",
+    id: "sticky left-[88px] z-20 w-[130px] min-w-[130px] bg-white group-hover:bg-slate-50 group-data-[focused=true]:bg-blue-50",
+    name: "sticky left-[218px] z-20 w-[220px] min-w-[220px] bg-white shadow-[1px_0_0_#e2e8f0] group-hover:bg-slate-50 group-data-[focused=true]:bg-blue-50"
+  },
+  scoreRow: "group hover:bg-slate-50 data-[focused=true]:bg-blue-50",
+  chip: {
+    none: "inline-flex min-w-[76px] justify-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-400",
+    pass: "inline-flex min-w-[76px] justify-center rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-slate-800",
+    warn: "inline-flex min-w-[76px] justify-center rounded-full border border-rose-200 bg-rose-50 px-2.5 py-1 text-xs font-semibold text-rose-700"
+  },
+  previewTable: "w-full border-collapse text-xs text-slate-800 [&_td]:border [&_td]:border-slate-300 [&_td]:px-1.5 [&_td]:py-1.5 [&_td]:text-center [&_th]:border [&_th]:border-slate-300 [&_th]:bg-slate-100 [&_th]:px-1.5 [&_th]:py-1.5 [&_th]:text-center [&_th]:font-bold [&_th_span]:font-medium [&_th_span]:text-slate-500",
+  previewNameCell: "min-w-[150px] !text-left"
+};
+
 const els = {
   academicYear: document.getElementById("scoreAcademicYear"),
   semester: document.getElementById("scoreSemester"),
@@ -73,86 +101,46 @@ const state = {
   followUpRows: []
 };
 
+// rooms, subjects, students and scores come from the shared report data set (report-data.js)
 function buildInlineMockDatabase() {
-  const academicYears = [
-    { id: "ay-2569", name: "2569", isCurrent: true }
-  ];
+  const data = window.ReportData;
+  return {
+    academicYears: data.academicYears,
+    semesters: data.semesters,
+    grades: data.grades,
+    classrooms: data.classrooms,
+    students: data.students,
+    subjects: data.subjects,
+    scoreRecords: data.scoreRecords
+  };
+}
 
-  const semesters = [
-    { id: "sem-2569-1", academicYearId: "ay-2569", term: 1, name: "ภาคเรียนที่ 1/2569", isCurrent: true },
-    { id: "sem-2569-2", academicYearId: "ay-2569", term: 2, name: "ภาคเรียนที่ 2/2569", isCurrent: false }
-  ];
+// scores already entered for the semester picked in the filter
+function getSemesterScores() {
+  const semesterId = els.semester.value;
+  if (state.semesterScores?.semesterId !== semesterId) {
+    state.semesterScores = {
+      semesterId,
+      scores: state.db.scoreRecords
+        .filter((record) => record.semesterId === semesterId && record.score !== null)
+        .map((record) => ({
+          studentId: record.studentId,
+          subjectId: record.subjectId,
+          score: record.score,
+          fullScore: record.maxScore,
+          gradeLabel: getGradeLabel(record.score, record.maxScore)
+        }))
+    };
+  }
+  return state.semesterScores.scores;
+}
 
-  const grades = [
-    { id: "grade-m1", code: "m1", name: "ม.1", order: 1 },
-    { id: "grade-m2", code: "m2", name: "ม.2", order: 2 },
-    { id: "grade-m3", code: "m3", name: "ม.3", order: 3 }
-  ];
+function getSelectedGradeId() {
+  return state.maps.classrooms.get(els.classroom.value)?.gradeId || (els.grade.value === "all" ? "" : els.grade.value);
+}
 
-  const classrooms = [
-    { id: "room-m1-1", gradeId: "grade-m1", name: "ม.1/1" },
-    { id: "room-m1-2", gradeId: "grade-m1", name: "ม.1/2" },
-    { id: "room-m2-1", gradeId: "grade-m2", name: "ม.2/1" },
-    { id: "room-m3-1", gradeId: "grade-m3", name: "ม.3/1" }
-  ];
-
-  const students = [
-    { id: "student-66001", studentCode: "66001", name: "กานต์ธิดา สุขผล", classroomId: "room-m1-1" },
-    { id: "student-66002", studentCode: "66002", name: "ธนกฤต แซ่ตั้ง", classroomId: "room-m1-1" },
-    { id: "student-66003", studentCode: "66003", name: "ปวีณ์นุช อินทรา", classroomId: "room-m1-1" },
-    { id: "student-66004", studentCode: "66004", name: "ภูริณัฐ ขยันดี", classroomId: "room-m1-1" },
-    { id: "student-66005", studentCode: "66005", name: "ศุภวิชญ์ เจริญผล", classroomId: "room-m1-2" },
-    { id: "student-66006", studentCode: "66006", name: "ณิชกานต์ พูลทรัพย์", classroomId: "room-m1-2" },
-    { id: "student-65001", studentCode: "65001", name: "กมลชนก พรหมมา", classroomId: "room-m2-1" },
-    { id: "student-65002", studentCode: "65002", name: "พีรพัฒน์ วงศ์ดี", classroomId: "room-m2-1" },
-    { id: "student-64001", studentCode: "64001", name: "ปวริศา ศรีสวัสดิ์", classroomId: "room-m3-1" },
-    { id: "student-64002", studentCode: "64002", name: "ชยพล แสงทอง", classroomId: "room-m3-1" }
-  ];
-
-  const subjectTemplates = [
-    ["th21102", "ภาษาไทย", 100],
-    ["ma21101", "คณิตศาสตร์", 100],
-    ["en21101", "ภาษาอังกฤษ", 100],
-    ["sc21103", "วิทยาศาสตร์", 100],
-    ["so21104", "สังคมศึกษา", 100],
-    ["he21101", "สุขศึกษา", 100],
-    ["ar21101", "ศิลปะ", 100],
-    ["pe21101", "พลศึกษา", 100],
-    ["co21101", "คอมพิวเตอร์", 100],
-    ["ho21101", "การงานอาชีพ", 100],
-    ["th21103", "การอ่านวิเคราะห์", 50],
-    ["ma21102", "คณิตเพิ่มเติม", 50]
-  ];
-
-  const subjects = subjectTemplates.map(([code, name, fullScore], index) => ({
-    id: `subject-${index + 1}`,
-    code,
-    name,
-    fullScore
-  }));
-
-  const subjectScores = [];
-  students.forEach((student, studentIndex) => {
-    subjects.forEach((subject, subjectIndex) => {
-      const baseScore = 54 + ((studentIndex * 9) + (subjectIndex * 7)) % 42;
-      const adjustedScore = subject.fullScore === 50
-        ? Math.min(subject.fullScore, Math.max(20, Math.round(baseScore / 2)))
-        : baseScore;
-      if ((studentIndex * subjects.length + subjectIndex) % 23 === 0) return;
-      const recordedScore = subjectIndex === 3
-        ? Math.max(0, adjustedScore - Math.round(subject.fullScore * 0.18))
-        : adjustedScore;
-      subjectScores.push({
-        studentId: student.id,
-        subjectId: subject.id,
-        score: recordedScore,
-        fullScore: subject.fullScore,
-        gradeLabel: getGradeLabel(recordedScore, subject.fullScore)
-      });
-    });
-  });
-
-  return { academicYears, semesters, grades, classrooms, students, subjects, subjectScores };
+function subjectCodeText(subject) {
+  return window.ReportData.subjectCode(subject, getSelectedGradeId());
 }
 
 function buildMap(items) {
@@ -160,12 +148,14 @@ function buildMap(items) {
 }
 
 function setToast(message, variant = "info") {
-  els.toast.className = `toast ${variant}`;
-  els.toast.innerHTML = `<strong>${variant === "success" ? "สำเร็จ" : "แจ้งเตือน"}</strong><span>${message}</span>`;
-  els.toast.classList.add("is-visible");
+  const toast = els.toast;
+  toast.className = toast.dataset.baseClass;
+  toast.innerHTML = `<strong class="font-semibold">${variant === "success" ? "สำเร็จ" : "แจ้งเตือน"}</strong><span class="text-slate-200">${message}</span>`;
+  const visible = toast.dataset.visibleClass.split(" ");
+  toast.classList.add(...visible);
   window.clearTimeout(setToast.timer);
   setToast.timer = window.setTimeout(() => {
-    els.toast.classList.remove("is-visible");
+    toast.classList.remove(...visible);
   }, 2200);
 }
 
@@ -209,7 +199,7 @@ function populateGrades() {
 
 function populateSubjects() {
   els.subject.innerHTML = `<option value="all">ทุกวิชา</option>${state.db.subjects
-    .map((subject) => `<option value="${subject.id}">${subject.code} - ${subject.name}</option>`)
+    .map((subject) => `<option value="${subject.id}">${subject.name}</option>`)
     .join("")}`;
   els.subject.value = "all";
 }
@@ -304,7 +294,7 @@ function setResultMode(mode) {
   els.overviewPanel.classList.toggle("hidden", !isOverview);
   els.detailSummaryGrid.classList.toggle("hidden", isOverview);
   els.backOverviewBtn.classList.toggle("hidden", isOverview);
-  document.querySelectorAll('[data-page="score-subject"] .score-detail-only')
+  document.querySelectorAll("[data-score-detail-only]")
     .forEach((element) => element.classList.toggle("hidden", isOverview));
   els.viewMeta.textContent = isOverview ? "ภาพรวมรายห้อง" : "ตารางแนวนอน";
 }
@@ -315,7 +305,7 @@ function buildOverviewRows() {
   const subjectIds = new Set(subjects.map((subject) => subject.id));
   const selectedStudents = state.db.students.filter((student) => classrooms.some((room) => room.id === student.classroomId));
   const selectedStudentIds = new Set(selectedStudents.map((student) => student.id));
-  const selectedScores = state.db.subjectScores.filter((score) => selectedStudentIds.has(score.studentId) && subjectIds.has(score.subjectId));
+  const selectedScores = getSemesterScores().filter((score) => selectedStudentIds.has(score.studentId) && subjectIds.has(score.subjectId));
 
   state.subjects = subjects;
   state.rows = [];
@@ -361,7 +351,7 @@ function buildStudentScoreRows() {
   const subjects = getSelectedSubjects();
   const studentIds = new Set(students.map((student) => student.id));
   const subjectIds = new Set(subjects.map((subject) => subject.id));
-  const scoreMap = new Map(state.db.subjectScores
+  const scoreMap = new Map(getSemesterScores()
     .filter((item) => studentIds.has(item.studentId) && subjectIds.has(item.subjectId))
     .map((item) => [`${item.studentId}|${item.subjectId}`, item]));
 
@@ -421,26 +411,25 @@ function buildScoreSummary() {
 
 function renderSubjectAverageChart() {
   if (!state.subjectAverages.length) {
-    els.subjectAverageChart.innerHTML = `<div class="empty-state">ไม่พบข้อมูลคะแนนรายวิชา</div>`;
+    els.subjectAverageChart.innerHTML = `<div class="col-span-full ${UI.empty}">ไม่พบข้อมูลคะแนนรายวิชา</div>`;
     return;
   }
 
-  els.subjectAverageChart.style.setProperty("--score-threshold", `${LOW_SCORE_THRESHOLD}%`);
   els.subjectAverageChart.innerHTML = `
-    <div class="score-threshold-overlay" aria-hidden="true"><span></span></div>
+    <div class="pointer-events-none absolute inset-y-0 left-[200px] right-[68px] z-[2]" aria-hidden="true"><span class="absolute inset-y-0 border-l-2 border-dashed border-amber-500" style="left: ${LOW_SCORE_THRESHOLD}%"></span></div>
     ${state.subjectAverages.map((subject) => {
     const average = subject.average;
     const width = average === null ? 0 : Math.max(0, Math.min(100, average));
-    const tone = average !== null && average < LOW_SCORE_THRESHOLD ? " is-low" : "";
+    const tone = average !== null && average < LOW_SCORE_THRESHOLD ? "low" : "normal";
     return `
-      <div class="score-bar-label" title="${subject.code} - ${subject.name}">
-        <strong>${subject.name}</strong>
-        <span>${subject.code}</span>
+      <div class="flex min-w-0 items-baseline gap-1.5" title="${subjectCodeText(subject)} - ${subject.name}">
+        <strong class="truncate text-sm font-semibold text-slate-800">${subject.name}</strong>
+        <span class="truncate text-xs text-slate-500">${subjectCodeText(subject)}</span>
       </div>
-      <div class="score-bar-track" aria-hidden="true">
-        <span class="score-bar-fill${tone}" style="width: ${width}%"></span>
+      <div class="relative z-[1] h-2 overflow-hidden rounded bg-slate-100" aria-hidden="true">
+        <span class="${UI.barFill[tone]}" style="width: ${width}%"></span>
       </div>
-      <strong class="score-bar-value${tone}">${average === null ? "-" : `${average.toFixed(1)}%`}</strong>
+      <strong class="${UI.barValue[tone]}">${average === null ? "-" : `${average.toFixed(1)}%`}</strong>
     `;
   }).join("")}
   `;
@@ -448,7 +437,7 @@ function renderSubjectAverageChart() {
 
 function renderFollowUpTable() {
   if (!state.followUpRows.length) {
-    els.followUpTbody.innerHTML = `<tr><td colspan="3"><div class="empty-state">ไม่มีนักเรียนที่มีคะแนนต่ำกว่าเกณฑ์</div></td></tr>`;
+    els.followUpTbody.innerHTML = `<tr><td colspan="3"><div class="${UI.empty}">ไม่มีนักเรียนที่มีคะแนนต่ำกว่าเกณฑ์</div></td></tr>`;
     return;
   }
 
@@ -456,9 +445,9 @@ function renderFollowUpTable() {
     const subjectNames = row.lowSubjects.map(({ subject }) => subject.name).join(", ");
     return `
       <tr>
-        <td><strong>${row.studentName}</strong><span class="score-student-code">${row.studentId}</span></td>
+        <td><strong class="font-semibold text-slate-900">${row.studentName}</strong><span class="mt-0.5 block text-xs text-slate-500">${row.studentId}</span></td>
         <td>${subjectNames}</td>
-        <td><button class="btn btn-secondary score-detail-btn" type="button" data-score-student="${row.studentId}">ดูรายละเอียด</button></td>
+        <td><button class="${UI.rowButton}" type="button" data-score-student="${row.studentId}">ดูรายละเอียด</button></td>
       </tr>
     `;
   }).join("");
@@ -473,7 +462,7 @@ function getFilteredSubjects() {
   const visibleSet = new Set(state.visibleSubjectIds);
   return state.subjects.filter((subject) => {
     const matchesVisibility = visibleSet.has(subject.id);
-    const matchesKeyword = !keyword || `${subject.code} ${subject.name}`.toLowerCase().includes(keyword);
+    const matchesKeyword = !keyword || `${subjectCodeText(subject)} ${subject.name}`.toLowerCase().includes(keyword);
     return matchesVisibility && matchesKeyword;
   });
 }
@@ -481,18 +470,18 @@ function getFilteredSubjects() {
 function renderColumnChooser() {
   const keyword = state.subjectKeyword.trim().toLowerCase();
   const filteredSubjects = state.subjects.filter((subject) => (
-    !keyword || `${subject.code} ${subject.name}`.toLowerCase().includes(keyword)
+    !keyword || `${subjectCodeText(subject)} ${subject.name}`.toLowerCase().includes(keyword)
   ));
   els.columnChooserPanel.innerHTML = `
-    <div class="score-column-search">
-      <label class="score-column-search-label" for="scoreColumnSearchInput">ค้นหาวิชา</label>
-      <input id="scoreColumnSearchInput" type="text" value="${state.subjectKeyword}" placeholder="พิมพ์ชื่อหรือรหัสวิชา" />
+    <div class="mb-3 grid gap-1.5">
+      <label class="text-sm font-medium text-slate-500" for="scoreColumnSearchInput">ค้นหาวิชา</label>
+      <input class="w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100" id="scoreColumnSearchInput" type="text" value="${state.subjectKeyword}" placeholder="พิมพ์ชื่อหรือรหัสวิชา" />
     </div>
-    <div class="score-column-list">
+    <div class="grid gap-2">
       ${filteredSubjects.map((subject) => `
-        <label class="score-column-item">
-          <input type="checkbox" value="${subject.id}" ${state.visibleSubjectIds.includes(subject.id) ? "checked" : ""} />
-          <span>${subject.code} - ${subject.name}</span>
+        <label class="flex items-start gap-2 text-sm text-slate-700">
+          <input class="mt-1 h-4 w-4 flex-none accent-blue-600" type="checkbox" value="${subject.id}" ${state.visibleSubjectIds.includes(subject.id) ? "checked" : ""} />
+          <span>${subjectCodeText(subject)} - ${subject.name}</span>
         </label>
       `).join("")}
     </div>
@@ -505,14 +494,14 @@ function renderTable() {
   if (!state.rows.length) {
     els.scoreThead.innerHTML = `
       <tr>
-        <th class="sticky-top">ลำดับ</th>
-        <th class="sticky-top">รหัสนักเรียน</th>
-        <th class="sticky-top">ชื่อ</th>
+        <th class="${UI.headCell}">ลำดับ</th>
+        <th class="${UI.headCell}">รหัสนักเรียน</th>
+        <th class="${UI.headCell}">ชื่อ</th>
       </tr>
     `;
     els.scoreTbody.innerHTML = `
       <tr>
-        <td colspan="3"><div class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div></td>
+        <td colspan="3"><div class="${UI.empty}">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div></td>
       </tr>
     `;
     return;
@@ -520,14 +509,14 @@ function renderTable() {
 
   els.scoreThead.innerHTML = `
     <tr>
-      <th class="sticky-col sticky-col-score-no sticky-top">ลำดับ</th>
-      <th class="sticky-col sticky-col-score-id sticky-top">รหัสนักเรียน</th>
-      <th class="sticky-col sticky-col-score-name sticky-top">ชื่อ</th>
+      <th class="${UI.stickyHead.no}">ลำดับ</th>
+      <th class="${UI.stickyHead.id}">รหัสนักเรียน</th>
+      <th class="${UI.stickyHead.name}">ชื่อ</th>
       ${visibleSubjects.map((subject) => `
-        <th class="sticky-top score-subject-head" title="${subject.code} - ${subject.name}">
-          <div class="score-subject-title">
-            <strong>${subject.name}</strong>
-            <span>${subject.fullScore} คะแนน</span>
+        <th class="${UI.headCell} min-w-[116px] !text-center" title="${subjectCodeText(subject)} - ${subject.name}">
+          <div class="grid gap-0.5">
+            <strong class="text-xs font-semibold text-slate-700">${subject.name}</strong>
+            <span class="text-xs font-medium text-slate-400">${subject.fullScore} คะแนน</span>
           </div>
         </th>
       `).join("")}
@@ -535,20 +524,21 @@ function renderTable() {
   `;
 
   els.scoreTbody.innerHTML = state.rows.map((row) => `
-    <tr data-score-row="${row.studentId}">
-      <td class="sticky-col sticky-col-score-no">${row.no}</td>
-      <td class="sticky-col sticky-col-score-id">${row.studentId}</td>
-      <td class="sticky-col sticky-col-score-name">${row.studentName}</td>
+    <tr class="${UI.scoreRow}" data-score-row="${row.studentId}">
+      <td class="${UI.stickyCell.no}">${row.no}</td>
+      <td class="${UI.stickyCell.id}">${row.studentId}</td>
+      <td class="${UI.stickyCell.name}">${row.studentName}</td>
       ${visibleSubjects.map((subject) => {
         const scoreItem = row.values[subject.id];
         if (!scoreItem) {
-          return `<td><span class="score-grade-chip">-</span></td>`;
+          return `<td class="text-center"><span class="${UI.chip.none}">-</span></td>`;
         }
         const scorePercent = Math.round((scoreItem.score / scoreItem.fullScore) * 100);
-        const tone = scorePercent >= 80 ? "excellent" : scorePercent >= 70 ? "good" : scorePercent >= 60 ? "fair" : "warn";
+        // only a score under the threshold is coloured, as before
+        const tone = scorePercent >= LOW_SCORE_THRESHOLD ? "pass" : "warn";
         return `
-          <td>
-            <span class="score-grade-chip score-grade-chip-${tone}" title="${scoreItem.gradeLabel}">
+          <td class="text-center">
+            <span class="${UI.chip[tone]}" title="${scoreItem.gradeLabel}">
               ${scoreItem.score}/${scoreItem.fullScore}
             </span>
           </td>
@@ -560,18 +550,18 @@ function renderTable() {
 
 function renderOverviewTable() {
   if (!state.overviewRows.length) {
-    els.overviewTbody.innerHTML = `<tr><td colspan="7"><div class="empty-state">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div></td></tr>`;
+    els.overviewTbody.innerHTML = `<tr><td colspan="7"><div class="${UI.empty}">ไม่พบข้อมูลตามเงื่อนไขที่เลือก</div></td></tr>`;
     return;
   }
 
   els.overviewTbody.innerHTML = state.overviewRows.map((row) => `
     <tr>
       <td>${row.gradeName}</td>
-      <td><strong>${row.classroomName}</strong></td>
+      <td><strong class="font-semibold text-slate-900">${row.classroomName}</strong></td>
       <td>${row.studentCount} คน</td>
       <td>${row.followUpCount} คน</td>
       <td>${row.missingCount} รายการ</td>
-      <td><button class="btn btn-secondary score-overview-detail-btn" type="button" data-score-grade="${row.gradeId}" data-score-classroom="${row.classroomId}">ดูรายละเอียด</button></td>
+      <td><button class="${UI.rowButton}" type="button" data-score-grade="${row.gradeId}" data-score-classroom="${row.classroomId}">ดูรายละเอียด</button></td>
     </tr>
   `).join("");
 }
@@ -634,7 +624,7 @@ function buildPreviewTableHtml(limitRows = 6, limitSubjects = 5) {
     .slice(0, limitRows);
 
   return `
-    <table class="pdf-preview-table pdf-preview-table-report">
+    <table class="${UI.previewTable}">
       <thead>
         <tr>
           <th>ลำดับ</th>
@@ -648,7 +638,7 @@ function buildPreviewTableHtml(limitRows = 6, limitSubjects = 5) {
           <tr>
             <td>${row.no}</td>
             <td>${row.studentId}</td>
-            <td class="pdf-name-cell">${row.studentName}</td>
+            <td class="${UI.previewNameCell}">${row.studentName}</td>
             ${subjects.map((subject) => {
               const scoreItem = row.values[subject.id];
               return `<td>${scoreItem ? `${scoreItem.score}/${scoreItem.fullScore}` : "-"}</td>`;
@@ -665,9 +655,9 @@ function updatePrintPreview() {
   const languageText = els.printLanguage.options[els.printLanguage.selectedIndex].text;
   const studentText = state.printMode === "student" ? els.studentPicker.options[els.studentPicker.selectedIndex]?.text || "-" : "นักเรียนทั้งหมด";
   els.printPreview.innerHTML = `
-    <strong>ตัวอย่างพิมพ์รายงานคะแนนรายวิชา</strong>
-    <span>Template: ${templateText} | ภาษา ${languageText} | ${studentText}</span>
-    ${buildPreviewTableHtml(state.printMode === "student" ? 1 : 5, 4)}
+    <strong class="mb-1 block font-semibold text-slate-900">ตัวอย่างพิมพ์รายงานคะแนนรายวิชา</strong>
+    <span class="block">Template: ${templateText} | ภาษา ${languageText} | ${studentText}</span>
+    <div class="mt-3">${buildPreviewTableHtml(state.printMode === "student" ? 1 : 5, 4)}</div>
   `;
   els.printPreview.classList.remove("hidden");
   els.confirmPrintBtn.disabled = false;
@@ -691,19 +681,19 @@ function openScoreExportPreview(format) {
     confirmText: "ดาวน์โหลด PDF",
     mockMessage: "Mockup: ดาวน์โหลด PDF รายงานคะแนนรายวิชายังไม่ถูกเชื่อมต่อ",
     sheetHtml: `
-      <div class="pdf-document-head">
+      <div class="flex items-start justify-between gap-4 border-b-2 border-slate-900 pb-3">
         <div>
-          <p>ระบบรายงานคะแนน</p>
-          <h3>รายงานคะแนนรายวิชา</h3>
+          <p class="text-xs text-slate-500">ระบบรายงานคะแนน</p>
+          <h3 class="mt-1 text-xl font-semibold text-slate-900">รายงานคะแนนรายวิชา</h3>
         </div>
-        <span>PDF</span>
+        <span class="rounded-lg border border-slate-300 px-2 py-1 text-xs font-bold">PDF</span>
       </div>
-      <div class="pdf-document-meta">
+      <div class="my-3 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500">
         <span>${els.summaryScope.textContent}</span>
         <span>วิชาที่แสดง: ${getFilteredSubjects().length} วิชา</span>
       </div>
       ${buildPreviewTableHtml(7, 6)}
-      <p class="pdf-preview-note">ตัวอย่างนี้แสดงบางรายการเพื่อดูรูปแบบตารางก่อนดาวน์โหลดจริง</p>
+      <p class="mt-3 text-right text-xs text-slate-500">ตัวอย่างนี้แสดงบางรายการเพื่อดูรูปแบบตารางก่อนดาวน์โหลดจริง</p>
     `
   });
 }
@@ -801,8 +791,8 @@ function attachEvents() {
     if (!button) return;
     const targetRow = els.scoreTbody.querySelector(`[data-score-row="${button.dataset.scoreStudent}"]`);
     if (!targetRow) return;
-    els.scoreTbody.querySelectorAll(".is-focused").forEach((row) => row.classList.remove("is-focused"));
-    targetRow.classList.add("is-focused");
+    els.scoreTbody.querySelectorAll('[data-focused="true"]').forEach((row) => { delete row.dataset.focused; });
+    targetRow.dataset.focused = "true";
     targetRow.scrollIntoView({ block: "center", inline: "start" });
   });
   els.overviewTbody.addEventListener("click", (event) => {
@@ -820,7 +810,7 @@ function attachEvents() {
     if (!els.exportDropdown.contains(event.target)) {
       els.exportMenu.classList.add("hidden");
     }
-    if (!event.target.closest(".score-column-chooser")) {
+    if (!event.target.closest("#scoreColumnChooser")) {
       toggleColumnPanel(false);
     }
   });

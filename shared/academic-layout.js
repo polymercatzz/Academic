@@ -7,7 +7,8 @@
     timetable: ['timetable.html', 'timetable-approvals.html', 'my-timetable.html', 'teacher-profile.html'],
     reports: ['overview.html', 'student-retake-management.html', 'student-retake-detail.html', 'subject-retake-detail.html',
       'fail-student-detail.html', 'student-score-ranking.html', 'student-score-ranking-detail.html', 'subject-results.html',
-      'student-results-detail.html', 'student-list-by-classroom.html', 'academic-report.html', 'teacher-attendance.html'],
+      'student-results-detail.html', 'student-list-by-classroom.html', 'teacher-attendance.html',
+      'attendance-report.html', 'unable-exam-report.html', 'score-subject-report.html', 'average-score-year-report.html', 'record-report.html'],
     grading: ['scores.html', 'attendance.html']
   };
   function pageUrl(link) {
@@ -77,7 +78,7 @@
 ,
     {
       key: 'ar-unable-exam',
-      href: 'academic-report.html#unable-exam',
+      href: 'unable-exam-report.html',
       label: 'รายงานผู้ไม่มีสิทธิ์สอบ',
       icon: '<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM4 12a8 8 0 0 1 12.9-6.3L5.7 16.9A7.96 7.96 0 0 1 4 12Zm8 8a7.96 7.96 0 0 1-4.9-1.7L18.3 7.1A8 8 0 0 1 12 20Z"/>'
     }
@@ -137,31 +138,31 @@
     },
     {
       key: 'ar-attendance',
-      href: 'academic-report.html#attendance',
+      href: 'attendance-report.html',
       label: 'รายงานการเข้าเรียน',
       icon: '<path d="M7 2h2v2h6V2h2v2h3v18H4V4h3V2Zm11 8H6v10h12V10Zm-7.5 8L7 14.5l1.4-1.4 2.1 2.1 4.6-4.6 1.4 1.4-6 6Z"/>'
     },
     {
       key: 'ar-unable-exam',
-      href: 'academic-report.html#unable-exam',
+      href: 'unable-exam-report.html',
       label: 'รายงานผู้ไม่มีสิทธิ์สอบ',
       icon: '<path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm0 2a8 8 0 0 1 6.32 12.9L7.1 5.68A7.96 7.96 0 0 1 12 4Zm-6.32 3.1L16.9 18.32A8 8 0 0 1 5.68 7.1Z"/>'
     },
     {
       key: 'ar-score-subject',
-      href: 'academic-report.html#score-subject',
+      href: 'score-subject-report.html',
       label: 'รายงานคะแนนรายวิชา',
       icon: '<path d="M4 4h16v16H4V4Zm2 2v12h12V6H6Zm2 8h2v3H8v-3Zm3-4h2v7h-2v-7Zm3 2h2v5h-2v-5Z"/>'
     },
     {
       key: 'ar-average-score-year',
-      href: 'academic-report.html#average-score-year',
+      href: 'average-score-year-report.html',
       label: 'รายงานคะแนนเฉลี่ยรายปี',
       icon: '<path d="M3 19h18v2H3v-2Zm2-2 4.5-6 3.5 3 4.5-7L21 11v3l-3.5-3.2-4.5 7-3.5-3L6 18H5v-1Z"/>'
     },
     {
       key: 'ar-record-report',
-      href: 'academic-report.html#record-report',
+      href: 'record-report.html',
       label: 'รายงานระเบียนสะสม / GPAX',
       icon: '<path d="M6 2h9l5 5v15H6V2Zm2 2v16h10V8h-4V4H8Zm2 8h6v2h-6v-2Zm0 4h6v2h-6v-2Z"/>'
     }

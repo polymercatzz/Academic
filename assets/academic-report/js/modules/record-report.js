@@ -24,6 +24,41 @@
     { label: "3.50-4.00", min: 3.5, max: 4.01 }
   ];
 
+  // Tailwind classes for the markup this script writes (complete literal strings: the CDN build only sees whole class names)
+  const UI = {
+    tabActive: ["bg-white", "text-blue-700", "shadow-sm"],
+    tabIdle: ["text-slate-500", "hover:text-slate-700"],
+    metric: "min-w-0 rounded-2xl border border-slate-200 bg-slate-50 p-5",
+    metricWarning: "min-w-0 rounded-2xl border border-amber-200 bg-amber-50 p-5",
+    metricLabel: "text-sm font-medium text-slate-500",
+    metricLabelWarning: "text-sm font-medium text-amber-700",
+    metricValue: "mt-2 text-3xl font-semibold tracking-tight text-slate-900",
+    statusBase: "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ring-1 ring-inset ",
+    statusTone: {
+      normal: "bg-emerald-50 text-emerald-700 ring-emerald-200",
+      warning: "bg-amber-50 text-amber-700 ring-amber-200",
+      credits: "bg-amber-50 text-amber-700 ring-amber-200",
+      failed: "bg-rose-50 text-rose-700 ring-rose-200",
+      incomplete: "bg-slate-100 text-slate-600 ring-slate-200"
+    },
+    warnText: "font-bold text-amber-600",
+    rowAction: "whitespace-nowrap rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-slate-50",
+    // first three columns of the per-student tables stay in place while the table scrolls sideways
+    headNo: "left-0 !z-30 w-[72px] min-w-[72px] max-w-[72px] !px-3 text-center",
+    headId: "left-[72px] !z-30 w-[128px] min-w-[128px] max-w-[128px] !px-3",
+    headName: "left-[200px] !z-30 w-[224px] min-w-[224px] max-w-[224px] !px-3 shadow-[2px_0_0_#e2e8f0]",
+    cellNo: "sticky left-0 z-10 w-[72px] min-w-[72px] max-w-[72px] bg-white !px-3 text-center",
+    cellId: "sticky left-[72px] z-10 w-[128px] min-w-[128px] max-w-[128px] bg-white !px-3",
+    cellName: "sticky left-[200px] z-10 w-[224px] min-w-[224px] max-w-[224px] overflow-hidden text-ellipsis bg-white !px-3 shadow-[2px_0_0_#e2e8f0]",
+    headGroup: "!text-center !text-blue-700",
+    facts: "grid grid-cols-2 gap-3 md:grid-cols-3 [&_dd]:text-sm [&_dd]:font-semibold [&_dd]:text-slate-900 [&_div]:rounded-2xl [&_div]:border [&_div]:border-slate-200 [&_div]:bg-slate-50 [&_div]:px-4 [&_div]:py-3 [&_dt]:mb-1 [&_dt]:text-xs [&_dt]:text-slate-500",
+    dialogHeading: "text-base font-semibold text-slate-900",
+    dialogTableWrap: "overflow-x-auto rounded-2xl border border-slate-200",
+    dialogTable: "w-full min-w-[620px] text-left text-sm [&_tbody_tr]:border-t [&_tbody_tr]:border-slate-100 [&_td]:px-4 [&_td]:py-2.5 [&_td]:text-slate-700 [&_th]:whitespace-nowrap [&_th]:bg-slate-50 [&_th]:px-4 [&_th]:py-2.5 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-slate-500",
+    previewTitle: "font-semibold text-slate-900",
+    previewLine: "mt-1.5"
+  };
+
   const els = {
     page: document.querySelector('[data-page="record-report"]'),
     year: document.getElementById("recordAcademicYear"),
@@ -50,6 +85,8 @@
     chartTwo: document.getElementById("recordChartTwo"),
     chartOneTitle: document.getElementById("recordChartOneTitle"),
     chartTwoTitle: document.getElementById("recordChartTwoTitle"),
+    chartGrid: document.getElementById("recordChartGrid"),
+    reportTabs: document.querySelectorAll("#recordReportTabs [data-report-type]"),
     exportDropdown: document.getElementById("recordExportDropdown"),
     exportBtn: document.getElementById("recordExportBtn"),
     exportMenu: document.getElementById("recordExportMenu"),
@@ -106,92 +143,59 @@
   }
 
   function incompleteCell() {
-    return '<span class="record-incomplete" title="ข้อมูลผลการเรียนยังไม่ครบ">-</span>';
+    return '<span class="' + UI.warnText + '" title="ข้อมูลผลการเรียนยังไม่ครบ">-</span>';
   }
 
+  // rooms, students and results come from the shared report data set (report-data.js);
+  // ids are shortened to the form this module has always used ("2569", "m1", "m1-1")
   function buildInlineMockDatabase() {
-    const academicYears = [
-      { id: "2567", name: "2567" },
-      { id: "2568", name: "2568" },
-      { id: "2569", name: "2569", isLatest: true }
-    ];
-    const grades = [
-      { id: "m1", name: "มัธยมศึกษาปีที่ 1" },
-      { id: "m2", name: "มัธยมศึกษาปีที่ 2" },
-      { id: "m3", name: "มัธยมศึกษาปีที่ 3" }
-    ];
-    const plans = [
-      { id: "general", name: "ห้องเรียนทั่วไป", gradeIds: ["m1", "m2", "m3"] },
-      { id: "science", name: "วิทยาศาสตร์-คณิตศาสตร์", gradeIds: ["m2", "m3"] },
-      { id: "language", name: "ภาษาอังกฤษ", gradeIds: ["m3"] }
-    ];
-    const classrooms = [
-      { id: "m1-1", name: "ม.1/1", gradeId: "m1", planId: "general" },
-      { id: "m1-2", name: "ม.1/2", gradeId: "m1", planId: "general" },
-      { id: "m2-1", name: "ม.2/1", gradeId: "m2", planId: "science" },
-      { id: "m2-2", name: "ม.2/2", gradeId: "m2", planId: "general" },
-      { id: "m3-1", name: "ม.3/1", gradeId: "m3", planId: "science" },
-      { id: "m3-2", name: "ม.3/2", gradeId: "m3", planId: "language" }
-    ];
-    const subjectGroups = [
-      { id: "thai", name: "ภาษาไทย", shortName: "ไทย", requiredCredits: 9, credit: 1.5 },
-      { id: "math", name: "คณิตศาสตร์", shortName: "คณิต", requiredCredits: 12, credit: 2 },
-      { id: "science", name: "วิทยาศาสตร์และเทคโนโลยี", shortName: "วิทย์ฯ", requiredCredits: 15, credit: 2.5 },
-      { id: "foreign", name: "ภาษาต่างประเทศ", shortName: "ภาษาต่างประเทศ", requiredCredits: 9, credit: 1.5 },
-      { id: "social", name: "สังคมศึกษา", shortName: "สังคม", requiredCredits: 9, credit: 1.5 },
-      { id: "health", name: "สุขศึกษาและพลศึกษา", shortName: "สุขศึกษา", requiredCredits: 6, credit: 1 },
-      { id: "art", name: "ศิลปะ", shortName: "ศิลปะ", requiredCredits: 6, credit: 1 },
-      { id: "career", name: "การงานอาชีพ", shortName: "การงาน", requiredCredits: 6, credit: 1 }
-    ];
-    const firstNames = ["กิตติพงศ์", "ชญานิน", "ณัฐวุฒิ", "ปภาวรินท์", "พีรวิชญ์", "วรัญญา", "ศุภกร", "สิริกานต์", "อชิรญา", "ธนกฤต"];
-    const lastNames = ["ใจดี", "แสงทอง", "วัฒนกุล", "บุญส่ง", "ศรีสุข", "รัตนวงศ์", "มั่นคง", "พรประเสริฐ", "นาคะ", "เจริญผล"];
-    const gradePoints = [1, 1.5, 2, 2.5, 3, 3.5, 4];
-    const gradeLabels = { "0": "0", "1": "1", "1.5": "1.5", "2": "2", "2.5": "2.5", "3": "3", "3.5": "3.5", "4": "4" };
-    const students = [];
-    const records = [];
-
-    classrooms.forEach(function (room, roomIndex) {
-      for (let studentIndex = 0; studentIndex < 20; studentIndex += 1) {
-        const serial = roomIndex * 20 + studentIndex + 1;
-        const studentId = "student-" + serial;
-        const enrollmentStatus = studentIndex === 18 ? "transferred" : studentIndex === 19 ? "graduated" : "active";
-        students.push({
-          id: studentId,
-          studentCode: String(68000 + serial),
-          firstName: firstNames[(studentIndex + roomIndex) % firstNames.length],
-          lastName: lastNames[(studentIndex * 3 + roomIndex) % lastNames.length],
-          gradeId: room.gradeId,
-          planId: room.planId,
-          classroomId: room.id,
-          enrollmentStatus: enrollmentStatus
-        });
-
-        academicYears.forEach(function (year, yearIndex) {
-          [1, 2].forEach(function (semester) {
-            subjectGroups.forEach(function (group, groupIndex) {
-              const isMissing = year.id === "2569" && semester === 2 && studentIndex % 10 === 0 && groupIndex === 2;
-              const isPending = year.id === "2569" && semester === 2 && studentIndex % 13 === 0 && groupIndex === 6;
-              const isFailed = !isMissing && !isPending && ((studentIndex % 7 === 0 && groupIndex === 1 && semester === 2) || (studentIndex % 11 === 0 && groupIndex === 3 && yearIndex === 1));
-              const point = isMissing || isPending ? null : isFailed ? 0 : gradePoints[(studentIndex + roomIndex + yearIndex + semester + groupIndex) % gradePoints.length];
-              records.push({
-                academicYear: year.id,
-                semester: semester,
-                studentId: studentId,
-                subjectId: group.id + "-" + year.id + "-" + semester,
-                subjectName: group.name + " " + semester,
-                subjectGroupId: group.id,
-                credit: group.credit,
-                grade: point == null ? null : gradeLabels[String(point)],
-                gradePoint: point,
-                status: isMissing ? "missing" : isPending ? "pending" : isFailed ? "failed" : "passed"
-              });
-            });
-          });
-        });
-      }
+    const data = window.ReportData;
+    const shortId = function (id) { return id.replace(/^(ay|grade|room)-/, ""); };
+    const subjectsById = new Map(data.subjects.map(function (subject) { return [subject.id, subject]; }));
+    const academicYears = data.academicYears.map(function (year) { return { id: shortId(year.id), name: year.name, isLatest: year.isCurrent }; });
+    const grades = data.grades.map(function (grade) { return { id: shortId(grade.id), name: grade.fullName }; });
+    const classrooms = data.classrooms.map(function (room) {
+      return { id: shortId(room.id), name: room.name, gradeId: shortId(room.gradeId), planId: room.planId };
+    });
+    const plans = data.plans.map(function (plan) {
+      return {
+        id: plan.id,
+        name: plan.name,
+        gradeIds: grades.filter(function (grade) {
+          return classrooms.some(function (room) { return room.gradeId === grade.id && room.planId === plan.id; });
+        }).map(function (grade) { return grade.id; })
+      };
+    });
+    const students = data.students.map(function (student) {
+      return {
+        id: student.id,
+        studentCode: student.studentCode,
+        firstName: student.firstName,
+        lastName: student.lastName,
+        gradeId: shortId(student.gradeId),
+        planId: student.planId,
+        classroomId: shortId(student.classroomId),
+        enrollmentStatus: student.enrollmentStatus
+      };
+    });
+    const records = data.scoreRecords.map(function (record) {
+      const subject = subjectsById.get(record.subjectId);
+      const point = data.gradePoint(record.score);
+      return {
+        academicYear: String(record.year),
+        semester: record.term,
+        studentId: record.studentId,
+        subjectId: subject.id + "-" + record.year + "-" + record.term,
+        subjectName: subject.name,
+        subjectGroupId: subject.subjectGroupId,
+        credit: subject.credit,
+        grade: point == null ? null : String(point),
+        gradePoint: point,
+        status: record.status !== "complete" ? record.status : point === 0 ? "failed" : "passed"
+      };
     });
 
-    return { academicYears: academicYears, grades: grades, plans: plans, classrooms: classrooms, subjectGroups: subjectGroups, students: students, records: records };
+    return { academicYears: academicYears, grades: grades, plans: plans, classrooms: classrooms, subjectGroups: data.subjectGroups, students: students, records: records };
   }
 
   function calculateWeightedGpa(records) {
@@ -376,11 +380,11 @@
   }
 
   function statusChip(status) {
-    return '<span class="record-status" data-tone="' + status.tone + '">' + escapeHtml(status.label) + "</span>";
+    return '<span class="' + UI.statusBase + (UI.statusTone[status.tone] || UI.statusTone.incomplete) + '" data-tone="' + status.tone + '">' + escapeHtml(status.label) + "</span>";
   }
 
   function metricCard(label, value, warning) {
-    return '<article class="metric' + (warning ? " record-metric-warning" : "") + '"><p class="metric-label">' + escapeHtml(label) + '</p><p class="metric-value">' + escapeHtml(value) + "</p></article>";
+    return '<article class="' + (warning ? UI.metricWarning : UI.metric) + '"><p class="' + (warning ? UI.metricLabelWarning : UI.metricLabel) + '">' + escapeHtml(label) + '</p><p class="' + UI.metricValue + '">' + escapeHtml(value) + "</p></article>";
   }
 
   function summaryData(results) {
@@ -647,7 +651,7 @@
     els.resultCount.textContent = rows.length + " ห้อง";
     els.thead.innerHTML = '<tr><th>ระดับชั้น</th><th>ห้องเรียน</th><th>แผนการเรียน</th><th>นักเรียน</th><th>' + (state.activeReportType === "record" ? "ผลสะสมเฉลี่ย" : "GPAX เฉลี่ย") + '</th><th>GPA ล่าสุดเฉลี่ย</th><th>หน่วยกิตผ่านเฉลี่ย</th><th>ผลสะสมต่ำกว่า 2.00</th><th>มีวิชาไม่ผ่าน</th><th>หน่วยกิตไม่ครบ</th><th>ข้อมูลไม่ครบ</th><th>การดำเนินการ</th></tr>';
     els.tbody.innerHTML = rows.map(function (row) {
-      return '<tr><td>' + escapeHtml(row.grade.name) + '</td><td><strong>' + escapeHtml(row.classroom.name) + '</strong></td><td>' + escapeHtml(row.plan.name) + '</td><td>' + row.count + '</td><td>' + (row.avgGpax == null ? incompleteCell() : row.avgGpax.toFixed(2)) + '</td><td>' + (row.avgLatestGpa == null ? incompleteCell() : row.avgLatestGpa.toFixed(2)) + '</td><td>' + (row.avgEarnedCredits == null ? incompleteCell() : row.avgEarnedCredits.toFixed(1)) + '</td><td>' + row.belowThreshold + '</td><td>' + row.failed + '</td><td>' + row.missingCredits + '</td><td>' + row.incomplete + '</td><td><button class="btn btn-secondary record-row-action" type="button" data-room-detail="' + row.classroom.id + '">ดูรายละเอียด</button></td></tr>';
+      return '<tr><td>' + escapeHtml(row.grade.name) + '</td><td><strong>' + escapeHtml(row.classroom.name) + '</strong></td><td>' + escapeHtml(row.plan.name) + '</td><td>' + row.count + '</td><td>' + (row.avgGpax == null ? incompleteCell() : row.avgGpax.toFixed(2)) + '</td><td>' + (row.avgLatestGpa == null ? incompleteCell() : row.avgLatestGpa.toFixed(2)) + '</td><td>' + (row.avgEarnedCredits == null ? incompleteCell() : row.avgEarnedCredits.toFixed(1)) + '</td><td>' + row.belowThreshold + '</td><td>' + row.failed + '</td><td>' + row.missingCredits + '</td><td>' + row.incomplete + '</td><td><button class="' + UI.rowAction + '" type="button" data-room-detail="' + row.classroom.id + '">ดูรายละเอียด</button></td></tr>';
     }).join("");
   }
 
@@ -655,11 +659,11 @@
     const year = escapeHtml(els.year.value);
     els.toolbarTitle.textContent = "ระเบียนสะสมรายนักเรียน";
     els.resultCount.textContent = state.visibleResults.length + " คน";
-    els.thead.innerHTML = '<tr><th class="record-sticky record-col-no" rowspan="2">ลำดับ</th><th class="record-sticky record-col-id" rowspan="2">รหัสนักเรียน</th><th class="record-sticky record-col-name" rowspan="2">ชื่อ-สกุล</th><th colspan="3">ภาคเรียน 1</th><th colspan="3">ภาคเรียน 2</th><th colspan="7">ผลสะสมถึงปีการศึกษา ' + year + '</th></tr><tr><th>GPA</th><th>ลงทะเบียน</th><th>ผ่าน</th><th>GPA</th><th>ลงทะเบียน</th><th>ผ่าน</th><th>ผลการเรียนสะสม</th><th>ลงทะเบียนสะสม</th><th>ผ่านสะสม</th><th>วิชาไม่ผ่าน</th><th>สถานะ</th><th>หมายเหตุ</th><th>การดำเนินการ</th></tr>';
+    els.thead.innerHTML = '<tr><th class="' + UI.headNo + '" rowspan="2">ลำดับ</th><th class="' + UI.headId + '" rowspan="2">รหัสนักเรียน</th><th class="' + UI.headName + '" rowspan="2">ชื่อ-สกุล</th><th class="' + UI.headGroup + '" colspan="3">ภาคเรียน 1</th><th class="' + UI.headGroup + '" colspan="3">ภาคเรียน 2</th><th class="' + UI.headGroup + '" colspan="7">ผลสะสมถึงปีการศึกษา ' + year + '</th></tr><tr><th>GPA</th><th>ลงทะเบียน</th><th>ผ่าน</th><th>GPA</th><th>ลงทะเบียน</th><th>ผ่าน</th><th>ผลการเรียนสะสม</th><th>ลงทะเบียนสะสม</th><th>ผ่านสะสม</th><th>วิชาไม่ผ่าน</th><th>สถานะ</th><th>หมายเหตุ</th><th>การดำเนินการ</th></tr>';
     els.tbody.innerHTML = state.visibleResults.map(function (result) {
       const student = result.student;
       const note = result.isIncomplete ? "ข้อมูลบางรายวิชายังไม่ครบ" : result.failedSubjects ? "ตรวจสอบรายวิชาไม่ผ่าน" : "-";
-      return '<tr><td class="record-sticky record-col-no">' + result.index + '</td><td class="record-sticky record-col-id">' + student.studentCode + '</td><td class="record-sticky record-col-name">' + escapeHtml(student.firstName + " " + student.lastName) + '</td><td>' + formatNumber(result.semesters[0].gpa, 2) + '</td><td>' + result.semesters[0].registeredCredits.toFixed(1) + '</td><td>' + result.semesters[0].earnedCredits.toFixed(1) + '</td><td>' + formatNumber(result.semesters[1].gpa, 2) + '</td><td>' + result.semesters[1].registeredCredits.toFixed(1) + '</td><td>' + result.semesters[1].earnedCredits.toFixed(1) + '</td><td><strong>' + formatNumber(result.gpax, 2) + '</strong></td><td>' + result.registeredCredits.toFixed(1) + '</td><td>' + result.earnedCredits.toFixed(1) + '</td><td>' + result.failedSubjects + '</td><td>' + statusChip(result.academicStatus) + '</td><td>' + escapeHtml(note) + '</td><td><button class="btn btn-secondary record-row-action" type="button" data-student-detail="' + student.id + '">ดูรายละเอียด</button></td></tr>';
+      return '<tr><td class="' + UI.cellNo + '">' + result.index + '</td><td class="' + UI.cellId + '">' + student.studentCode + '</td><td class="' + UI.cellName + '">' + escapeHtml(student.firstName + " " + student.lastName) + '</td><td>' + formatNumber(result.semesters[0].gpa, 2) + '</td><td>' + result.semesters[0].registeredCredits.toFixed(1) + '</td><td>' + result.semesters[0].earnedCredits.toFixed(1) + '</td><td>' + formatNumber(result.semesters[1].gpa, 2) + '</td><td>' + result.semesters[1].registeredCredits.toFixed(1) + '</td><td>' + result.semesters[1].earnedCredits.toFixed(1) + '</td><td><strong>' + formatNumber(result.gpax, 2) + '</strong></td><td>' + result.registeredCredits.toFixed(1) + '</td><td>' + result.earnedCredits.toFixed(1) + '</td><td>' + result.failedSubjects + '</td><td>' + statusChip(result.academicStatus) + '</td><td>' + escapeHtml(note) + '</td><td><button class="' + UI.rowAction + '" type="button" data-student-detail="' + student.id + '">ดูรายละเอียด</button></td></tr>';
     }).join("");
   }
 
@@ -667,14 +671,14 @@
     els.toolbarTitle.textContent = "GPAX และหน่วยกิตรายนักเรียน";
     els.resultCount.textContent = state.visibleResults.length + " คน";
     const groupHeaders = state.db.subjectGroups.map(function (group) { return "<th>" + escapeHtml(group.shortName) + "</th>"; }).join("");
-    els.thead.innerHTML = '<tr><th class="record-sticky record-col-no" rowspan="2">ลำดับ</th><th class="record-sticky record-col-id" rowspan="2">รหัสนักเรียน</th><th class="record-sticky record-col-name" rowspan="2">ชื่อ-สกุล</th><th rowspan="2">GPAX</th><th rowspan="2">GPA ล่าสุด</th><th rowspan="2">ลงทะเบียนสะสม</th><th rowspan="2">ผ่านสะสม</th><th rowspan="2">วิชาไม่ผ่าน</th><th rowspan="2">หน่วยกิตที่ยังขาด</th><th colspan="8">หน่วยกิตตามกลุ่มสาระ</th><th rowspan="2">สถานะการศึกษา</th><th rowspan="2">การดำเนินการ</th></tr><tr>' + groupHeaders + "</tr>";
+    els.thead.innerHTML = '<tr><th class="' + UI.headNo + '" rowspan="2">ลำดับ</th><th class="' + UI.headId + '" rowspan="2">รหัสนักเรียน</th><th class="' + UI.headName + '" rowspan="2">ชื่อ-สกุล</th><th rowspan="2">GPAX</th><th rowspan="2">GPA ล่าสุด</th><th rowspan="2">ลงทะเบียนสะสม</th><th rowspan="2">ผ่านสะสม</th><th rowspan="2">วิชาไม่ผ่าน</th><th rowspan="2">หน่วยกิตที่ยังขาด</th><th class="' + UI.headGroup + '" colspan="' + state.db.subjectGroups.length + '">หน่วยกิตตามกลุ่มสาระ</th><th rowspan="2">สถานะการศึกษา</th><th rowspan="2">การดำเนินการ</th></tr><tr>' + groupHeaders + "</tr>";
     els.tbody.innerHTML = state.visibleResults.map(function (result) {
       const student = result.student;
       const groupCells = state.db.subjectGroups.map(function (group) {
         const earned = result.creditsByGroup[group.id];
-        return '<td class="' + (earned < group.requiredCredits ? "record-credit-warning" : "") + '">' + earned.toFixed(1) + "/" + group.requiredCredits + "</td>";
+        return '<td class="' + (earned < group.requiredCredits ? UI.warnText : "") + '">' + earned.toFixed(1) + "/" + group.requiredCredits + "</td>";
       }).join("");
-      return '<tr><td class="record-sticky record-col-no">' + result.index + '</td><td class="record-sticky record-col-id">' + student.studentCode + '</td><td class="record-sticky record-col-name">' + escapeHtml(student.firstName + " " + student.lastName) + '</td><td><strong>' + formatNumber(result.gpax, 2) + '</strong></td><td>' + formatNumber(result.latestGpa, 2) + '</td><td>' + result.registeredCredits.toFixed(1) + '</td><td>' + result.earnedCredits.toFixed(1) + '</td><td>' + result.failedSubjects + '</td><td>' + result.missingCredits.toFixed(1) + '</td>' + groupCells + '<td>' + statusChip(result.academicStatus) + '</td><td><button class="btn btn-secondary record-row-action" type="button" data-student-detail="' + student.id + '">ดูรายละเอียด</button></td></tr>';
+      return '<tr><td class="' + UI.cellNo + '">' + result.index + '</td><td class="' + UI.cellId + '">' + student.studentCode + '</td><td class="' + UI.cellName + '">' + escapeHtml(student.firstName + " " + student.lastName) + '</td><td><strong>' + formatNumber(result.gpax, 2) + '</strong></td><td>' + formatNumber(result.latestGpa, 2) + '</td><td>' + result.registeredCredits.toFixed(1) + '</td><td>' + result.earnedCredits.toFixed(1) + '</td><td>' + result.failedSubjects + '</td><td>' + result.missingCredits.toFixed(1) + '</td>' + groupCells + '<td>' + statusChip(result.academicStatus) + '</td><td><button class="' + UI.rowAction + '" type="button" data-student-detail="' + student.id + '">ดูรายละเอียด</button></td></tr>';
     }).join("");
   }
 
@@ -739,9 +743,10 @@
 
   function setActiveReportType(type, shouldSearch) {
     state.activeReportType = type === "gpax" ? "gpax" : "record";
-    document.querySelectorAll(".record-report-tab").forEach(function (tab) {
+    els.reportTabs.forEach(function (tab) {
       const isActive = tab.dataset.reportType === state.activeReportType;
-      tab.classList.toggle("is-active", isActive);
+      tab.classList.remove.apply(tab.classList, isActive ? UI.tabIdle : UI.tabActive);
+      tab.classList.add.apply(tab.classList, isActive ? UI.tabActive : UI.tabIdle);
       tab.setAttribute("aria-selected", String(isActive));
     });
     if (shouldSearch && state.initialized && !state.isInitializing) runSearch();
@@ -779,11 +784,11 @@
     els.studentDialogTitle.textContent = student.studentCode + " " + student.firstName + " " + student.lastName;
     let groupTable = "";
     if (state.activeReportType === "gpax") {
-      groupTable = '<h3>หน่วยกิตตามกลุ่มสาระ</h3><div class="table-wrap"><table class="record-dialog-table"><thead><tr><th>กลุ่มสาระ</th><th>หน่วยกิตที่ได้</th><th>หน่วยกิตที่กำหนด</th></tr></thead><tbody>' + state.db.subjectGroups.map(function (group) {
+      groupTable = '<h3 class="' + UI.dialogHeading + '">หน่วยกิตตามกลุ่มสาระ</h3><div class="' + UI.dialogTableWrap + '"><table class="' + UI.dialogTable + '"><thead><tr><th>กลุ่มสาระ</th><th>หน่วยกิตที่ได้</th><th>หน่วยกิตที่กำหนด</th></tr></thead><tbody>' + state.db.subjectGroups.map(function (group) {
         return "<tr><td>" + escapeHtml(group.name) + "</td><td>" + result.creditsByGroup[group.id].toFixed(1) + "</td><td>" + group.requiredCredits + "</td></tr>";
       }).join("") + "</tbody></table></div>";
     }
-    els.studentDialogBody.innerHTML = '<dl class="record-student-facts"><div><dt>รหัส</dt><dd>' + student.studentCode + '</dd></div><div><dt>ชื่อ-สกุล</dt><dd>' + escapeHtml(student.firstName + " " + student.lastName) + '</dd></div><div><dt>ระดับชั้น</dt><dd>' + escapeHtml(grade) + '</dd></div><div><dt>ห้องเรียน</dt><dd>' + escapeHtml(classroom) + '</dd></div><div><dt>แผนการเรียน</dt><dd>' + escapeHtml(plan) + '</dd></div></dl><h3>ผลการเรียนรายภาค</h3><div class="table-wrap"><table class="record-dialog-table"><thead><tr><th>ปีการศึกษา</th><th>ภาคเรียน</th><th>GPA</th><th>ลงทะเบียน</th><th>ผ่าน</th><th>วิชาไม่ผ่าน</th></tr></thead><tbody>' + semesterDetailRows(result) + '</tbody></table></div><h3>ผลสะสม</h3><dl class="record-student-facts"><div><dt>GPAX</dt><dd>' + (result.gpax == null ? "-" : result.gpax.toFixed(2)) + '</dd></div><div><dt>ลงทะเบียนสะสม</dt><dd>' + result.registeredCredits.toFixed(1) + '</dd></div><div><dt>ผ่านสะสม</dt><dd>' + result.earnedCredits.toFixed(1) + '</dd></div><div><dt>หน่วยกิตที่ยังขาด</dt><dd>' + result.missingCredits.toFixed(1) + '</dd></div><div><dt>สถานะ</dt><dd>' + statusChip(result.academicStatus) + "</dd></div></dl>" + groupTable;
+    els.studentDialogBody.innerHTML = '<dl class="' + UI.facts + '"><div><dt>รหัส</dt><dd>' + student.studentCode + '</dd></div><div><dt>ชื่อ-สกุล</dt><dd>' + escapeHtml(student.firstName + " " + student.lastName) + '</dd></div><div><dt>ระดับชั้น</dt><dd>' + escapeHtml(grade) + '</dd></div><div><dt>ห้องเรียน</dt><dd>' + escapeHtml(classroom) + '</dd></div><div><dt>แผนการเรียน</dt><dd>' + escapeHtml(plan) + '</dd></div></dl><h3 class="' + UI.dialogHeading + '">ผลการเรียนรายภาค</h3><div class="' + UI.dialogTableWrap + '"><table class="' + UI.dialogTable + '"><thead><tr><th>ปีการศึกษา</th><th>ภาคเรียน</th><th>GPA</th><th>ลงทะเบียน</th><th>ผ่าน</th><th>วิชาไม่ผ่าน</th></tr></thead><tbody>' + semesterDetailRows(result) + '</tbody></table></div><h3 class="' + UI.dialogHeading + '">ผลสะสม</h3><dl class="' + UI.facts + '"><div><dt>GPAX</dt><dd>' + (result.gpax == null ? "-" : result.gpax.toFixed(2)) + '</dd></div><div><dt>ลงทะเบียนสะสม</dt><dd>' + result.registeredCredits.toFixed(1) + '</dd></div><div><dt>ผ่านสะสม</dt><dd>' + result.earnedCredits.toFixed(1) + '</dd></div><div><dt>หน่วยกิตที่ยังขาด</dt><dd>' + result.missingCredits.toFixed(1) + '</dd></div><div><dt>สถานะ</dt><dd>' + statusChip(result.academicStatus) + "</dd></div></dl>" + groupTable;
     els.studentDialog.showModal();
   }
 
@@ -813,13 +818,13 @@
   function buildRecordPrintPreview() {
     const scope = els.printScope.value === "student" ? "รายงานรายบุคคล" : "รายงานทั้งห้อง";
     const selected = state.visibleResults.find(function (result) { return result.student.id === els.printStudent.value; });
-    return '<strong>ตัวอย่างรายงานระเบียนสะสม</strong><p>' + scope + ' | ปีการศึกษา ' + escapeHtml(els.year.value) + (selected ? " | " + escapeHtml(selected.student.firstName + " " + selected.student.lastName) : "") + '</p><p>A' + (els.printPaper.value === "a3" ? "3" : "4") + " " + (els.printOrientation.value === "landscape" ? "แนวนอน" : "แนวตั้ง") + "</p>";
+    return '<strong class="' + UI.previewTitle + '">ตัวอย่างรายงานระเบียนสะสม</strong><p class="' + UI.previewLine + '">' + scope + ' | ปีการศึกษา ' + escapeHtml(els.year.value) + (selected ? " | " + escapeHtml(selected.student.firstName + " " + selected.student.lastName) : "") + '</p><p class="' + UI.previewLine + '">A' + (els.printPaper.value === "a3" ? "3" : "4") + " " + (els.printOrientation.value === "landscape" ? "แนวนอน" : "แนวตั้ง") + "</p>";
   }
 
   function buildGpaxPrintPreview() {
     const scope = els.printScope.value === "student" ? "รายงานรายบุคคล" : "รายงานทั้งห้อง";
     const selected = state.visibleResults.find(function (result) { return result.student.id === els.printStudent.value; });
-    return '<strong>ตัวอย่างรายงาน GPAX และหน่วยกิต</strong><p>' + scope + ' | ปีการศึกษา ' + escapeHtml(els.year.value) + (selected ? " | " + escapeHtml(selected.student.firstName + " " + selected.student.lastName) : "") + '</p><p>A' + (els.printPaper.value === "a3" ? "3" : "4") + " " + (els.printOrientation.value === "landscape" ? "แนวนอน" : "แนวตั้ง") + "</p>";
+    return '<strong class="' + UI.previewTitle + '">ตัวอย่างรายงาน GPAX และหน่วยกิต</strong><p class="' + UI.previewLine + '">' + scope + ' | ปีการศึกษา ' + escapeHtml(els.year.value) + (selected ? " | " + escapeHtml(selected.student.firstName + " " + selected.student.lastName) : "") + '</p><p class="' + UI.previewLine + '">A' + (els.printPaper.value === "a3" ? "3" : "4") + " " + (els.printOrientation.value === "landscape" ? "แนวนอน" : "แนวตั้ง") + "</p>";
   }
 
   function buildPrintPreview() {
@@ -856,7 +861,7 @@
         populatePrintStudents();
       }, 250);
     });
-    document.querySelectorAll(".record-report-tab").forEach(function (tab) {
+    els.reportTabs.forEach(function (tab) {
       tab.addEventListener("click", function () { setActiveReportType(tab.dataset.reportType, true); });
     });
     els.tbody.addEventListener("click", function (event) {
@@ -902,7 +907,7 @@
       const observer = new ResizeObserver(function (entries) {
         if (entries.some(function (entry) { return entry.contentRect.width > 0; }) && state.baseResults.length) renderVisualization();
       });
-      observer.observe(document.querySelector(".record-chart-grid"));
+      observer.observe(els.chartGrid);
     }
   }
 

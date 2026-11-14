@@ -28,7 +28,7 @@ timetable/     ตารางสอน — 4 หน้า + timetable-core.js (
 grading/       บันทึกคะแนน + เช็คชื่อ — 2 หน้า (SPA แบบ hash route) + assets/ ของตัวเอง
                grading-layout.js (ต่อเข้ากับ layout กลาง) · GLOSSARY.md · docs/
 reports/       รายงานวิชาการ — 12 หน้า
-assets/academic-report/   CSS, JS core/module ของ reports/academic-report.html, Chart.js, mock JSON
+assets/academic-report/   JS core/module ของรายงาน 5 หน้า (attendance, unable-exam, score-subject, average-score-year, record), Chart.js, mock JSON
 docs/          เอกสารภาพรวมนี้
 ```
 

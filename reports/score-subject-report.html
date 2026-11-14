@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>รายงานคะแนนรายวิชา | Academic Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // same theme as the other Tailwind report pages (subject-results.html)
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#f7f8fc',
+            ink: '#1e293b',
+            muted: '#64748b',
+            brand: '#2563eb'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          fontSize: {
+            xs: ['1.15vh', { lineHeight: '1.55' }],
+            sm: ['1.35vh', { lineHeight: '1.6' }],
+            base: ['1.55vh', { lineHeight: '1.6' }],
+            lg: ['1.75vh', { lineHeight: '1.45' }],
+            xl: ['2vh', { lineHeight: '1.35' }],
+            '2xl': ['2.45vh', { lineHeight: '1.25' }],
+            '3xl': ['3vh', { lineHeight: '1.18' }],
+            '4xl': ['3.6vh', { lineHeight: '1.12' }],
+            '5xl': ['4.2vh', { lineHeight: '1.08' }]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="relative min-h-screen overflow-x-hidden bg-[#F7F9FC] font-body text-ink [&.modal-open]:overflow-hidden">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden">
+    <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl"></div>
+    <div class="absolute right-0 top-20 h-80 w-80 rounded-full bg-sky-100/60 blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-100/50 blur-3xl"></div>
+  </div>
+  <div id="layoutSidebar"></div>
+
+  <div class="relative lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="../shared/academic-layout.js?v=14"></script>
+    <script src="../assets/academic-report/js/scope-chip.js?v=3"></script>
+    <script>
+      // academic-office report: a teacher is sent to the one report they can use
+      if (AcademicLayout.role() === 'teacher') window.location.replace('unable-exam-report.html');
+    </script>
+
+    <!-- text source of the scope chip in the shared header (scope-chip.js mirrors it) -->
+    <aside class="academic-card hidden" aria-hidden="true">
+      <span class="meta-label">ค่าตั้งต้นที่ใช้งาน</span>
+      <strong class="meta-value" id="scoreCurrentAcademicLabel">กำลังโหลด...</strong>
+    </aside>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8">
+      <div class="space-y-6">
+        <section>
+          <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
+            <a href="overview.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">หน้าหลัก</a>
+            <span class="text-slate-300">&gt;</span>
+            <span>รายงานวิชาการ</span>
+            <span class="text-slate-300">&gt;</span>
+            <span class="font-medium text-slate-800">รายงานคะแนนรายวิชา</span>
+          </nav>
+          <h1 id="scoreSubjectPageTitle" class="text-3xl font-semibold tracking-tight text-slate-900 lg:text-4xl">รายงานคะแนนรายวิชา</h1>
+          <p class="mt-3 max-w-4xl text-sm leading-6 text-slate-500">ดูคะแนนรายวิชาของแต่ละห้อง พร้อมติดตามนักเรียนที่ต่ำกว่าเกณฑ์และคะแนนที่ยังไม่กรอก</p>
+        </section>
+
+        <!-- summary: overview by room, or one room's chart and follow-up list -->
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6" aria-labelledby="scoreSummaryTitle">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ผลลัพธ์รายงาน</p>
+              <h2 class="mt-2 text-xl font-semibold text-slate-900" id="scoreSummaryTitle">รายงานคะแนนรายวิชา</h2>
+              <p class="mt-1 text-sm font-semibold text-slate-800" id="scoreSummaryPeriod">กำลังโหลดข้อมูล</p>
+              <p class="text-sm text-slate-500" id="scoreSummaryScope"></p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2 text-xs">
+              <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-blue-700">ตาราง: <strong class="font-semibold" id="scoreMatrixMeta">รายวิชาทั้งหมด</strong></span>
+              <span class="inline-flex items-center gap-1 rounded-full bg-blue-50 px-3 py-1.5 text-blue-700">มุมมอง: <strong class="font-semibold" id="scoreViewMeta">ตารางแนวนอน</strong></span>
+              <button class="hidden rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50" id="scoreBackOverviewBtn" type="button">กลับไปภาพรวม</button>
+            </div>
+          </div>
+
+          <div class="mt-5 grid gap-4 md:grid-cols-3" id="scoreDetailSummaryGrid" aria-label="สรุปคะแนนรายวิชา">
+            <article class="rounded-2xl border border-amber-100 bg-amber-50/70 p-5">
+              <p class="text-sm font-medium text-amber-700">นักเรียนต่ำกว่าเกณฑ์</p>
+              <p class="mt-2 text-3xl font-semibold tracking-tight text-amber-700" id="scoreFollowUpCount">0 คน</p>
+            </article>
+            <article class="rounded-2xl border border-amber-100 bg-amber-50/70 p-5">
+              <p class="text-sm font-medium text-amber-700">รายวิชาต่ำกว่าเกณฑ์</p>
+              <p class="mt-2 text-3xl font-semibold tracking-tight text-amber-700" id="scoreLowSubjectCount">0 วิชา</p>
+            </article>
+            <article class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p class="text-sm font-medium text-slate-500">ครูกรอกคะแนนแล้ว</p>
+              <p class="mt-2 text-3xl font-semibold tracking-tight text-slate-900" id="scoreCompletionRate">0/0</p>
+              <p class="mt-1 text-sm text-slate-500" id="scoreCompletionDesc">0%</p>
+            </article>
+          </div>
+
+          <div class="mt-5 grid hidden gap-4 sm:grid-cols-2 xl:grid-cols-5" id="scoreOverviewSummaryGrid" aria-label="สรุปภาพรวมคะแนนรายวิชา">
+            <article class="rounded-2xl border border-blue-100 bg-blue-50/70 p-5">
+              <p class="text-sm font-medium text-blue-700">นักเรียนทั้งหมด</p>
+              <p class="mt-2 text-3xl font-semibold tracking-tight text-blue-700" id="scoreOverviewStudentCount">0 คน</p>
+            </article>
+            <article class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p class="text-sm font-medium text-slate-500">ห้องเรียน</p>
+              <p class="mt-2 text-3xl font-semibold tracking-tight text-slate-900" id="scoreOverviewRoomCount">0 ห้อง</p>
+            </article>
+            <article class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p class="text-sm font-medium text-slate-500">รายวิชา</p>
+              <p class="mt-2 text-3xl font-semibold tracking-tight text-slate-900" id="scoreOverviewSubjectCount">0 วิชา</p>
+            </article>
+            <article class="rounded-2xl border border-amber-100 bg-amber-50/70 p-5">
+              <p class="text-sm font-medium text-amber-700">นักเรียนต่ำกว่าเกณฑ์</p>
+              <p class="mt-2 text-3xl font-semibold tracking-tight text-amber-700" id="scoreOverviewFollowUpCount">0 คน</p>
+            </article>
+            <article class="rounded-2xl border border-amber-100 bg-amber-50/70 p-5">
+              <p class="text-sm font-medium text-amber-700">ครูยังไม่กรอกคะแนน</p>
+              <p class="mt-2 text-3xl font-semibold tracking-tight text-amber-700" id="scoreOverviewMissingCount">0 รายการ</p>
+            </article>
+          </div>
+
+          <section class="mt-5 hidden rounded-2xl border border-slate-200 p-5" id="scoreOverviewPanel" aria-labelledby="scoreOverviewTitle">
+            <h3 class="text-base font-semibold text-slate-900" id="scoreOverviewTitle">สรุปรายห้อง</h3>
+            <div class="mt-4 max-h-[70vh] overflow-auto rounded-2xl border border-slate-200">
+              <table class="min-w-[720px] w-full text-left text-sm [&_tbody_tr:hover]:bg-slate-50/70 [&_tbody_tr]:border-t [&_tbody_tr]:border-slate-100 [&_td]:px-4 [&_td]:py-3.5 [&_td]:align-middle [&_td]:text-slate-700 [&_th]:whitespace-nowrap [&_th]:bg-slate-50 [&_th]:px-4 [&_th]:py-3.5 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-slate-500 [&_td:last-child]:w-32 [&_td:last-child]:text-right [&_th:last-child]:w-32 [&_th:last-child]:text-right">
+                <thead>
+                  <tr>
+                    <th>ระดับชั้น</th>
+                    <th>ห้องเรียน</th>
+                    <th>นักเรียน</th>
+                    <th>ต่ำกว่าเกณฑ์</th>
+                    <th>ยังไม่กรอกคะแนน</th>
+                    <th aria-label="คำสั่ง"></th>
+                  </tr>
+                </thead>
+                <tbody id="scoreOverviewTbody"></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="mt-5 rounded-2xl border border-slate-200 p-5" data-score-detail-only aria-labelledby="scoreSubjectAverageTitle">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="text-base font-semibold text-slate-900" id="scoreSubjectAverageTitle">คะแนนแต่ละวิชา</h3>
+              <span class="flex-none text-xs font-semibold text-slate-500">เกณฑ์ 60%</span>
+            </div>
+            <div class="mt-4 overflow-x-auto">
+              <div class="relative grid min-w-[420px] grid-cols-[190px_minmax(150px,1fr)_58px] items-center gap-x-2.5 gap-y-1.5" id="scoreSubjectAverageChart">
+                <div class="col-span-full rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-400">ค้นหาข้อมูลเพื่อแสดงกราฟ</div>
+              </div>
+            </div>
+          </section>
+
+          <section class="mt-5 rounded-2xl border border-slate-200 p-5" data-score-detail-only aria-labelledby="scoreFollowUpTitle">
+            <div class="flex items-center justify-between gap-3">
+              <h3 class="text-base font-semibold text-slate-900" id="scoreFollowUpTitle">นักเรียนต่ำกว่าเกณฑ์</h3>
+              <span class="flex-none text-xs font-semibold text-slate-500">คะแนนต่ำกว่า 60%</span>
+            </div>
+            <div class="mt-4 max-h-80 overflow-auto rounded-2xl border border-slate-200">
+              <table class="min-w-[640px] w-full text-left text-sm [&_tbody_tr:hover]:bg-slate-50/70 [&_tbody_tr]:border-t [&_tbody_tr]:border-slate-100 [&_td]:px-4 [&_td]:py-3.5 [&_td]:align-middle [&_td]:text-slate-700 [&_th]:whitespace-nowrap [&_th]:bg-slate-50 [&_th]:px-4 [&_th]:py-3.5 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-slate-500 [&_td:last-child]:w-32 [&_td:last-child]:text-right [&_th:last-child]:w-32 [&_th:last-child]:text-right [&_td:first-child]:min-w-[210px] [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-10">
+                <thead>
+                  <tr>
+                    <th>ชื่อ</th>
+                    <th>วิชาที่ต่ำกว่าเกณฑ์</th>
+                    <th aria-label="คำสั่ง"></th>
+                  </tr>
+                </thead>
+                <tbody id="scoreFollowUpTbody">
+                  <tr>
+                    <td colspan="3"><div class="rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-400">ค้นหาข้อมูลเพื่อแสดงรายการ</div></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </section>
+
+        <!-- filters -->
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6" aria-labelledby="scoreFilterTitle">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ค้นหารายงาน</p>
+            <h2 class="mt-2 text-xl font-semibold text-slate-900" id="scoreFilterTitle">เงื่อนไขการค้นหา</h2>
+          </div>
+
+          <form id="scoreFiltersForm" aria-label="เงื่อนไขการค้นหารายงานคะแนนรายวิชา" class="[&_select]:w-full [&_select]:rounded-2xl [&_select]:border [&_select]:border-slate-200 [&_select]:bg-white [&_select]:px-4 [&_select]:py-3 [&_select]:text-sm [&_select]:outline-none [&_select]:transition focus:[&_select]:border-brand focus:[&_select]:ring-4 focus:[&_select]:ring-blue-100">
+            <div class="mt-5">
+              <p class="text-xs font-semibold uppercase tracking-wide text-slate-400">ตัวกรองหลัก</p>
+              <h3 class="mt-1 text-base font-semibold text-slate-900" id="scoreMainFilterTitle">ปีการศึกษาและห้องเรียน</h3>
+            </div>
+            <div class="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">ปีการศึกษา</span>
+                <select id="scoreAcademicYear" name="academicYear"></select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">เทอม</span>
+                <select id="scoreSemester" name="semester"></select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">ระดับชั้น</span>
+                <select id="scoreGrade" name="grade">
+                  <option value="">เลือกระดับชั้น</option>
+                </select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">ชั้นเรียน</span>
+                <select id="scoreClassroom" name="classroom">
+                  <option value="all">ทุกห้องเรียน</option>
+                </select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">รายวิชา</span>
+                <select id="scoreSubject" name="subject">
+                  <option value="all">ทุกวิชา</option>
+                </select>
+              </label>
+            </div>
+          </form>
+
+          <div class="mt-5 flex flex-wrap justify-end gap-3" aria-label="คำสั่งค้นหา">
+            <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="scoreResetFiltersBtn" type="button">ล้างเงื่อนไข</button>
+            <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" id="scoreSearchBtn" type="button" disabled>ค้นหาข้อมูล</button>
+          </div>
+        </section>
+
+        <!-- score matrix of one room -->
+        <section class="rounded-3xl border border-slate-200 bg-white shadow-sm" data-score-detail-only aria-labelledby="scoreTableTitle">
+          <div class="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6">
+            <h3 class="text-xl font-semibold text-slate-900" id="scoreTableTitle">ตารางคะแนนรายวิชา</h3>
+
+            <div class="flex flex-wrap items-center gap-3" aria-label="คำสั่งจัดการรายงาน">
+              <div class="relative" id="scoreColumnChooser">
+                <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="scoreColumnToggleBtn" type="button" aria-expanded="false" aria-controls="scoreColumnChooserPanel">เลือกวิชา</button>
+                <div class="absolute left-0 top-full z-40 mt-2 hidden max-h-72 w-[min(340px,80vw)] overflow-y-auto rounded-2xl border border-slate-200 bg-white p-3 shadow-xl" id="scoreColumnChooserPanel"></div>
+              </div>
+
+              <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="scoreShowAllSubjectsBtn" type="button">แสดงทั้งหมด</button>
+
+              <div class="relative" id="scoreExportDropdown">
+                <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="scoreExportBtn" type="button" aria-haspopup="true" aria-expanded="false" disabled>ส่งออก</button>
+                <div class="absolute right-0 top-full z-40 mt-2 hidden w-40 overflow-hidden rounded-2xl border border-slate-200 bg-white py-1 shadow-xl [&_button]:block [&_button]:w-full [&_button]:px-4 [&_button]:py-2.5 [&_button]:text-left [&_button]:text-sm [&_button]:text-slate-700 hover:[&_button]:bg-slate-50" id="scoreExportMenu" role="menu" aria-label="รูปแบบการส่งออก">
+                  <button type="button" role="menuitem" data-export="excel">Excel</button>
+                  <button type="button" role="menuitem" data-export="csv">CSV</button>
+                  <button type="button" role="menuitem" data-export="pdf">PDF</button>
+                </div>
+              </div>
+
+              <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="scorePrintBtn" type="button" disabled>พิมพ์รายงาน</button>
+            </div>
+          </div>
+          <div class="max-h-[70vh] overflow-auto rounded-b-3xl border-t border-slate-200">
+            <table class="w-full border-separate border-spacing-0 text-left text-sm [&_td]:border-t [&_td]:border-slate-100 [&_td]:px-4 [&_td]:py-3.5 [&_td]:align-middle [&_td]:text-slate-700 [&_th]:whitespace-nowrap [&_th]:bg-slate-50 [&_th]:px-4 [&_th]:py-3.5 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-slate-500">
+              <thead id="scoreThead">
+                <tr>
+                  <th class="sticky top-0 z-10">ลำดับ</th>
+                  <th class="sticky top-0 z-10">รหัสนักเรียน</th>
+                  <th class="sticky top-0 z-10">ชื่อ</th>
+                  <th class="sticky top-0 z-10">วิชา</th>
+                </tr>
+              </thead>
+              <tbody id="scoreTbody">
+                <tr>
+                  <td colspan="4">
+                    <div class="rounded-2xl bg-slate-50 px-4 py-8 text-center text-sm text-slate-400">กดค้นหาข้อมูลเพื่อเริ่มแสดงรายงาน</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- print dialog: the hidden attribute sits on the outer element, the layout on the inner wrapper -->
+  <div id="scorePrintModal" class="fixed inset-0 z-[60]" hidden>
+    <div class="absolute inset-0 bg-slate-900/50" data-score-print-close></div>
+    <div class="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
+      <section class="pointer-events-auto flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="scorePrintModalTitle">
+        <header class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+          <h2 class="text-xl font-semibold text-slate-900" id="scorePrintModalTitle">พิมพ์รายงานคะแนนรายวิชา</h2>
+          <button class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 text-xl text-slate-500 transition hover:bg-slate-50" type="button" id="scorePrintCloseBtn" aria-label="ปิดหน้าต่างพิมพ์">×</button>
+        </header>
+
+        <div class="min-h-0 flex-1 space-y-4 overflow-auto p-6">
+          <div class="grid gap-4 md:grid-cols-3 [&_select]:w-full [&_select]:rounded-2xl [&_select]:border [&_select]:border-slate-200 [&_select]:bg-white [&_select]:px-4 [&_select]:py-3 [&_select]:text-sm [&_select]:outline-none [&_select]:transition focus:[&_select]:border-brand focus:[&_select]:ring-4 focus:[&_select]:ring-blue-100">
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">ขอบเขตการพิมพ์</span>
+              <select id="scorePrintMode">
+                <option value="all">พิมพ์ทั้งห้อง</option>
+                <option value="student">พิมพ์รายบุคคล</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">Template</span>
+              <select id="scorePrintTemplate">
+                <option value="standard">มาตรฐานโรงเรียน</option>
+                <option value="compact">แบบย่อ</option>
+                <option value="formal">แบบทางการ</option>
+              </select>
+            </label>
+            <label class="block">
+              <span class="mb-2 block text-sm font-medium text-slate-700">ภาษา</span>
+              <select id="scorePrintLanguage">
+                <option value="th">ไทย</option>
+                <option value="en">English</option>
+                <option value="th-en">ไทย / English</option>
+              </select>
+            </label>
+            <label class="block hidden" id="scoreStudentPickerWrap">
+              <span class="mb-2 block text-sm font-medium text-slate-700">นักเรียน</span>
+              <select id="scoreStudentPicker"></select>
+            </label>
+          </div>
+
+          <div class="hidden overflow-x-auto rounded-2xl border border-dashed border-slate-300 bg-white px-4 py-3 text-sm text-slate-500" id="scorePrintPreview"></div>
+        </div>
+
+        <footer class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-200 px-6 py-4">
+          <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" type="button" data-score-print-close>ยกเลิก</button>
+          <div class="flex gap-3">
+            <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="scorePreviewBtn" type="button">สร้าง Preview</button>
+            <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" id="scoreConfirmPrintBtn" type="button" disabled>พิมพ์</button>
+          </div>
+        </footer>
+      </section>
+    </div>
+  </div>
+
+  <!-- preview before export / print (driven by report-preview.js) -->
+  <div id="attendancePdfModal" class="fixed inset-0 z-[60]" hidden>
+    <div class="absolute inset-0 bg-slate-900/50" data-pdf-close></div>
+    <div class="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
+      <section class="pointer-events-auto flex max-h-[90vh] w-full max-w-5xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="attendancePdfTitle">
+        <header class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ตัวอย่างก่อนส่งออก</p>
+            <h2 class="mt-1 text-xl font-semibold text-slate-900" id="attendancePdfTitle">รายงานคะแนนรายวิชา</h2>
+            <p class="mt-1 text-sm text-slate-500" id="attendancePdfScope">ตรวจสอบรูปแบบตารางก่อนดาวน์โหลด</p>
+          </div>
+          <button class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 text-xl text-slate-500 transition hover:bg-slate-50" type="button" id="attendancePdfCloseBtn" aria-label="ปิดตัวอย่าง PDF">×</button>
+        </header>
+        <div class="flex-1 overflow-y-auto bg-slate-100 p-6">
+          <div class="mx-auto overflow-x-auto rounded-xl bg-white p-8 shadow-sm" id="attendancePdfSheet"></div>
+        </div>
+        <footer class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
+          <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50" type="button" data-pdf-close>ยกเลิก</button>
+          <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700" type="button" id="attendancePdfDownloadBtn">ดาวน์โหลด PDF</button>
+        </footer>
+      </section>
+    </div>
+  </div>
+
+  <!-- data-base-class / data-visible-class tell the scripts which Tailwind classes show and hide the toast -->
+  <div id="toast" role="status" aria-live="polite"
+    data-base-class="pointer-events-none fixed bottom-6 right-6 z-[70] flex max-w-sm translate-y-2 flex-col gap-0.5 rounded-2xl bg-slate-900 px-5 py-4 text-sm text-white opacity-0 shadow-xl transition duration-200 [&.is-visible]:translate-y-0 [&.is-visible]:opacity-100"
+    data-visible-class="is-visible"
+    class="pointer-events-none fixed bottom-6 right-6 z-[70] flex max-w-sm translate-y-2 flex-col gap-0.5 rounded-2xl bg-slate-900 px-5 py-4 text-sm text-white opacity-0 shadow-xl transition duration-200 [&.is-visible]:translate-y-0 [&.is-visible]:opacity-100"></div>
+
+  <!-- the gradebook's rooms, subjects, teachers and name lists; report-data.js builds one data set for all five reports from them -->
+  <script src="../grading/assets/js/data.js"></script>
+  <script src="../assets/academic-report/js/core/report-data.js?v=2"></script>
+  <script src="../assets/academic-report/js/core/report-preview.js?v=2"></script>
+  <script src="../assets/academic-report/js/modules/score-per-subject.js?v=tw-1"></script>
+  <script>
+    AcademicLayout.mount({ active: 'ar-score-subject', title: 'รายงานคะแนนรายวิชา', rightHtml: ScopeChip.html });
+    ScopeChip.follow(document.querySelector('.academic-card'));
+  </script>
+</body>
+</html>

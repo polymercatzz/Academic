@@ -1,7 +1,7 @@
 /*
  * Lets the shared sidebar/header (academic-layout.js, Tailwind classes) sit on pages that keep
  * their own stylesheet and therefore run Tailwind without its preflight reset
- * (reports/academic-report.html, reports/teacher-attendance.html, grading/*.html).
+ * (grading/*.html).
  */
 
 /* ---------- minimal reset for the shared sidebar/header ---------- */

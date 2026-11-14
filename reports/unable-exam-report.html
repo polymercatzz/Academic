@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>รายงานผู้ไม่มีสิทธิ์สอบ | Academic Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // same theme as the other Tailwind report pages (subject-results.html)
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#f7f8fc',
+            ink: '#1e293b',
+            muted: '#64748b',
+            brand: '#2563eb'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          fontSize: {
+            xs: ['1.15vh', { lineHeight: '1.55' }],
+            sm: ['1.35vh', { lineHeight: '1.6' }],
+            base: ['1.55vh', { lineHeight: '1.6' }],
+            lg: ['1.75vh', { lineHeight: '1.45' }],
+            xl: ['2vh', { lineHeight: '1.35' }],
+            '2xl': ['2.45vh', { lineHeight: '1.25' }],
+            '3xl': ['3vh', { lineHeight: '1.18' }],
+            '4xl': ['3.6vh', { lineHeight: '1.12' }],
+            '5xl': ['4.2vh', { lineHeight: '1.08' }]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="relative min-h-screen overflow-x-hidden bg-[#F7F9FC] font-body text-ink [&.modal-open]:overflow-hidden">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden">
+    <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl"></div>
+    <div class="absolute right-0 top-20 h-80 w-80 rounded-full bg-sky-100/60 blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-100/50 blur-3xl"></div>
+  </div>
+  <div id="layoutSidebar"></div>
+
+  <div class="relative lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="../shared/academic-layout.js?v=14"></script>
+    <script src="../assets/academic-report/js/scope-chip.js?v=3"></script>
+
+    <!-- text source of the scope chip in the shared header (scope-chip.js mirrors it) -->
+    <aside class="academic-card hidden" aria-hidden="true">
+      <span class="meta-label">ค่าตั้งต้นที่ใช้งาน</span>
+      <strong class="meta-value" id="unableCurrentAcademicLabel">กำลังโหลด...</strong>
+    </aside>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8">
+      <div class="space-y-6">
+        <section>
+          <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
+            <a id="unableBreadcrumbHome" href="overview.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">หน้าหลัก</a>
+            <span class="text-slate-300">&gt;</span>
+            <span>รายงานวิชาการ</span>
+            <span class="text-slate-300">&gt;</span>
+            <span class="font-medium text-slate-800">รายงานผู้ไม่มีสิทธิ์สอบ</span>
+          </nav>
+          <h1 id="unablePageTitle" class="text-3xl font-semibold tracking-tight text-slate-900 lg:text-4xl">รายงานผู้ไม่มีสิทธิ์สอบ</h1>
+          <p id="unablePageSubtitle" class="mt-3 max-w-4xl text-sm leading-6 text-slate-500">ตรวจสอบนักเรียนที่เวลาเรียนไม่ถึงเกณฑ์และไม่มีสิทธิ์สอบในภาคเรียน</p>
+        </section>
+
+        <!-- overview -->
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6" aria-labelledby="unableSummaryTitle">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ภาพรวม</p>
+              <h2 class="mt-2 text-xl font-semibold text-slate-900" id="unableSummaryTitle">ภาพรวมสิทธิ์สอบ</h2>
+              <p class="mt-1 text-sm text-slate-500" id="unableSummaryScope">ทั้งโรงเรียน</p>
+            </div>
+            <span class="inline-flex items-center gap-2 self-start rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600">เกณฑ์การเข้าเรียน <strong class="font-semibold text-slate-900" id="unableThresholdValue">80%</strong></span>
+          </div>
+
+          <div class="mt-5 grid gap-4 md:grid-cols-3" aria-label="ตัวเลขสรุปผล">
+            <article class="rounded-2xl border border-rose-100 bg-rose-50/70 p-5">
+              <p class="text-sm font-medium text-rose-700">ไม่มีสิทธิ์สอบ</p>
+              <p class="mt-2 text-4xl font-semibold tracking-tight text-rose-700"><span id="unableStudentsFound">0</span> <span class="text-base font-medium">คน</span></p>
+            </article>
+            <article class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p class="text-sm font-medium text-slate-500">รายการตรวจสอบ</p>
+              <p class="mt-2 text-4xl font-semibold tracking-tight text-slate-900" id="unableCaseMetric">0</p>
+            </article>
+            <article class="rounded-2xl border border-slate-200 bg-slate-50 p-5">
+              <p class="text-sm font-medium text-slate-500">ค่าเฉลี่ยการเข้าเรียน</p>
+              <p class="mt-2 text-4xl font-semibold tracking-tight text-slate-900" id="unableAttendanceAverage">0%</p>
+            </article>
+          </div>
+
+          <div class="mt-5 grid gap-4 xl:grid-cols-2" id="unableOverviewGrid">
+            <section class="rounded-2xl border border-slate-200 p-5" aria-labelledby="unableStatusChartTitle">
+              <div class="flex items-center justify-between gap-3">
+                <h3 class="text-base font-semibold text-slate-900" id="unableStatusChartTitle">สถานะสิทธิ์สอบ</h3>
+                <span class="text-sm text-slate-500" id="unableCaseTotal">0 รายการ</span>
+              </div>
+              <div class="mt-4 space-y-4" id="unableStatusChart"></div>
+            </section>
+            <section class="rounded-2xl border border-slate-200 p-5" aria-labelledby="unableBreakdownTitle">
+              <div class="flex flex-wrap items-center justify-between gap-3">
+                <h3 class="text-base font-semibold text-slate-900" id="unableBreakdownTitle">สรุปแยกตาม</h3>
+                <div class="inline-flex rounded-xl bg-slate-100 p-1" id="unableBreakdownTabs" role="tablist" aria-label="มุมมองสรุป">
+                  <button class="rounded-lg px-3 py-1.5 text-sm font-semibold transition" type="button" role="tab" aria-selected="true" aria-controls="unableGradeRoomBreakdown" data-breakdown-tab="gradeRoom">ชั้น/ห้อง</button>
+                  <button class="rounded-lg px-3 py-1.5 text-sm font-semibold transition" type="button" role="tab" aria-selected="false" aria-controls="unableSubjectBreakdown" data-breakdown-tab="subject">รายวิชา</button>
+                </div>
+              </div>
+              <div class="mt-4 max-h-72 overflow-y-auto pr-1" id="unableBreakdownViewport">
+                <div class="space-y-4" id="unableGradeRoomBreakdown" role="tabpanel" data-breakdown-panel="gradeRoom"></div>
+                <div class="hidden space-y-4" id="unableSubjectBreakdown" role="tabpanel" data-breakdown-panel="subject"></div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <!-- filters -->
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6" aria-labelledby="unableFilterTitle">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ตัวกรองการค้นหา</p>
+            <h2 class="mt-2 text-xl font-semibold text-slate-900" id="unableFilterTitle">เงื่อนไขการค้นหา</h2>
+          </div>
+
+          <form id="unableFiltersForm" aria-label="เงื่อนไขการค้นหา unable to exam"
+            class="[&_input]:w-full [&_input]:rounded-2xl [&_input]:border [&_input]:border-slate-200 [&_input]:bg-white [&_input]:px-4 [&_input]:py-3 [&_input]:text-sm [&_input]:outline-none [&_input]:transition focus:[&_input]:border-brand focus:[&_input]:ring-4 focus:[&_input]:ring-blue-100 [&_select]:w-full [&_select]:rounded-2xl [&_select]:border [&_select]:border-slate-200 [&_select]:bg-white [&_select]:px-4 [&_select]:py-3 [&_select]:text-sm [&_select]:outline-none [&_select]:transition focus:[&_select]:border-brand focus:[&_select]:ring-4 focus:[&_select]:ring-blue-100">
+            <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">ปีการศึกษา</span>
+                <select id="unableAcademicYear" name="academicYear"></select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">ภาคเรียน</span>
+                <select id="unableSemester" name="semester"></select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">ระดับชั้น</span>
+                <select id="unableGrade" name="grade">
+                  <option value="">ทุกระดับชั้น</option>
+                </select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">ห้องเรียน</span>
+                <select id="unableClassroom" name="classroom">
+                  <option value="">ทุกห้อง</option>
+                </select>
+              </label>
+              <label class="block">
+                <span class="mb-2 block text-sm font-medium text-slate-700">รายวิชา</span>
+                <select id="unableSubject" name="subject">
+                  <option value="">ทุกวิชา</option>
+                </select>
+              </label>
+            </div>
+
+            <div class="mt-4">
+              <button id="unableAdvancedToggleBtn" type="button" aria-expanded="false" aria-controls="unableAdvancedFilters"
+                class="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100">
+                แสดงตัวกรองเพิ่มเติม
+              </button>
+              <div class="mt-4 hidden rounded-3xl border border-slate-200 bg-[#F7F9FC] p-4" id="unableAdvancedFilters">
+                <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">ตารางเรียน</span>
+                    <select id="unableScheduleScope" name="scheduleScope">
+                      <option value="current">เฉพาะภาคเรียนปัจจุบัน</option>
+                      <option value="all">ทุกตารางเรียนในปีการศึกษา</option>
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">สถานะ</span>
+                    <select id="unableStatus" name="status">
+                      <option value="unable">ไม่มีสิทธิ์สอบ</option>
+                      <option value="all">ทุกสถานะ</option>
+                      <option value="eligible">ยังมีสิทธิ์สอบ</option>
+                    </select>
+                  </label>
+                  <label class="block">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">เกณฑ์การเข้าเรียน (%)</span>
+                    <input id="unableThreshold" name="threshold" type="number" min="1" max="100" step="1" value="80" />
+                  </label>
+                  <label class="block xl:col-span-2">
+                    <span class="mb-2 block text-sm font-medium text-slate-700">คำค้นหา</span>
+                    <input id="unableKeyword" name="keyword" type="text" placeholder="ค้นหาด้วยรหัสนักเรียนหรือชื่อ-สกุล" />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-4 hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800" id="unableValidationBanner" role="status" aria-live="polite"></div>
+          </form>
+        </section>
+
+        <!-- result table: shown once a room or a subject is picked -->
+        <section class="hidden rounded-3xl border border-slate-200 bg-white shadow-sm" id="unableDetailPanel" aria-labelledby="unableDetailTitle">
+          <div class="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ผลลัพธ์การค้นหา</p>
+              <h3 class="mt-2 text-xl font-semibold text-slate-900" id="unableDetailTitle">รายชื่อนักเรียนตามสถานะสิทธิ์สอบ</h3>
+              <p class="mt-1 text-sm text-slate-500" id="unableDetailScope"></p>
+            </div>
+            <div class="flex flex-wrap items-center gap-3" aria-label="การจัดการผลลัพธ์">
+              <label class="flex items-center gap-2 text-sm text-slate-600" for="unablePageSize">
+                <span>จำนวนแถว</span>
+                <select id="unablePageSize" class="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none transition focus:border-brand focus:ring-4 focus:ring-blue-100">
+                  <option value="5">5</option>
+                  <option value="10" selected>10</option>
+                  <option value="20">20</option>
+                </select>
+              </label>
+              <span class="text-sm text-slate-500">ทั้งหมด <strong class="font-semibold text-slate-900" id="unableTotalRecords">0</strong> รายการ</span>
+              <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="unablePdfPreviewBtn" type="button" disabled>PDF Preview</button>
+              <div class="relative" id="unableExportDropdown">
+                <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" id="unableExportBtn" type="button" aria-haspopup="true" aria-expanded="false" disabled>ส่งออก</button>
+                <div class="absolute right-0 top-full z-20 mt-2 hidden w-40 overflow-hidden rounded-2xl border border-slate-200 bg-white py-1 shadow-xl [&_button]:block [&_button]:w-full [&_button]:px-4 [&_button]:py-2.5 [&_button]:text-left [&_button]:text-sm [&_button]:text-slate-700 hover:[&_button]:bg-slate-50" id="unableExportMenu" role="menu" aria-label="รูปแบบการส่งออก">
+                  <button type="button" role="menuitem" data-export="excel">Excel</button>
+                  <button type="button" role="menuitem" data-export="print">พิมพ์</button>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="mx-5 mt-4 hidden rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 lg:mx-6" id="unableEmptyNotice" role="status" aria-live="polite"></div>
+
+          <div class="overflow-x-auto" id="unableTablePlaceholder">
+            <table class="min-w-full text-left text-sm [&_tbody_tr:hover]:bg-slate-50/70 [&_tbody_tr]:border-t [&_tbody_tr]:border-slate-100 [&_td]:px-4 [&_td]:py-3 [&_td]:align-middle [&_td]:text-slate-700 [&_th]:whitespace-nowrap [&_th]:bg-slate-50 [&_th]:px-4 [&_th]:py-3 [&_th]:text-xs [&_th]:font-semibold [&_th]:uppercase [&_th]:tracking-wide [&_th]:text-slate-500">
+              <thead id="unableThead"></thead>
+              <tbody id="unableTbody">
+                <tr>
+                  <td colspan="9"><div class="py-10 text-center text-sm text-slate-400">กดค้นหาข้อมูลเพื่อเริ่มแสดงรายงาน</div></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="flex hidden items-center justify-end gap-3 border-t border-slate-200 p-4" id="unablePaginationBar" aria-label="การแบ่งหน้า">
+            <button class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="unablePrevPageBtn" type="button">ก่อนหน้า</button>
+            <span class="text-sm text-slate-500" id="unablePaginationStatus">หน้า 1 จาก 1</span>
+            <button class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="unableNextPageBtn" type="button">ถัดไป</button>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- preview before export / print (driven by report-preview.js) -->
+  <div id="attendancePdfModal" class="fixed inset-0 z-[60]" hidden>
+    <div class="absolute inset-0 bg-slate-900/50" data-pdf-close></div>
+    <div class="pointer-events-none absolute inset-0 flex items-center justify-center p-4">
+      <section class="pointer-events-auto flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="attendancePdfTitle">
+        <header class="flex items-start justify-between gap-4 border-b border-slate-200 px-6 py-5">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ตัวอย่างก่อนส่งออก</p>
+            <h2 class="mt-1 text-xl font-semibold text-slate-900" id="attendancePdfTitle">รายงานผู้ไม่มีสิทธิ์สอบ</h2>
+            <p class="mt-1 text-sm text-slate-500" id="attendancePdfScope"></p>
+          </div>
+          <button class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 text-xl text-slate-500 transition hover:bg-slate-50" type="button" id="attendancePdfCloseBtn" aria-label="ปิดตัวอย่าง">×</button>
+        </header>
+        <div class="flex-1 overflow-y-auto bg-slate-100 p-6">
+          <div class="mx-auto max-w-3xl rounded-xl bg-white p-8 shadow-sm" id="attendancePdfSheet"></div>
+        </div>
+        <footer class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
+          <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50" type="button" data-pdf-close>ยกเลิก</button>
+          <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700" type="button" id="attendancePdfDownloadBtn">ดาวน์โหลด PDF</button>
+        </footer>
+      </section>
+    </div>
+  </div>
+
+  <!-- data-base-class / data-visible-class tell the scripts which Tailwind classes show and hide the toast -->
+  <div id="toast" role="status" aria-live="polite"
+    data-base-class="pointer-events-none fixed bottom-6 right-6 z-[70] flex max-w-sm translate-y-2 flex-col gap-0.5 rounded-2xl bg-slate-900 px-5 py-4 text-sm text-white opacity-0 shadow-xl transition duration-200 [&.is-visible]:translate-y-0 [&.is-visible]:opacity-100"
+    data-visible-class="is-visible"
+    class="pointer-events-none fixed bottom-6 right-6 z-[70] flex max-w-sm translate-y-2 flex-col gap-0.5 rounded-2xl bg-slate-900 px-5 py-4 text-sm text-white opacity-0 shadow-xl transition duration-200 [&.is-visible]:translate-y-0 [&.is-visible]:opacity-100"></div>
+
+  <!-- the gradebook's rooms, subjects, teachers and name lists; report-data.js builds one data set for all five reports from them -->
+  <script src="../grading/assets/js/data.js"></script>
+  <script src="../assets/academic-report/js/core/report-data.js?v=2"></script>
+  <script src="../assets/academic-report/js/core/report-preview.js?v=2"></script>
+  <script src="../assets/academic-report/js/modules/unable-exam-report.js?v=tw-1"></script>
+  <script>
+    // the teacher view shows the sections of the gradebook's teacher, like scores.html does
+    AcademicLayout.mount({ active: 'ar-unable-exam', title: 'รายงานผู้ไม่มีสิทธิ์สอบ', rightHtml: ScopeChip.html, persona: { teacher: ReportData.teacherPersona } });
+    ScopeChip.follow(document.querySelector('.academic-card'));
+  </script>
+</body>
+</html>

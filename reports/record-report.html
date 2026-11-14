@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>รายงานระเบียนสะสม / GPAX | Academic Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // same theme as the other Tailwind report pages (subject-results.html)
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            canvas: '#f7f8fc',
+            ink: '#1e293b',
+            muted: '#64748b',
+            brand: '#2563eb'
+          },
+          fontFamily: {
+            body: ['"Noto Sans Thai"', 'system-ui', 'sans-serif']
+          },
+          fontSize: {
+            xs: ['1.15vh', { lineHeight: '1.55' }],
+            sm: ['1.35vh', { lineHeight: '1.6' }],
+            base: ['1.55vh', { lineHeight: '1.6' }],
+            lg: ['1.75vh', { lineHeight: '1.45' }],
+            xl: ['2vh', { lineHeight: '1.35' }],
+            '2xl': ['2.45vh', { lineHeight: '1.25' }],
+            '3xl': ['3vh', { lineHeight: '1.18' }],
+            '4xl': ['3.6vh', { lineHeight: '1.12' }],
+            '5xl': ['4.2vh', { lineHeight: '1.08' }]
+          }
+        }
+      }
+    };
+  </script>
+</head>
+<body class="relative min-h-screen overflow-x-hidden bg-[#F7F9FC] font-body text-ink">
+  <div class="pointer-events-none absolute inset-0 overflow-hidden">
+    <div class="absolute -left-24 top-0 h-72 w-72 rounded-full bg-blue-200/40 blur-3xl"></div>
+    <div class="absolute right-0 top-20 h-80 w-80 rounded-full bg-sky-100/60 blur-3xl"></div>
+    <div class="absolute bottom-0 left-1/3 h-80 w-80 rounded-full bg-emerald-100/50 blur-3xl"></div>
+  </div>
+  <div id="layoutSidebar"></div>
+
+  <div class="relative lg:pl-80">
+    <div id="layoutHeader"></div>
+    <script src="../shared/academic-layout.js?v=14"></script>
+    <script src="../assets/academic-report/js/scope-chip.js?v=3"></script>
+    <script>
+      // academic-office report: a teacher is sent to the one report they can use
+      if (AcademicLayout.role() === 'teacher') window.location.replace('unable-exam-report.html');
+    </script>
+
+    <!-- text source of the scope chip in the shared header (scope-chip.js mirrors it) -->
+    <aside class="academic-card hidden" aria-hidden="true">
+      <span class="meta-label">ขอบเขตปัจจุบัน</span>
+      <strong class="meta-value" id="recordCurrentAcademicLabel">กำลังโหลด...</strong>
+    </aside>
+
+    <main class="px-4 py-6 lg:px-8 lg:py-8" data-page="record-report">
+      <div class="space-y-6">
+        <section aria-labelledby="recordReportPageTitle">
+          <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
+            <a href="overview.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">หน้าหลัก</a>
+            <span class="text-slate-300">&gt;</span>
+            <span>รายงานวิชาการ</span>
+            <span class="text-slate-300">&gt;</span>
+            <span class="font-medium text-slate-800">รายงานผลการเรียนระเบียนสะสม / GPAX</span>
+          </nav>
+          <h1 id="recordReportPageTitle" class="text-3xl font-semibold tracking-tight text-slate-900 lg:text-4xl">รายงานผลการเรียนระเบียนสะสม / GPAX</h1>
+          <p class="mt-3 max-w-4xl text-sm leading-6 text-slate-500">สรุปผลการเรียนสะสมและ GPAX ของนักเรียน พร้อมตัวอย่างก่อนพิมพ์ระเบียน</p>
+        </section>
+
+        <!-- summary: report tabs, tiles and the two charts -->
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6" aria-labelledby="recordResultsTitle">
+          <div class="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div>
+              <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ผลลัพธ์รายงาน</p>
+              <h2 class="mt-2 text-xl font-semibold text-slate-900" id="recordResultsTitle">รายงานผลการเรียนระเบียนสะสม</h2>
+              <p class="mt-1 text-sm text-slate-500" id="recordSummaryScope">กำลังประมวลผลข้อมูลผลการเรียนสะสม...</p>
+            </div>
+            <span class="inline-flex items-center gap-2 self-start rounded-full bg-slate-100 px-4 py-2 text-sm text-slate-600">มุมมอง: <strong class="font-semibold text-slate-900" id="recordViewMeta">ภาพรวมรายห้อง</strong></span>
+          </div>
+
+          <div class="mt-5 inline-flex rounded-xl bg-slate-100 p-1" id="recordReportTabs" role="tablist" aria-label="ประเภทรายงาน">
+            <button class="rounded-lg px-4 py-2 text-sm font-semibold transition" id="recordTabRecord" type="button" role="tab" aria-selected="true" data-report-type="record">ระเบียนสะสม</button>
+            <button class="rounded-lg px-4 py-2 text-sm font-semibold transition" id="recordTabGpax" type="button" role="tab" aria-selected="false" data-report-type="gpax">GPAX และหน่วยกิต</button>
+          </div>
+
+          <div class="mt-5 grid gap-4 [grid-template-columns:repeat(auto-fit,minmax(150px,1fr))]" id="recordSummaryGrid" aria-label="สรุปผลการเรียน"></div>
+
+          <section class="mt-5" aria-labelledby="recordVisualizationTitle">
+            <h3 class="text-base font-semibold text-slate-900" id="recordVisualizationTitle">ภาพรวมผลการเรียนสะสม</h3>
+            <div class="mt-4 grid gap-4 xl:grid-cols-2" id="recordChartGrid">
+              <article class="min-w-0 rounded-2xl border border-slate-200 p-5">
+                <h4 class="mb-3 text-sm font-semibold text-slate-900" id="recordChartOneTitle">แนวโน้ม GPA เฉลี่ยรายภาคเรียน</h4>
+                <div class="min-h-[260px] w-full overflow-x-auto"><canvas class="block max-w-full" id="recordChartOne" role="img" aria-label="กราฟแนวโน้ม GPA เฉลี่ยรายภาคเรียน"></canvas></div>
+              </article>
+              <article class="min-w-0 rounded-2xl border border-slate-200 p-5">
+                <h4 class="mb-3 text-sm font-semibold text-slate-900" id="recordChartTwoTitle">การกระจายผลการเรียนสะสม</h4>
+                <div class="min-h-[260px] w-full overflow-x-auto"><canvas class="block max-w-full" id="recordChartTwo" role="img" aria-label="กราฟการกระจายผลการเรียนสะสม"></canvas></div>
+              </article>
+            </div>
+          </section>
+        </section>
+
+        <!-- filters -->
+        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm lg:p-6" aria-labelledby="recordFilterTitle">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">ตัวกรอง</p>
+            <h2 class="mt-2 text-xl font-semibold text-slate-900" id="recordFilterTitle">ขอบเขตข้อมูล</h2>
+          </div>
+          <form id="recordFiltersForm" aria-label="ตัวกรองรายงานผลการเรียน"
+            class="[&_input[type=text]]:w-full [&_input[type=text]]:rounded-2xl [&_input[type=text]]:border [&_input[type=text]]:border-slate-200 [&_input[type=text]]:bg-white [&_input[type=text]]:px-4 [&_input[type=text]]:py-3 [&_input[type=text]]:text-sm [&_input[type=text]]:outline-none [&_input[type=text]]:transition focus:[&_input[type=text]]:border-brand focus:[&_input[type=text]]:ring-4 focus:[&_input[type=text]]:ring-blue-100 [&_select]:w-full [&_select]:rounded-2xl [&_select]:border [&_select]:border-slate-200 [&_select]:bg-white [&_select]:px-4 [&_select]:py-3 [&_select]:text-sm [&_select]:outline-none [&_select]:transition focus:[&_select]:border-brand focus:[&_select]:ring-4 focus:[&_select]:ring-blue-100">
+            <div class="mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <div class="block"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordAcademicYear">ปีการศึกษา</label><select id="recordAcademicYear" name="academicYear"></select></div>
+              <div class="block"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordGrade">ระดับชั้น</label><select id="recordGrade" name="grade"></select></div>
+              <div class="block"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordPlan">แผนการเรียน</label><select id="recordPlan" name="plan"></select></div>
+              <div class="block"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordClassroom">ห้องเรียน</label><select id="recordClassroom" name="classroom"></select></div>
+              <div class="block"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordStudentStatus">สถานะนักเรียน</label><select id="recordStudentStatus" name="studentStatus"><option value="active">กำลังศึกษา</option><option value="all">ทุกสถานะ</option><option value="transferred">ย้ายสถานศึกษา</option><option value="graduated">สำเร็จการศึกษา</option></select></div>
+              <div class="block"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordKeyword">ค้นหานักเรียน</label><input id="recordKeyword" name="keyword" type="text" autocomplete="off" placeholder="รหัสหรือชื่อ-สกุล" /></div>
+            </div>
+            <div class="mt-5 flex flex-wrap items-center justify-end gap-3" aria-label="คำสั่งค้นหา">
+              <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="recordResetFiltersBtn" type="button">ล้างเงื่อนไข</button>
+              <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" id="recordSearchBtn" type="submit">ค้นหาข้อมูล</button>
+            </div>
+          </form>
+        </section>
+
+        <!-- result table: one row per room, or one row per student once a room is picked -->
+        <section class="rounded-3xl border border-slate-200 bg-white shadow-sm" aria-labelledby="recordToolbarTitle">
+          <div class="flex flex-col gap-4 border-b border-slate-200 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6">
+            <div>
+              <strong class="block text-xl font-semibold text-slate-900" id="recordToolbarTitle">สรุปผลรายห้อง</strong>
+              <span class="mt-1 block text-sm text-slate-500" id="recordResultCount">0 ห้อง</span>
+            </div>
+            <div class="flex flex-wrap items-center gap-3" aria-label="คำสั่งจัดการรายงาน">
+              <div class="relative" id="recordExportDropdown">
+                <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="recordExportBtn" type="button" aria-haspopup="true" aria-expanded="false">ส่งออก ▼</button>
+                <div class="absolute right-0 top-full z-40 mt-2 hidden w-40 overflow-hidden rounded-2xl border border-slate-200 bg-white py-1 shadow-xl [&_button]:block [&_button]:w-full [&_button]:px-4 [&_button]:py-2.5 [&_button]:text-left [&_button]:text-sm [&_button]:text-slate-700 hover:[&_button]:bg-slate-50" id="recordExportMenu" role="menu" aria-label="รูปแบบการส่งออก">
+                  <button type="button" role="menuitem" data-export="pdf">PDF</button>
+                  <button type="button" role="menuitem" data-export="excel">Excel</button>
+                  <button type="button" role="menuitem" data-export="csv">CSV</button>
+                </div>
+              </div>
+              <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" id="recordPrintBtn" type="button">พิมพ์รายงาน</button>
+            </div>
+          </div>
+          <div class="m-5 hidden rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center text-sm text-slate-500 lg:m-6" id="recordTableState" role="status"></div>
+          <!-- scrolls on both axes inside the card; header rows and the first three columns stay in place -->
+          <div class="max-h-[75vh] overflow-auto rounded-b-3xl" id="recordTableWrap">
+            <table class="w-full border-separate border-spacing-0 text-left text-sm [&_tbody_tr:hover_td]:bg-slate-50 [&_td]:whitespace-nowrap [&_td]:border-b [&_td]:border-slate-100 [&_td]:px-4 [&_td]:py-3 [&_td]:align-middle [&_td]:text-slate-700 [&_th]:whitespace-nowrap [&_th]:border-b [&_th]:border-slate-200 [&_th]:bg-slate-50 [&_th]:px-4 [&_th]:py-3 [&_th]:text-xs [&_th]:font-semibold [&_th]:text-slate-500 [&_thead_th]:sticky [&_thead_th]:top-0 [&_thead_th]:z-20 [&_thead_th]:h-11 [&_thead_tr:nth-child(2)_th]:top-11">
+              <thead id="recordThead"></thead>
+              <tbody id="recordTbody"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+
+      <dialog class="w-[min(920px,calc(100vw-2rem))] max-w-none max-h-[calc(100vh-2.5rem)] overflow-y-auto rounded-3xl bg-white p-0 font-body text-ink shadow-2xl backdrop:bg-slate-900/50" id="recordStudentDialog" aria-labelledby="recordStudentDialogTitle">
+        <div class="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-slate-200 bg-white px-6 py-5">
+          <div><p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">รายละเอียดรายบุคคล</p><h2 class="mt-1 text-xl font-semibold text-slate-900" id="recordStudentDialogTitle">ข้อมูลนักเรียน</h2></div>
+          <button class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 text-xl text-slate-500 transition hover:bg-slate-50" type="button" data-record-close="student" aria-label="ปิด">×</button>
+        </div>
+        <div class="grid gap-4 p-6" id="recordStudentDialogBody"></div>
+      </dialog>
+
+      <dialog class="w-[min(920px,calc(100vw-2rem))] max-w-none max-h-[calc(100vh-2.5rem)] overflow-y-auto rounded-3xl bg-white p-0 font-body text-ink shadow-2xl backdrop:bg-slate-900/50" id="recordPrintDialog" aria-labelledby="recordPrintDialogTitle">
+        <form id="recordPrintForm">
+          <div class="sticky top-0 z-10 flex items-start justify-between gap-3 border-b border-slate-200 bg-white px-6 py-5">
+            <div><p class="text-sm font-semibold uppercase tracking-[0.18em] text-blue-600">พิมพ์รายงาน</p><h2 class="mt-1 text-xl font-semibold text-slate-900" id="recordPrintDialogTitle">ตั้งค่ารายงาน</h2></div>
+            <button class="inline-flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl border border-slate-200 text-xl text-slate-500 transition hover:bg-slate-50" type="button" data-record-close="print" aria-label="ปิด">×</button>
+          </div>
+          <div class="p-6 [&_input[type=text]]:w-full [&_input[type=text]]:rounded-2xl [&_input[type=text]]:border [&_input[type=text]]:border-slate-200 [&_input[type=text]]:bg-white [&_input[type=text]]:px-4 [&_input[type=text]]:py-3 [&_input[type=text]]:text-sm [&_input[type=text]]:outline-none [&_input[type=text]]:transition focus:[&_input[type=text]]:border-brand focus:[&_input[type=text]]:ring-4 focus:[&_input[type=text]]:ring-blue-100 [&_select]:w-full [&_select]:rounded-2xl [&_select]:border [&_select]:border-slate-200 [&_select]:bg-white [&_select]:px-4 [&_select]:py-3 [&_select]:text-sm [&_select]:outline-none [&_select]:transition focus:[&_select]:border-brand focus:[&_select]:ring-4 focus:[&_select]:ring-blue-100">
+            <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              <div class="block"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordPrintType">ประเภทรายงาน</label><select id="recordPrintType"><option value="record">ระเบียนสะสม</option><option value="gpax">GPAX และหน่วยกิต</option></select></div>
+              <div class="block"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordPrintScope">ขอบเขต</label><select id="recordPrintScope"><option value="class">รายงานทั้งห้อง</option><option value="student">รายงานรายบุคคล</option></select></div>
+              <div class="block hidden" id="recordPrintStudentWrap"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordPrintStudent">นักเรียน</label><select id="recordPrintStudent"></select></div>
+              <div class="block"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordPrintTemplate">Template</label><select id="recordPrintTemplate"><option value="standard">มาตรฐานโรงเรียน</option></select></div>
+              <div class="block"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordPrintLanguage">ภาษา</label><select id="recordPrintLanguage"><option value="th">ไทย</option><option value="th-en">ไทย / English</option></select></div>
+              <div class="block"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordPrintPaper">กระดาษ</label><select id="recordPrintPaper"><option value="a4">A4</option><option value="a3">A3</option></select></div>
+              <div class="block"><label class="mb-2 block text-sm font-medium text-slate-700" for="recordPrintOrientation">แนวกระดาษ</label><select id="recordPrintOrientation"><option value="portrait">แนวตั้ง</option><option value="landscape">แนวนอน</option></select></div>
+            </div>
+            <fieldset class="mt-4 flex flex-wrap gap-x-5 gap-y-3 rounded-2xl border border-slate-200 p-4 text-sm text-slate-700 [&_input]:mr-1.5 [&_input]:h-4 [&_input]:w-4 [&_input]:accent-blue-600 [&_label]:inline-flex [&_label]:items-center">
+              <legend class="px-2 text-sm font-semibold text-slate-900">ข้อมูล</legend>
+              <label><input type="checkbox" name="recordPrintData" value="summary" checked /> ข้อมูลสรุป</label>
+              <label><input type="checkbox" name="recordPrintData" value="semester" checked /> ข้อมูลรายภาคเรียน</label>
+              <label><input type="checkbox" name="recordPrintData" value="credits" checked /> หน่วยกิตแยกกลุ่มสาระ</label>
+              <label><input type="checkbox" name="recordPrintData" value="status" checked /> สถานะและหมายเหตุ</label>
+            </fieldset>
+            <div class="mt-4 hidden rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700" id="recordPrintPreview"></div>
+          </div>
+          <div class="flex items-center justify-end gap-3 border-t border-slate-200 px-6 py-4">
+            <button class="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50" type="button" data-record-close="print">ยกเลิก</button>
+            <button class="rounded-xl bg-brand px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50" id="recordBuildPrintPreviewBtn" type="button">ดูตัวอย่างรายงาน</button>
+          </div>
+        </form>
+      </dialog>
+    </main>
+  </div>
+
+  <!-- the gradebook's rooms, subjects, teachers and name lists; report-data.js builds one data set for all five reports from them -->
+  <script src="../grading/assets/js/data.js"></script>
+  <script src="../assets/academic-report/js/core/report-data.js?v=2"></script>
+  <script src="../assets/academic-report/vendor/chart.umd.min.js"></script>
+  <script>Chart.defaults.font.family = '"Noto Sans Thai", system-ui, sans-serif'; Chart.defaults.color = '#64748b';</script>
+  <script src="../assets/academic-report/js/modules/record-report.js?v=tw-1"></script>
+  <script>
+    AcademicLayout.mount({ active: 'ar-record-report', title: 'รายงานระเบียนสะสม / GPAX', rightHtml: ScopeChip.html });
+    ScopeChip.follow(document.querySelector('.academic-card'));
+  </script>
+</body>
+</html>
