@@ -148,14 +148,18 @@ function attendancePercent(db, sec, sid) {
   return Math.round(((c.present + c.late) / a.checked) * 1000) / 10;
 }
 
-/* สถานะของนักเรียนหนึ่งคนในห้องเรียนที่สอน: ok | risk (ขาดได้อีก ≤ 2) | ms */
+/* สถานะของนักเรียนหนึ่งคนในห้องเรียนที่สอน: ok | risk | ms
+ * risk = ขาดหรือลาถึงครึ่งหนึ่งของจำนวนคาบที่ขาดได้ (ปัดขึ้น) แต่ยังไม่เกิน ใช้กฎเดียวกับรายงานเวลาเรียน */
 function studentAttendance(db, sec, sid) {
   const a = sectionAttendance(db, sec);
   const c = a.by[sid] || { present: 0, late: 0, leave: 0, absent: 0 };
   const pct = attendancePercent(db, sec, sid);
-  const left = allowedMiss(sec) - (c.leave + c.absent);
+  const allowed = allowedMiss(sec);
+  const used = c.leave + c.absent;
+  const left = allowed - used;
   const ms = pct < MIN_ATTENDANCE || left < 0;
-  const level = ms ? (msWaiverOf(sec, sid) ? 'waived' : 'ms') : left <= 2 ? 'risk' : 'ok';
+  const risk = allowed > 0 && used >= Math.ceil(allowed / 2);
+  const level = ms ? (msWaiverOf(sec, sid) ? 'waived' : 'ms') : risk ? 'risk' : 'ok';
   return { ...c, pct, left, level };
 }
 

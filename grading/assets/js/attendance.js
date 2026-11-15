@@ -1084,7 +1084,7 @@ function renderHomeroomSum(room, secs, roster, head, tabs, focus) {
         ${msList.length ? msList.map((x) => stuCard(x, ['ms', 'risk'])).join('') : `<div class="hr-list-empty">${icon('check')}ไม่มีนักเรียน มส</div>`}
       </section>
       <section class="card hr-list risk">
-        <div class="hr-list-head"><h2>นักเรียนกลุ่มเสี่ยงด้านเวลาเรียน</h2><span class="faint">ขาดได้อีกไม่เกิน 2 คาบ</span></div>
+        <div class="hr-list-head"><h2>นักเรียนกลุ่มเสี่ยงด้านเวลาเรียน</h2><span class="faint">ขาดหรือลาถึงครึ่งหนึ่งของจำนวนคาบที่ขาดได้</span></div>
         ${riskList.length ? riskList.map((x) => stuCard(x, ['risk'])).join('') : `<div class="hr-list-empty">${icon('check')}ไม่มีนักเรียนกลุ่มเสี่ยง</div>`}
       </section>
     </div>
@@ -1102,7 +1102,7 @@ function renderHomeroomSum(room, secs, roster, head, tabs, focus) {
         <td class="c num ${x.absent ? 'txt-bad' : 'faint'}">${x.absent}</td><td class="c num faint">${x.leave}</td>
         <td class="c num ${x.weekDays.length ? 'txt-bad' : 'faint'}" title="${x.weekDays.map(dmy).join(', ')}">${x.weekDays.length ? `${x.weekDays.length} วัน` : '—'}</td></tr>`).join('')}</tbody>
     </table></div>
-    <div class="legend" style="margin:8px 0 20px"><span><span class="sw pct-risk"></span>ใกล้ มส (ขาดได้อีก ≤ 2 คาบ)</span><span><span class="sw pct-ms"></span>มส (เวลาเรียนต่ำกว่า ${MIN_ATTENDANCE}%)</span><span>กดชื่อนักเรียนเพื่อดูรายละเอียด</span></div>
+    <div class="legend" style="margin:8px 0 20px"><span><span class="sw pct-risk"></span>ใกล้ มส (ขาดถึงครึ่งหนึ่งของที่ขาดได้)</span><span><span class="sw pct-ms"></span>มส (เวลาเรียนต่ำกว่า ${MIN_ATTENDANCE}%)</span><span>กดชื่อนักเรียนเพื่อดูรายละเอียด</span></div>
 `;
   bindChartTips($('.hr-charts', view));
   view.addEventListener('click', (e) => {
