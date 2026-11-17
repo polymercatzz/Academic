@@ -41,6 +41,17 @@
     .term-tab.is-active { border-color: #2563eb; background: #2563eb; color: #fff; box-shadow: 0 10px 24px rgba(37, 99, 235, .18); }
     .term-tab.is-active .term-tab-meta { color: #dbeafe; }
     .plan-item.is-active { border-color: #bfdbfe; background: #eff6ff; }
+    .teacher-view .admin-only,
+    .teacher-view [data-action="create-curriculum"], .teacher-view [data-action="open-import"], .teacher-view [data-action="copy-curriculum"],
+    .teacher-view [data-action="delete-curriculum"], .teacher-view [data-action="edit-curriculum"], .teacher-view [data-action="publish"],
+    .teacher-view [data-action="add-plan"], .teacher-view [data-action="edit-plan"], .teacher-view [data-action="duplicate-plan"],
+    .teacher-view [data-action="delete-plan"], .teacher-view [data-action="add-subjects"], .teacher-view [data-action="auto-assign"],
+    .teacher-view #bulkBar { display: none !important; }
+    .list-tab { border-color: transparent; color: #64748b; }
+    .list-tab:hover { color: #1e293b; }
+    .list-tab span { background: #f1f5f9; color: #475569; }
+    .list-tab.is-active { border-color: #2563eb; color: #1d4ed8; }
+    .list-tab.is-active span { background: #dbeafe; color: #1d4ed8; }
     .plan-item.is-active .plan-item-name { color: #1d4ed8; }
     .drop-zone.is-ready { border-color: #2563eb; background: #eff6ff; }
   </style>
@@ -49,8 +60,8 @@
   <div id="layoutSidebar"></div>
   <div class="lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=14"></script>
-    <script>AcademicLayout.mount({ active: 'curriculum-management', eyebrow: 'ภาพรวมหลักสูตร', title: 'จัดการหลักสูตร' });</script>
+    <script src="../shared/academic-layout.js?v=18"></script>
+    <script>AcademicLayout.mount({ active: 'curriculum-management', eyebrow: 'หลักสูตร', title: AcademicLayout.role() === 'teacher' ? 'หลักสูตรที่ประกาศใช้' : 'จัดการหลักสูตร' });</script>
 
     <main class="px-4 py-6 lg:px-8 lg:py-8">
       <div class="mx-auto max-w-[1600px]">
@@ -60,12 +71,12 @@
           <section class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
             <div>
               <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
-                <a href="../reports/overview.html" class="font-medium text-slate-600 transition hover:text-brand">ภาพรวมงานวิชาการ</a>
+                <span class="font-medium text-slate-600">หลักสูตร</span>
                 <span class="text-slate-300">&gt;</span>
-                <span class="font-medium text-slate-800">จัดการหลักสูตร</span>
+                <span class="font-medium text-slate-800" data-page-name>จัดการหลักสูตร</span>
               </nav>
-              <h1 class="text-3xl font-semibold tracking-tight text-slate-950 lg:text-4xl">จัดการหลักสูตร</h1>
-              <p class="mt-3 max-w-3xl text-sm leading-6 text-slate-500">รวมหลักสูตรทุกปีการศึกษาไว้ในที่เดียว เปิดหลักสูตรเพื่อจัดแผนการเรียน รายวิชา และครูผู้สอนได้ในหน้าเดียว</p>
+              <h1 class="text-3xl font-semibold tracking-tight text-slate-950 lg:text-4xl" data-page-name>จัดการหลักสูตร</h1>
+              <p id="listIntro" class="mt-3 max-w-3xl text-sm leading-6 text-slate-500">รวมหลักสูตรทุกปีการศึกษาไว้ในที่เดียว เปิดหลักสูตรเพื่อจัดแผนการเรียน รายวิชา และครูผู้สอนได้ในหน้าเดียว</p>
             </div>
             <div class="flex flex-wrap gap-3">
               <button data-action="open-import" type="button" class="inline-flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-blue-200 hover:bg-blue-50 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">
@@ -79,8 +90,26 @@
             </div>
           </section>
 
-          <section id="listStats" class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"></section>
+          <section id="listStats" class="admin-only grid gap-4 sm:grid-cols-2 xl:grid-cols-4"></section>
 
+          <div class="admin-only flex flex-wrap gap-2 border-b border-slate-200" role="tablist" aria-label="มุมมองหลักสูตร">
+            <button data-action="list-tab" data-tab="current" id="tabCurrent" type="button" role="tab" class="list-tab -mb-px inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition">หลักสูตรที่ใช้อยู่ปัจจุบัน <span id="tabCurrentCount" class="rounded-full px-2 py-0.5 text-xs"></span></button>
+            <button data-action="list-tab" data-tab="all" id="tabAll" type="button" role="tab" class="list-tab -mb-px inline-flex items-center gap-2 border-b-2 px-4 py-3 text-sm font-semibold transition">หลักสูตรทั้งหมด <span id="tabAllCount" class="rounded-full px-2 py-0.5 text-xs"></span></button>
+          </div>
+
+          <!-- แท็บ: หลักสูตรที่ใช้อยู่ปัจจุบัน -->
+          <section id="currentPanel" role="tabpanel" class="space-y-4">
+            <p id="currentIntro" class="text-sm text-slate-500">หลักสูตรที่ประกาศใช้แล้วและเปิดใช้งานกับนักเรียนในปีการศึกษานี้ แยกตามระดับการศึกษา</p>
+            <div id="currentGrid" class="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3"></div>
+            <div id="currentEmpty" class="hidden rounded-3xl border border-dashed border-slate-300 bg-white px-6 py-16 text-center">
+              <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-100 text-slate-400"><svg class="h-7 w-7" viewBox="0 0 24 24" fill="currentColor"><path d="M5 3h9.59L19 7.41V21H5V3Zm2 2v14h10V8h-4V5H7Z"/></svg></div>
+              <h3 class="mt-4 text-base font-semibold text-slate-900">ยังไม่มีหลักสูตรที่ใช้งานอยู่</h3>
+              <p class="mt-1 text-sm text-slate-500">เปิดหลักสูตรฉบับร่างแล้วกด “ประกาศใช้หลักสูตร” เพื่อเริ่มใช้งาน</p>
+            </div>
+          </section>
+
+          <!-- แท็บ: หลักสูตรทั้งหมด -->
+          <div id="allPanel" role="tabpanel" class="hidden space-y-6">
           <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-soft lg:p-6">
             <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
               <div>
@@ -119,6 +148,7 @@
               <p class="mt-1 text-sm text-slate-500">ลองเปลี่ยนคำค้นหาหรือล้างตัวกรอง</p>
             </div>
           </section>
+          </div>
         </div>
 
         <!-- หน้าหลักสูตร: แผนการเรียน รายวิชา ครูผู้สอน -->
@@ -126,9 +156,9 @@
           <section class="flex flex-col gap-5 2xl:flex-row 2xl:items-end xl:justify-between">
             <div class="min-w-0">
               <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
-                <a href="../reports/overview.html" class="font-medium text-slate-600 transition hover:text-brand">ภาพรวมงานวิชาการ</a>
+                <span class="font-medium text-slate-600">หลักสูตร</span>
                 <span class="text-slate-300">&gt;</span>
-                <button data-action="back-to-list" type="button" class="font-medium text-slate-600 transition hover:text-brand">จัดการหลักสูตร</button>
+                <button data-action="back-to-list" type="button" class="font-medium text-slate-600 transition hover:text-brand" data-page-name>จัดการหลักสูตร</button>
                 <span class="text-slate-300">&gt;</span>
                 <span id="wsCrumb" class="font-medium text-slate-800"></span>
               </nav>
@@ -581,7 +611,7 @@
 
     /* ---------- state และ helper ---------- */
     const state = {
-      curriculumId: null, planId: null, term: '1', gradeFilter: 'ทั้งหมด',
+      listTab: 'current', curriculumId: null, planId: null, term: '1', gradeFilter: 'ทั้งหมด',
       rowSearch: '', rowGroup: 'ทั้งหมด', rowStatus: 'ทั้งหมด', selected: new Set(),
       curriculumMode: 'create', method: 'copy', editingCurriculumId: null,
       planMode: 'create', editingPlanId: null, planRooms: new Set(),
@@ -705,6 +735,21 @@
       delete record.dropLastRoom;
     });
 
+    // เก็บข้อมูลหลักสูตรไว้ในเบราว์เซอร์ ให้วิชาการประกาศใช้แล้วสลับเป็นครูก็ยังเห็น (ล้างได้ด้วยปุ่มรีเซ็ตข้อมูลเดโม)
+    const STORE_KEY = 'curriculum-demo-v1';
+    try {
+      const saved = localStorage.getItem(STORE_KEY);
+      if (saved) { restore(saved); uid = JSON.parse(saved).uid || uid; }
+    } catch (e) { /* ใช้ข้อมูลตั้งต้น */ }
+    function saveStore() {
+      try { localStorage.setItem(STORE_KEY, JSON.stringify({ curricula, plans, planSubjects, uid })); } catch (e) { /* ignore */ }
+    }
+
+    // ครูดูได้เฉพาะหลักสูตรที่ประกาศใช้ และแก้ไขอะไรไม่ได้
+    const IS_TEACHER = AcademicLayout.role() === 'teacher';
+    const isVisible = (c) => !IS_TEACHER || c.status === 'ใช้งานอยู่';
+    const MY_TEACHER_ID = IS_TEACHER ? teachers.find((t) => t.name === AcademicLayout.persona()?.name)?.id : null;
+
     /* ---------- toast / modal ---------- */
     let toastTimer;
     function showToast(title, message = '', { tone = 'success', undo } = {}) {
@@ -785,7 +830,10 @@
         .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || b.year.localeCompare(a.year));
       $('listCount').textContent = `${rows.length} หลักสูตร`;
       $('listEmpty').classList.toggle('hidden', rows.length > 0);
-      $('curriculumGrid').innerHTML = rows.map((c) => {
+      $('curriculumGrid').innerHTML = rows.map(curriculumCard).join('');
+    }
+
+    function curriculumCard(c) {
         const cPlans = plansOf(c.id);
         const records = recordsOfCurriculum(c.id);
         const open = records.filter((r) => r.open);
@@ -809,7 +857,7 @@
               <div><dt class="text-xs text-slate-500">รายวิชาในแผน</dt><dd class="mt-1 text-lg font-bold text-slate-900">${records.length}</dd></div>
               <div><dt class="text-xs text-slate-500">ครูผู้สอน</dt><dd class="mt-1 text-lg font-bold text-slate-900">${distinctTeachers(records)}</dd></div>
             </dl>
-            <div class="mt-4">
+            <div class="admin-only mt-4">
               <div class="flex items-center justify-between text-xs"><span class="font-semibold text-slate-600">กำหนดครูผู้สอนแล้ว</span><span class="font-semibold ${pct === 100 ? 'text-emerald-600' : 'text-amber-600'}">${assigned}/${open.length} วิชา (${pct}%)</span></div>
               <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${pct === 100 ? 'bg-emerald-500' : 'bg-amber-400'}" style="width:${pct}%"></div></div>
             </div>
@@ -819,14 +867,33 @@
                 <button data-action="copy-curriculum" data-id="${c.id}" type="button" title="คัดลอกไปปีการศึกษาใหม่" aria-label="คัดลอกไปปีการศึกษาใหม่" class="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-blue-700">${icon(ICONS.copy)}</button>
                 <button data-action="export-curriculum" data-id="${c.id}" type="button" title="ส่งออก Excel" aria-label="ส่งออก Excel" class="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-emerald-700">${icon(ICONS.download)}</button>
                 ${c.status === 'ฉบับร่าง' ? `<button data-action="delete-curriculum" data-id="${c.id}" type="button" title="ลบหลักสูตร" aria-label="ลบหลักสูตร" class="rounded-xl p-2 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600">${icon(ICONS.trash)}</button>` : ''}
-                <button data-action="open-curriculum" data-id="${c.id}" type="button" class="ml-1 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">จัดการแผนการเรียน ${icon(ICONS.open)}</button>
+                <button data-action="open-curriculum" data-id="${c.id}" type="button" class="ml-1 inline-flex items-center gap-1.5 rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">${IS_TEACHER ? 'ดูแผนการเรียน' : 'จัดการแผนการเรียน'} ${icon(ICONS.open)}</button>
               </div>
             </div>
           </article>`;
-      }).join('');
     }
 
-    function renderList() { renderListStats(); renderYearOptions(); renderCurriculumGrid(); }
+    function renderCurrentGrid() {
+      const rows = curricula.filter((c) => c.status === 'ใช้งานอยู่' && isVisible(c))
+        .sort((a, b) => LEVEL_ORDER(a.level) - LEVEL_ORDER(b.level) || b.year.localeCompare(a.year));
+      $('currentEmpty').classList.toggle('hidden', rows.length > 0);
+      $('currentGrid').innerHTML = rows.map(curriculumCard).join('');
+    }
+    const LEVEL_ORDER = (level) => (level === 'มัธยมศึกษาตอนต้น' ? 0 : 1);
+
+    function renderListTabs() {
+      const isCurrent = state.listTab === 'current';
+      $('tabCurrent').classList.toggle('is-active', isCurrent);
+      $('tabAll').classList.toggle('is-active', !isCurrent);
+      $('tabCurrent').setAttribute('aria-selected', isCurrent);
+      $('tabAll').setAttribute('aria-selected', !isCurrent);
+      $('currentPanel').classList.toggle('hidden', !isCurrent);
+      $('allPanel').classList.toggle('hidden', isCurrent);
+      $('tabCurrentCount').textContent = curricula.filter((c) => c.status === 'ใช้งานอยู่').length;
+      $('tabAllCount').textContent = curricula.length;
+    }
+
+    function renderList() { renderListStats(); renderListTabs(); renderCurrentGrid(); renderYearOptions(); renderCurriculumGrid(); }
 
     /* ---------- หน้าหลักสูตร ---------- */
     function openCurriculum(id, planId, opts = {}) {
@@ -906,7 +973,7 @@
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div class="flex items-start justify-between gap-4"><div><p class="text-sm font-semibold text-slate-600">ครูผู้สอนในหลักสูตร</p><div class="mt-3 flex items-baseline gap-2"><span class="text-3xl font-bold text-slate-950">${teacherCount}</span><span class="text-sm font-semibold text-slate-500">คน</span></div><p class="mt-2 text-sm ${overloaded ? 'font-semibold text-rose-600' : 'text-slate-500'}">${overloaded ? `${overloaded} คนมีภาระสอนเกิน ${HIGH_LOAD_HOURS} ชม./สัปดาห์` : 'ภาระสอนอยู่ในเกณฑ์ทุกคน'}</p></div><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">${icon(ICONS.users, 'h-5 w-5')}</div></div>
         </div>
-        <${missing ? 'button type="button" data-action="jump-missing-here"' : 'div'} class="rounded-2xl border ${missing ? 'border-amber-200 bg-amber-50/60 hover:shadow-soft focus:outline-none focus:ring-4 focus:ring-amber-100' : 'border-emerald-200 bg-emerald-50/60'} p-5 text-left shadow-sm transition">
+        <${missing ? 'button type="button" data-action="jump-missing-here"' : 'div'} class="admin-only rounded-2xl border ${missing ? 'border-amber-200 bg-amber-50/60 hover:shadow-soft focus:outline-none focus:ring-4 focus:ring-amber-100' : 'border-emerald-200 bg-emerald-50/60'} p-5 text-left shadow-sm transition">
           <div class="flex items-start justify-between gap-4"><div class="min-w-0 flex-1"><p class="text-sm font-semibold text-slate-600">ความพร้อมของหลักสูตร</p><div class="mt-3 flex items-baseline gap-2"><span class="text-3xl font-bold ${missing ? 'text-amber-700' : 'text-emerald-700'}">${pct}%</span><span class="text-sm font-semibold text-slate-500">กำหนดครูแล้ว</span></div><div class="mt-3 h-2 overflow-hidden rounded-full bg-white"><div class="h-full rounded-full ${missing ? 'bg-amber-400' : 'bg-emerald-500'}" style="width:${pct}%"></div></div><p class="mt-2 text-sm font-semibold ${missing ? 'text-amber-700' : 'text-emerald-700'}">${missing ? `ยังไม่มีครู ${missing} วิชา — คลิกเพื่อไปกำหนด →` : 'พร้อมประกาศใช้'}</p></div><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${missing ? 'bg-amber-100 text-amber-600' : 'bg-emerald-100 text-emerald-600'}">${icon(missing ? ICONS.warn : ICONS.check, 'h-5 w-5')}</div></div>
         </${missing ? 'button' : 'div'}>`;
     }
@@ -1056,13 +1123,13 @@
             <table class="w-full min-w-[720px] text-left text-sm">
               <thead class="bg-slate-50 text-xs font-semibold uppercase tracking-wide text-slate-500">
                 <tr>
-                  <th class="w-10 px-5 py-3.5"><input id="checkAll" type="checkbox" aria-label="เลือกทั้งหมด" class="h-4 w-4 rounded border-slate-300 text-blue-600"></th>
+                  <th class="admin-only w-10 px-5 py-3.5"><input id="checkAll" type="checkbox" aria-label="เลือกทั้งหมด" class="h-4 w-4 rounded border-slate-300 text-blue-600"></th>
                   <th class="px-3 py-3.5">รายวิชา</th>
                   ${state.term === 'all' ? '<th class="px-3 py-3.5 text-center">ภาค</th>' : ''}
                   <th class="whitespace-nowrap px-3 py-3.5 text-center">นก. / ชม.</th>
                   <th class="px-3 py-3.5">ครูผู้สอน</th>
-                  <th class="px-3 py-3.5 text-center">เปิดสอน</th>
-                  <th class="px-5 py-3.5 text-right">จัดการ</th>
+                  <th class="admin-only px-3 py-3.5 text-center">เปิดสอน</th>
+                  <th class="admin-only px-5 py-3.5 text-right">จัดการ</th>
                 </tr>
               </thead>
               <tbody id="rowBody" class="divide-y divide-slate-100"></tbody>
@@ -1078,6 +1145,21 @@
     function teacherCell(record) {
       const plan = planOf(record.planId);
       if (!record.open) return '<span class="text-sm text-slate-400">ปิดการสอน</span>';
+      if (IS_TEACHER) {
+        // ชื่อเต็มบรรทัดละคน พร้อมห้องที่สอนแบบเต็ม (ม.4/1) และไฮไลต์ชื่อครูที่เข้าระบบอยู่
+        const missingRooms = uncoveredRooms(record);
+        const lines = record.teachers.map((t) => {
+          const me = t.id === MY_TEACHER_ID;
+          const rooms = t.rooms.length === plan.rooms.length ? 'ทุกห้อง' : `ห้อง ${sortRooms(t.rooms).join(', ')}`;
+          return `<div class="flex flex-wrap items-baseline gap-x-2 ${me ? '-mx-2 rounded-lg bg-blue-50 px-2 py-0.5' : ''}">
+            <span class="text-sm font-semibold ${me ? 'text-blue-700' : 'text-slate-800'}">${escapeHTML(teacherById.get(t.id).name)}</span>
+            ${me ? '<span class="rounded-full bg-blue-600 px-1.5 py-px text-[10px] font-bold text-white">ฉัน</span>' : ''}
+            <span class="text-xs text-slate-500">${rooms}</span>
+          </div>`;
+        }).join('');
+        const gap = missingRooms.length ? `<p class="text-xs text-slate-400">${record.teachers.length ? `ห้อง ${missingRooms.join(', ')} ยังไม่มีครูผู้สอน` : 'ยังไม่กำหนดครูผู้สอน'}</p>` : '';
+        return `<div class="min-w-[220px] space-y-1">${lines}${gap}</div>`;
+      }
       const missing = uncoveredRooms(record);
       const chips = record.teachers.slice(0, 3).map((t) => `<span class="inline-flex max-w-full items-center gap-1 rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700"><span class="truncate">${escapeHTML(shortName(teacherById.get(t.id)))}</span>${plan.rooms.length > 1 ? `<span class="shrink-0 font-medium text-slate-400">${shortRooms(t.rooms, plan)}</span>` : ''}</span>`).join('');
       const more = record.teachers.length > 3 ? `<span class="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-500">+${record.teachers.length - 3}</span>` : '';
@@ -1097,7 +1179,7 @@
         const checked = state.selected.has(r.id);
         return `
           <tr class="${checked ? 'bg-blue-50/60' : 'hover:bg-slate-50/70'} ${r.open ? '' : 'text-slate-400'}">
-            <td class="px-5 py-3"><input data-check="${r.id}" type="checkbox" ${checked ? 'checked' : ''} aria-label="เลือก ${escapeHTML(s.name)}" class="h-4 w-4 rounded border-slate-300 text-blue-600"></td>
+            <td class="admin-only px-5 py-3"><input data-check="${r.id}" type="checkbox" ${checked ? 'checked' : ''} aria-label="เลือก ${escapeHTML(s.name)}" class="h-4 w-4 rounded border-slate-300 text-blue-600"></td>
             <td class="px-3 py-3">
               <div class="flex flex-wrap items-center gap-2"><span class="font-mono text-xs font-semibold ${r.open ? 'text-blue-700' : ''}">${s.code}</span>${typeBadge(s.type)}</div>
               <p class="mt-0.5 font-semibold ${r.open ? 'text-slate-900' : ''}">${escapeHTML(s.name)}</p>
@@ -1106,10 +1188,10 @@
             ${state.term === 'all' ? `<td class="px-3 py-3 text-center"><span class="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">${r.term}</span></td>` : ''}
             <td class="whitespace-nowrap px-3 py-3 text-center"><span class="font-semibold">${s.credits ? fmt(s.credits) : '-'}</span><span class="text-slate-400"> / ${s.hours}</span></td>
             <td class="px-3 py-2">${teacherCell(r)}</td>
-            <td class="px-3 py-3 text-center">
+            <td class="admin-only px-3 py-3 text-center">
               <button data-action="toggle-open" data-id="${r.id}" type="button" role="switch" aria-checked="${r.open}" aria-label="เปิดสอน ${escapeHTML(s.name)}" class="relative inline-flex h-6 w-11 items-center rounded-full transition ${r.open ? 'bg-emerald-500' : 'bg-slate-300'}"><span class="inline-block h-5 w-5 rounded-full bg-white shadow transition ${r.open ? 'translate-x-[22px]' : 'translate-x-0.5'}"></span></button>
             </td>
-            <td class="px-5 py-3">
+            <td class="admin-only px-5 py-3">
               <div class="flex items-center justify-end gap-1">
                 <button data-action="move-term" data-id="${r.id}" type="button" title="ย้ายไปภาคเรียนที่ ${r.term === '1' ? '2' : '1'}" aria-label="ย้ายภาคเรียน" class="rounded-lg p-2 text-slate-500 transition hover:bg-slate-100 hover:text-blue-700">${icon(ICONS.swap)}</button>
                 <button data-action="remove-row" data-id="${r.id}" type="button" title="นำออกจากแผน" aria-label="นำออกจากแผน" class="rounded-lg p-2 text-slate-500 transition hover:bg-rose-50 hover:text-rose-600">${icon(ICONS.trash)}</button>
@@ -1183,7 +1265,7 @@
           <div class="mt-5 grid gap-x-8 gap-y-4 md:grid-cols-2">
             ${rows.map((t) => `<div class="grid grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)] items-center gap-3">
               <div class="min-w-0"><p class="truncate text-sm font-semibold text-slate-900">${escapeHTML(t.name)}</p><p class="truncate text-xs text-slate-500">${escapeHTML(t.group)}</p></div>
-              <div class="space-y-1"><div class="grid grid-cols-[28px_1fr] items-center gap-1 text-[11px] text-slate-400"><span>ภ.1</span>${bar(t.load['1'])}</div><div class="grid grid-cols-[28px_1fr] items-center gap-1 text-[11px] text-slate-400"><span>ภ.2</span>${bar(t.load['2'])}</div></div>
+              <div class="space-y-1"><div class="grid grid-cols-[80px_1fr] items-center gap-1 text-[11px] text-slate-400"><span>ภาคเรียนที่ 1</span>${bar(t.load['1'])}</div><div class="grid grid-cols-[80px_1fr] items-center gap-1 text-[11px] text-slate-400"><span>ภาคเรียนที่ 2</span>${bar(t.load['2'])}</div></div>
             </div>`).join('')}
           </div>` : '<p class="mt-5 rounded-2xl bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">ยังไม่มีครูผู้สอนในแผนนี้</p>'}`;
     }
@@ -1692,6 +1774,7 @@
     }
 
     /* ---------- events ---------- */
+    const TEACHER_BLOCKED = new Set(['create-curriculum', 'copy-curriculum', 'delete-curriculum', 'publish', 'jump-missing', 'jump-missing-here', 'confirm-import', 'tm-save', 'confirm-add-subjects']);
     const READONLY_ACTIONS = new Set(['edit-curriculum', 'add-plan', 'edit-plan', 'duplicate-plan', 'delete-plan', 'edit-teachers', 'add-subjects',
       'auto-assign', 'toggle-open', 'move-term', 'remove-row', 'bulk-teacher', 'bulk-auto', 'bulk-open', 'bulk-move', 'bulk-remove', 'open-import']);
     document.addEventListener('click', (event) => {
@@ -1702,6 +1785,8 @@
       const el = event.target.closest('[data-action]');
       if (!el) return;
       const { action, id } = el.dataset;
+      // ครูอ่านได้อย่างเดียว
+      if (IS_TEACHER && (READONLY_ACTIONS.has(action) || TEACHER_BLOCKED.has(action))) return;
       // หลักสูตรที่ปิดใช้งานแล้วอ่านได้อย่างเดียว (รูปที่ 3.13)
       if (READONLY_ACTIONS.has(action) && curriculumOf(state.curriculumId)?.status === 'ปิดใช้งาน') {
         showToast('หลักสูตรนี้ปิดใช้งานแล้ว', 'หลักสูตรที่ปิดใช้งานอ่านได้อย่างเดียว', { tone: 'warning' });
@@ -1715,6 +1800,7 @@
         case 'delete-curriculum': deleteCurriculum(id); break;
         case 'export-curriculum': exportCurriculum(id || state.curriculumId); break;
         case 'back-to-list': backToList(); break;
+        case 'list-tab': state.listTab = el.dataset.tab; renderListTabs(); break;
         case 'clear-list-filters': $('listSearch').value = ''; $('listYear').value = 'ทั้งหมด'; $('listLevel').value = 'ทั้งหมด'; $('listStatus').value = 'ทั้งหมด'; renderCurriculumGrid(); break;
         case 'jump-missing': jumpToMissing(); break;
         case 'jump-missing-here': jumpToMissing(state.curriculumId); break;
@@ -1835,9 +1921,19 @@
     $('planForm').addEventListener('submit', submitPlan);
 
     /* ---------- เริ่มต้น ---------- */
+    if (IS_TEACHER) {
+      document.body.classList.add('teacher-view');
+      state.listTab = 'current';
+      document.querySelectorAll('[data-page-name]').forEach((el) => { el.textContent = 'หลักสูตรที่ประกาศใช้'; });
+      $('listIntro').textContent = 'หลักสูตรที่งานวิชาการประกาศใช้ในปีการศึกษานี้ เปิดดูแผนการเรียน รายวิชา และครูผู้สอนของแต่ละห้องได้ (ดูอย่างเดียว)';
+      $('currentIntro').textContent = 'แยกตามระดับการศึกษา หลักสูตรที่ยังเป็นฉบับร่างจะแสดงเมื่องานวิชาการประกาศใช้แล้ว';
+    }
     renderList();
     const [hashCurriculum, hashPlan] = decodeURIComponent(location.hash.slice(1)).split('/');
-    if (hashCurriculum && curriculumOf(hashCurriculum)) openCurriculum(hashCurriculum, hashPlan);
+    if (hashCurriculum && curriculumOf(hashCurriculum) && isVisible(curriculumOf(hashCurriculum))) openCurriculum(hashCurriculum, hashPlan);
+
+    // บันทึกหลังทุกการกระทำ (listener นี้ลงทะเบียนทีหลัง จึงทำงานหลัง handler หลัก)
+    ['click', 'change', 'submit'].forEach((type) => document.addEventListener(type, () => setTimeout(saveStore, 0)));
   </script>
 </body>
 </html>

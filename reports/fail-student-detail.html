@@ -103,18 +103,18 @@
 
   <div class="relative lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=14"></script>
+    <script src="../shared/academic-layout.js?v=18"></script>
     <script>AcademicLayout.mount({"active":"fail-student","title":"นักเรียนต้องปรับปรุง","rightHtml":"<div class=\"flex items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm\">\n            <div class=\"flex h-10 w-10 items-center justify-center rounded-xl bg-blue-50 text-blue-600\">\n              <svg class=\"h-5 w-5\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 2 4 6v6c0 5 3.5 9.7 8 10 4.5-.3 8-5 8-10V6l-8-4Zm0 2.2 5.9 2.8v4.8c0 3.8-2.4 7.4-5.9 8-3.5-.6-5.9-4.2-5.9-8V7l5.9-2.8Z\"/></svg>\n            </div>\n            <div>\n              <p class=\"text-[1.05vh] font-semibold uppercase tracking-[0.18em] text-slate-400\">ข้อมูลล่าสุด</p>\n              <p id=\"timestampText\" class=\"text-sm font-medium text-slate-900\">-</p>\n            </div>\n          </div>"});</script>
 
     <main class="px-4 py-6 lg:px-8 lg:py-8">
       <section class="mb-6">
         <div class="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <div class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500">
-              <span>รายงานผลการเรียน</span>
-              <span class="text-slate-300">></span>
-              <span class="font-medium text-slate-700">นักเรียนต้องปรับปรุง</span>
-            </div>
+            <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
+              <a href="overview.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">รายงานวิชาการ</a>
+              <span class="text-slate-300">&gt;</span>
+              <span class="font-medium text-slate-800">รายงานนักเรียนต้องปรับปรุง</span>
+            </nav>
             <div class="flex flex-wrap items-center gap-3">
               <h1 class="text-3xl font-semibold tracking-tight text-slate-900 lg:text-4xl">รายงานนักเรียนต้องปรับปรุง</h1>
               <button type="button" id="thresholdInfo" class="inline-flex h-7 w-7 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-500 shadow-sm transition hover:text-slate-700" title="แสดงรายวิชาที่มีนักเรียนอย่างน้อย 1 คนอยู่ในช่วงคะแนนที่เลือก">

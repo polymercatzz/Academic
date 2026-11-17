@@ -908,10 +908,11 @@ function attachEvents() {
 
 function applyTeacherScopeText() {
   document.getElementById("unablePageSubtitle").textContent = "นักเรียนที่เวลาเรียนไม่ถึงเกณฑ์ เฉพาะรายวิชาและห้องที่คุณสอน";
-  const breadcrumbHome = document.getElementById("unableBreadcrumbHome");
-  if (breadcrumbHome) {
-    breadcrumbHome.textContent = "งานของฉัน";
-    breadcrumbHome.href = "../timetable/my-timetable.html";
+  // teacher reaches this page from "งานของฉัน", not the admin report group
+  const breadcrumbGroup = document.getElementById("unableBreadcrumbGroup");
+  if (breadcrumbGroup) {
+    breadcrumbGroup.textContent = "งานของฉัน";
+    breadcrumbGroup.href = "../timetable/my-timetable.html";
   }
 }
 

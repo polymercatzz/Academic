@@ -45,9 +45,9 @@
 
   <div class="relative lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=14"></script>
+    <script src="../shared/academic-layout.js?v=18"></script>
     <script src="../assets/academic-report/js/scope-chip.js?v=3"></script>
-    <script>AcademicLayout.mount({ active: "teacher-attendance", title: "รายงานการเข้าเรียน", rightHtml: ScopeChip.html });</script>
+    <script>AcademicLayout.mount({ active: "teacher-attendance", eyebrow: "งานของฉัน", title: "รายงานการเข้าเรียน", rightHtml: ScopeChip.html });</script>
 
     <!-- text source of the scope chip in the shared header (scope-chip.js mirrors it) -->
     <aside class="academic-card hidden" aria-hidden="true">
@@ -60,9 +60,7 @@
       <div class="space-y-6">
         <section>
           <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
-            <a href="../timetable/my-timetable.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">หน้าหลัก</a>
-            <span class="text-slate-300">&gt;</span>
-            <span>งานของฉัน</span>
+            <a href="../timetable/my-timetable.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">งานของฉัน</a>
             <span class="text-slate-300">&gt;</span>
             <span class="font-medium text-slate-800">รายงานการเข้าเรียน</span>
           </nav>

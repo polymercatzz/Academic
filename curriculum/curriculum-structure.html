@@ -49,17 +49,21 @@
 
   <div class="lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=14"></script>
-    <script>AcademicLayout.mount({"active":"curriculum-structure","title":"โครงสร้างหลักสูตร"});</script>
+    <script src="../shared/academic-layout.js?v=18"></script>
+    <script>AcademicLayout.mount({"active":"curriculum-structure","eyebrow":"หลักสูตร","title":"โครงสร้างหลักสูตร"});</script>
 
     <main class="px-4 py-6 lg:px-8 lg:py-8">
       <div class="mx-auto max-w-7xl space-y-6">
         <section>
           <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
-            <a href="../reports/overview.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">หน้าหลัก</a>
-            <span class="text-slate-300">></span>
+            <a id="structureCrumbGroup" href="curriculum-management.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">หลักสูตร</a>
+            <span class="text-slate-300">&gt;</span>
             <span class="font-medium text-slate-800">โครงสร้างหลักสูตร</span>
           </nav>
+          <script>
+            // teachers have no จัดการหลักสูตร page: the group name is plain text for them
+            if (AcademicLayout.role() === 'teacher') document.getElementById('structureCrumbGroup').outerHTML = '<span class="font-medium text-slate-600">หลักสูตร</span>';
+          </script>
           <h1 class="text-3xl font-semibold tracking-tight text-slate-950 lg:text-4xl">โครงสร้างหลักสูตรแกนกลางการศึกษาขั้นพื้นฐาน พ.ศ. 2551</h1>
           <p class="mt-3 max-w-4xl text-sm leading-6 text-slate-500">สรุปเวลาเรียน หน่วยกิต กิจกรรมพัฒนาผู้เรียน และเกณฑ์การจบการศึกษา สำหรับใช้วางแผนจัดหลักสูตรสถานศึกษา (ฉบับปรับปรุงตามคำสั่ง สพฐ. ที่ 683/2552 และ 110/2555)</p>
         </section>

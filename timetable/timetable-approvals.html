@@ -46,7 +46,7 @@
     <script src="timetable-core.js?v=2"></script>
     <script src="timetable-data.js"></script>
     <script>TT.load();</script>
-    <script src="../shared/academic-layout.js?v=14"></script>
+    <script src="../shared/academic-layout.js?v=18"></script>
     <script>AcademicLayout.mount({ active: 'timetable-approvals', eyebrow: 'ตารางเรียน', title: 'คำขออนุมัติ' });</script>
 
     <main class="px-4 py-6 lg:px-8 lg:py-8">
@@ -179,9 +179,7 @@
         <section class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
           <div class="min-w-0">
             <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
-              <a href="../reports/overview.html" class="font-medium text-slate-600 transition hover:text-brand">ภาพรวมงานวิชาการ</a>
-              <span class="text-slate-300">&gt;</span>
-              <a href="timetable.html" class="font-medium text-slate-600 transition hover:text-brand">ตารางเรียน</a>
+              <a href="timetable.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">ตารางเรียน</a>
               <span class="text-slate-300">&gt;</span>
               <span class="font-medium text-slate-800">คำขออนุมัติ</span>
             </nav>

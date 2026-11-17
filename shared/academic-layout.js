@@ -92,7 +92,7 @@
   // the academic year/term every module treats as "now" (grading data.js and timetable seed use the same)
   const CURRENT_TERM = { year: '2569', term: '1' };
   // every localStorage key that holds demo data, cleared by the sidebar's reset button
-  const DEMO_STORES = ['tt-store-v1', 'gradebook-demo-v2'];
+  const DEMO_STORES = ['tt-store-v1', 'gradebook-demo-v2', 'curriculum-demo-v1'];
   function currentRole() { try { return localStorage.getItem('tt-role') === 'teacher' ? 'teacher' : 'admin'; } catch (e) { return 'admin'; } }
   // pages whose mock data belongs to another user pass { persona } to mount(); notifications stay per role
   function persona() { return (lastOptions.persona && lastOptions.persona[currentRole()]) || PERSONAS[currentRole()]; }
@@ -269,6 +269,16 @@
       label: 'เช็คชื่อ',
       icon: ICON_CHECK,
       items: checkInMenuItems
+    },
+    {
+      // UC-1: teachers view the published curriculum and the core curriculum structure (view only)
+      id: 'teacherCurriculumMenu',
+      label: 'หลักสูตร',
+      icon: '<path d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3ZM5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82Z"/>',
+      items: [
+        { ...curriculumMenuItems[0], label: 'หลักสูตรที่ประกาศใช้' },
+        ...curriculumMenuItems.filter((item) => item.key === 'curriculum-structure')
+      ]
     }
   ];
 
@@ -496,7 +506,7 @@
   }
 
   function header(options) {
-    const eyebrow = options.eyebrow || 'รายงานผลการเรียน';
+    const eyebrow = options.eyebrow || 'รายงานวิชาการ';
     const title = options.title || 'Academic Report';
     const customRightHtml = options.rightHtml || options.actionHtml || '';
     const hasTimestampCard = /timestamp(Text|Label)/.test(customRightHtml);
@@ -567,6 +577,7 @@
     // re-render sidebar badges + bell after the timetable store changes
     refresh() { refreshChrome(); },
     role: currentRole,
+    persona,
     url: pageUrl,
     currentTerm: CURRENT_TERM,
     // report filters: lastSearch('x:lastSearch') reads, lastSearch('x:lastSearch', values) saves

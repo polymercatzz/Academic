@@ -45,7 +45,7 @@
 
   <div class="relative lg:pl-80">
     <div id="layoutHeader"></div>
-    <script src="../shared/academic-layout.js?v=14"></script>
+    <script src="../shared/academic-layout.js?v=18"></script>
     <script src="../assets/academic-report/js/scope-chip.js?v=3"></script>
 
     <!-- text source of the scope chip in the shared header (scope-chip.js mirrors it) -->
@@ -58,9 +58,7 @@
       <div class="space-y-6">
         <section>
           <nav class="mb-3 flex flex-wrap items-center gap-2 text-sm text-slate-500" aria-label="breadcrumb">
-            <a id="unableBreadcrumbHome" href="overview.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">หน้าหลัก</a>
-            <span class="text-slate-300">&gt;</span>
-            <span>รายงานวิชาการ</span>
+            <a id="unableBreadcrumbGroup" href="overview.html" class="font-medium text-slate-600 transition hover:text-brand focus:outline-none focus:ring-4 focus:ring-blue-100">รายงานวิชาการ</a>
             <span class="text-slate-300">&gt;</span>
             <span class="font-medium text-slate-800">รายงานผู้ไม่มีสิทธิ์สอบ</span>
           </nav>
@@ -282,7 +280,7 @@
   <script src="../assets/academic-report/js/modules/unable-exam-report.js?v=tw-1"></script>
   <script>
     // the teacher view shows the sections of the gradebook's teacher, like scores.html does
-    AcademicLayout.mount({ active: 'ar-unable-exam', title: 'รายงานผู้ไม่มีสิทธิ์สอบ', rightHtml: ScopeChip.html, persona: { teacher: ReportData.teacherPersona } });
+    AcademicLayout.mount({ active: 'ar-unable-exam', eyebrow: AcademicLayout.role() === 'teacher' ? 'งานของฉัน' : 'รายงานวิชาการ', title: 'รายงานผู้ไม่มีสิทธิ์สอบ', rightHtml: ScopeChip.html, persona: { teacher: ReportData.teacherPersona } });
     ScopeChip.follow(document.querySelector('.academic-card'));
   </script>
 </body>
