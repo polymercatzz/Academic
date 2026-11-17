@@ -456,6 +456,187 @@
   // Tailwind CDN has styled it, and a mount in that window must neither read nor save its 0 position
   let pendingScroll = null;
 
+  /* ---------- วิธีใช้: ผู้ใช้เลือกหัวข้อเอง แล้วระบบชี้ไปทีละขั้น (ไม่ขึ้นเองอัตโนมัติ) ----------
+   * หน้าไหนมีหัวข้อ เรียก AcademicLayout.setHelp([{ id, title, desc, steps: [{ target, title, text, before }] }])
+   * target = CSS selector หรือ function ที่คืน element · before = เตรียมหน้าจอก่อนชี้ (เช่น สลับแท็บ) */
+  let helpTopics = [];
+  let tour = null;
+  const HELP_SEEN_KEY = 'help-seen-v1';
+  function helpSeen() { try { return new Set(JSON.parse(localStorage.getItem(HELP_SEEN_KEY) || '[]')); } catch (e) { return new Set(); } }
+  function markHelpSeen(id) { const s = helpSeen(); s.add(id); try { localStorage.setItem(HELP_SEEN_KEY, JSON.stringify([...s])); } catch (e) { /* ignore */ } }
+  const helpKey = (id) => `${location.pathname.split('/').pop()}#${id}`;
+
+  function helpHtml() {
+    if (!helpTopics.length) return '';
+    const seen = helpSeen();
+    return `
+      <div class="relative">
+        <button id="helpButton" type="button" class="inline-flex h-12 items-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:bg-slate-50" aria-label="วิธีใช้หน้านี้" aria-expanded="false" aria-controls="helpPanel">
+          <svg class="h-5 w-5 text-blue-600" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Zm1 17h-2v-2h2v2Zm2.07-7.75-.9.92A3.4 3.4 0 0 0 13 15h-2v-.5a4 4 0 0 1 1.17-2.83l1.24-1.26A2 2 0 1 0 10 9H8a4 4 0 1 1 7.07 2.25Z"/></svg>
+          <span class="hidden sm:inline">วิธีใช้</span>
+        </button>
+        <div id="helpPanel" class="absolute right-0 top-14 z-50 hidden w-[min(22rem,calc(100vw-2rem))] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl">
+          <div class="border-b border-slate-100 px-4 py-3">
+            <p class="text-sm font-semibold text-slate-900">วิธีใช้หน้านี้</p>
+            <p class="text-xs text-slate-500">เลือกเรื่องที่อยากดู ระบบจะชี้ให้ดูทีละขั้น</p>
+          </div>
+          <div class="max-h-[70vh] overflow-y-auto p-2">
+            ${helpTopics.map((t) => {
+              const done = seen.has(helpKey(t.id));
+              return `<button type="button" data-help-topic="${t.id}" class="flex w-full items-start gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-slate-50">
+                <span class="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full ${done ? 'bg-emerald-50 text-emerald-600' : 'bg-blue-50 text-blue-600'}">${done
+                  ? '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="m9 16.17-3.88-3.88-1.41 1.42L9 19 21 7l-1.41-1.41L9 16.17Z"/></svg>'
+                  : '<svg class="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7L8 5Z"/></svg>'}</span>
+                <span class="min-w-0 flex-1">
+                  <span class="flex items-center justify-between gap-2"><span class="text-sm font-semibold text-slate-800">${t.title}</span><span class="shrink-0 text-[11px] text-slate-400">${t.steps.length} ขั้น</span></span>
+                  ${t.desc ? `<span class="mt-0.5 block text-xs text-slate-500">${t.desc}</span>` : ''}
+                </span>
+              </button>`;
+            }).join('')}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  let helpBound = false;
+  function bindHelp() {
+    if (helpBound) return;
+    helpBound = true;
+    // ผูกครั้งเดียวที่ document เพราะ header ถูกวาดใหม่บ่อย
+    document.addEventListener('click', (e) => {
+      const panel = document.getElementById('helpPanel');
+      const btn = document.getElementById('helpButton');
+      if (!panel || !btn) return;
+      if (btn.contains(e.target)) {
+        panel.classList.toggle('hidden');
+        btn.setAttribute('aria-expanded', String(!panel.classList.contains('hidden')));
+        return;
+      }
+      const item = e.target.closest('[data-help-topic]');
+      if (item) { panel.classList.add('hidden'); startTour(item.dataset.helpTopic); return; }
+      if (!panel.contains(e.target)) panel.classList.add('hidden');
+    });
+    document.addEventListener('keydown', (e) => {
+      if (!tour) return;
+      if (e.key === 'Escape') endTour(false);
+      else if (e.key === 'ArrowRight') tourGo(1);
+      else if (e.key === 'ArrowLeft') tourGo(-1);
+    });
+    window.addEventListener('resize', () => tour && positionTour());
+    window.addEventListener('scroll', () => tour && positionTour(), true);
+  }
+
+  function resolveTarget(step) {
+    try {
+      const el = typeof step.target === 'function' ? step.target() : step.target ? document.querySelector(step.target) : null;
+      return el && el.getClientRects().length ? el : null;
+    } catch (e) { return null; }
+  }
+
+  function startTour(id) {
+    const topic = helpTopics.find((t) => t.id === id);
+    if (!topic) return;
+    endTour(false);
+    const root = document.createElement('div');
+    root.id = 'helpTour';
+    root.innerHTML = `
+      <div data-tour-block class="fixed inset-0 z-[90]"></div>
+      <div data-tour-spot class="pointer-events-none fixed z-[91] rounded-2xl"></div>
+      <div data-tour-pop role="dialog" aria-modal="true" aria-labelledby="helpTourTitle" class="fixed z-[92] w-[min(24rem,calc(100vw-2rem))] rounded-2xl border border-slate-200 bg-white p-5 shadow-2xl"></div>`;
+    document.body.appendChild(root);
+    tour = { topic, index: 0, root, timer: setInterval(positionTour, 400) };
+    root.querySelector('[data-tour-block]').addEventListener('click', () => root.querySelector('[data-tour-next]')?.focus());
+    showStep();
+  }
+  function endTour(finished) {
+    if (!tour) return;
+    const { topic, root, timer } = tour;
+    clearInterval(timer);
+    root.remove();
+    tour = null;
+    if (finished) {
+      markHelpSeen(helpKey(topic.id));
+      refreshChrome();
+      // จบหัวข้อแล้วเปิดเมนูให้เลือกเรื่องถัดไป (รอให้คลิกปุ่ม "เสร็จแล้ว" จบก่อน ไม่งั้นตัวปิดเมนูเมื่อคลิกข้างนอกจะปิดทันที)
+      setTimeout(() => {
+        const panel = document.getElementById('helpPanel');
+        if (panel) { panel.classList.remove('hidden'); document.getElementById('helpButton')?.setAttribute('aria-expanded', 'true'); }
+      }, 0);
+    }
+  }
+  function tourGo(dir) {
+    if (!tour) return;
+    const next = tour.index + dir;
+    if (next < 0) return;
+    if (next >= tour.topic.steps.length) { endTour(true); return; }
+    tour.index = next;
+    showStep();
+  }
+  function showStep() {
+    const { topic, index, root } = tour;
+    const step = topic.steps[index];
+    try { step.before && step.before(); } catch (e) { /* หน้าจอเตรียมไม่ได้ก็ยังแสดงคำอธิบาย */ }
+    const total = topic.steps.length;
+    const last = index === total - 1;
+    const pop = root.querySelector('[data-tour-pop]');
+    pop.innerHTML = `
+      <div class="flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="text-[11px] font-semibold text-blue-600">${topic.title} · ขั้นที่ ${index + 1} จาก ${total}</p>
+          <h3 id="helpTourTitle" class="mt-1 text-base font-semibold text-slate-950">${step.title}</h3>
+        </div>
+        <button type="button" data-tour-close class="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="ปิดคำแนะนำ"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg></button>
+      </div>
+      <p class="mt-2 text-sm leading-6 text-slate-600">${step.text}</p>
+      <div class="mt-4 flex items-center justify-between gap-3">
+        <div class="flex gap-1">${topic.steps.map((_, i) => `<span class="h-1.5 rounded-full ${i === index ? 'w-5 bg-blue-600' : i < index ? 'w-1.5 bg-blue-300' : 'w-1.5 bg-slate-200'}"></span>`).join('')}</div>
+        <div class="flex gap-2">
+          ${index ? '<button type="button" data-tour-prev class="rounded-xl border border-slate-200 px-3 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50">ก่อนหน้า</button>' : ''}
+          <button type="button" data-tour-next class="rounded-xl bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100">${last ? 'เสร็จแล้ว' : 'ต่อไป'}</button>
+        </div>
+      </div>`;
+    pop.querySelector('[data-tour-close]').onclick = () => endTour(false);
+    pop.querySelector('[data-tour-next]').onclick = () => tourGo(1);
+    const prev = pop.querySelector('[data-tour-prev]');
+    if (prev) prev.onclick = () => tourGo(-1);
+    // รอให้หน้าวาดใหม่หลัง before() แล้วค่อยเลื่อนไปที่จุดที่ชี้ (ไม่ใช้ requestAnimationFrame เพราะหยุดทำงานเมื่อแท็บไม่ได้แสดงอยู่)
+    setTimeout(() => {
+      if (!tour) return;
+      const el = resolveTarget(step);
+      if (el) el.scrollIntoView({ block: 'center', inline: 'nearest' });
+      positionTour();
+      pop.querySelector('[data-tour-next]')?.focus({ preventScroll: true });
+    }, 0);
+  }
+  function positionTour() {
+    if (!tour) return;
+    const step = tour.topic.steps[tour.index];
+    const spot = tour.root.querySelector('[data-tour-spot]');
+    const pop = tour.root.querySelector('[data-tour-pop]');
+    const el = resolveTarget(step);
+    const vw = window.innerWidth; const vh = window.innerHeight; const gap = 12; const pad = 6;
+    const pw = pop.offsetWidth; const ph = pop.offsetHeight;
+    if (!el) {
+      // ไม่เจอจุดที่ชี้ (เช่น ยังไม่ได้เปิดฉบับ) ก็แสดงคำอธิบายกลางจอ
+      spot.style.cssText = `left:${vw / 2}px;top:${vh / 2}px;width:0;height:0;box-shadow:0 0 0 9999px rgba(15,23,42,.55);`;
+      pop.style.left = `${Math.max(16, (vw - pw) / 2)}px`; pop.style.top = `${Math.max(16, (vh - ph) / 2)}px`;
+      return;
+    }
+    const r = el.getBoundingClientRect();
+    const top = Math.max(r.top - pad, 4); const left = Math.max(r.left - pad, 4);
+    const w = Math.min(r.right + pad, vw - 4) - left; const h = Math.min(r.bottom + pad, vh - 4) - top;
+    spot.style.cssText = `left:${left}px;top:${top}px;width:${w}px;height:${h}px;box-shadow:0 0 0 9999px rgba(15,23,42,.55),0 0 0 3px #3b82f6;`;
+    const clampX = (x) => Math.min(Math.max(16, x), vw - pw - 16);
+    const clampY = (y) => Math.min(Math.max(16, y), vh - ph - 16);
+    let x; let y;
+    if (top + h + gap + ph <= vh - 16) { x = clampX(left); y = top + h + gap; }
+    else if (top - gap - ph >= 16) { x = clampX(left); y = top - gap - ph; }
+    else if (left + w + gap + pw <= vw - 16) { x = left + w + gap; y = clampY(top); }
+    else if (left - gap - pw >= 16) { x = left - gap - pw; y = clampY(top); }
+    else { x = clampX(left + w / 2 - pw / 2); y = vh - ph - 16; }
+    pop.style.left = `${x}px`; pop.style.top = `${y}px`;
+  }
+
   function refreshChrome() {
     const sidebarMount = document.getElementById('layoutSidebar');
     const headerMount = document.getElementById('layoutHeader');
@@ -487,6 +668,7 @@
     bindSidebar();
     bindMenuGroups();
     bindBell();
+    bindHelp();
     bindRoleSwitch();
     updateTimestamp();
   }
@@ -510,7 +692,7 @@
     const title = options.title || 'Academic Report';
     const customRightHtml = options.rightHtml || options.actionHtml || '';
     const hasTimestampCard = /timestamp(Text|Label)/.test(customRightHtml);
-    const rightHtml = `${hasTimestampCard ? customRightHtml : `${defaultRightHtml()}${customRightHtml}`}${bellHtml()}`;
+    const rightHtml = `${hasTimestampCard ? customRightHtml : `${defaultRightHtml()}${customRightHtml}`}${helpHtml()}${bellHtml()}`;
     return `
       <header class="sticky top-0 z-30 border-b border-slate-200 bg-slate-100/90 backdrop-blur">
         <div class="flex items-center justify-between gap-3 px-4 py-3 lg:px-8">
@@ -577,6 +759,9 @@
     // re-render sidebar badges + bell after the timetable store changes
     refresh() { refreshChrome(); },
     role: currentRole,
+    // หัวข้อ "วิธีใช้" ของหน้านี้ (ดูคำอธิบายที่ helpTopics)
+    setHelp(topics) { helpTopics = Array.isArray(topics) ? topics : []; refreshChrome(); },
+    startHelp: startTour,
     persona,
     url: pageUrl,
     currentTerm: CURRENT_TERM,

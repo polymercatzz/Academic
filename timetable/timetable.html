@@ -38,7 +38,7 @@
     <script src="timetable-core.js?v=2"></script>
     <script src="timetable-data.js"></script>
     <script>TT.load();</script>
-    <script src="../shared/academic-layout.js?v=18"></script>
+    <script src="../shared/academic-layout.js?v=22"></script>
     <script>AcademicLayout.mount({ active: 'timetable', eyebrow: 'ตารางเรียน', title: 'ตารางสอน' });</script>
 
     <main class="px-4 py-6 lg:px-8 lg:py-8">
@@ -1338,6 +1338,62 @@
     applyHash();
     bind();
     render();
+
+    /* ------------------------------------------------------------------ วิธีใช้ (ผู้ใช้กดเลือกหัวข้อเอง) */
+    const statCard = (label) => () => [...document.querySelectorAll('#workspace article')].find((a) => a.querySelector('p')?.textContent.trim() === label);
+    // หัวข้อที่สอนการแก้ตารางต้องเปิดฉบับร่างอยู่ ถ้าเปิดฉบับเผยแพร่อยู่จะสลับไปฉบับร่างของภาคเรียนนี้ให้
+    function helpDraftTeacherTab() {
+      if (!editable()) {
+        const draft = TT.versionsOf(state.term).find((v) => v.status === 'draft');
+        if (draft) state.versionId = draft.id;
+      }
+      if (state.tab !== 'teacher') state.tab = 'teacher';
+      render();
+    }
+    if (TT.role() === 'admin') AcademicLayout.setHelp([
+      {
+        id: 'overview', title: 'ภาพรวมหน้าจัดตารางสอน', desc: 'หน้านี้มีอะไรบ้าง และเริ่มจากตรงไหน',
+        steps: [
+          { target: () => $('termSelect')?.closest('label'), title: 'เลือกภาคเรียน', text: 'เลือกภาคเรียนที่จะจัดตาราง ทั้งหน้าจะแสดงเฉพาะตารางสอนของภาคเรียนที่เลือก' },
+          { target: '#openWizardButton', title: 'สร้างตารางสอนใหม่', text: 'เริ่มฉบับใหม่ได้ 2 วิธี คือ <b>คัดลอกจากฉบับที่มีอยู่</b> หรือ <b>สร้างใหม่ทั้งหมด</b> ระบบจะพาตั้งโครงสร้างเวลาและกิจกรรมที่ล็อกเวลาไว้ทีละขั้น' },
+          { target: '#versionList', title: 'ฉบับของตารางสอน', text: 'ภาคเรียนหนึ่งมีได้หลายฉบับ <b>ฉบับร่าง</b> แก้ไขได้ <b>ฉบับเผยแพร่</b> คือฉบับที่ครูเห็นและแก้ไม่ได้ เมื่อเผยแพร่ฉบับใหม่ ฉบับเดิมจะกลายเป็น <b>ฉบับเก่า</b> กด "เปิด" ที่การ์ดเพื่อดูหรือแก้ฉบับนั้น' },
+          { target: () => $('workspace')?.children[1], title: 'สรุปความคืบหน้า', text: 'ดูว่าจัดไปแล้วกี่เปอร์เซ็นต์ เหลือคาบรอจัดเท่าไร มี <b>Conflict</b> (คาบที่ชนกัน) และคำเตือนกี่คาบ และมีครูที่ภาระสอนเกินกำหนดไหม' },
+          { target: '#workspace [role="tablist"]', title: 'มุมมองของตาราง', text: 'สลับดูตารางรายครู รายห้อง การใช้ห้อง ตารางรวมระดับชั้น และรายงาน แท็บ <b>✎ จัดตารางสอนครู</b> คือที่ใช้จัดตาราง' }
+        ]
+      },
+      {
+        id: 'drag', title: 'ลากรายวิชาลงตาราง', desc: 'จัดตารางด้วยตัวเองทีละครู',
+        steps: [
+          { before: helpDraftTeacherTab, target: () => document.querySelector('[data-teacher]')?.parentElement, title: 'เลือกครู', text: 'จัดตารางทีละคน เลือกครูจากแถบนี้ หรือพิมพ์ค้นหาชื่อในช่องด้านบน แถบใต้ชื่อบอกว่าจัดไปกี่เปอร์เซ็นต์และมี Conflict หรือไม่' },
+          { before: helpDraftTeacherTab, target: () => $('poolDrop')?.parentElement, title: 'รายการรอจัด', text: 'คาบที่ครูคนนี้ได้รับมอบหมายสอนแต่ยังไม่ได้ลงตาราง (มาจากหน้าจัดการหลักสูตร) <b>คลิกค้างที่การ์ดแล้วลาก</b> ไปวางบนตารางได้เลย' },
+          { before: helpDraftTeacherTab, target: '#teacherTimeline', title: 'วางลงตาราง', text: 'ระหว่างลาก ช่องของห้องนั้นจะเปลี่ยนสี <b class="text-emerald-600">เขียว</b> วางได้ <b class="text-amber-600">เหลือง</b> วางได้แต่ขัดเงื่อนไข <b class="text-rose-600">แดง</b> จะเกิด Conflict <b class="text-slate-500">เทา</b> วางไม่ได้ (มีกิจกรรมหรือคาบที่ล็อกไว้) ลากคาบกลับไปที่รายการรอจัดเพื่อนำออก' }
+        ]
+      },
+      {
+        id: 'conflict', title: 'ดูและแก้เมื่อตารางชนกัน', desc: 'Conflict คืออะไร และแก้อย่างไร',
+        steps: [
+          { before: helpDraftTeacherTab, target: statCard('Conflict'), title: 'Conflict คืออะไร', text: 'คาบที่ชนกันจริง เช่น ครูคนเดียวสอน 2 ห้องในเวลาเดียวกัน ห้องเฉพาะทางถูกใช้ซ้อน หรือตรงกับเวลาไม่ว่างของครูที่อนุมัติแล้ว ระบบตรวจจากเวลาจริง ม.ต้น กับ ม.ปลายที่เวลาคาบไม่ตรงกันก็ตรวจได้ <b>ต้องเป็น 0 ก่อนเผยแพร่</b>' },
+          { before: helpDraftTeacherTab, target: () => document.querySelector('[data-teacher]')?.parentElement, title: 'หาครูที่มี Conflict', text: 'ครูที่มีคาบชนจะขึ้นข้อความสีแดงพร้อมจำนวน Conflict ใต้ชื่อ เลือกครูคนนั้นเพื่อดูตาราง' },
+          { before: helpDraftTeacherTab, target: '#teacherTimeline', title: 'แก้คาบที่ชน', text: 'คาบที่ชนจะมี<b class="text-rose-600">กรอบแดง</b> คลิกที่คาบเพื่อดูว่าชนกับอะไร แล้วลากย้ายไปช่องที่เป็นสีเขียว ถ้าอยากเห็นรายการทั้งหมดในที่เดียว ให้เปิดแท็บ <b>รายงาน</b>' }
+        ]
+      },
+      {
+        id: 'auto', title: 'จัดตารางอัตโนมัติ', desc: 'ให้ระบบจัดให้ แล้วตรวจผลก่อนใช้',
+        steps: [
+          { before: helpDraftTeacherTab, target: () => document.querySelector('[data-act="toggle-readiness"]')?.closest('section'), title: 'ตรวจความพร้อมก่อน', text: 'ระบบตรวจข้อมูลที่ต้องใช้ เช่น การมอบหมายสอน ห้องเรียน และเวลาไม่ว่างของครู ถ้ามีรายการ <b class="text-rose-600">ไม่ผ่าน</b> จะจัดอัตโนมัติไม่ได้จนกว่าจะแก้ที่ต้นทาง' },
+          { before: helpDraftTeacherTab, target: '[data-act="conditions"]', title: 'กำหนดเงื่อนไข (ถ้าต้องการ)', text: 'ตั้งค่าได้ เช่น คาบสูงสุดต่อวันของครู รายวิชาที่ต้องเรียนคาบคู่ ควรเรียนช่วงเช้าหรือบ่าย หรือห้ามอยู่คาบไหน และช่วงเวลาที่ห้องไม่พร้อมใช้' },
+          { before: helpDraftTeacherTab, target: '[data-act="auto"]', title: 'เริ่มจัดอัตโนมัติ', text: 'เลือก <b>วิธีจัด</b> (ตามเงื่อนไข หรือมาตรฐาน) <b>ขอบเขต</b> (ครูคนเดียว กลุ่มสาระ หรือทุกคน) และจะเก็บคาบที่จัดไว้แล้วหรือไม่ ระบบจะแสดงผลให้ตรวจก่อน ตารางยังไม่เปลี่ยนจนกว่าจะกดนำไปใช้' },
+          { before: helpDraftTeacherTab, target: '[data-act="undo"]', title: 'ย้อนกลับได้เสมอ', text: 'ถ้าผลไม่ถูกใจ กดย้อนกลับได้ทุกการเปลี่ยนแปลง (หรือกด Ctrl/⌘ + Z)' }
+        ]
+      },
+      {
+        id: 'publish', title: 'เผยแพร่ตาราง', desc: 'ส่งตารางให้ครูเห็น',
+        steps: [
+          { before: helpDraftTeacherTab, target: statCard('Conflict'), title: 'ตรวจว่าไม่มี Conflict', text: 'เผยแพร่ได้เมื่อ Conflict เป็น 0 ถ้ายังมี ระบบจะพาไปหน้ารายงานให้แก้ก่อน ส่วนคำเตือนไม่บังคับ' },
+          { before: helpDraftTeacherTab, target: '[data-act="publish"]', title: 'เผยแพร่', text: 'ครูจะเห็นตารางนี้ทันทีและได้รับแจ้งเตือน ฉบับนี้จะ<b>แก้ไขไม่ได้อีก</b> และฉบับเผยแพร่เดิมจะกลายเป็นฉบับเก่า ถ้าต้องแก้ภายหลังให้กด <b>คัดลอกเป็นฉบับร่าง</b> แล้วเผยแพร่ใหม่' }
+        ]
+      }
+    ]);
   </script>
 </body>
 </html>
