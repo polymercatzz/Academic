@@ -775,3 +775,10 @@
     }
   };
 }());
+
+// เครื่องมือกรอกข้อมูลสำหรับอัดเดโม: F9 กรอกให้ · F8 เปิดแผงคำสั่ง (shared/demo-autofill.js)
+(function () {
+  const s = document.createElement('script');
+  s.src = new URL('demo-autofill.js?v=1', document.currentScript.src).href;
+  document.head.appendChild(s);
+}());
