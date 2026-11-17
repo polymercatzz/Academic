@@ -88,7 +88,7 @@ function buildSeed() {
     ev(sec, hDecide, reviewerId, `ฝ่ายวิชาการตีกลับให้แก้ไข${notes.length ? ` (${notes.length} หมุดข้อสังเกต)` : ''}: ${reason}`);
   };
   const full = { fill: 1, attrFill: 1, rtwFill: 1 };
-  const T = '2569-1', DL = '2026-10-09';
+  const T = '2569-1', DL = '2027-01-15';
 
   /* ---------- ห้องที่ครูสมศรี (ผู้ใช้ปัจจุบัน) สอน ---------- */
   const m21 = add({
