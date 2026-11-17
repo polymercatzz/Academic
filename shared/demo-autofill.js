@@ -142,6 +142,8 @@
     const info = gridInfo();
     if (!info) return 0;
     const cells = emptyCells(info);
+    // ตารางใหญ่ให้เร็วขึ้น ทั้งตารางใช้เวลาราว 4 วินาที
+    const step = Math.max(12, Math.min(70, 4000 / Math.max(cells.length, 1)));
     for (const inp of cells) {
       const col = info.cols[+inp.dataset.c];
       if (!col) continue;
@@ -150,9 +152,88 @@
       inp.focus();
       inp.value = v;
       fire(inp, 'input');
-      await wait(70);
+      await wait(step);
     }
     return cells.length;
+  }
+
+  /* ---------- โครงสร้างคะแนน (scores.html แท็บโครงสร้าง) ---------- */
+  // รวม 100% · เก็บ 60 : กลางภาค 20 : ปลายภาค 20
+  const STRUCTURE = [
+    ['collect', 'ใบงานที่ 1', 10, 15], ['collect', 'ใบงานที่ 2', 10, 15], ['collect', 'แบบฝึกหัด', 20, 20], ['collect', 'จิตพิสัย', 10, 10],
+    ['mid', 'สอบกลางภาค', 20, 20], ['final', 'สอบปลายภาค', 20, 20],
+  ];
+  function structurePending() {
+    if (document.querySelector('[data-tpl="blank"]')) return true;
+    return Array.from(document.querySelectorAll('table.struct [data-sf="name"]')).some((el) => editable(el) && !el.value.trim());
+  }
+  async function buildStructure() {
+    const blank = document.querySelector('[data-tpl="blank"]');
+    if (blank) { pulse(blank); await wait(500); blank.click(); await wait(500); }
+    for (const [g, name, max, weight] of STRUCTURE) {
+      const done = Array.from(document.querySelectorAll('table.struct [data-sf="name"]')).some((el) => el.value.trim() === name);
+      if (done) continue;
+      const findEmpty = () => {
+        const block = document.querySelector(`[data-add="${g}"]`)?.closest('.group-block');
+        return block && Array.from(block.querySelectorAll('tr[data-cid]')).find((tr) => !tr.querySelector('[data-sf="name"]').value.trim());
+      };
+      let tr = findEmpty();
+      if (!tr) {
+        const add = document.querySelector(`[data-add="${g}"]`);
+        if (!add) continue;
+        pulse(add); await wait(350); add.click(); await wait(400);
+        tr = findEmpty();
+      }
+      if (!tr) continue;
+      await typeInto(tr.querySelector('[data-sf="name"]'), name, 40);
+      await typeInto(tr.querySelector('[data-sf="max"]'), String(max), 80);
+      await typeInto(tr.querySelector('[data-sf="weight"]'), String(weight), 80);
+      await wait(250);
+    }
+    pulse(document.getElementById('saveStruct'));
+    return true;
+  }
+
+  /* ---------- ตัวช่วยสร้างตารางสอน ขั้นกิจกรรมล็อกเวลา (timetable.html) ---------- */
+  const ACTIVITY = { name: 'กิจกรรมเพื่อสังคม', scope: 'ระดับชั้น ม.3', day: 'ศุกร์', period: 6 };
+  function activityPending() {
+    const body = document.getElementById('modalBody');
+    if (!body || !visible(body) || !body.querySelector('[data-act-add]')) return false;
+    return !Array.from(body.querySelectorAll('[data-a="name"]')).some((el) => el.value === ACTIVITY.name);
+  }
+  async function addActivity() {
+    const body = document.getElementById('modalBody');
+    const lastRow = () => { const rows = body.querySelectorAll('[data-act-row]'); return rows[rows.length - 1]; };
+    const add = body.querySelector('[data-act-add]');
+    pulse(add); await wait(400); add.click(); await wait(400);
+    lastRow().scrollIntoView({ block: 'center', behavior: 'smooth' });
+    await typeInto(lastRow().querySelector('[data-a="name"]'), ACTIVITY.name, 40);
+    await wait(300);
+    const pick = async (sel, text) => {
+      const el = lastRow().querySelector(sel);
+      const opt = Array.from(el.options).find((o) => o.text.trim() === text);
+      if (!opt) return;
+      pulse(el); el.value = opt.value; fire(el, 'change'); await wait(450);
+    };
+    await pick('[data-a="scopeKey"]', ACTIVITY.scope);
+    await pick('[data-a="day"]', ACTIVITY.day);
+    for (const p of [1, ACTIVITY.period]) {
+      const cb = lastRow().querySelector(`[data-period="${p}"]`);
+      if (cb && cb.checked !== (p === ACTIVITY.period)) { pulse(cb.closest('label')); cb.click(); await wait(400); }
+    }
+    return true;
+  }
+
+  /* ---------- เพิ่มรายวิชาเข้าแผน (curriculum-management.html) ---------- */
+  function subjectBoxes() {
+    const m = document.getElementById('addSubjectModal');
+    if (!m || !visible(m)) return [];
+    return Array.from(m.querySelectorAll('input[type="checkbox"]')).filter((cb) => !['addShowAll', 'addAutoTeacher'].includes(cb.id) && editable(cb) && !cb.checked);
+  }
+  async function pickSubjects() {
+    const boxes = subjectBoxes().slice(0, 3);
+    for (const cb of boxes) { pulse(cb.closest('label, tr, li') || cb); await wait(400); cb.click(); await wait(300); }
+    return boxes.length;
   }
 
   function buildCsv() {
@@ -244,6 +325,9 @@
   function actions() {
     const list = [];
     if (dialogFields().length) list.push({ id: 'dialog', label: 'กรอกช่องข้อความในหน้าต่างนี้', run: fillDialog });
+    if (activityPending()) list.push({ id: 'activity', label: `เพิ่มกิจกรรม "${ACTIVITY.name}"`, run: addActivity });
+    if (subjectBoxes().length) list.push({ id: 'subjects', label: 'เลือกรายวิชาตัวอย่าง 3 วิชา', run: pickSubjects });
+    if (structurePending()) list.push({ id: 'structure', label: 'ตั้งโครงสร้างคะแนนตัวอย่าง (รวม 100%)', run: buildStructure });
     if (document.getElementById('fileIn') || (document.getElementById('importBtn') && buildCsv())) {
       list.push({ id: 'import', label: 'นำเข้าไฟล์คะแนนตัวอย่าง', run: autoImport });
     }
@@ -299,5 +383,5 @@
     else if (e.key === 'F9') { e.preventDefault(); smart(); }
   }, true);
 
-  window.DemoAutofill = { smart, showPanel, fillDialog, fillGrid, autoImport, downloadCsv, markAttendance };
+  window.DemoAutofill = { smart, showPanel, fillDialog, fillGrid, autoImport, downloadCsv, markAttendance, buildStructure, addActivity, pickSubjects };
 }());

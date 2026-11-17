@@ -427,7 +427,19 @@
       window.location.href = pageUrl(PERSONAS[role].home);
     }));
     const reset = document.querySelector('[data-reset-mock]');
-    if (reset) reset.addEventListener('click', () => { try { DEMO_STORES.forEach((key) => localStorage.removeItem(key)); } catch (e) { /* ignore */ } window.location.reload(); });
+    if (reset) reset.addEventListener('click', () => {
+      try {
+        DEMO_STORES.forEach((key) => localStorage.removeItem(key));
+        // บางหน้าบันทึกข้อมูลทุกครั้งที่คลิก เช่นหน้าหลักสูตร ซึ่งจะเขียนข้อมูลเก่ากลับก่อนรีโหลด
+        // จึงห้ามเขียนคีย์ข้อมูลจำลองจนกว่าหน้าจะโหลดใหม่
+        const setItem = Storage.prototype.setItem;
+        Storage.prototype.setItem = function (key, value) {
+          if (this === localStorage && DEMO_STORES.includes(key)) return;
+          setItem.call(this, key, value);
+        };
+      } catch (e) { /* ignore */ }
+      window.location.reload();
+    });
   }
 
   let lastOptions = {};
@@ -779,6 +791,6 @@
 // เครื่องมือกรอกข้อมูลสำหรับอัดเดโม: F9 กรอกให้ · F8 เปิดแผงคำสั่ง (shared/demo-autofill.js)
 (function () {
   const s = document.createElement('script');
-  s.src = new URL('demo-autofill.js?v=1', document.currentScript.src).href;
+  s.src = new URL('demo-autofill.js?v=2', document.currentScript.src).href;
   document.head.appendChild(s);
 }());
