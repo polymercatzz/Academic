@@ -18,8 +18,8 @@ OUT_BODY = '#FFF4EC'     # พื้นกรอบ / เนื้อตาร�
 FONT = 'fontFamily=TH SarabunPSK;fontSize=18;fontColor=#000000;'
 BOX_PREFIX = ('ext_user_box', 'box_b_', 'box_c_')
 PKG_IDS = ('ext_user_pkg', 'ext_c_pkg')
-NAME_B = 'ระบบงานทะเบียนและ IAM (Service B)'
-NAME_C = 'Student Care Track (Service C)'
+NAME_B = 'Registry'
+NAME_C = 'Student Support'
 
 
 def set_style(st, **kv):
