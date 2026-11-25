@@ -197,8 +197,8 @@ window.TT_SEED = function (useDb) {
 
   /* ---------------- โครงสร้างเวลา / กิจกรรมล็อกเวลา / เงื่อนไข ---------------- */
   const timeStructures = () => [
-    { id: 'lower', name: 'ม.ต้น', levels: [1, 2, 3], days: [0, 1, 2, 3, 4], start: '08:30', periodMin: 50, periods: 8, breaks: [{ after: 4, min: 50, name: 'พักกลางวัน' }], homeroom: { min: 30, name: 'เข้าแถว · โฮมรูม' } },
-    { id: 'upper', name: 'ม.ปลาย', levels: [4, 5, 6], days: [0, 1, 2, 3, 4], start: '08:30', periodMin: 55, periods: 8, breaks: [{ after: 4, min: 50, name: 'พักกลางวัน' }], homeroom: { min: 30, name: 'เข้าแถว · โฮมรูม' } }
+    { id: 'lower', name: 'ม.ต้น', levels: [1, 2, 3], days: [0, 1, 2, 3, 4], start: '08:30', periodMin: 50, periods: 8, breaks: [{ after: 4, min: 50, name: 'พักกลางวัน' }], homeroom: { min: 30, name: 'เข้าแถว โฮมรูม' } },
+    { id: 'upper', name: 'ม.ปลาย', levels: [4, 5, 6], days: [0, 1, 2, 3, 4], start: '08:30', periodMin: 55, periods: 8, breaks: [{ after: 4, min: 50, name: 'พักกลางวัน' }], homeroom: { min: 30, name: 'เข้าแถว โฮมรูม' } }
   ];
   const mathTeachers = teachers.filter((t) => t.group === 'ค').map((t) => t.id);
   const activities = () => [
@@ -240,7 +240,7 @@ window.TT_SEED = function (useDb) {
   const v1 = newVersion('V-2569-2-1', '2569-2', 'ตารางสอน 2/2569', 'published', '2026-09-28');
   fill(v1, 7);
   hist('2569-2', v1.id, ['2026-09-26', '10:00'], 'อ.สุนิสา ปัญญาดี', 'สร้างฉบับร่าง', 'คัดลอกจาก "ตารางสอน 1/2569" (ภาคเรียนที่ 1/2569)');
-  hist('2569-2', v1.id, ['2026-09-27', '14:00'], 'อ.สุนิสา ปัญญาดี', 'จัดตารางอัตโนมัติ', 'จัดอัตโนมัติตามเงื่อนไข · ครูทุกคน');
+  hist('2569-2', v1.id, ['2026-09-27', '14:00'], 'อ.สุนิสา ปัญญาดี', 'จัดตารางอัตโนมัติ', 'จัดอัตโนมัติตามเงื่อนไข ครูทุกคน');
   hist('2569-2', v1.id, ['2026-09-28', '16:00'], 'อ.สุนิสา ปัญญาดี', 'เผยแพร่ตาราง', 'เผยแพร่ "ตารางสอน 2/2569"');
 
   const draft = TT.copyVersion(v1, { term: '2569-2', name: 'ร่าง ปรับห้อง Lab', by: 'อ.สุนิสา ปัญญาดี' }).version;
@@ -312,16 +312,16 @@ window.TT_SEED = function (useDb) {
   fill(v70, 31, { classIds: classes.filter((c) => c.level >= 4).map((c) => c.id) });
   const manual = TT.autoSchedule(v70, { mode: 'standard', keep: true, seed: 5, classIds: ['1-1', '1-2'] }).entries;
   ['1-1', '1-2'].forEach((cid) => { Object.entries(manual[cid]).slice(0, 14).forEach(([k, e]) => { v70.entries[cid][k] = { ...e, src: 'manual' }; }); });
-  hist('2570-1', v70.id, ['2026-10-12', '09:10'], 'อ.สุนิสา ปัญญาดี', 'สร้างฉบับร่าง', 'สร้างใหม่ทั้งหมด "ร่างแรก 1/2570" · วันปิดรับเวลาไม่ว่าง 30 ต.ค. 2569');
-  hist('2570-1', v70.id, ['2026-10-12', '14:20'], 'อ.สุนิสา ปัญญาดี', 'จัดตารางอัตโนมัติ', 'จัดอัตโนมัติตามเงื่อนไข · ม.4–ม.6');
+  hist('2570-1', v70.id, ['2026-10-12', '09:10'], 'อ.สุนิสา ปัญญาดี', 'สร้างฉบับร่าง', 'สร้างใหม่ทั้งหมด "ร่างแรก 1/2570" วันปิดรับเวลาไม่ว่าง 30 ต.ค. 2569');
+  hist('2570-1', v70.id, ['2026-10-12', '14:20'], 'อ.สุนิสา ปัญญาดี', 'จัดตารางอัตโนมัติ', 'จัดอัตโนมัติตามเงื่อนไข ม.4–ม.6');
   hist('2570-1', v70.id, ['2026-10-13', '10:05'], 'อ.สุนิสา ปัญญาดี', 'เพิ่มคาบ', 'จัดเอง ม.1/1 และ ม.1/2 บางส่วน');
 
   /* notifications */
   db.notifications = [
-    { id: 'N-1', to: 'admin', title: 'คำร้องขอเปลี่ยนการจัดใหม่', text: 'อ.ดารุณี คำแสง · เปลี่ยนห้องเรียน', link: 'timetable-approvals.html', at: iso('2026-10-14', '08:45'), read: false },
-    { id: 'N-2', to: 'admin', title: 'คำร้องขอเปลี่ยนการจัดใหม่', text: 'อ.ธนกฤต แก้วใส · ย้ายคาบ', link: 'timetable-approvals.html', at: iso('2026-10-13', '08:45'), read: false },
-    { id: 'N-3', to: 'admin', title: 'คำร้องขอเปลี่ยนการจัดใหม่', text: 'อ.อนุชา แสงทอง · สลับคาบของตนเอง', link: 'timetable-approvals.html', at: iso('2026-10-13', '08:40'), read: false },
-    { id: 'N-4', to: 'admin', title: 'เวลาไม่ว่างรออนุมัติ', text: 'อ.อนุชา แสงทอง · อังคาร 13:30–15:10', link: 'timetable-approvals.html#unavailability', at: iso('2026-10-13', '09:00'), read: false },
+    { id: 'N-1', to: 'admin', title: 'คำร้องขอเปลี่ยนการจัดใหม่', text: 'อ.ดารุณี คำแสง เปลี่ยนห้องเรียน', link: 'timetable-approvals.html', at: iso('2026-10-14', '08:45'), read: false },
+    { id: 'N-2', to: 'admin', title: 'คำร้องขอเปลี่ยนการจัดใหม่', text: 'อ.ธนกฤต แก้วใส ย้ายคาบ', link: 'timetable-approvals.html', at: iso('2026-10-13', '08:45'), read: false },
+    { id: 'N-3', to: 'admin', title: 'คำร้องขอเปลี่ยนการจัดใหม่', text: 'อ.อนุชา แสงทอง สลับคาบของตนเอง', link: 'timetable-approvals.html', at: iso('2026-10-13', '08:40'), read: false },
+    { id: 'N-4', to: 'admin', title: 'เวลาไม่ว่างรออนุมัติ', text: 'อ.อนุชา แสงทอง อังคาร 13:30–15:10', link: 'timetable-approvals.html#unavailability', at: iso('2026-10-13', '09:00'), read: false },
     { id: 'N-5', to: 't05', title: 'คำร้องไม่ได้รับอนุมัติ', text: 'เปลี่ยนห้องเรียน ม.4/1 — ห้องคอม 2 มีคาบเต็ม', link: 'my-timetable.html#requests', at: iso('2026-10-10', '15:30'), read: false },
     { id: 'N-6', to: 't05', title: 'คำร้องได้รับอนุมัติ', text: 'ย้ายคาบ ม.3/1 — ตารางสอนฉบับใหม่เผยแพร่แล้ว', link: 'my-timetable.html#requests', at: iso('2026-10-06', '15:30'), read: true },
     { id: 'N-7', to: 't05', title: 'เปิดรับเวลาไม่ว่าง 1/2570', text: 'กรอกได้ถึง 30 ต.ค. 2569', link: 'teacher-profile.html', at: iso('2026-10-12', '09:15'), read: false },

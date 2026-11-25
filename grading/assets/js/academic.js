@@ -26,9 +26,9 @@ function inboxItems(term) {
 /* ---------- ส่วนประกอบในหน้าตรวจห้อง ---------- */
 function academicBadges(sec) {
   const b = [];
-  if (sec.state === 'draft') b.push(`<span class="chip chip-warn">${icon('info')}ยังไม่ส่ง · ข้อมูลอาจเปลี่ยนแปลง</span>`);
-  if (sec.state === 'pending') b.push(`<span class="chip chip-primary">${icon('clock')}รอตรวจ · รอบที่ ${sec.reviews.length}</span>`);
-  if (isReturned(sec)) b.push(`<span class="chip chip-bad">${icon('alert')}ตีกลับแล้ว · รอครูแก้ไข</span>`);
+  if (sec.state === 'draft') b.push(`<span class="chip chip-warn">${icon('info')}ยังไม่ส่ง ข้อมูลอาจเปลี่ยนแปลง</span>`);
+  if (sec.state === 'pending') b.push(`<span class="chip chip-primary">${icon('clock')}รอตรวจ รอบที่ ${sec.reviews.length}</span>`);
+  if (isReturned(sec)) b.push(`<span class="chip chip-bad">${icon('alert')}ตีกลับแล้ว รอครูแก้ไข</span>`);
   if (isSelfReview(sec) && isLocked(sec)) b.push(`<span class="chip chip-ms">${icon('eye')}ตรวจงานตนเอง</span>`);
   if (hasUnlockRequest(sec)) b.push(`<span class="chip chip-warn">${icon('lock')}มีคำขอปลดล็อก</span>`);
   return b.length ? `<div class="row wrap" style="gap:6px;margin-top:8px">${b.join('')}</div>` : '';
@@ -51,10 +51,10 @@ function renderDecisionBar(sec) {
     left = `<span class="ab-status"><span style="color:var(--ok)">${icon('lock')}</span>อนุมัติแล้วเมื่อ <strong>${thDate(r?.decidedAt, true)}</strong> โดย ${esc(userById(r?.reviewerId)?.name || '—')}</span>`;
   } else {
     const p = sectionProgress(sec);
-    left = `<span class="ab-status">${icon('eye')}ดูได้อย่างเดียว · ${isReturned(sec) ? `ตีกลับเมื่อ ${relTime(r.decidedAt)} รอครูแก้ไขและส่งใหม่` : sec.structure.length ? `ยังไม่ส่งผลการเรียน · ความคืบหน้า <strong>${Math.round(p.overall * 100)}%</strong>` : 'ครูยังไม่เริ่มบันทึก'}</span>`;
+    left = `<span class="ab-status">${icon('eye')}ดูได้อย่างเดียว ${isReturned(sec) ? `ตีกลับเมื่อ ${relTime(r.decidedAt)} รอครูแก้ไขและส่งใหม่` : sec.structure.length ? `ยังไม่ส่งผลการเรียน ความคืบหน้า <strong>${Math.round(p.overall * 100)}%</strong>` : 'ครูยังไม่เริ่มบันทึก'}</span>`;
   }
   if (u && u.status === 'pending') {
-    left += `<span class="unlock-req">${icon('lock')}<span><b>คำขอปลดล็อก</b> · ${esc(u.reason)}</span></span>`;
+    left += `<span class="unlock-req">${icon('lock')}<span><b>คำขอปลดล็อก</b> ${esc(u.reason)}</span></span>`;
     right = `<button class="btn btn-sm" id="unlockReject">ปฏิเสธคำขอ</button><button class="btn btn-sm btn-primary" id="unlockApprove">อนุมัติคำขอปลดล็อก</button>` + right;
   }
   bar.innerHTML = `${left}<span class="spacer"></span>${right}`;
@@ -77,10 +77,10 @@ function openNoteEditor(sec, sid, field, anchor, rerender) {
   const r = lastReview(sec);
   const existing = r.notes.find((n) => n.sid === sid && (n.field || null) === (field || null));
   const s = sec.students.find((x) => x.id === sid);
-  const where = field ? `${fullName(s)} · ${fieldLabel(sec, fieldKind(sec, field), field)}` : `${fullName(s)} · ทั้งแถว`;
+  const where = field ? `${fullName(s)} ${fieldLabel(sec, fieldKind(sec, field), field)}` : `${fullName(s)} ทั้งแถว`;
   const value = field ? getRaw(sec, fieldKind(sec, field), sid, field) : '';
   openPopover(anchor, `
-    <div class="pop-title">${icon('pin')} ${esc(where)}${field ? ` · ค่าปัจจุบัน <b>${esc(value || '(ว่าง)')}</b>` : ''}</div>
+    <div class="pop-title">${icon('pin')} ${esc(where)}${field ? ` ค่าปัจจุบัน <b>${esc(value || '(ว่าง)')}</b>` : ''}</div>
     <div style="padding:4px 8px 8px;width:300px">
       <textarea class="input textarea" id="noteText" rows="3" placeholder="เช่น คะแนนนี้สูงกว่าคะแนนเต็มของชิ้นงานจริง">${esc(existing?.text || '')}</textarea>
       <div class="row" style="margin-top:8px">
@@ -119,7 +119,7 @@ function decide(sec, decision, reason = '') {
   persist();
 }
 
-function sectionTitle(sec) { return `${sec.code} ${esc(sec.name)} · ${sec.room}`; }
+function sectionTitle(sec) { return `${sec.code} ${esc(sec.name)} ${sec.room}`; }
 
 function openApprove(sec) {
   const pins = lastReview(sec).notes.length;
@@ -127,7 +127,7 @@ function openApprove(sec) {
   openModal({
     title: 'อนุมัติผลการเรียน',
     body: `<p style="margin:0 0 6px"><b>${sectionTitle(sec)}</b></p>
-      <p class="muted" style="margin:0 0 12px">ครูผู้สอน ${esc(teacherName(sec))} · ${sec.students.length} คน · คะแนนเฉลี่ย ${st.mean != null ? fmt1(st.mean) : '—'} · ผ่าน ${st.pass} คน</p>
+      <p class="muted" style="margin:0 0 12px">ครูผู้สอน ${esc(teacherName(sec))} ${sec.students.length} คน คะแนนเฉลี่ย ${st.mean != null ? fmt1(st.mean) : '—'} ผ่าน ${st.pass} คน</p>
       <div class="checklist">
         ${isSelfReview(sec) ? `<div class="cl-item"><span class="cl-icon cl-warn">${icon('eye')}</span><span>ท่านเป็นครูผู้สอนของห้องนี้ การอนุมัตินี้จะถูกบันทึกเป็น <b>“ตรวจงานตนเอง”</b></span></div>` : ''}
         ${pins ? `<div class="cl-item"><span class="cl-icon cl-bad">${icon('pin')}</span><span>ท่านปักหมุดไว้ ${pins} รายการ หากต้องการให้ครูแก้ไข ควรกด “ตีกลับ” แทน</span></div>` : ''}
@@ -150,12 +150,12 @@ function openReturn(sec) {
   const r = lastReview(sec);
   const noteRow = (n) => {
     const s = sec.students.find((x) => x.id === n.sid);
-    return `<div class="note-item"><span class="pin-dot"></span><div style="flex:1;min-width:0"><div class="faint" style="font-size:12.5px">${esc(fullName(s))} · ${n.field ? esc(fieldLabel(sec, fieldKind(sec, n.field), n.field)) : 'ทั้งแถว'}</div><div>${esc(n.text)}</div></div><button class="icon-btn" data-rmnote="${n.id}" style="border:0" title="ลบหมุด">${icon('x')}</button></div>`;
+    return `<div class="note-item"><span class="pin-dot"></span><div style="flex:1;min-width:0"><div class="faint" style="font-size:12.5px">${esc(fullName(s))} ${n.field ? esc(fieldLabel(sec, fieldKind(sec, n.field), n.field)) : 'ทั้งแถว'}</div><div>${esc(n.text)}</div></div><button class="icon-btn" data-rmnote="${n.id}" style="border:0" title="ลบหมุด">${icon('x')}</button></div>`;
   };
   openModal({
     title: 'ตีกลับให้ครูแก้ไข',
     wide: true,
-    body: `<p style="margin:0 0 10px"><b>${sectionTitle(sec)}</b> <span class="muted">· ${esc(teacherName(sec))}</span></p>
+    body: `<p style="margin:0 0 10px"><b>${sectionTitle(sec)}</b> <span class="muted">${esc(teacherName(sec))}</span></p>
       <label style="font-size:14px;font-weight:600">เหตุผลรวม <span style="color:var(--bad)">*</span></label>
       <div class="row wrap" style="gap:6px;margin:6px 0">${QUICK_REASONS.map((q) => `<button class="chip quick-reason" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
       <textarea class="input textarea" id="returnReason" rows="3" placeholder="อธิบายสิ่งที่ต้องแก้ไข"></textarea>
@@ -192,7 +192,7 @@ function openUnlockDecision(sec, approve, after) {
   if (approve) {
     confirmModal({
       title: 'อนุมัติคำขอปลดล็อก?',
-      message: `${sectionTitle(sec)} · ${esc(teacherName(sec))}<br>เหตุผล: “${esc(u.reason)}”<br><br>สถานะจะกลับเป็น “กำลังบันทึก” ครูแก้ไขได้ และต้องส่งผลการเรียนใหม่`,
+      message: `${sectionTitle(sec)} ${esc(teacherName(sec))}<br>เหตุผล: “${esc(u.reason)}”<br><br>สถานะจะกลับเป็น “กำลังบันทึก” ครูแก้ไขได้ และต้องส่งผลการเรียนใหม่`,
       okLabel: 'อนุมัติคำขอ',
       onOk: () => {
         Object.assign(u, { status: 'approved', decidedBy: CURRENT_USER_ID, decidedAt: Date.now() });
@@ -208,7 +208,7 @@ function openUnlockDecision(sec, approve, after) {
   }
   openModal({
     title: 'ปฏิเสธคำขอปลดล็อก',
-    body: `<p style="margin:0 0 8px">${sectionTitle(sec)} · ${esc(teacherName(sec))}</p><p class="muted" style="margin:0 0 10px">เหตุผลของครู: “${esc(u.reason)}”</p>
+    body: `<p style="margin:0 0 8px">${sectionTitle(sec)} ${esc(teacherName(sec))}</p><p class="muted" style="margin:0 0 10px">เหตุผลของครู: “${esc(u.reason)}”</p>
       <label style="font-size:14px;font-weight:600">เหตุผลที่ปฏิเสธ <span style="color:var(--bad)">*</span></label>
       <textarea class="input textarea" id="rejReason" rows="3" placeholder="เช่น เลยกำหนดแก้ไขผลการเรียนแล้ว ให้ดำเนินการผ่านคำร้องแก้ผลการเรียน"></textarea>`,
     actions: [
@@ -277,11 +277,11 @@ function renderAOverview() {
       const pct = Math.round(p.overall * 100);
       const label = st.key === 'draft' ? `${pct}%` : MX_STATUS[st.key].short;
       return `<td class="mx-cell mx-${st.key} ${matchesFilter(sec) ? '' : 'mx-dim'}">
-        <a href="#/a/s/${sec.id}/${sec.state === 'pending' ? 'scores' : sec.structure.length ? 'scores' : 'structure'}" title="${esc(`${sec.code} ${sec.name} ${sec.room} · ${teacherName(sec)} · ${MX_STATUS[st.key].label}`)}">
+        <a href="#/a/s/${sec.id}/${sec.state === 'pending' ? 'scores' : sec.structure.length ? 'scores' : 'structure'}" title="${esc(`${sec.code} ${sec.name} ${sec.room} ${teacherName(sec)} ${MX_STATUS[st.key].label}`)}">
           <span class="mx-top">${st.key === 'approved' ? icon('check') : st.key === 'returned' ? icon('back') : st.key === 'pending' ? icon('clock') : ''}<b>${label}</b>
             ${hasUnlockRequest(sec) ? `<span class="mx-lock">${icon('lock')}</span>` : ''}</span>
           ${st.key === 'draft' ? `<span class="mx-bar"><span style="width:${pct}%"></span></span>` : ''}
-          <span class="mx-teacher">${esc(shortName(sec.teacherId))}${isSelfReview(sec) ? ' · ฉัน' : ''}</span>
+          <span class="mx-teacher">${esc(shortName(sec.teacherId))}${isSelfReview(sec) ? ' ฉัน' : ''}</span>
         </a></td>`;
     };
     return `<div class="card mx-wrap"><table class="mx">
@@ -299,7 +299,7 @@ function renderAOverview() {
       <span>${icon('lock')}มีคำขอปลดล็อก</span>
     </div>
     ${secsAll.filter((s) => s.type !== 'พื้นฐาน').length ? `<div class="card card-pad" style="margin-top:16px"><h3 style="font-size:15px;margin-bottom:8px">รายวิชาเพิ่มเติม</h3>
-      <div class="row wrap">${secsAll.filter((s) => s.type !== 'พื้นฐาน').map((s) => `<a class="chip ${sectionState(s).chip}" href="#/a/s/${s.id}/scores">${s.code} ${esc(s.name)} · ${s.room} · ${esc(shortName(s.teacherId))} · ${sectionState(s).label}</a>`).join('')}</div></div>` : ''}`;
+      <div class="row wrap">${secsAll.filter((s) => s.type !== 'พื้นฐาน').map((s) => `<a class="chip ${sectionState(s).chip}" href="#/a/s/${s.id}/scores">${s.code} ${esc(s.name)} ${s.room} ${esc(shortName(s.teacherId))} ${sectionState(s).label}</a>`).join('')}</div></div>` : ''}`;
   };
 
   const byTeacher = () => {
@@ -317,7 +317,7 @@ function renderAOverview() {
           <td class="c num">${c((s) => s.state === 'draft' && s.structure.length) || ''}</td>
           <td class="c num" style="color:var(--warn)">${c((s) => !s.structure.length) || ''}</td>
           <td><div class="row" style="gap:8px"><div class="progress ${sent === secs.length ? 'ok' : ''}" style="flex:1"><span style="width:${(sent / secs.length) * 100}%"></span></div><span class="num" style="font-size:13px">${sent}/${secs.length}</span></div></td>
-          <td><div class="row wrap" style="gap:4px">${secs.map((s) => `<a class="chip mx-chip mx-${sectionState(s).key}" href="#/a/s/${s.id}/scores" title="${esc(`${s.code} ${s.name} · ${sectionState(s).label}`)}">${s.room} ${esc((SUBJECTS.find((x) => x.slot === s.slot)?.short) || s.code)}</a>`).join('')}</div></td>
+          <td><div class="row wrap" style="gap:4px">${secs.map((s) => `<a class="chip mx-chip mx-${sectionState(s).key}" href="#/a/s/${s.id}/scores" title="${esc(`${s.code} ${s.name} ${sectionState(s).label}`)}">${s.room} ${esc((SUBJECTS.find((x) => x.slot === s.slot)?.short) || s.code)}</a>`).join('')}</div></td>
         </tr>`;
       }).join('')}</tbody></table></div>`;
   };
@@ -379,12 +379,12 @@ function renderAInbox() {
         <button class="btn btn-sm btn-ok" id="bulkApprove" ${ui.bulk.size ? '' : 'disabled'}>${icon('check')}อนุมัติที่เลือก (${ui.bulk.size})</button>
       </div>
       ${reviews.length ? `<table class="list">
-        <thead><tr><th style="width:40px"></th><th>รายวิชา · ห้อง</th><th>ครูผู้สอน</th><th>ส่งเมื่อ</th><th></th></tr></thead>
+        <thead><tr><th style="width:40px"></th><th>รายวิชา ห้อง</th><th>ครูผู้สอน</th><th>ส่งเมื่อ</th><th></th></tr></thead>
         <tbody>${reviews.map((s) => {
           const el = bulkEligibility(s);
           return `<tr class="${ui.bulk.has(s.id) ? 'row-sel' : ''}">
             <td class="c"><input type="checkbox" data-bulk="${s.id}" ${ui.bulk.has(s.id) ? 'checked' : ''} ${el.ok ? '' : 'disabled'} title="${el.ok ? 'เลือกเพื่ออนุมัติพร้อมกัน' : esc(el.why)}" style="accent-color:var(--ok);width:16px;height:16px"></td>
-            <td><b>${s.code} ${esc(s.name)}</b><div class="faint" style="font-size:12.5px">${s.room} · รอบที่ ${s.reviews.length}</div></td>
+            <td><b>${s.code} ${esc(s.name)}</b><div class="faint" style="font-size:12.5px">${s.room} รอบที่ ${s.reviews.length}</div></td>
             <td>${esc(teacherName(s))}${isSelfReview(s) ? ` <span class="chip chip-ms" style="font-size:11px">${icon('eye')}ตรวจงานตนเอง</span>` : ''}${hasUnlockRequest(s) ? ` <span class="chip chip-warn" style="font-size:11px">${icon('lock')}ขอปลดล็อก</span>` : ''}</td>
             <td class="muted">${relTime(s.submittedAt)}</td>
             <td class="r"><a class="btn btn-sm btn-primary" href="#/a/s/${s.id}/scores">ตรวจ ${icon('chev')}</a></td>
@@ -395,7 +395,7 @@ function renderAInbox() {
     <div class="card list-wrap">
       <div class="card-pad" style="padding-bottom:12px"><h3 style="font-size:16px">คำขอปลดล็อก <span class="chip chip-warn">${unlocks.length}</span></h3></div>
       ${unlocks.length ? `<table class="list">
-        <thead><tr><th>รายวิชา · ห้อง</th><th>ครูผู้สอน</th><th>สถานะปัจจุบัน</th><th>เหตุผลของครู</th><th>ยื่นเมื่อ</th><th></th></tr></thead>
+        <thead><tr><th>รายวิชา ห้อง</th><th>ครูผู้สอน</th><th>สถานะปัจจุบัน</th><th>เหตุผลของครู</th><th>ยื่นเมื่อ</th><th></th></tr></thead>
         <tbody>${unlocks.map((s) => `<tr>
           <td><a href="#/a/s/${s.id}/history"><b>${s.code} ${esc(s.name)}</b></a><div class="faint" style="font-size:12.5px">${s.room}</div></td>
           <td>${esc(teacherName(s))}</td>
@@ -419,8 +419,8 @@ function openBulkApprove() {
   if (!secs.length) return;
   openModal({
     title: `อนุมัติพร้อมกัน ${secs.length} ห้อง`,
-    body: `<p class="muted" style="margin:0 0 10px">ทุกห้องผ่านเงื่อนไข: รอตรวจ · ไม่มีคำขอปลดล็อก · ไม่ใช่การตรวจงานตนเอง</p>
-      <div class="checklist">${secs.map((s) => `<div class="cl-item"><span class="cl-icon cl-ok">${icon('check')}</span><span><b>${s.code} ${esc(s.name)}</b> · ${s.room} <span class="faint">· ${esc(teacherName(s))}</span></span></div>`).join('')}</div>`,
+    body: `<p class="muted" style="margin:0 0 10px">ทุกห้องผ่านเงื่อนไข: รอตรวจ ไม่มีคำขอปลดล็อก ไม่ใช่การตรวจงานตนเอง</p>
+      <div class="checklist">${secs.map((s) => `<div class="cl-item"><span class="cl-icon cl-ok">${icon('check')}</span><span><b>${s.code} ${esc(s.name)}</b> ${s.room} <span class="faint">${esc(teacherName(s))}</span></span></div>`).join('')}</div>`,
     actions: [
       { label: 'ยกเลิก', cls: 'btn-ghost' },
       { label: `ยืนยันอนุมัติ ${secs.length} ห้อง`, cls: 'btn-ok', icon: 'check', onClick: () => {
@@ -464,7 +464,7 @@ function renderAReports() {
       <div class="filters">${termSelect('rTerm')}</div>
     </div>
     <div class="card list-wrap" style="margin-bottom:18px">
-      <div class="row wrap card-pad" style="padding-bottom:12px"><div><h3 style="font-size:16px">สถานะการส่งผลการเรียนทุกห้อง</h3><div class="faint" style="font-size:13px">${rows.length} ห้องเรียนที่สอน · อนุมัติ ${rows.filter((x) => x.sec.state === 'approved').length} · รอตรวจ ${rows.filter((x) => x.sec.state === 'pending').length} · ยังไม่ส่ง ${rows.filter((x) => !isLocked(x.sec)).length}</div></div><span class="spacer"></span>
+      <div class="row wrap card-pad" style="padding-bottom:12px"><div><h3 style="font-size:16px">สถานะการส่งผลการเรียนทุกห้อง</h3><div class="faint" style="font-size:13px">${rows.length} ห้องเรียนที่สอน อนุมัติ ${rows.filter((x) => x.sec.state === 'approved').length} รอตรวจ ${rows.filter((x) => x.sec.state === 'pending').length} ยังไม่ส่ง ${rows.filter((x) => !isLocked(x.sec)).length}</div></div><span class="spacer"></span>
         <button class="btn" id="csvStatus" ${rows.length ? '' : 'disabled'}>${icon('download')}ส่งออก CSV</button></div>
       <div style="max-height:420px;overflow:auto"><table class="list">
         <thead><tr><th>ห้อง</th><th>รายวิชา</th><th>ครูผู้สอน</th><th>สถานะ</th><th class="c">ความคืบหน้า</th><th>ส่งเมื่อ</th><th>อนุมัติโดย</th></tr></thead>
@@ -475,7 +475,7 @@ function renderAReports() {
           <td>${x.approver ? `${esc(x.approver)}${x.self ? ' <span class="chip chip-ms" style="font-size:11px">ตรวจงานตนเอง</span>' : ''}` : '<span class="faint">—</span>'}</td></tr>`).join('')}</tbody></table></div>
     </div>
     <div class="card list-wrap">
-      <div class="row wrap card-pad" style="padding-bottom:12px"><div><h3 style="font-size:16px">นักเรียนที่ต้องติดตามทั้งโรงเรียน</h3><div class="faint" style="font-size:13px">${flagged.length} รายการ · ได้ 0: ${fc('fail')} · ร: ${fc('r')} · มส: ${fc('ms')}</div></div><span class="spacer"></span>
+      <div class="row wrap card-pad" style="padding-bottom:12px"><div><h3 style="font-size:16px">นักเรียนที่ต้องติดตามทั้งโรงเรียน</h3><div class="faint" style="font-size:13px">${flagged.length} รายการ ได้ 0: ${fc('fail')} ร: ${fc('r')} มส: ${fc('ms')}</div></div><span class="spacer"></span>
         <button class="btn" id="csvFlag" ${flagged.length ? '' : 'disabled'}>${icon('download')}ส่งออก CSV</button></div>
       <div style="max-height:420px;overflow:auto"><table class="list">
         <thead><tr><th>นักเรียน</th><th>ห้อง</th><th>รายวิชา</th><th>ครูผู้สอน</th><th>สถานะ</th><th>รายละเอียด</th></tr></thead>

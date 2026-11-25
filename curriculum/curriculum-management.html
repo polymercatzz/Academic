@@ -795,7 +795,7 @@
       const planCount = plans.filter((p) => curriculumOf(p.curriculumId)?.status !== 'ปิดใช้งาน').length;
       const missing = curricula.filter((c) => c.status !== 'ปิดใช้งาน').reduce((sum, c) => sum + recordsOfCurriculum(c.id).filter(needsTeacher).length, 0);
       const cards = [
-        { title: 'หลักสูตรทั้งหมด', value: curricula.length, unit: 'หลักสูตร', text: `ใช้งานอยู่ ${active} · ฉบับร่าง ${drafts}`, tone: 'bg-blue-50 text-blue-600', icon: ICONS.book },
+        { title: 'หลักสูตรทั้งหมด', value: curricula.length, unit: 'หลักสูตร', text: `ใช้งานอยู่ ${active} ฉบับร่าง ${drafts}`, tone: 'bg-blue-50 text-blue-600', icon: ICONS.book },
         { title: 'แผนการเรียนที่เปิดใช้', value: planCount, unit: 'แผน', text: 'ในหลักสูตรที่ใช้งานและฉบับร่าง', tone: 'bg-violet-50 text-violet-600', icon: ICONS.layers },
         { title: 'ครูผู้สอน', value: teachers.length, unit: 'คน', text: `ครบ ${GROUPS.length} กลุ่มสาระการเรียนรู้`, tone: 'bg-sky-50 text-sky-600', icon: ICONS.users },
         { title: 'รายวิชาที่ยังไม่มีครู', value: missing, unit: 'รายวิชา', text: missing ? 'คลิกเพื่อไปกำหนดครูทันที' : 'กำหนดครูครบทุกรายวิชาแล้ว', tone: missing ? 'bg-amber-50 text-amber-600' : 'bg-emerald-50 text-emerald-600', icon: missing ? ICONS.warn : ICONS.check, action: missing ? 'jump-missing' : '' }
@@ -839,7 +839,7 @@
         const open = records.filter((r) => r.open);
         const assigned = open.filter((r) => !needsTeacher(r)).length;
         const pct = open.length ? Math.round((assigned / open.length) * 100) : 0;
-        const grades = LEVEL_GRADES[c.level].map((g) => `<span class="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">${g} · ${cPlans.filter((p) => p.grade === g).length} แผน</span>`).join('');
+        const grades = LEVEL_GRADES[c.level].map((g) => `<span class="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">${g} ${cPlans.filter((p) => p.grade === g).length} แผน</span>`).join('');
         const muted = c.status === 'ปิดใช้งาน';
         return `
           <article class="flex flex-col rounded-3xl border border-slate-200 bg-white p-5 shadow-soft transition hover:border-blue-200 lg:p-6 ${muted ? 'opacity-75' : ''}">
@@ -847,7 +847,7 @@
               <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-2"><span class="font-mono text-xs font-semibold text-blue-700">${c.id}</span>${statusBadge(c.status)}</div>
                 <h3 class="mt-2 text-lg font-semibold leading-snug text-slate-950">${escapeHTML(c.name)}</h3>
-                <p class="mt-1 text-sm text-slate-500">เริ่มใช้ปีการศึกษา ${c.year} · ${c.level}</p>
+                <p class="mt-1 text-sm text-slate-500">เริ่มใช้ปีการศึกษา ${c.year} ${c.level}</p>
               </div>
               <span class="shrink-0 rounded-2xl bg-blue-50 px-3 py-2 text-center"><span class="block text-[11px] font-semibold text-blue-600">ปีการศึกษา</span><span class="block text-lg font-bold text-blue-700">${c.year}</span></span>
             </div>
@@ -862,7 +862,7 @@
               <div class="mt-2 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${pct === 100 ? 'bg-emerald-500' : 'bg-amber-400'}" style="width:${pct}%"></div></div>
             </div>
             <div class="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-4">
-              <p class="text-xs text-slate-400">แก้ไขล่าสุด ${escapeHTML(c.updated)} · ${escapeHTML(c.editor)}</p>
+              <p class="text-xs text-slate-400">แก้ไขล่าสุด ${escapeHTML(c.updated)} ${escapeHTML(c.editor)}</p>
               <div class="flex items-center gap-1">
                 <button data-action="copy-curriculum" data-id="${c.id}" type="button" title="คัดลอกไปปีการศึกษาใหม่" aria-label="คัดลอกไปปีการศึกษาใหม่" class="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-blue-700">${icon(ICONS.copy)}</button>
                 <button data-action="export-curriculum" data-id="${c.id}" type="button" title="ส่งออก Excel" aria-label="ส่งออก Excel" class="rounded-xl p-2 text-slate-500 transition hover:bg-slate-100 hover:text-emerald-700">${icon(ICONS.download)}</button>
@@ -941,10 +941,10 @@
 
     function renderWorkspace() {
       const c = curriculumOf(state.curriculumId);
-      $('wsCrumb').textContent = `${c.id} · ปี ${c.year}`;
+      $('wsCrumb').textContent = `${c.id} ปี ${c.year}`;
       $('wsTitle').textContent = c.name;
       $('wsStatus').innerHTML = statusBadge(c.status);
-      $('wsMeta').textContent = `${c.id} · เริ่มใช้ปีการศึกษา ${c.year} · ${c.level} · แก้ไขล่าสุด ${c.updated} โดย ${c.editor}`;
+      $('wsMeta').textContent = `${c.id} เริ่มใช้ปีการศึกษา ${c.year} ${c.level} แก้ไขล่าสุด ${c.updated} โดย ${c.editor}`;
       $('publishButton').classList.toggle('hidden', c.status !== 'ฉบับร่าง');
       renderWsStats();
       renderGradeChips();
@@ -968,7 +968,7 @@
           <div class="flex items-start justify-between gap-4"><div><p class="text-sm font-semibold text-slate-600">แผนการเรียน</p><div class="mt-3 flex items-baseline gap-2"><span class="text-3xl font-bold text-slate-950">${cPlans.length}</span><span class="text-sm font-semibold text-slate-500">แผน</span></div><p class="mt-2 text-sm ${emptyPlans ? 'font-semibold text-amber-700' : 'text-slate-500'}">${emptyPlans ? `มี ${emptyPlans} แผนที่ยังไม่มีรายวิชา` : `ครอบคลุม ${rooms} ห้องเรียน`}</p></div><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600">${icon(ICONS.layers, 'h-5 w-5')}</div></div>
         </div>
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <div class="flex items-start justify-between gap-4"><div><p class="text-sm font-semibold text-slate-600">รายวิชาในแผนทั้งหมด</p><div class="mt-3 flex items-baseline gap-2"><span class="text-3xl font-bold text-slate-950">${records.length}</span><span class="text-sm font-semibold text-slate-500">รายการ</span></div><p class="mt-2 text-sm text-slate-500">เปิดสอน ${open.length} · ปิดสอน ${records.length - open.length}</p></div><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">${icon(ICONS.book, 'h-5 w-5')}</div></div>
+          <div class="flex items-start justify-between gap-4"><div><p class="text-sm font-semibold text-slate-600">รายวิชาในแผนทั้งหมด</p><div class="mt-3 flex items-baseline gap-2"><span class="text-3xl font-bold text-slate-950">${records.length}</span><span class="text-sm font-semibold text-slate-500">รายการ</span></div><p class="mt-2 text-sm text-slate-500">เปิดสอน ${open.length} ปิดสอน ${records.length - open.length}</p></div><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600">${icon(ICONS.book, 'h-5 w-5')}</div></div>
         </div>
         <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
           <div class="flex items-start justify-between gap-4"><div><p class="text-sm font-semibold text-slate-600">ครูผู้สอนในหลักสูตร</p><div class="mt-3 flex items-baseline gap-2"><span class="text-3xl font-bold text-slate-950">${teacherCount}</span><span class="text-sm font-semibold text-slate-500">คน</span></div><p class="mt-2 text-sm ${overloaded ? 'font-semibold text-rose-600' : 'text-slate-500'}">${overloaded ? `${overloaded} คนมีภาระสอนเกิน ${HIGH_LOAD_HOURS} ชม./สัปดาห์` : 'ภาระสอนอยู่ในเกณฑ์ทุกคน'}</p></div><div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-sky-50 text-sky-600">${icon(ICONS.users, 'h-5 w-5')}</div></div>
@@ -989,7 +989,7 @@
       const q = $('planSearch').value.trim().toLowerCase();
       const all = plansOf(state.curriculumId);
       const visible = all.filter((p) => (state.gradeFilter === 'ทั้งหมด' || p.grade === state.gradeFilter) && (!q || `${p.name} ${p.grade} ${p.rooms.join(' ')}`.toLowerCase().includes(q)));
-      $('planCount').textContent = `${all.length} แผน · ${all.reduce((s, p) => s + p.rooms.length, 0)} ห้องเรียน`;
+      $('planCount').textContent = `${all.length} แผน ${all.reduce((s, p) => s + p.rooms.length, 0)} ห้องเรียน`;
       const grades = LEVEL_GRADES[c.level].filter((g) => visible.some((p) => p.grade === g));
       if (!visible.length) {
         $('planList').innerHTML = `<div class="rounded-2xl border border-dashed border-slate-300 px-4 py-10 text-center"><p class="text-sm font-semibold text-slate-700">${all.length ? 'ไม่พบแผนการเรียน' : 'ยังไม่มีแผนการเรียน'}</p><p class="mt-1 text-xs text-slate-500">${all.length ? 'ลองเปลี่ยนคำค้นหา' : 'กด “เพิ่มแผน” เพื่อเริ่มต้น'}</p></div>`;
@@ -1014,7 +1014,7 @@
                     <span class="plan-item-name text-sm font-semibold leading-snug text-slate-900">${escapeHTML(p.name)}</span>
                     ${tag}
                   </div>
-                  <p class="mt-1.5 text-xs text-slate-500">${escapeHTML(roomRange(p.rooms))} · ${records.length} วิชา · ${fmt(credits)} นก.</p>
+                  <p class="mt-1.5 text-xs text-slate-500">${escapeHTML(roomRange(p.rooms))} ${records.length} วิชา ${fmt(credits)} นก.</p>
                 </button>`;
             }).join('')}
           </div>
@@ -1092,7 +1092,7 @@
               ${terms.map(([key, label]) => { const s = termSummary(plan.id, key); return `
                 <button data-action="set-term" data-term="${key}" type="button" class="term-tab ${state.term === key ? 'is-active' : ''} rounded-2xl border border-slate-200 bg-white px-4 py-3 text-left transition hover:border-blue-300">
                   <span class="flex items-center justify-between gap-2"><span class="text-sm font-semibold">${label}</span>${s.missing ? `<span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">ขาดครู ${s.missing}</span>` : ''}</span>
-                  <span class="term-tab-meta mt-0.5 block text-xs text-slate-500">${s.count} วิชา · ${fmt(s.basic + s.extra)} หน่วยกิต · ${s.hours} ชม./สัปดาห์</span>
+                  <span class="term-tab-meta mt-0.5 block text-xs text-slate-500">${s.count} วิชา ${fmt(s.basic + s.extra)} หน่วยกิต ${s.hours} ชม./สัปดาห์</span>
                 </button>`; }).join('')}
             </div>
             <div id="creditSummary" class="mt-4"></div>
@@ -1183,7 +1183,7 @@
             <td class="px-3 py-3">
               <div class="flex flex-wrap items-center gap-2"><span class="font-mono text-xs font-semibold ${r.open ? 'text-blue-700' : ''}">${s.code}</span>${typeBadge(s.type)}</div>
               <p class="mt-0.5 font-semibold ${r.open ? 'text-slate-900' : ''}">${escapeHTML(s.name)}</p>
-              <p class="text-xs text-slate-500">${escapeHTML(s.group)}${s.grade !== planOf(state.planId).grade ? ` · <span class="text-amber-600">วิชาของ ${s.grade}</span>` : ''}</p>
+              <p class="text-xs text-slate-500">${escapeHTML(s.group)}${s.grade !== planOf(state.planId).grade ? ` <span class="text-amber-600">วิชาของ ${s.grade}</span>` : ''}</p>
             </td>
             ${state.term === 'all' ? `<td class="px-3 py-3 text-center"><span class="rounded-lg bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-600">${r.term}</span></td>` : ''}
             <td class="whitespace-nowrap px-3 py-3 text-center"><span class="font-semibold">${s.credits ? fmt(s.credits) : '-'}</span><span class="text-slate-400"> / ${s.hours}</span></td>
@@ -1257,7 +1257,7 @@
         <div class="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h3 class="text-lg font-semibold text-slate-950">ภาระงานสอนของครูในแผนนี้</h3>
-            <p class="mt-1 text-sm text-slate-500">รวมทุกแผนในหลักสูตร (ชม. ของวิชา × จำนวนห้อง) · เกณฑ์แนะนำไม่เกิน ${HIGH_LOAD_HOURS} ชม./สัปดาห์</p>
+            <p class="mt-1 text-sm text-slate-500">รวมทุกแผนในหลักสูตร (ชม. ของวิชา × จำนวนห้อง) เกณฑ์แนะนำไม่เกิน ${HIGH_LOAD_HOURS} ชม./สัปดาห์</p>
           </div>
           <div class="flex items-center gap-4 text-xs text-slate-500"><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-blue-500"></span>ปกติ</span><span class="flex items-center gap-1.5"><span class="h-2 w-2 rounded-full bg-rose-500"></span>เกินเกณฑ์</span></div>
         </div>
@@ -1276,7 +1276,7 @@
       document.querySelectorAll('#termTabs [data-term]').forEach((btn) => {
         const s = termSummary(state.planId, btn.dataset.term);
         const label = { '1': 'ภาคเรียนที่ 1', '2': 'ภาคเรียนที่ 2', all: 'ทั้งปีการศึกษา' }[btn.dataset.term];
-        btn.innerHTML = `<span class="flex items-center justify-between gap-2"><span class="text-sm font-semibold">${label}</span>${s.missing ? `<span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">ขาดครู ${s.missing}</span>` : ''}</span><span class="term-tab-meta mt-0.5 block text-xs text-slate-500">${s.count} วิชา · ${fmt(s.basic + s.extra)} หน่วยกิต · ${s.hours} ชม./สัปดาห์</span>`;
+        btn.innerHTML = `<span class="flex items-center justify-between gap-2"><span class="text-sm font-semibold">${label}</span>${s.missing ? `<span class="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">ขาดครู ${s.missing}</span>` : ''}</span><span class="term-tab-meta mt-0.5 block text-xs text-slate-500">${s.count} วิชา ${fmt(s.basic + s.extra)} หน่วยกิต ${s.hours} ชม./สัปดาห์</span>`;
       });
     }
     const rowOf = (id) => planSubjects.find((r) => r.id === id);
@@ -1299,7 +1299,7 @@
       const s = subjectById.get(r.subjectId);
       const plan = planOf(r.planId);
       $('teacherModalTitle').textContent = `${s.code} ${s.name}`;
-      $('teacherModalSubtitle').textContent = `${plan.grade} ${plan.name} · ภาคเรียนที่ ${r.term} · ${s.hours} ชม./สัปดาห์ต่อห้อง · ${plan.rooms.length} ห้องเรียน`;
+      $('teacherModalSubtitle').textContent = `${plan.grade} ${plan.name} ภาคเรียนที่ ${r.term} ${s.hours} ชม./สัปดาห์ต่อห้อง ${plan.rooms.length} ห้องเรียน`;
       $('tmSearch').value = '';
       renderTeacherModal();
       openModal('teacherModal');
@@ -1346,14 +1346,14 @@
           <div class="flex items-start justify-between gap-3">
             <div class="flex min-w-0 items-center gap-3">
               <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-sm font-bold text-blue-700">${escapeHTML(teacher.name.replace('อ.', '').slice(0, 1))}</span>
-              <div class="min-w-0"><p class="truncate text-sm font-semibold text-slate-900">${escapeHTML(teacher.name)}</p><p class="truncate text-xs">${escapeHTML(teacher.group)} · ${loadText(t.id)}</p></div>
+              <div class="min-w-0"><p class="truncate text-sm font-semibold text-slate-900">${escapeHTML(teacher.name)}</p><p class="truncate text-xs">${escapeHTML(teacher.group)} ${loadText(t.id)}</p></div>
             </div>
             <button data-action="tm-remove" data-tid="${t.id}" type="button" class="shrink-0 rounded-lg px-2 py-1 text-xs font-semibold text-rose-600 transition hover:bg-rose-50">นำออก</button>
           </div>
           ${plan.rooms.length > 1 ? `
             <div class="mt-3 flex flex-wrap items-center gap-1.5">
               <span class="mr-1 text-xs font-semibold text-slate-500">สอนห้อง</span>
-              ${plan.rooms.map((room) => { const on = t.rooms.includes(room); return `<button data-action="tm-room" data-tid="${t.id}" data-room="${room}" type="button" aria-pressed="${on}" class="rounded-lg border px-2.5 py-1 text-xs font-semibold transition ${on ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-600 hover:border-blue-300'}">${room}${on && coTeach(room) ? ' · ร่วมสอน' : ''}</button>`; }).join('')}
+              ${plan.rooms.map((room) => { const on = t.rooms.includes(room); return `<button data-action="tm-room" data-tid="${t.id}" data-room="${room}" type="button" aria-pressed="${on}" class="rounded-lg border px-2.5 py-1 text-xs font-semibold transition ${on ? 'border-blue-600 bg-blue-600 text-white' : 'border-slate-200 text-slate-600 hover:border-blue-300'}">${room}${on && coTeach(room) ? ' ร่วมสอน' : ''}</button>`; }).join('')}
               <button data-action="tm-all-rooms" data-tid="${t.id}" type="button" class="ml-1 text-xs font-semibold text-blue-600 hover:underline">ทุกห้อง</button>
             </div>
             ${t.rooms.length ? '' : '<p class="mt-2 text-xs font-semibold text-rose-600">เลือกห้องที่ครูคนนี้สอน หรือนำออก</p>'}` : `<p class="mt-2 text-xs text-slate-500">สอนห้อง ${plan.rooms[0]}${tm.draft.length > 1 ? ' (ร่วมสอน)' : ''}</p>`}
@@ -1379,13 +1379,13 @@
       const available = teachers.filter((t) => !tm.draft.some((d) => d.id === t.id) && (!q || `${t.name} ${t.group}`.toLowerCase().includes(q)));
       const section = (title, list) => list.length ? `<p class="px-2 pb-1 pt-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">${title}</p>${list.map((t) => `
         <button data-action="tm-add" data-tid="${t.id}" type="button" class="flex w-full items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-left transition hover:bg-white hover:shadow-sm">
-          <span class="min-w-0"><span class="block truncate text-sm font-semibold text-slate-800">${escapeHTML(t.name)}${otherIds.includes(t.id) ? ' <span class="ml-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">สอนวิชานี้แผนอื่น</span>' : ''}</span><span class="block truncate text-xs">${q ? `${escapeHTML(t.group)} · ` : ''}${loadText(t.id)}</span></span>
+          <span class="min-w-0"><span class="block truncate text-sm font-semibold text-slate-800">${escapeHTML(t.name)}${otherIds.includes(t.id) ? ' <span class="ml-1 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-semibold text-blue-700">สอนวิชานี้แผนอื่น</span>' : ''}</span><span class="block truncate text-xs">${q ? `${escapeHTML(t.group)} ` : ''}${loadText(t.id)}</span></span>
           <span class="shrink-0 rounded-lg bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700">+ เพิ่ม</span>
         </button>`).join('')}` : '';
       const byLoad = (a, b) => loads.get(a.id)[r.term] - loads.get(b.id)[r.term];
       $('tmPicker').innerHTML = (section(`กลุ่มสาระ${s.group}`, available.filter((t) => t.group === s.group).sort(byLoad)) + section('กลุ่มสาระอื่น', available.filter((t) => t.group !== s.group).sort(byLoad))) || '<p class="px-3 py-8 text-center text-sm text-slate-500">ไม่พบครู</p>';
 
-      $('tmFooterNote').textContent = tm.draft.length > 1 ? `${tm.draft.length} คนสอนวิชานี้ · ห้องที่เลือกซ้ำกันหมายถึงสอนร่วมกัน` : 'ภาระสอนคำนวณจากจำนวนห้องที่ครูแต่ละคนสอน';
+      $('tmFooterNote').textContent = tm.draft.length > 1 ? `${tm.draft.length} คนสอนวิชานี้ ห้องที่เลือกซ้ำกันหมายถึงสอนร่วมกัน` : 'ภาระสอนคำนวณจากจำนวนห้องที่ครูแต่ละคนสอน';
     }
     function saveTeacherModal() {
       const empty = tm.draft.find((t) => !t.rooms.length);
@@ -1395,7 +1395,7 @@
       closeModal('teacherModal');
       updateAfterRowChange();
       const missing = uncoveredRooms(r);
-      showToast('บันทึกครูผู้สอนแล้ว', `${subjectById.get(r.subjectId).name} · ${r.teachers.length} คน${missing.length ? ` · ยังขาด ${missing.length} ห้อง` : ''}`, { tone: missing.length ? 'warning' : 'success' });
+      showToast('บันทึกครูผู้สอนแล้ว', `${subjectById.get(r.subjectId).name} ${r.teachers.length} คน${missing.length ? ` ยังขาด ${missing.length} ห้อง` : ''}`, { tone: missing.length ? 'warning' : 'success' });
     }
 
     /* ---------- เพิ่มรายวิชา ---------- */
@@ -1406,7 +1406,7 @@
       $('addSearch').value = '';
       $('addShowAll').checked = false;
       $('addGroup').innerHTML = `<option value="ทั้งหมด">ทุกกลุ่มสาระ</option>${GROUPS.map((g) => `<option>${g}</option>`).join('')}`;
-      $('addSubjectTitle').textContent = `เพิ่มรายวิชา · ${plan.grade} ${plan.name}`;
+      $('addSubjectTitle').textContent = `เพิ่มรายวิชา ${plan.grade} ${plan.name}`;
       $('addSubjectSubtitle').textContent = 'เลือกได้หลายรายวิชาพร้อมกัน รายวิชาที่อยู่ในแผนแล้วจะถูกข้าม';
       renderAddList();
       openModal('addSubjectModal');
@@ -1427,9 +1427,9 @@
         return `<label class="flex items-center gap-4 px-5 py-3 transition lg:px-7 ${already ? 'cursor-not-allowed bg-slate-50/70' : checked ? 'cursor-pointer bg-blue-50/60' : 'cursor-pointer hover:bg-slate-50'}">
           <input data-add="${s.id}" type="checkbox" ${checked || already ? 'checked' : ''} ${already ? 'disabled' : ''} class="h-4 w-4 rounded border-slate-300 text-blue-600">
           <span class="w-20 shrink-0 font-mono text-xs font-semibold ${already ? 'text-slate-400' : 'text-blue-700'}">${s.code}</span>
-          <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold ${already ? 'text-slate-400' : 'text-slate-900'}">${escapeHTML(s.name)}</span><span class="block truncate text-xs text-slate-500">${escapeHTML(s.group)} · ${s.grade} ภาค ${s.term}</span></span>
+          <span class="min-w-0 flex-1"><span class="block truncate text-sm font-semibold ${already ? 'text-slate-400' : 'text-slate-900'}">${escapeHTML(s.name)}</span><span class="block truncate text-xs text-slate-500">${escapeHTML(s.group)} ${s.grade} ภาค ${s.term}</span></span>
           <span class="hidden sm:block">${typeBadge(s.type)}</span>
-          <span class="w-24 shrink-0 text-right text-xs text-slate-500">${s.credits ? `${fmt(s.credits)} นก. · ` : ''}${s.hours} ชม.</span>
+          <span class="w-24 shrink-0 text-right text-xs text-slate-500">${s.credits ? `${fmt(s.credits)} นก. ` : ''}${s.hours} ชม.</span>
           ${already ? '<span class="w-24 shrink-0 text-right text-xs font-semibold text-slate-400">อยู่ในแผนแล้ว</span>' : '<span class="w-24 shrink-0"></span>'}
         </label>`;
       }).join('') : '<p class="px-6 py-14 text-center text-sm text-slate-500">ไม่พบรายวิชา ลองติ๊ก “แสดงรายวิชาของทุกระดับชั้น”</p>';
@@ -1438,7 +1438,7 @@
     function renderAddSummary() {
       const selected = [...state.addSelected].map((id) => subjectById.get(id));
       const credits = selected.reduce((s, x) => s + x.credits, 0);
-      $('addSummary').textContent = selected.length ? `เลือกแล้ว ${selected.length} วิชา · ${fmt(credits)} หน่วยกิต → ภาคเรียนที่ ${state.addTerm}` : 'ยังไม่ได้เลือกรายวิชา';
+      $('addSummary').textContent = selected.length ? `เลือกแล้ว ${selected.length} วิชา ${fmt(credits)} หน่วยกิต → ภาคเรียนที่ ${state.addTerm}` : 'ยังไม่ได้เลือกรายวิชา';
       $('addSubmit').disabled = !selected.length;
       $('addSubmit').textContent = selected.length ? `เพิ่ม ${selected.length} รายวิชา` : 'เพิ่มรายวิชา';
     }
@@ -1465,7 +1465,7 @@
       const level = $('cLevel').value;
       const sources = curricula.filter((c) => c.level === level).sort((a, b) => b.year.localeCompare(a.year));
       const current = $('cSource').value;
-      $('cSource').innerHTML = sources.length ? sources.map((c) => `<option value="${c.id}">${c.id} · ${escapeHTML(c.name)} (ปี ${c.year})</option>`).join('') : '<option value="">ไม่มีหลักสูตรระดับนี้ให้คัดลอก</option>';
+      $('cSource').innerHTML = sources.length ? sources.map((c) => `<option value="${c.id}">${c.id} ${escapeHTML(c.name)} (ปี ${c.year})</option>`).join('') : '<option value="">ไม่มีหลักสูตรระดับนี้ให้คัดลอก</option>';
       if (sources.some((c) => c.id === current)) $('cSource').value = current;
       renderCopyPreview();
     }
@@ -1480,7 +1480,7 @@
       if ($('copyPlans').checked && $('copySubjects').checked && $('copyTeachers').checked) parts.push(`ครูผู้สอน ${distinctTeachers(records)} คน`);
       $('copySubjects').disabled = !$('copyPlans').checked;
       $('copyTeachers').disabled = !$('copyPlans').checked || !$('copySubjects').checked;
-      $('copyPreview').innerHTML = parts.length ? `ระบบจะคัดลอก <b class="text-slate-900">${parts.join(' · ')}</b> จาก ${source.id}` : 'ไม่ได้เลือกข้อมูลที่จะคัดลอก ระบบจะสร้างหลักสูตรว่าง';
+      $('copyPreview').innerHTML = parts.length ? `ระบบจะคัดลอก <b class="text-slate-900">${parts.join(', ')}</b> จาก ${source.id}` : 'ไม่ได้เลือกข้อมูลที่จะคัดลอก ระบบจะสร้างหลักสูตรว่าง';
     }
     function yearOptions(selected) {
       const years = ['2566', '2567', '2568', '2569', '2570', '2571', '2572'];
@@ -1622,7 +1622,7 @@
       $('pGrade').innerHTML = LEVEL_GRADES[c.level].map((g) => `<option>${g}</option>`).join('');
       $('planTemplateSection').classList.toggle('hidden', mode === 'edit');
       const others = plansOf(c.id);
-      $('pCopyFrom').innerHTML = others.length ? others.map((p) => `<option value="${p.id}">${p.grade} · ${escapeHTML(p.name)}</option>`).join('') : '<option value="">ยังไม่มีแผนอื่น</option>';
+      $('pCopyFrom').innerHTML = others.length ? others.map((p) => `<option value="${p.id}">${p.grade} ${escapeHTML(p.name)}</option>`).join('') : '<option value="">ยังไม่มีแผนอื่น</option>';
       if (mode === 'edit') {
         const p = planOf(state.planId);
         state.editingPlanId = p.id;
@@ -1745,7 +1745,7 @@
         rows.push([p.name, p.grade, p.rooms.join(' '), r.term, s.code, s.name, s.group, s.type, s.credits, s.hours, r.teachers.map((t) => `${teacherById.get(t.id).name} (${t.rooms.join(' ')})`).join('; '), r.open ? 'เปิดสอน' : 'ปิดสอน']);
       }));
       downloadCsv(`${c.id}_แผนการเรียน.csv`, [header, ...rows]);
-      showToast('ส่งออกไฟล์แล้ว', `${rows.length} รายการ · เปิดด้วย Excel ได้ทันที`);
+      showToast('ส่งออกไฟล์แล้ว', `${rows.length} รายการ เปิดด้วย Excel ได้ทันที`);
     }
     function resetImport() {
       $('importFile').value = '';
@@ -1860,7 +1860,7 @@
             n++;
           });
           state.selected.clear(); updateAfterRowChange();
-          showToast(n ? `เพิ่มครูใน ${n} วิชาแล้ว` : 'ทุกห้องมีครูอยู่แล้ว', n ? `${teacherById.get(teacherId).name} · สอนห้องที่ยังไม่มีครู` : 'เปิดแต่ละวิชาเพื่อเพิ่มครูร่วมสอน', { tone: n ? 'success' : 'info' });
+          showToast(n ? `เพิ่มครูใน ${n} วิชาแล้ว` : 'ทุกห้องมีครูอยู่แล้ว', n ? `${teacherById.get(teacherId).name} สอนห้องที่ยังไม่มีครู` : 'เปิดแต่ละวิชาเพื่อเพิ่มครูร่วมสอน', { tone: n ? 'success' : 'info' });
           break;
         }
         case 'bulk-auto': { const count = autoAssign([...state.selected].map(rowOf)); state.selected.clear(); updateAfterRowChange(); showToast(`กำหนดครูอัตโนมัติ ${count} วิชา`); break; }
@@ -1870,7 +1870,7 @@
         case 'bulk-clear': state.selected.clear(); renderRows(); break;
         case 'open-import': resetImport(); openModal('importModal'); break;
         case 'download-template': downloadCsv('แม่แบบนำเข้าแผนการเรียน.csv', [['แผนการเรียน', 'ระดับชั้น', 'ห้องเรียน', 'ภาคเรียน', 'รหัสวิชา', 'ครูผู้สอน'], ['ห้องเรียนปกติ', 'ม.1', 'ม.1/1 ม.1/2', '1', 'ท21101', 'อ.ปาริฉัตร ทองดี']]); break;
-        case 'confirm-import': closeModal('importModal'); showToast('นำเข้าข้อมูลแล้ว', '24 รายการ · ตรวจสอบรายวิชาที่ยังไม่มีครูได้จากการ์ดความพร้อม'); break;
+        case 'confirm-import': closeModal('importModal'); showToast('นำเข้าข้อมูลแล้ว', '24 รายการ ตรวจสอบรายวิชาที่ยังไม่มีครูได้จากการ์ดความพร้อม'); break;
       }
     });
 

@@ -6,7 +6,7 @@
   const academic = AcademicLayout.role() === 'admin'; // admin = ครูฝ่ายวิชาการ (see docs/actors.md)
 
   // the mock data belongs to ครูสมศรี; admin keeps the shared admin persona
-  const PERSONA = { teacher: { name: 'ครูสมศรี ใจดี', title: 'ครู · คณิตศาสตร์', initials: 'สศ' } };
+  const PERSONA = { teacher: { name: 'ครูสมศรี ใจดี', title: 'ครู คณิตศาสตร์', initials: 'สศ' } };
 
   // the gradebook picks its view from the hash and remembers it under its own key; drive both from the shared role
   if (app === 'scores') {

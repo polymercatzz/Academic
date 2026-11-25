@@ -87,7 +87,7 @@
   /* ---------- mock role + shared timetable store (see timetable-core.js) ---------- */
   const PERSONAS = {
     admin: { name: 'อ.สุนิสา ปัญญาดี', title: 'งานวิชาการ (admin)', initials: 'SP', home: 'timetable.html', notifyTo: 'admin' },
-    teacher: { name: 'อ.อนุชา แสงทอง', title: 'ครู · คณิตศาสตร์', initials: 'AS', home: 'my-timetable.html', notifyTo: 't05' }
+    teacher: { name: 'อ.อนุชา แสงทอง', title: 'ครู คณิตศาสตร์', initials: 'AS', home: 'my-timetable.html', notifyTo: 't05' }
   };
   // the academic year/term every module treats as "now" (grading data.js and timetable seed use the same)
   const CURRENT_TERM = { year: '2569', term: '1' };
@@ -470,7 +470,7 @@
 
   /* ---------- วิธีใช้: ผู้ใช้เลือกหัวข้อเอง แล้วระบบชี้ไปทีละขั้น (ไม่ขึ้นเองอัตโนมัติ) ----------
    * หน้าไหนมีหัวข้อ เรียก AcademicLayout.setHelp([{ id, title, desc, steps: [{ target, title, text, before }] }])
-   * target = CSS selector หรือ function ที่คืน element · before = เตรียมหน้าจอก่อนชี้ (เช่น สลับแท็บ) */
+   * target = CSS selector หรือ function ที่คืน element before = เตรียมหน้าจอก่อนชี้ (เช่น สลับแท็บ) */
   let helpTopics = [];
   let tour = null;
   const HELP_SEEN_KEY = 'help-seen-v1';
@@ -594,7 +594,7 @@
     pop.innerHTML = `
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
-          <p class="text-[11px] font-semibold text-blue-600">${topic.title} · ขั้นที่ ${index + 1} จาก ${total}</p>
+          <p class="text-[11px] font-semibold text-blue-600">${topic.title} ขั้นที่ ${index + 1} จาก ${total}</p>
           <h3 id="helpTourTitle" class="mt-1 text-base font-semibold text-slate-950">${step.title}</h3>
         </div>
         <button type="button" data-tour-close class="-mr-1 -mt-1 shrink-0 rounded-lg p-1.5 text-slate-400 transition hover:bg-slate-100 hover:text-slate-700" aria-label="ปิดคำแนะนำ"><svg class="h-4 w-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41Z"/></svg></button>
@@ -788,7 +788,7 @@
   };
 }());
 
-// เครื่องมือกรอกข้อมูลสำหรับอัดเดโม: F9 กรอกให้ · F8 เปิดแผงคำสั่ง (shared/demo-autofill.js)
+// เครื่องมือกรอกข้อมูลสำหรับอัดเดโม: F9 กรอกให้ F8 เปิดแผงคำสั่ง (shared/demo-autofill.js)
 (function () {
   const s = document.createElement('script');
   s.src = new URL('demo-autofill.js?v=2', document.currentScript.src).href;

@@ -1,7 +1,7 @@
 'use strict';
 
 /* หน้าเช็คชื่อรายคาบ (attendance.html)
- * ครูผู้สอนเห็นเฉพาะคาบของห้องเรียนที่ตนสอน · ครูประจำชั้นเห็นทุกคาบของห้องตน (ดูอย่างเดียว)
+ * ครูผู้สอนเห็นเฉพาะคาบของห้องเรียนที่ตนสอน ครูประจำชั้นเห็นทุกคาบของห้องตน (ดูอย่างเดียว)
  * ใช้ข้อมูลชุดเดียวกับระบบบันทึกคะแนน (localStorage) — กฎทั้งหมดอยู่ใน ADR 0011
  * Demo นี้จำลองช่วงกลางภาคเรียน จึงไม่แสดงการล็อกการเช็คชื่อเมื่อส่งผลการเรียน */
 
@@ -60,7 +60,7 @@ const weekdayName = (date, style = 'long') => parseISO(date).toLocaleDateString(
 const thDay = (date) => `${weekdayName(date)} ${dmy(date)}`;
 const thShort = (date) => `${weekdayName(date, 'short')} ${dmy(date)}`;
 function thTime(t) { const d = new Date(t); return `${dmy(isoDate(d))} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; }
-const periodLabel = (no) => `คาบ ${no} · ${periodOf(no).start}–${periodOf(no).end}`;
+const periodLabel = (no) => `คาบ ${no} ${periodOf(no).start}–${periodOf(no).end}`;
 function nowPeriod() {
   const d = new Date();
   const hm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
@@ -116,7 +116,7 @@ function countsOf(db, sec, x, rec) {
   return c;
 }
 const userName = (uid) => userById(uid)?.name || '—';
-const countsText = (c) => ['absent', 'leave', 'late'].filter((k) => c[k]).map((k) => `${ATT[k].label} ${c[k]}`).join(' · ') || 'มาครบ';
+const countsText = (c) => ['absent', 'leave', 'late'].filter((k) => c[k]).map((k) => `${ATT[k].label} ${c[k]}`).join(', ') || 'มาครบ';
 
 /* =========================================================
  *  ปฏิทินรายเดือน (จันทร์–ศุกร์) พร้อมจุดสีสถานะคาบ
@@ -357,7 +357,7 @@ function renderToday(date) {
         <div class="period-no"><b>${t.period}</b><span>${periodOf(t.period).start}</span></div>
         <div class="period-main">
           <div class="period-title">${sec.code} ${esc(sec.name)} <span class="sec-room">${sec.room}</span>${np === t.period ? '<span class="chip chip-primary">กำลังสอน</span>' : ''}</div>
-          <div class="period-sub">${periodOf(t.period).start}–${periodOf(t.period).end} · ${sec.students.length} คน · ${status}</div>
+          <div class="period-sub">${periodOf(t.period).start}–${periodOf(t.period).end} ${sec.students.length} คน ${status}</div>
         </div>
         <div>${btn}</div>
       </div>`;
@@ -440,10 +440,10 @@ function renderCheck(secId, date, period) {
     <div class="card ws-head">
       <div class="ws-title">
         <div>
-          <h1>${sec.code} ${esc(sec.name)} · ${sec.room}</h1>
+          <h1>${sec.code} ${esc(sec.name)} ${sec.room}</h1>
           <div class="ws-sub"><span>${icon('calendar')} ${thDay(date)}</span><span>${icon('clock')} ${periodLabel(period)}</span><span>${icon('users')} ${sec.students.length} คน</span>
           ${rec ? `<span>เช็คล่าสุด ${thTime(rec.t)}${rec.by && rec.by !== ME ? ` โดย ${esc(userName(rec.by))}` : ''}</span>` : ''}
-          ${rec?.fill ? `<span class="chip">เช็คย้อนหลัง · ${BACKFILL[rec.fill].label}</span>` : ''}</div>
+          ${rec?.fill ? `<span class="chip">เช็คย้อนหลัง ${BACKFILL[rec.fill].label}</span>` : ''}</div>
         </div>
       </div>
       <div class="ws-kpis" id="kpis"></div>
@@ -475,7 +475,7 @@ function renderCheck(secId, date, period) {
           <td class="c">${levelChip(a)}</td></tr>`;
       }).join('')}</tbody>
     </table></div>
-    <p class="faint" style="font-size:12.5px">เวลาเรียนและจำนวนคาบที่ขาดได้อีก คิดจากคาบที่บันทึกแล้ว (${sectionAttendance(db, sec).checked} คาบ) · ขาดหรือลาได้ทั้งภาคไม่เกิน ${allowedMiss(sec)} คาบจาก ${sec.hours} ชั่วโมงตามหลักสูตร</p>
+    <p class="faint" style="font-size:12.5px">เวลาเรียนและจำนวนคาบที่ขาดได้อีก คิดจากคาบที่บันทึกแล้ว (${sectionAttendance(db, sec).checked} คาบ) ขาดหรือลาได้ทั้งภาคไม่เกิน ${allowedMiss(sec)} คาบจาก ${sec.hours} ชั่วโมงตามหลักสูตร</p>
     ${hist.length ? `<h2 class="sub-head">ประวัติการแก้ไขคาบนี้ <span class="faint">(${hist.length})</span></h2>
       <div class="card list-wrap"><table class="list">
         <thead><tr><th>เมื่อ</th><th>ผู้แก้ไข</th><th>นักเรียน</th><th>เปลี่ยน</th><th>เหตุผล</th></tr></thead>
@@ -493,7 +493,7 @@ function renderCheck(secId, date, period) {
       $$('.att-seg button', tr).forEach((b) => b.classList.toggle('on', b.dataset.m === m));
       tr.classList.toggle('row-changed', s.id in ui.draft.marks);
       tr.classList.toggle('row-strict', !!strict(s.id));
-      if (strict(s.id)) $('.strict-note span', tr).textContent = `แก้จากขาด · ${ui.draft.reasons[s.id]}`;
+      if (strict(s.id)) $('.strict-note span', tr).textContent = `แก้จากขาด ${ui.draft.reasons[s.id]}`;
     });
     $('#kpis').innerHTML = ATT_KEYS.map((k) => `<div class="kpi"><div class="kpi-label">${ATT[k].label}</div><div class="kpi-value att-text-${k}">${c[k]}</div></div>`).join('');
     $$('[data-fill]', view).forEach((b) => b.classList.toggle('btn-primary', b.dataset.fill === ui.draft.fill));
@@ -502,8 +502,8 @@ function renderCheck(secId, date, period) {
     const n = Object.keys(ui.draft.marks).length;
     bar.innerHTML = `
       <div class="ab-status">${rec
-        ? (n ? `<span class="dot" style="color:#e0a100"></span><span>แก้ไข <strong>${n}</strong> คน ยังไม่บันทึก</span>` : `<span style="color:var(--ok)">${icon('check')}</span><span>บันทึกแล้ว · ${thTime(rec.t)}</span>`)
-        : `<span class="dot" style="color:#e0a100"></span><span>คาบนี้<strong>ยังไม่ได้บันทึก</strong> · มา ${c.present + c.late} / ${sec.students.length} คน</span>`}</div>
+        ? (n ? `<span class="dot" style="color:#e0a100"></span><span>แก้ไข <strong>${n}</strong> คน ยังไม่บันทึก</span>` : `<span style="color:var(--ok)">${icon('check')}</span><span>บันทึกแล้ว ${thTime(rec.t)}</span>`)
+        : `<span class="dot" style="color:#e0a100"></span><span>คาบนี้<strong>ยังไม่ได้บันทึก</strong> มา ${c.present + c.late} / ${sec.students.length} คน</span>`}</div>
       <span class="spacer"></span>
       <button class="btn btn-ghost" id="discardBtn" ${n || ui.draft.fill ? '' : 'disabled'}>ยกเลิกการแก้ไข</button>
       <button class="btn btn-primary" id="saveBtn" ${rec && !n ? 'disabled' : ''}>${icon('save')}บันทึกการเช็คชื่อ</button>`;
@@ -566,7 +566,7 @@ function askStrictReason(s, onOk, onCancel) {
     body: `<p class="muted" style="margin-top:0"><b>${s.no}. ${esc(fullName(s))}</b> บันทึกไว้ว่า <b class="att-text-absent">ขาด</b> การแก้เป็น <b class="att-text-present">มา</b> จะเพิ่มเวลาเรียน ต้องระบุเหตุผล ระบบจะเก็บชื่อผู้แก้ไขและเวลาไว้ในประวัติ</p>
       <label class="field-label" for="strictReason">เหตุผล <span class="txt-bad">*</span></label>
       <textarea id="strictReason" class="input" rows="3" placeholder="เช่น นักเรียนมาเรียนแต่ครูเช็คผิดคน / ไปแข่งขันในนามโรงเรียน มีหนังสือรับรอง"></textarea>
-      <div class="faint" id="strictErr" style="font-size:12.5px;margin-top:4px">อย่างน้อย 10 ตัวอักษร · กด Enter เพื่อยืนยัน</div>`,
+      <div class="faint" id="strictErr" style="font-size:12.5px;margin-top:4px">อย่างน้อย 10 ตัวอักษร กด Enter เพื่อยืนยัน</div>`,
     actions: [
       { label: 'ไม่แก้', cls: 'btn-ghost', onClick: () => { done = true; onCancel(); } },
       { label: 'ยืนยันแก้เป็นมา', cls: 'btn-primary', icon: 'check', onClick: (close) => {
@@ -642,7 +642,7 @@ function renderSections(focus) {
   });
   const hits = cards.filter((c) => c.hit);
   view.innerHTML = `
-    <div class="page-head"><div><h1>ห้องที่ฉันสอน</h1><p>สรุปเวลาเรียนรายห้อง ${esc(TERMS.find((t) => t.key === term).label)} · เห็นเฉพาะห้องเรียนที่ท่านเป็นครูผู้สอน</p></div></div>
+    <div class="page-head"><div><h1>ห้องที่ฉันสอน</h1><p>สรุปเวลาเรียนรายห้อง ${esc(TERMS.find((t) => t.key === term).label)} เห็นเฉพาะห้องเรียนที่ท่านเป็นครูผู้สอน</p></div></div>
     ${focus ? `<div class="focus-bar ${FOCUS[focus].cls}">${icon(focus === 'ms' ? 'alert' : 'info')}<div>${hits.length
       ? `มี <b>${hits.length} ห้อง</b> ที่มี${FOCUS[focus].label} (ไฮไลต์ไว้) กดที่ห้องเพื่อดูรายชื่อ`
       : `ไม่มีห้องที่มี${FOCUS[focus].label}`}</div><a class="btn btn-sm btn-ghost" href="#/sections">แสดงทุกห้องตามปกติ</a></div>` : ''}
@@ -651,7 +651,7 @@ function renderSections(focus) {
       const prog = Math.min(1, a.checked / sec.hours);
       return `
         <a class="card sec-card ${focus ? (hit ? `hl ${FOCUS[focus].cls}` : 'dim') : ''}" href="#/s/${sec.id}${hit ? `/${focus}` : ''}">
-          <div class="sec-top"><div style="min-width:0"><div class="sec-code">${sec.code} · ${sec.type}</div><div class="sec-name">${esc(sec.name)}</div></div><div class="sec-room">${sec.room}</div></div>
+          <div class="sec-top"><div style="min-width:0"><div class="sec-code">${sec.code} ${sec.type}</div><div class="sec-name">${esc(sec.name)}</div></div><div class="sec-room">${sec.room}</div></div>
           <div class="sec-meta"><span>${icon('users')}${sec.students.length} คน</span><span>${icon('calendar')}${slotsOf(db, sec.id).length} คาบ/สัปดาห์</span></div>
           <div><div class="progress"><span style="width:${Math.round(prog * 100)}%"></span></div>
             <div class="faint" style="font-size:12.5px;margin-top:4px">เช็คแล้ว ${a.checked} คาบ จาก ${sec.hours} ชั่วโมงตามหลักสูตร</div></div>
@@ -679,8 +679,8 @@ function renderSection(secId) {
     <a class="back-link" href="#/sections">${icon('back')}ห้องที่ฉันสอน</a>
     <div class="card ws-head">
       <div class="ws-title"><div>
-        <h1>${sec.code} ${esc(sec.name)} · ${sec.room}</h1>
-        <div class="ws-sub"><span>${icon('users')} ${sec.students.length} คน</span><span>${sec.hours} ชั่วโมง/ภาค · ขาดหรือลาได้ไม่เกิน ${allowedMiss(sec)} คาบ</span>
+        <h1>${sec.code} ${esc(sec.name)} ${sec.room}</h1>
+        <div class="ws-sub"><span>${icon('users')} ${sec.students.length} คน</span><span>${sec.hours} ชั่วโมง/ภาค ขาดหรือลาได้ไม่เกิน ${allowedMiss(sec)} คาบ</span>
           <a href="scores.html#/s/${sec.id}/results">${icon('book')} ดูผลการเรียนในระบบบันทึกคะแนน</a></div>
       </div></div>
       <div class="ws-kpis">
@@ -704,7 +704,7 @@ function renderSection(secId) {
           : x.level === 'waived' ? `<button class="btn btn-sm btn-ghost" data-waive="${s.id}" title="${esc(MS_WAIVER[msWaiverOf(sec, s.id).kind].label)}">${icon('eye')}ดูการปลด</button>` : ''}</td></tr>`).join('') || '<tr><td colspan="9" class="c faint" style="padding:24px">ไม่มีนักเรียนในกลุ่มนี้</td></tr>'}</tbody>
     </table></div>
 
-    <h2 class="sub-head">คาบที่ผ่านมา <span class="faint">(${a.sessions.length} คาบ · เลือกวันบนปฏิทิน)</span></h2>
+    <h2 class="sub-head">คาบที่ผ่านมา <span class="faint">(${a.sessions.length} คาบ เลือกวันบนปฏิทิน)</span></h2>
     <div class="cal-layout">
       <div class="card cal-card" id="secCal"></div>
       <div class="card day-detail" id="dayDetail"></div>
@@ -722,7 +722,7 @@ function renderSection(secId) {
   const all = plannedSessions(db, sec);
   if (ui.calSec?.id !== sec.id) ui.calSec = { id: sec.id, date: a.sessions.length ? a.sessions[a.sessions.length - 1].date : todayISO() };
   const studentsWith = (rec, x, m) => sec.students.filter((s) => markOf(rec, s.id) === m);
-  /* หนึ่งคาบ: ซ้าย = คาบ/เวลา/สถานะ · กลาง = จำนวน + รายชื่อ · ขวา = ปุ่ม */
+  /* หนึ่งคาบ: ซ้าย = คาบ/เวลา/สถานะ กลาง = จำนวน + รายชื่อ ขวา = ปุ่ม */
   const periodCard = (x) => {
     const rec = db.att.records[x.key];
     const future = x.date > todayISO();
@@ -741,7 +741,7 @@ function renderSection(secId) {
         <div class="dd-counts">${ATT_KEYS.map((k) => `<div class="dd-count ${c[k] ? '' : 'zero'}"><span class="att-text-${k}">${c[k]}</span>${ATT[k].label}</div>`).join('')}</div>
         ${groups || `<div class="dd-all">${icon('check')}มาครบทุกคน</div>`}`;
     } else {
-      body = `<div class="dd-empty">${future ? 'ยังไม่ถึงวันสอน เช็คชื่อได้ในวันที่สอน' : `ยังไม่ได้เช็คชื่อคาบนี้ · ${sec.students.length} คน`}</div>`;
+      body = `<div class="dd-empty">${future ? 'ยังไม่ถึงวันสอน เช็คชื่อได้ในวันที่สอน' : `ยังไม่ได้เช็คชื่อคาบนี้ ${sec.students.length} คน`}</div>`;
     }
     return `
       <div class="dd-card">
@@ -767,7 +767,7 @@ function renderSection(secId) {
 function openWaiver(sec, s) {
   const a = studentAttendance(db, sec, s.id);
   const w = msWaiverOf(sec, s.id);
-  const head = `<div class="waive-stu"><b>${s.no}. ${esc(fullName(s))}</b><span class="muted">${sec.code} ${esc(sec.name)} · เวลาเรียน ${a.pct}% · ขาด ${a.absent} ลา ${a.leave}</span></div>`;
+  const head = `<div class="waive-stu"><b>${s.no}. ${esc(fullName(s))}</b><span class="muted">${sec.code} ${esc(sec.name)} เวลาเรียน ${a.pct}% ขาด ${a.absent} ลา ${a.leave}</span></div>`;
   const log = (to, extra = {}) => sec.history.unshift({ t: Date.now(), who: myName(), student: fullName(s), field: 'เวลาเรียน (มส)', from: '', to, ...extra });
   if (w) {
     openModal({
@@ -775,7 +775,7 @@ function openWaiver(sec, s) {
       body: `${head}<dl class="waive-dl">
         <dt>กรณี</dt><dd>${MS_WAIVER[w.kind].label}<div class="faint">${MS_WAIVER[w.kind].grade}</div></dd>
         <dt>เลขที่บันทึกอนุมัติ</dt><dd>${esc(w.ref)}</dd><dt>เหตุผล</dt><dd>${esc(w.reason)}</dd>
-        <dt>บันทึกโดย</dt><dd>${esc(userName(w.by))} · ${thTime(w.at)}</dd></dl>`,
+        <dt>บันทึกโดย</dt><dd>${esc(userName(w.by))} ${thTime(w.at)}</dd></dl>`,
       actions: secLocked(sec) ? [{ label: 'ปิด', cls: 'btn-ghost' }] : [
         { label: 'ยกเลิกการปลด มส', cls: 'btn-danger', onClick: () => {
           delete sec.msWaiver[s.id]; log('ยกเลิกการปลด มส', { from: 'ปลด มส' }); persist(); route(); toast('ยกเลิกการปลด มส แล้ว', 'ok');
@@ -858,7 +858,7 @@ function renderHomeroom(r) {
     const rec = db.att.records[sessionKey(sec.id, date, p)];
     if (!rec) return `<td class="hr-cell unchecked" title="${esc(sec.code)} ยังไม่เช็ค">${date > today ? '' : '?'}</td>`;
     const m = markOf(rec, s.id);
-    return `<td class="hr-cell" title="${esc(sec.code)} · ${ATT[m].label}">${m === 'present' ? '<span class="hr-dot"></span>' : markChip(m)}</td>`;
+    return `<td class="hr-cell" title="${esc(sec.code)} ${ATT[m].label}">${m === 'present' ? '<span class="hr-dot"></span>' : markChip(m)}</td>`;
   };
   // ขาดอย่างน้อยหนึ่งคาบในวันนี้ → ครูประจำชั้นควรติดตาม
   const absentToday = roster.filter((s) => slots.some((t) => db.att.records[sessionKey(t.sec, date, t.period)]?.ex[s.id] === 'absent'));
@@ -897,8 +897,8 @@ function renderHomeroomSubj(secs, roster, head, tabs, secId) {
   let lastMonth = '';
   view.innerHTML = `${head}${tabs}
     <div class="toolbar">
-      <select class="select" id="subjPick" aria-label="เลือกวิชา">${secs.map((x) => `<option value="${x.id}" ${x.id === sec.id ? 'selected' : ''}>${x.code} ${esc(x.name)} · ${esc(userName(x.teacherId))}</option>`).join('')}</select>
-      <span class="faint">${sessions.length} คาบตั้งแต่ต้นภาค · ยังไม่เช็ค ${recs.filter((r) => !r).length} คาบ</span>
+      <select class="select" id="subjPick" aria-label="เลือกวิชา">${secs.map((x) => `<option value="${x.id}" ${x.id === sec.id ? 'selected' : ''}>${x.code} ${esc(x.name)} ${esc(userName(x.teacherId))}</option>`).join('')}</select>
+      <span class="faint">${sessions.length} คาบตั้งแต่ต้นภาค ยังไม่เช็ค ${recs.filter((r) => !r).length} คาบ</span>
       <span class="spacer"></span>
       <div class="legend"><span><span class="hr-dot"></span>มา</span>${['late', 'leave', 'absent'].map((k) => `<span>${markChip(k)}</span>`).join('')}<span><span class="hr-q">?</span>ยังไม่เช็ค</span></div>
     </div>
@@ -913,7 +913,7 @@ function renderHomeroomSubj(secs, roster, head, tabs, secId) {
           <td class="c num ${a.level === 'ms' ? 'pct-ms' : a.level === 'risk' ? 'pct-risk' : ''}">${a.pct}%</td>${sessions.map((_, i) => cell(s, i)).join('')}</tr>`;
       }).join('')}</tbody>
     </table></div>
-    <p class="faint" style="font-size:12.5px">เลื่อนตารางไปทางซ้ายเพื่อดูคาบที่เก่ากว่า · ชี้ที่หัวคอลัมน์เพื่อดูวันและเวลา</p>`
+    <p class="faint" style="font-size:12.5px">เลื่อนตารางไปทางซ้ายเพื่อดูคาบที่เก่ากว่า ชี้ที่หัวคอลัมน์เพื่อดูวันและเวลา</p>`
     : `<div class="card empty"><div class="empty-icon">${icon('calendar')}</div><h3>ยังไม่มีคาบของวิชานี้</h3></div>`}`;
   $('#subjPick').addEventListener('change', (e) => go(`#/h/subj/${e.target.value}`));
   const wrap = $('#histWrap');
@@ -1000,7 +1000,7 @@ function trendChart(weeks, curWeek) {
       ${pts.map((p) => `<rect class="hit" x="${x(p.i) - (W - L - R) / n / 2}" y="${T}" width="${(W - L - R) / n}" height="${H - T - B}" data-x="${x(p.i)}"
         data-tip="<b>สัปดาห์ที่ ${p.i + 1}</b>${p.i === curWeek ? ' (ยังไม่ครบสัปดาห์)' : ''}<br>เวลาเรียน ${fmtPct(p.pct)}<br>ขาด ${p.absent} คาบ-คน"/>`).join('')}
     </svg>
-    <div class="chart-foot faint">แกนนอน = สัปดาห์ที่ของภาคเรียน · แกนตั้งเริ่มที่ ${lo}%</div>`;
+    <div class="chart-foot faint">แกนนอน = สัปดาห์ที่ของภาคเรียน แกนตั้งเริ่มที่ ${lo}%</div>`;
 }
 
 /* กราฟจุด: เวลาเรียนเฉลี่ยแยกตามวิชา ต่ำสุดอยู่บน (ใช้จุดแทนแท่ง เพราะแกนไม่เริ่มที่ 0) */
@@ -1011,10 +1011,10 @@ function subjectChart(subjects) {
   return `
     <div class="dotplot" style="--th:${pos(MIN_ATTENDANCE)}">
       ${list.map((x) => `
-        <div class="dp-row" data-tip="<b>${esc(x.sec.code)} ${esc(x.sec.name)}</b><br>${esc(userById(x.sec.teacherId).name)}<br>เวลาเรียนเฉลี่ย ${fmtPct(x.pct)}<br>มส ${x.ms} คน · ใกล้ มส ${x.risk} คน">
+        <div class="dp-row" data-tip="<b>${esc(x.sec.code)} ${esc(x.sec.name)}</b><br>${esc(userById(x.sec.teacherId).name)}<br>เวลาเรียนเฉลี่ย ${fmtPct(x.pct)}<br>มส ${x.ms} คน ใกล้ มส ${x.risk} คน">
           <div class="dp-label"><b>${esc(subjName(x.sec))}</b><span>${esc(userById(x.sec.teacherId).name.replace('ครู', ''))}</span></div>
           <div class="dp-track"><span class="dp-th"></span><span class="dp-dot ${x.pct < MIN_ATTENDANCE ? 'low' : ''}" style="left:${pos(x.pct)}"></span></div>
-          <div class="dp-val"><b>${fmtPct(x.pct)}</b>${x.ms || x.risk ? `<span>${[x.ms && `มส ${x.ms}`, x.risk && `ใกล้ มส ${x.risk}`].filter(Boolean).join(' · ')}</span>` : ''}</div>
+          <div class="dp-val"><b>${fmtPct(x.pct)}</b>${x.ms || x.risk ? `<span>${[x.ms && `มส ${x.ms}`, x.risk && `ใกล้ มส ${x.risk}`].filter(Boolean).join(', ')}</span>` : ''}</div>
         </div>`).join('')}
       <div class="dp-axis"><span></span><div><span style="left:0">${lo}%</span><span class="th" style="left:${pos(MIN_ATTENDANCE)}">${MIN_ATTENDANCE}%</span><span style="left:100%">100%</span></div><span></span></div>
     </div>`;
@@ -1058,7 +1058,7 @@ function renderHomeroomSum(room, secs, roster, head, tabs, focus) {
   const box = (key, label, value, unit, cls) => {
     const on = focus === key;
     return `<a class="card stat stat-link ${on ? 'stat-on' : ''}" href="${on ? '#/h/sum' : `#/h/sum/${key}`}"><div class="stat-label">${label}</div>
-      <div class="stat-value" style="color:${value ? cls : 'inherit'}">${value} <small>คน</small></div><div class="stat-hint">${on ? 'กำลังไฮไลต์ในตาราง · กดอีกครั้งเพื่อยกเลิก' : 'กดเพื่อไฮไลต์ในตาราง'}</div></a>`;
+      <div class="stat-value" style="color:${value ? cls : 'inherit'}">${value} <small>คน</small></div><div class="stat-hint">${on ? 'กำลังไฮไลต์ในตาราง กดอีกครั้งเพื่อยกเลิก' : 'กดเพื่อไฮไลต์ในตาราง'}</div></a>`;
   };
   const subjChips = (x, which) => x.cols.filter((c) => which.includes(c.level)).map((c) => c.level === 'ms'
     ? `<span class="chip chip-ms">${esc(subjName(c.sec))} ${c.pct}%</span>`
@@ -1098,7 +1098,7 @@ function renderHomeroomSum(room, secs, roster, head, tabs, focus) {
     <div class="card list-wrap hr-wrap"><table class="list hr-table">
       <thead><tr><th class="c">เลขที่</th><th>ชื่อ-สกุล</th>${secs.map((sec) => `<th class="c">${sec.code}<div class="hr-subj">${esc(sec.name)}</div></th>`).join('')}<th class="c">ขาดรวม</th><th class="c">ลารวม</th><th class="c">ขาดเรียน<div class="hr-subj">สัปดาห์นี้</div></th></tr></thead>
       <tbody>${per.map((x) => `<tr class="${focus && HR_FOCUS[focus].test(x) ? `row-hl hl-${focus}` : ''}"><td class="c num faint">${x.s.no}</td><td><a class="stu-link" data-stu="${x.s.id}">${esc(fullName(x.s))}</a></td>
-        ${x.cols.map((a) => `<td class="c num ${a.level === 'ms' ? 'pct-ms' : a.level === 'risk' ? 'pct-risk' : ''}" title="มา ${a.present} · สาย ${a.late} · ลา ${a.leave} · ขาด ${a.absent} · ขาดได้อีก ${a.left}">${a.pct}%</td>`).join('')}
+        ${x.cols.map((a) => `<td class="c num ${a.level === 'ms' ? 'pct-ms' : a.level === 'risk' ? 'pct-risk' : ''}" title="มา ${a.present} สาย ${a.late} ลา ${a.leave} ขาด ${a.absent} ขาดได้อีก ${a.left}">${a.pct}%</td>`).join('')}
         <td class="c num ${x.absent ? 'txt-bad' : 'faint'}">${x.absent}</td><td class="c num faint">${x.leave}</td>
         <td class="c num ${x.weekDays.length ? 'txt-bad' : 'faint'}" title="${x.weekDays.map(dmy).join(', ')}">${x.weekDays.length ? `${x.weekDays.length} วัน` : '—'}</td></tr>`).join('')}</tbody>
     </table></div>
@@ -1147,7 +1147,7 @@ function openStudent(room, secs, s) {
     <aside class="drawer" role="dialog" aria-modal="true" aria-label="รายละเอียดนักเรียน">
       <div class="drawer-head">
         <div class="stu-no big">${s.no}</div>
-        <div style="flex:1;min-width:0"><h2>${esc(fullName(s))}</h2><div class="faint">รหัส ${s.id} · ${room} เลขที่ ${s.no}</div></div>
+        <div style="flex:1;min-width:0"><h2>${esc(fullName(s))}</h2><div class="faint">รหัส ${s.id} ${room} เลขที่ ${s.no}</div></div>
         <button class="icon-btn" data-close-drawer aria-label="ปิด">${icon('x')}</button>
       </div>
       <div class="drawer-body">
@@ -1191,7 +1191,7 @@ function boot() {
   const rooms = myRooms();
   $('#schoolName').textContent = SCHOOL;
   $('#userName').textContent = me.name;
-  $('#userRole').textContent = `ครูผู้สอน${rooms.length ? ` · ครูประจำชั้น ${rooms.join(', ')}` : ''}`;
+  $('#userRole').textContent = `ครูผู้สอน${rooms.length ? ` ครูประจำชั้น ${rooms.join(', ')}` : ''}`;
   $('#avatar').textContent = me.name.replace('ครู', '').trim().charAt(0);
   // เมนูเดียว: ครูทุกคนเห็นส่วนครูผู้สอน ถ้าเป็นครูประจำชั้นจะมีเมนูห้องประจำชั้นเพิ่ม
   $('#nav').innerHTML = `

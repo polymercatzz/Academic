@@ -62,7 +62,7 @@
   };
   const PERSONAS = {
     admin: { role: 'admin', teacherId: 't17', name: 'อ.สุนิสา ปัญญาดี', title: 'งานวิชาการ (admin)', initials: 'SP' },
-    teacher: { role: 'teacher', teacherId: 't05', name: 'อ.อนุชา แสงทอง', title: 'ครู · คณิตศาสตร์', initials: 'AS' }
+    teacher: { role: 'teacher', teacherId: 't05', name: 'อ.อนุชา แสงทอง', title: 'ครู คณิตศาสตร์', initials: 'AS' }
   };
   const ISSUE_LABEL = {
     'teacher-clash': 'ครูสอนซ้อน', 'teacher-activity': 'ครูติดกิจกรรมล็อกเวลา', 'room-clash': 'ห้องใช้ซ้อน', 'teacher-unavailable': 'ตรงเวลาไม่ว่างของครู',
@@ -478,8 +478,8 @@
       const qualified = db.external.teachers.filter((t) => t.canTeach.includes(l.code));
       (qualified.length ? noAssign : noQualified).push({ c, l, qualified });
     }));
-    items.push({ id: 'assign', status: noAssign.length ? 'fail' : 'pass', source: 'curriculum', title: 'ทุกรายวิชามีครูผู้สอน (การมอบหมายสอน)', detail: noAssign.length ? `${noAssign.length} รายการยังไม่ได้มอบหมายครู — แก้ได้ที่หน้าจัดการหลักสูตร` : 'มอบหมายครูครบทุกรายวิชา', rows: noAssign.map(({ c, l, qualified }) => ({ text: `${c.name} · ${l.code} ${l.subject.name} — มีครูที่สอนได้ ${qualified.length} คน`, link: curriculumLink(c.id) })) });
-    items.push({ id: 'qualified', status: noQualified.length ? 'fail' : 'pass', source: 'external', title: 'มีครูที่สอนวิชาได้ (ข้อมูลจากระบบงานบุคคล)', detail: noQualified.length ? `${noQualified.length} รายการไม่มีครูคนใดสอนวิชานั้นได้ — ต้องแก้ที่ระบบต้นทาง` : 'ทุกวิชามีครูที่สอนได้', rows: noQualified.map(({ c, l }) => ({ text: `${c.name} · ${l.code} ${l.subject.name} — ไม่มีครูที่สอนวิชานี้ได้`, external: true })) });
+    items.push({ id: 'assign', status: noAssign.length ? 'fail' : 'pass', source: 'curriculum', title: 'ทุกรายวิชามีครูผู้สอน (การมอบหมายสอน)', detail: noAssign.length ? `${noAssign.length} รายการยังไม่ได้มอบหมายครู — แก้ได้ที่หน้าจัดการหลักสูตร` : 'มอบหมายครูครบทุกรายวิชา', rows: noAssign.map(({ c, l, qualified }) => ({ text: `${c.name} ${l.code} ${l.subject.name} — มีครูที่สอนได้ ${qualified.length} คน`, link: curriculumLink(c.id) })) });
+    items.push({ id: 'qualified', status: noQualified.length ? 'fail' : 'pass', source: 'external', title: 'มีครูที่สอนวิชาได้ (ข้อมูลจากระบบงานบุคคล)', detail: noQualified.length ? `${noQualified.length} รายการไม่มีครูคนใดสอนวิชานั้นได้ — ต้องแก้ที่ระบบต้นทาง` : 'ทุกวิชามีครูที่สอนได้', rows: noQualified.map(({ c, l }) => ({ text: `${c.name} ${l.code} ${l.subject.name} — ไม่มีครูที่สอนวิชานี้ได้`, external: true })) });
     const capRows = [];
     classes.forEach((c) => {
       const ts = tsOfClass(v, c.id);
@@ -496,13 +496,13 @@
       const supply = db.external.rooms.filter((r) => r.type === type).reduce((a, r) => a + (r.maxClasses || 1) * 35, 0);
       return { type, n, supply };
     }).filter((x) => x.n > x.supply * 0.85).map((x) => ({ text: `${ROOM_TYPES[x.type]} ต้องใช้ ${x.n} คาบ รองรับได้ประมาณ ${x.supply} คาบ`, external: true }));
-    items.push({ id: 'rooms', status: roomRows.length ? 'warn' : 'pass', source: 'external', title: 'ห้องเฉพาะทางเพียงพอ', detail: roomRows.length ? 'ห้องเฉพาะทางบางประเภทใกล้เต็ม การจัดอัตโนมัติอาจวางบางวิชาไม่ได้' : Object.entries(demand).map(([t, n]) => `${ROOM_TYPES[t]} ${n} คาบ`).join(' · '), rows: roomRows });
+    items.push({ id: 'rooms', status: roomRows.length ? 'warn' : 'pass', source: 'external', title: 'ห้องเฉพาะทางเพียงพอ', detail: roomRows.length ? 'ห้องเฉพาะทางบางประเภทใกล้เต็ม การจัดอัตโนมัติอาจวางบางวิชาไม่ได้' : Object.entries(demand).map(([t, n]) => `${ROOM_TYPES[t]} ${n} คาบ`).join(', '), rows: roomRows });
     const noAdvisor = classes.filter((c) => !c.advisor);
     items.push({ id: 'advisor', status: noAdvisor.length ? 'warn' : 'pass', source: 'external', title: 'ทุกห้องมีครูประจำชั้น', detail: noAdvisor.length ? `${noAdvisor.map((c) => c.name).join(', ')} ยังไม่มีครูประจำชั้น — กิจกรรมที่ใช้ครูประจำชั้นจะไม่มีผู้ดูแล` : 'ครบทุกห้อง', rows: noAdvisor.map((c) => ({ text: `${c.name} ยังไม่มีครูประจำชั้น`, external: true })) });
     const pendingUn = db.unavailability.filter((u) => u.term === term && u.status === 'pending');
     const deadline = termInfo(term)?.unavailDeadline;
     const open = deadline && new Date(`${deadline}T23:59:59`) >= new Date();
-    items.push({ id: 'unavail', status: pendingUn.length || open ? 'warn' : 'pass', source: 'timetable', title: 'เวลาไม่ว่างของครูพร้อมใช้งาน', detail: [pendingUn.length ? `รออนุมัติ ${pendingUn.length} รายการ` : '', open ? `ยังไม่ถึงวันปิดรับ (${formatDate(deadline)}) อาจมีเพิ่มอีก` : `ปิดรับแล้วเมื่อ ${formatDate(deadline)}`].filter(Boolean).join(' · '), rows: pendingUn.map((u) => ({ text: `${teacherName(u.teacherId)} · ${DAYS[u.day].name} ${u.start}–${u.end} (${u.reason})`, link: 'timetable-approvals.html#unavailability' })) });
+    items.push({ id: 'unavail', status: pendingUn.length || open ? 'warn' : 'pass', source: 'timetable', title: 'เวลาไม่ว่างของครูพร้อมใช้งาน', detail: [pendingUn.length ? `รออนุมัติ ${pendingUn.length} รายการ` : '', open ? `ยังไม่ถึงวันปิดรับ (${formatDate(deadline)}) อาจมีเพิ่มอีก` : `ปิดรับแล้วเมื่อ ${formatDate(deadline)}`].filter(Boolean).join(', '), rows: pendingUn.map((u) => ({ text: `${teacherName(u.teacherId)} ${DAYS[u.day].name} ${u.start}–${u.end} (${u.reason})`, link: 'timetable-approvals.html#unavailability' })) });
     const fails = items.filter((i) => i.status === 'fail').length;
     return { items, fails, warns: items.filter((i) => i.status === 'warn').length, canAuto: fails === 0 };
   }
@@ -527,10 +527,10 @@
     if (withEntries) Object.entries(src.entries).forEach(([cid, slots]) => Object.entries(slots).forEach(([slot, e]) => {
       const code = src.term === term ? e.code : mapCode(e.code, term);
       if (!cls(cid)) { dropped.push({ text: `${cid} ไม่มีในภาคเรียนปลายทาง` }); return; }
-      if (!code || !subjectsOfClass(term, cid).some((s) => s.code === code)) { dropped.push({ text: `${className(cid)} ${slotLabel(slot)} · ${e.code} ไม่อยู่ในแผนการเรียนของภาคเรียนปลายทาง` }); return; }
+      if (!code || !subjectsOfClass(term, cid).some((s) => s.code === code)) { dropped.push({ text: `${className(cid)} ${slotLabel(slot)} ${e.code} ไม่อยู่ในแผนการเรียนของภาคเรียนปลายทาง` }); return; }
       const a = assignmentsOf(term).find((x) => x.classId === cid && x.code === code);
       const keepTeachers = a ? e.teachers.filter((t) => a.teachers.includes(t)) : [];
-      if (!keepTeachers.length) { dropped.push({ text: `${className(cid)} ${slotLabel(slot)} · ${code} — ${teachersLabel(e.teachers)} ไม่ได้สอนวิชานี้ให้ห้องนี้แล้ว` }); return; }
+      if (!keepTeachers.length) { dropped.push({ text: `${className(cid)} ${slotLabel(slot)} ${code} — ${teachersLabel(e.teachers)} ไม่ได้สอนวิชานี้ให้ห้องนี้แล้ว` }); return; }
       entries[cid][slot] = { code, teachers: a.teachers, room: e.room, src: 'copy', ...(e.locked ? { locked: true } : {}) };
     }));
     const v = {
@@ -539,7 +539,7 @@
       appliedRequests: src.term === term ? [...(src.appliedRequests || [])] : []
     };
     db.versions.push(v);
-    logHistory(term, v.id, 'สร้างฉบับร่าง', `คัดลอกจาก "${src.name}" (${termLabel(src.term)})${dropped.length ? ` · ตัดทิ้ง ${dropped.length} คาบ` : ''}`, by);
+    logHistory(term, v.id, 'สร้างฉบับร่าง', `คัดลอกจาก "${src.name}" (${termLabel(src.term)})${dropped.length ? ` ตัดทิ้ง ${dropped.length} คาบ` : ''}`, by);
     return { version: v, dropped };
   }
   function createBlankVersion({ term, name, timeStructures, activities, conditions, by = me().name }) {
@@ -616,7 +616,7 @@
     const pub = publishedOf(term);
     const r = { id: newId('RQ'), term, versionId: pub.id, teacherId, type, classId, slot, target, reason, note, status: 'pending', createdAt: nowIso(), decidedAt: null, decidedBy: null, adminNote: '', final: null };
     db.requests.unshift(r);
-    notify('admin', 'คำร้องขอเปลี่ยนการจัดใหม่', `${teacherName(teacherId)} · ${REQUEST_TYPES[type]} ${className(classId)} ${slotLabel(slot)}`, 'timetable-approvals.html');
+    notify('admin', 'คำร้องขอเปลี่ยนการจัดใหม่', `${teacherName(teacherId)} ${REQUEST_TYPES[type]} ${className(classId)} ${slotLabel(slot)}`, 'timetable-approvals.html');
     logHistory(term, pub.id, 'ยื่นคำร้อง', `${teacherName(teacherId)} ${REQUEST_TYPES[type]} ${className(classId)} ${slotLabel(slot)}`, teacherName(teacherId));
     save();
     return r;
@@ -629,7 +629,7 @@
     if (!approve) {
       r.status = 'rejected';
       notify(r.teacherId, 'คำร้องไม่ได้รับอนุมัติ', `${REQUEST_TYPES[r.type]} ${className(r.classId)} ${slotLabel(r.slot)}${adminNote ? ` — ${adminNote}` : ''}`, 'my-timetable.html#requests');
-      logHistory(r.term, r.versionId, 'ไม่อนุมัติคำร้อง', `${teacherName(r.teacherId)} · ${REQUEST_TYPES[r.type]} ${className(r.classId)}${adminNote ? ` · ${adminNote}` : ''}`, by);
+      logHistory(r.term, r.versionId, 'ไม่อนุมัติคำร้อง', `${teacherName(r.teacherId)} ${REQUEST_TYPES[r.type]} ${className(r.classId)}${adminNote ? ` ${adminNote}` : ''}`, by);
       save();
       return { ok: true };
     }
@@ -642,7 +642,7 @@
     r.status = final ? 'modified' : 'approved'; r.final = final; r.resultVersionId = nv.id;
     publish(nv, by, false);
     notify(r.teacherId, final ? 'คำร้องได้รับอนุมัติพร้อมแก้ไข' : 'คำร้องได้รับอนุมัติ', `${REQUEST_TYPES[r.type]} ${className(r.classId)} ${slotLabel(r.slot)}${final?.slot ? ` → ${slotLabel(final.slot)}` : final?.room ? ` → ${roomShort(final.room)}` : final?.swap ? ` → สลับกับ${slotLabel(final.swap.split('|')[1])}` : ''}${adminNote ? ` — ${adminNote}` : ''}`, 'my-timetable.html#requests');
-    logHistory(r.term, nv.id, final ? 'อนุมัติคำร้องพร้อมแก้ไข' : 'อนุมัติคำร้อง', `${teacherName(r.teacherId)} · ${REQUEST_TYPES[r.type]} ${className(r.classId)} ${slotLabel(r.slot)} → สร้าง "${nv.name}"`, by);
+    logHistory(r.term, nv.id, final ? 'อนุมัติคำร้องพร้อมแก้ไข' : 'อนุมัติคำร้อง', `${teacherName(r.teacherId)} ${REQUEST_TYPES[r.type]} ${className(r.classId)} ${slotLabel(r.slot)} → สร้าง "${nv.name}"`, by);
     save();
     return { ok: true, version: nv };
   }
@@ -653,7 +653,7 @@
       if (res.ok) { merged.push(r); draft.appliedRequests = [...(draft.appliedRequests || []), r.id]; }
       else { skipped.push({ r, msg: res.msg }); draft.appliedRequests = [...(draft.appliedRequests || []), r.id]; }
     });
-    logHistory(draft.term, draft.id, 'นำการเปลี่ยนแปลงมารวม', `รวม ${merged.length} คำร้อง${skipped.length ? ` · ข้าม ${skipped.length}` : ''}`);
+    logHistory(draft.term, draft.id, 'นำการเปลี่ยนแปลงมารวม', `รวม ${merged.length} คำร้อง${skipped.length ? ` ข้าม ${skipped.length}` : ''}`);
     return { merged, skipped };
   }
 
@@ -858,7 +858,7 @@
       ${ts.homeroom && di === 0 ? `<td rowspan="${ts.days.length}" class="tt-hatch border-b border-slate-100 bg-slate-50 px-1 text-center"><span class="tt-vtext mx-auto text-xs font-semibold text-slate-400">${esc(ts.homeroom.name)}</span></td>` : ''}
       ${pts.map((p) => { const slot = `${d}-${p.no}`; const e = v.entries[cid]?.[slot]; const act = classActivityAt(v, cid, slot); const b = breakAfter(p.no); return `<td class="border-b border-slate-100 p-1 align-top" data-slot="${slot}" ${tdAttrs(slot, e, act)}>${fn(slot, e, act)}</td>${b && di === 0 ? `<td rowspan="${ts.days.length}" class="tt-hatch border-b border-slate-100 bg-slate-50 px-1 text-center"><span class="tt-vtext mx-auto text-xs font-semibold text-slate-400">${esc(b.name)}</span></td>` : ''}`; }).join('')}</tr>`).join('');
     return `<table id="${id}" class="tt-table w-full min-w-[960px] overflow-hidden rounded-2xl border border-slate-200 text-sm"><thead>${head}</thead><tbody>${rows}</tbody></table>
-      <p class="mt-2 text-xs text-slate-400">${esc(ts.name)} · เริ่ม ${ts.start} · คาบละ ${ts.periodMin} นาที · ${ts.periods} คาบ/วัน · เลิก ${fmt(dayEnd(ts))}</p>`;
+      <p class="mt-2 text-xs text-slate-400">${esc(ts.name)} เริ่ม ${ts.start} คาบละ ${ts.periodMin} นาที ${ts.periods} คาบ/วัน เลิก ${fmt(dayEnd(ts))}</p>`;
   }
 
   /*
@@ -921,7 +921,7 @@
   function teacherBands(v, tid, { includePending = true } = {}) {
     const bands = [];
     db.unavailability.filter((u) => u.term === v.term && u.teacherId === tid && (u.status === 'approved' || (includePending && u.status === 'pending')))
-      .forEach((u) => bands.push({ day: u.day, start: toMin(u.start), end: toMin(u.end), label: `${u.status === 'pending' ? 'รออนุมัติ · ' : 'ไม่ว่าง · '}${u.reason}`, cls: u.status === 'pending' ? 'tt-hatch bg-amber-50/70 text-amber-700' : 'tt-hatch bg-rose-50/80 text-rose-600' }));
+      .forEach((u) => bands.push({ day: u.day, start: toMin(u.start), end: toMin(u.end), label: `${u.status === 'pending' ? 'รออนุมัติ ' : 'ไม่ว่าง '}${u.reason}`, cls: u.status === 'pending' ? 'tt-hatch bg-amber-50/70 text-amber-700' : 'tt-hatch bg-rose-50/80 text-rose-600' }));
     activityTeacherBusy(v).filter((b) => b.tid === tid).forEach((b) => bands.push({ day: b.day, start: b.start, end: b.end, label: b.label, cls: 'tt-hatch bg-slate-100 text-slate-500' }));
     return bands;
   }
@@ -960,7 +960,7 @@
     const pts = periodTimes(ts);
     const c = cls(cid);
     return {
-      name: c.name, title: `ตารางเรียน ${c.name} · ${termLabel(v.term)}`, sub: `ครูประจำชั้น ${teacherName(c.advisor)} · ${roomShort(c.homeroom)} · ${v.name}`,
+      name: c.name, title: `ตารางเรียน ${c.name} ${termLabel(v.term)}`, sub: `ครูประจำชั้น ${teacherName(c.advisor)} ${roomShort(c.homeroom)} ${v.name}`,
       header: ['วัน', ...pts.map((p) => `คาบ ${p.no}\n${fmt(p.start)}-${fmt(p.end)}`)],
       rows: ts.days.map((d) => [DAYS[d].name, ...pts.map((p) => { const slot = `${d}-${p.no}`; const e = v.entries[cid]?.[slot]; const act = classActivityAt(v, cid, slot); return act ? act.name : e ? `${e.code} ${subject(e.code)?.name}\n${teachersLabel(e.teachers)}\n${roomShort(e.room)}` : ''; })])
     };
@@ -972,10 +972,10 @@
     return { name, title, sub, header: ['วัน', ...Array.from({ length: maxN }, (_, i) => `ลำดับ ${i + 1}`)], rows: days.map((d) => { const list = sorted.filter((b) => b.day === d); return [DAYS[d].name, ...Array.from({ length: maxN }, (_, i) => (list[i] ? `${fmt(list[i].start)}-${fmt(list[i].end)}\n${line(list[i])}` : ''))]; }) };
   }
   function teacherSheet(v, tid) {
-    return listSheet(v, teacherBlocks(v, tid), { name: teacherName(tid), title: `ตารางสอน ${teacherName(tid)} · ${termLabel(v.term)}`, sub: `${GROUPS[teacher(tid).group]?.name || ''} · ${v.name}`, line: (b) => `${className(b.cid)} ${b.entry.code}\n${roomShort(b.entry.room)}` });
+    return listSheet(v, teacherBlocks(v, tid), { name: teacherName(tid), title: `ตารางสอน ${teacherName(tid)} ${termLabel(v.term)}`, sub: `${GROUPS[teacher(tid).group]?.name || ''} ${v.name}`, line: (b) => `${className(b.cid)} ${b.entry.code}\n${roomShort(b.entry.room)}` });
   }
   function roomSheet(v, rid) {
-    return listSheet(v, roomBlocks(v, rid), { name: roomShort(rid), title: `ตารางการใช้ห้อง ${room(rid).name} · ${termLabel(v.term)}`, sub: `${ROOM_TYPES[room(rid).type]} · ${v.name}`, line: (b) => `${className(b.cid)} ${b.entry.code}\n${teachersLabel(b.entry.teachers)}` });
+    return listSheet(v, roomBlocks(v, rid), { name: roomShort(rid), title: `ตารางการใช้ห้อง ${room(rid).name} ${termLabel(v.term)}`, sub: `${ROOM_TYPES[room(rid).type]} ${v.name}`, line: (b) => `${className(b.cid)} ${b.entry.code}\n${teachersLabel(b.entry.teachers)}` });
   }
 
   window.TT = {

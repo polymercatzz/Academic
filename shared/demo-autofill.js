@@ -158,7 +158,7 @@
   }
 
   /* ---------- โครงสร้างคะแนน (scores.html แท็บโครงสร้าง) ---------- */
-  // รวม 100% · เก็บ 60 : กลางภาค 20 : ปลายภาค 20
+  // รวม 100% เก็บ 60 : กลางภาค 20 : ปลายภาค 20
   const STRUCTURE = [
     ['collect', 'ใบงานที่ 1', 10, 15], ['collect', 'ใบงานที่ 2', 10, 15], ['collect', 'แบบฝึกหัด', 20, 20], ['collect', 'จิตพิสัย', 10, 10],
     ['mid', 'สอบกลางภาค', 20, 20], ['final', 'สอบปลายภาค', 20, 20],
@@ -366,7 +366,7 @@
         : '<div style="color:#64748b">หน้านี้ไม่มีช่องที่ต้องกรอก</div>'}
       <div style="display:flex;gap:6px;align-items:center;margin-top:10px;color:#64748b">ความเร็ว
         ${Object.keys(SPEEDS).map((k) => `<button data-sp="${k}" style="padding:2px 8px;border-radius:7px;border:1px solid ${k === speed ? '#2563eb' : '#e2e8f0'};background:${k === speed ? '#eff6ff' : '#fff'};cursor:pointer;font:inherit">${{ slow: 'ช้า', normal: 'ปกติ', fast: 'เร็ว' }[k]}</button>`).join('')}</div>
-      <div style="margin-top:8px;font-size:12px;color:#94a3b8">F9 กรอกให้ทันที · F8 เปิด/ปิดแผงนี้</div>`;
+      <div style="margin-top:8px;font-size:12px;color:#94a3b8">F9 กรอกให้ทันที F8 เปิด/ปิดแผงนี้</div>`;
     panel.addEventListener('mousedown', (e) => e.stopPropagation());
     panel.addEventListener('click', (e) => {
       if (e.target.closest('[data-x]')) { hidePanel(); return; }

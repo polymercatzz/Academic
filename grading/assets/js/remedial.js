@@ -30,9 +30,9 @@ function remedialState(sec, sid) {
 }
 const REMEDIAL_STATE = {
   waiting: { label: 'รอสอบซ่อม', chip: 'chip-warn' },
-  retry: { label: 'ไม่ผ่าน · สอบซ่อมได้อีก', chip: 'chip-bad' },
+  retry: { label: 'ไม่ผ่าน สอบซ่อมได้อีก', chip: 'chip-bad' },
   passed: { label: 'สอบซ่อมผ่าน (ระดับ 1)', chip: 'chip-ok' },
-  exhausted: { label: 'ไม่ผ่าน · ต้องเรียนซ้ำรายวิชา', chip: 'chip-ms' },
+  exhausted: { label: 'ไม่ผ่าน ต้องเรียนซ้ำรายวิชา', chip: 'chip-ms' },
 };
 const remedialChip = (st) => `<span class="chip ${REMEDIAL_STATE[st].chip}"><span class="dot"></span>${REMEDIAL_STATE[st].label}</span>`;
 
@@ -68,7 +68,7 @@ function renderRemedial() {
         <div class="seg" id="remFilter">${[['all', 'ทั้งหมด', all.length], ['waiting', 'รอสอบซ่อม', count('waiting')], ['retry', 'สอบซ่อมได้อีก', count('retry')], ['passed', 'ผ่าน', count('passed')], ['exhausted', 'ต้องเรียนซ้ำ', count('exhausted')]]
           .map(([k, l, c]) => `<button data-f="${k}" class="${f === k ? 'on' : ''}">${l}<span class="cnt">${c}</span></button>`).join('')}</div>
         <span class="spacer"></span>
-        <span class="faint" style="font-size:13px">นักเรียนที่ติด ร ให้แก้คะแนนในหน้ารายวิชา · ติด มส ดูที่ <a href="${AcademicLayout.url('attendance.html#/sections/ms')}">ห้องที่ฉันสอน</a></span>
+        <span class="faint" style="font-size:13px">นักเรียนที่ติด ร ให้แก้คะแนนในหน้ารายวิชา ติด มส ดูที่ <a href="${AcademicLayout.url('attendance.html#/sections/ms')}">ห้องที่ฉันสอน</a></span>
       </div>
       ${rows.length ? `<div class="card list-wrap"><table class="list">
         <thead><tr><th>นักเรียน</th><th>รายวิชา</th><th class="c">ห้อง</th><th class="r">คะแนนเดิม</th><th class="c">สอบซ่อม</th><th>ผลครั้งล่าสุด</th><th>สถานะ</th><th></th></tr></thead>
@@ -78,7 +78,7 @@ function renderRemedial() {
             ? `<span class="chip" title="ผลการเรียนอยู่ระหว่างรอฝ่ายวิชาการตรวจ">${icon('lock')}รอตรวจ</span>`
             : `<button class="btn btn-sm ${st === 'waiting' || st === 'retry' ? 'btn-primary' : ''}" data-rem="${sec.id}|${s.id}">${st === 'waiting' || st === 'retry' ? 'บันทึกผล' : 'ดูประวัติ'}</button>`;
           return `<tr>
-            <td><b>${esc(fullName(s))}</b><div class="faint" style="font-size:12.5px">รหัส ${s.id} · เลขที่ ${s.no}</div></td>
+            <td><b>${esc(fullName(s))}</b><div class="faint" style="font-size:12.5px">รหัส ${s.id} เลขที่ ${s.no}</div></td>
             <td>${sec.code} ${esc(sec.name)}</td>
             <td class="c">${sec.room}</td>
             <td class="r num">${fmt1(r.total)}</td>
@@ -120,7 +120,7 @@ function openRemedial(sec, s, after) {
       <label style="font-size:14px;font-weight:600">คะแนนที่ได้ (ร้อยละ)<input class="input" id="remIn" inputmode="decimal" placeholder="0–100" style="width:100%;margin-top:6px"></label>
     </div>
     <label style="display:block;margin-top:10px;font-size:14px;font-weight:600">วิธีสอบ / หมายเหตุ<input class="input" id="remNote" placeholder="เช่น สอบข้อเขียน, ส่งงานเพิ่ม" style="width:100%;margin-top:6px"></label>
-    <div class="callout" style="margin-top:12px">${icon('info')}<div>ครั้งที่ ${list.length + 1} จาก ${MAX_REMEDIAL} · ได้ ${REMEDIAL_PASS}% ขึ้นไปจะปรับระดับผลการเรียนเป็น <b>1</b>${list.length + 1 === MAX_REMEDIAL ? ' · ถ้าไม่ผ่านครั้งนี้ นักเรียนต้องเรียนซ้ำรายวิชา' : ''}${sec.state === 'approved' ? ' · ผลการเรียนห้องนี้อนุมัติแล้ว การบันทึกจะเก็บในประวัติการแก้ไขให้ฝ่ายวิชาการเห็น' : ''}</div></div>`
+    <div class="callout" style="margin-top:12px">${icon('info')}<div>ครั้งที่ ${list.length + 1} จาก ${MAX_REMEDIAL} ได้ ${REMEDIAL_PASS}% ขึ้นไปจะปรับระดับผลการเรียนเป็น <b>1</b>${list.length + 1 === MAX_REMEDIAL ? ' ถ้าไม่ผ่านครั้งนี้ นักเรียนต้องเรียนซ้ำรายวิชา' : ''}${sec.state === 'approved' ? ' ผลการเรียนห้องนี้อนุมัติแล้ว การบันทึกจะเก็บในประวัติการแก้ไขให้ฝ่ายวิชาการเห็น' : ''}</div></div>`
     : `<div class="callout ${st === 'passed' ? 'ok' : st === 'exhausted' ? 'warn' : ''}">${icon(st === 'passed' ? 'check' : 'info')}<div>${
       st === 'passed' ? 'สอบซ่อมผ่านแล้ว ระดับผลการเรียนเป็น 1'
         : st === 'exhausted' ? `สอบซ่อมครบ ${MAX_REMEDIAL} ครั้งแล้วยังไม่ผ่าน นักเรียนต้องเรียนซ้ำรายวิชานี้`
@@ -136,15 +136,15 @@ function openRemedial(sec, s, after) {
     sec.remedialAttempts = sec.remedialAttempts || {};
     sec.remedialAttempts[s.id] = [...list, attempt];
     const passed = score >= REMEDIAL_PASS;
-    sec.history.unshift({ t: Date.now(), who: TEACHER.name, student: fullName(s), field: `ผลสอบซ่อมครั้งที่ ${attempt.no}`, from: '', to: `${fmt1(score)}% ${passed ? '→ ผ่าน (1)' : attempt.no >= MAX_REMEDIAL ? '→ ไม่ผ่าน · เรียนซ้ำ' : '→ ไม่ผ่าน'}` });
+    sec.history.unshift({ t: Date.now(), who: TEACHER.name, student: fullName(s), field: `ผลสอบซ่อมครั้งที่ ${attempt.no}`, from: '', to: `${fmt1(score)}% ${passed ? '→ ผ่าน (1)' : attempt.no >= MAX_REMEDIAL ? '→ ไม่ผ่าน เรียนซ้ำ' : '→ ไม่ผ่าน'}` });
     sec.updatedAt = Date.now();
     persist(); updateFollowBadge();
     if (after) after();
-    toast(passed ? 'สอบซ่อมผ่าน · ปรับผลการเรียนเป็น 1' : attempt.no >= MAX_REMEDIAL ? 'ไม่ผ่าน · นักเรียนต้องเรียนซ้ำรายวิชา' : 'บันทึกแล้ว · ยังสอบซ่อมได้อีก 1 ครั้ง', passed ? 'ok' : 'bad');
+    toast(passed ? 'สอบซ่อมผ่าน ปรับผลการเรียนเป็น 1' : attempt.no >= MAX_REMEDIAL ? 'ไม่ผ่าน นักเรียนต้องเรียนซ้ำรายวิชา' : 'บันทึกแล้ว ยังสอบซ่อมได้อีก 1 ครั้ง', passed ? 'ok' : 'bad');
   } });
   openModal({
     title: 'ผลการสอบซ่อม',
-    body: `<p style="margin:0 0 12px"><b>${esc(fullName(s))}</b> <span class="muted">· ${sec.code} ${esc(sec.name)} · ${sec.room} · คะแนนเดิม ${fmt1(r.total)}</span></p>${history}${form}`,
+    body: `<p style="margin:0 0 12px"><b>${esc(fullName(s))}</b> <span class="muted">${sec.code} ${esc(sec.name)} ${sec.room} คะแนนเดิม ${fmt1(r.total)}</span></p>${history}${form}`,
     actions,
     onMount: (m) => $('#remIn', m)?.focus(),
   });

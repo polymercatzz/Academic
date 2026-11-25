@@ -1,7 +1,7 @@
 'use strict';
 /* =========================================================
  *  ชุมนุมและผลกิจกรรม (UC-27)
- *  ฝ่ายวิชาการเปิดชุมนุมและกำหนดครูที่ปรึกษา · ครูที่ปรึกษาจัดสมาชิก กรอกเวลาเข้าร่วม ให้ ผ / มผ แล้วส่งผล
+ *  ฝ่ายวิชาการเปิดชุมนุมและกำหนดครูที่ปรึกษา ครูที่ปรึกษาจัดสมาชิก กรอกเวลาเข้าร่วม ให้ ผ / มผ แล้วส่งผล
  *  ชุมนุมไม่เช็คชื่อรายคาบ ครูกรอกเวลาเข้าร่วมเอง (docs/database/04-attendance.md)
  *
  *  db.clubs = [{ id, term, name, type, advisorId, capacity, members: [sid],
@@ -75,7 +75,7 @@ function renderClubs() {
         </div>
         <div class="muted" style="font-size:13.5px">${icon('users')} สมาชิก ${st.n} / ${c.capacity} คน</div>
         <div class="progress ${pct === 100 ? 'ok' : ''}"><span style="width:${pct}%"></span></div>
-        <div class="faint" style="font-size:12.5px;margin-top:-8px">ประเมินแล้ว ${st.done} / ${st.n} คน · ผ ${st.pass} · มผ ${st.fail}</div>
+        <div class="faint" style="font-size:12.5px;margin-top:-8px">ประเมินแล้ว ${st.done} / ${st.n} คน ผ ${st.pass} มผ ${st.fail}</div>
       </a>`;
     }).join('')}</div>`
     : `<div class="card empty"><div class="empty-icon">${icon('users')}</div><h3>ภาคเรียนนี้ท่านไม่ได้เป็นครูที่ปรึกษาชุมนุม</h3><div>ฝ่ายวิชาการเป็นผู้เปิดชุมนุมและกำหนดครูที่ปรึกษา</div></div>`}`;
@@ -96,10 +96,10 @@ function renderClub(id) {
   view.innerHTML = `
     <a class="back-link" href="#/clubs">${icon('back')}ชุมนุมของฉัน</a>
     <div class="page-head">
-      <div><div class="faint" style="font-size:13px">${CLUB_TYPES[c.type]} · ${termOf(c.term).label}</div><h1>${esc(c.name)}</h1>
+      <div><div class="faint" style="font-size:13px">${CLUB_TYPES[c.type]} ${termOf(c.term).label}</div><h1>${esc(c.name)}</h1>
         <div class="row wrap" style="gap:6px;margin-top:6px">${clubChip(c)}</div></div>
     </div>
-    ${c.state === 'pending' ? `<div class="callout" style="margin-bottom:12px">${icon('lock')}<div><b>ส่งผลแล้ว · รอฝ่ายวิชาการตรวจ</b> ส่งเมื่อ ${thDate(c.submittedAt, true)} · ข้อมูลถูกล็อก</div></div>` : ''}
+    ${c.state === 'pending' ? `<div class="callout" style="margin-bottom:12px">${icon('lock')}<div><b>ส่งผลแล้ว รอฝ่ายวิชาการตรวจ</b> ส่งเมื่อ ${thDate(c.submittedAt, true)} ข้อมูลถูกล็อก</div></div>` : ''}
     ${c.state === 'approved' ? `<div class="callout ok" style="margin-bottom:12px">${icon('lock')}<div><b>ฝ่ายวิชาการอนุมัติแล้ว</b> เมื่อ ${thDate(c.decidedAt, true)} โดย ${esc(userById(c.decidedBy)?.name || '—')}</div></div>` : ''}
     ${c.state === 'draft' && c.returnReason ? `<div class="callout warn" style="margin-bottom:12px">${icon('alert')}<div><b>ฝ่ายวิชาการตีกลับให้แก้ไข</b> ${c.decidedAt ? `เมื่อ ${relTime(c.decidedAt)}` : ''}: ${esc(c.returnReason)}</div></div>` : ''}
     <div class="stat-row">
@@ -112,7 +112,7 @@ function renderClub(id) {
       ${locked ? '' : `<button class="btn" id="addMember" ${st.n >= c.capacity ? 'disabled title="ชุมนุมเต็มแล้ว"' : ''}>${icon('plus')}เพิ่มสมาชิก</button>
       <button class="btn btn-ghost" id="autoPass" ${st.n ? '' : 'disabled'}>ให้ ผ / มผ ตามเวลาเข้าร่วม</button>`}
       <span class="spacer"></span>
-      <span class="faint" style="font-size:13px">เกณฑ์: เวลาเข้าร่วม ${MIN_ATTENDANCE}% ขึ้นไป และผ่านการประเมินกิจกรรม · ${locked ? 'ดูได้อย่างเดียว' : 'บันทึกอัตโนมัติเมื่อแก้ไข'}</span>
+      <span class="faint" style="font-size:13px">เกณฑ์: เวลาเข้าร่วม ${MIN_ATTENDANCE}% ขึ้นไป และผ่านการประเมินกิจกรรม ${locked ? 'ดูได้อย่างเดียว' : 'บันทึกอัตโนมัติเมื่อแก้ไข'}</span>
       ${locked ? '' : `<button class="btn btn-ok" id="clubSubmit">${icon('send')}ส่งผลชุมนุม</button>`}
     </div>
     ${members.length ? `<div class="card list-wrap"><table class="list" id="clubTable">
@@ -202,10 +202,10 @@ function openAddMembers(c, pool) {
         ${dis ? `<span class="faint" style="font-size:12px">${other.id === c.id ? 'เป็นสมาชิกแล้ว' : `อยู่${esc(other.name)}`}</span>` : ''}
       </label>`;
     }).join('') || '<p class="muted c" style="padding:16px">ไม่พบนักเรียน</p>';
-    $('#amCount', m).textContent = `เลือก ${picked.size} คน · รับได้อีก ${left} คน`;
+    $('#amCount', m).textContent = `เลือก ${picked.size} คน รับได้อีก ${left} คน`;
   };
   openModal({
-    title: `เพิ่มสมาชิก · ${esc(c.name)}`,
+    title: `เพิ่มสมาชิก ${esc(c.name)}`,
     wide: true,
     body: `<div class="row wrap" style="gap:8px;margin-bottom:10px">
         <select class="select" id="amRoom"><option value="all">ทุกห้อง</option>${rooms.map((r) => `<option>${r}</option>`).join('')}</select>
@@ -231,7 +231,7 @@ function openAddMembers(c, pool) {
         const cb = e.target.closest('[data-pick]');
         if (!cb) return;
         if (cb.checked) picked.add(cb.dataset.pick); else picked.delete(cb.dataset.pick);
-        $('#amCount', m).textContent = `เลือก ${picked.size} คน · รับได้อีก ${left} คน`;
+        $('#amCount', m).textContent = `เลือก ${picked.size} คน รับได้อีก ${left} คน`;
       });
     },
   });
@@ -255,7 +255,7 @@ function openClubSubmit(c, pool) {
       { label: 'ส่งให้ฝ่ายวิชาการ', cls: 'btn-ok', icon: 'send', disabled: !ok, onClick: () => {
         Object.assign(c, { state: 'pending', submittedAt: Date.now(), decidedAt: null, decidedBy: null, returnReason: '' });
         persist(); renderClub(c.id);
-        toast('ส่งผลชุมนุมแล้ว · รอฝ่ายวิชาการตรวจ', 'ok');
+        toast('ส่งผลชุมนุมแล้ว รอฝ่ายวิชาการตรวจ', 'ok');
       } },
     ],
   });
@@ -324,8 +324,8 @@ function openClubForm(c) {
         <label style="font-size:14px;font-weight:600">จำนวนรับ (คน)<input class="input num" id="cfCap" inputmode="numeric" style="width:100%;margin-top:6px" value="${c?.capacity ?? 30}"></label>
       </div>
       <label style="display:block;margin-top:10px;font-size:14px;font-weight:600">ครูที่ปรึกษา
-        <select class="select" id="cfAdvisor" style="width:100%;margin-top:6px">${teachers.map((u) => `<option value="${u.id}" ${c?.advisorId === u.id ? 'selected' : ''}>${esc(u.name)} · ${esc(u.dept.replace('กลุ่มสาระการเรียนรู้', ''))}</option>`).join('')}</select></label>
-      ${c ? `<p class="faint" style="font-size:13px;margin:10px 0 0">มีสมาชิก ${c.members.length} คน ${c.members.length ? '· ลบชุมนุมได้เมื่อไม่มีสมาชิก' : ''}</p>` : ''}`,
+        <select class="select" id="cfAdvisor" style="width:100%;margin-top:6px">${teachers.map((u) => `<option value="${u.id}" ${c?.advisorId === u.id ? 'selected' : ''}>${esc(u.name)} ${esc(u.dept.replace('กลุ่มสาระการเรียนรู้', ''))}</option>`).join('')}</select></label>
+      ${c ? `<p class="faint" style="font-size:13px;margin:10px 0 0">มีสมาชิก ${c.members.length} คน ${c.members.length ? 'ลบชุมนุมได้เมื่อไม่มีสมาชิก' : ''}</p>` : ''}`,
     actions: [
       ...(c ? [{ label: 'ลบชุมนุม', cls: 'btn-danger', disabled: c.members.length > 0, onClick: () => {
         db.clubs = db.clubs.filter((x) => x.id !== c.id); persist(); renderAClubs(); toast('ลบชุมนุมแล้ว', 'ok');
@@ -349,7 +349,7 @@ function openClubForm(c) {
   });
 }
 
-/* ดูผลชุมนุม อ่านอย่างเดียว · อนุมัติ หรือตีกลับพร้อมเหตุผล (เหมือนผลการเรียนรายวิชา ADR 0001) */
+/* ดูผลชุมนุม อ่านอย่างเดียว อนุมัติ หรือตีกลับพร้อมเหตุผล (เหมือนผลการเรียนรายวิชา ADR 0001) */
 function openClubReview(c) {
   const pool = studentPool(c.term);
   const st = clubStats(c);
@@ -363,7 +363,7 @@ function openClubReview(c) {
   openModal({
     title: esc(c.name),
     wide: true,
-    body: `<div class="row wrap" style="gap:8px;margin-bottom:10px">${clubChip(c)}<span class="muted" style="font-size:13.5px">${CLUB_TYPES[c.type]} · ครูที่ปรึกษา ${esc(userById(c.advisorId)?.name || '—')} · ผ ${st.pass} · มผ ${st.fail} · ยังไม่ประเมิน ${st.n - st.done}</span>${self ? `<span class="chip chip-ms">${icon('eye')}ตรวจงานตนเอง</span>` : ''}</div>
+    body: `<div class="row wrap" style="gap:8px;margin-bottom:10px">${clubChip(c)}<span class="muted" style="font-size:13.5px">${CLUB_TYPES[c.type]} ครูที่ปรึกษา ${esc(userById(c.advisorId)?.name || '—')} ผ ${st.pass} มผ ${st.fail} ยังไม่ประเมิน ${st.n - st.done}</span>${self ? `<span class="chip chip-ms">${icon('eye')}ตรวจงานตนเอง</span>` : ''}</div>
       ${c.state === 'pending' ? `<label style="display:block;font-size:14px;font-weight:600;margin-bottom:10px">เหตุผล (ถ้าตีกลับ)<input class="input" id="crReason" style="width:100%;margin-top:6px" placeholder="เช่น มีนักเรียนได้ มผ แต่ไม่ได้ระบุเหตุผล"></label>` : ''}
       <div style="max-height:380px;overflow:auto"><table class="list">
         <thead><tr><th class="c">#</th><th>ชื่อ - สกุล</th><th class="c">ห้อง</th><th class="c">เวลาเข้าร่วม</th><th class="c">ผล</th><th>หมายเหตุ</th></tr></thead>

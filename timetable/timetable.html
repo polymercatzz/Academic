@@ -195,9 +195,9 @@
       const order = { published: 0, draft: 1, old: 2 };
       const list = TT.versionsOf(state.term).sort((a, b) => order[a.status] - order[b.status] || (a.createdAt < b.createdAt ? 1 : -1));
       const info = TT.termInfo(state.term);
-      $('versionsTitle').textContent = `${TT.termLabel(state.term)} · ${list.length} ฉบับ`;
+      $('versionsTitle').textContent = `${TT.termLabel(state.term)} ${list.length} ฉบับ`;
       const open = TT.unavailabilityOpen(state.term);
-      $('deadlineInfo').innerHTML = info ? `เปิดภาคเรียน ${TT.formatDate(info.start)} · วันปิดรับเวลาไม่ว่าง <span class="font-semibold ${open ? 'text-blue-700' : 'text-slate-700'}">${TT.formatDate(info.unavailDeadline)}</span> ${open ? `(เหลือ ${TT.daysLeft(info.unavailDeadline)} วัน)` : '(ปิดรับแล้ว)'}` : '';
+      $('deadlineInfo').innerHTML = info ? `เปิดภาคเรียน ${TT.formatDate(info.start)} วันปิดรับเวลาไม่ว่าง <span class="font-semibold ${open ? 'text-blue-700' : 'text-slate-700'}">${TT.formatDate(info.unavailDeadline)}</span> ${open ? `(เหลือ ${TT.daysLeft(info.unavailDeadline)} วัน)` : '(ปิดรับแล้ว)'}` : '';
       if (!list.length) {
         $('versionList').innerHTML = `<div class="rounded-2xl border border-dashed border-slate-300 bg-slate-50 p-6 text-center md:col-span-2 2xl:col-span-4"><p class="font-semibold text-slate-800">${TT.termLabel(state.term)} ยังไม่มีตารางสอน</p><p class="mt-1 text-sm text-slate-500">สร้างตารางสอนใหม่ โดยคัดลอกจากฉบับที่มีหรือสร้างใหม่ทั้งหมด</p><button data-act="wizard" type="button" class="${btnP} mt-4">สร้างตารางสอน</button></div>`;
         return;
@@ -213,7 +213,7 @@
           <div class="flex items-start justify-between gap-2"><button data-open-version="${v.id}" type="button" class="min-w-0 text-left"><p class="truncate font-semibold text-slate-900">${esc(v.name)}</p><p class="mt-0.5 text-xs text-slate-500">${base ? `คัดลอกจาก "${esc(base.name)}"` : 'สร้างใหม่ทั้งหมด'}</p></button><span class="shrink-0 rounded-full px-2.5 py-1 text-[11px] font-semibold ${st.cls}">${st.label}</span></div>
           <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${iss.errorCells ? 'bg-rose-500' : prog.pct === 100 ? 'bg-emerald-500' : 'bg-blue-600'}" style="width:${prog.pct}%"></div></div>
           <div class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-500"><span>จัดแล้ว ${prog.pct}%</span><span class="${iss.errorCells ? 'font-semibold text-rose-600' : ''}">Conflict ${iss.errorCells}</span><span>คำเตือน ${iss.warnCells}</span>${div ? `<span class="font-semibold text-violet-700">ล้าหลังฉบับเผยแพร่ ${div}</span>` : ''}</div>
-          <p class="mt-2 text-[11px] text-slate-400">${v.status === 'draft' ? `สร้าง ${TT.formatDateTime(v.createdAt)} · ${esc(v.createdBy)}` : `เผยแพร่ ${TT.formatDateTime(v.publishedAt)}`}</p>
+          <p class="mt-2 text-[11px] text-slate-400">${v.status === 'draft' ? `สร้าง ${TT.formatDateTime(v.createdAt)} ${esc(v.createdBy)}` : `เผยแพร่ ${TT.formatDateTime(v.publishedAt)}`}</p>
           <div class="mt-3 flex flex-wrap gap-2 border-t border-slate-100 pt-3">
             ${active ? '<span class="rounded-lg bg-blue-600 px-2.5 py-1 text-xs font-semibold text-white">กำลังเปิด</span>' : `<button data-open-version="${v.id}" type="button" class="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">เปิด</button>`}
             <button data-copy-version="${v.id}" type="button" class="rounded-lg border border-slate-200 px-2.5 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-50">คัดลอกเป็นฉบับร่าง</button>
@@ -246,7 +246,7 @@
           <div class="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between lg:p-6">
             <div class="min-w-0">
               <div class="flex flex-wrap items-center gap-2"><h2 class="text-xl font-semibold text-slate-950">${esc(v.name)}</h2><span class="rounded-full px-2.5 py-1 text-xs font-semibold ${st.cls}">${st.label}</span></div>
-              <p class="mt-1 text-sm text-slate-500">${v.timeStructures.map((ts) => `${esc(ts.name)}: ${ts.start}–${TT.fmt(TT.dayEnd(ts))} · ${ts.periods} คาบ × ${ts.periodMin} นาที`).join(' · ')}</p>
+              <p class="mt-1 text-sm text-slate-500">${v.timeStructures.map((ts) => `${esc(ts.name)}: ${ts.start}–${TT.fmt(TT.dayEnd(ts))} ${ts.periods} คาบ × ${ts.periodMin} นาที`).join(', ')}</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
               ${editable() ? `
@@ -261,7 +261,7 @@
             </div>
           </div>
           ${v.status !== 'draft' ? `<div class="mx-5 mb-5 flex gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600 lg:mx-6">${icon('lock', 'h-5 w-5 shrink-0 text-slate-400')}<span>${v.status === 'published' ? 'ฉบับเผยแพร่แก้ไขไม่ได้ ครูกำลังใช้ฉบับนี้ หากต้องการเปลี่ยนให้คัดลอกเป็นฉบับร่าง แล้วเผยแพร่ใหม่ หรืออนุมัติคำร้องของครูที่หน้าคำขออนุมัติ' : 'ฉบับเก่าถูกแทนที่แล้ว ใช้ดูย้อนหลังเท่านั้น'}</span></div>` : ''}
-          ${div.length ? `<div class="mx-5 mb-5 flex flex-col gap-3 rounded-2xl border border-violet-200 bg-violet-50 p-4 lg:mx-6 lg:flex-row lg:items-center lg:justify-between"><div class="flex gap-3">${icon('info', 'h-5 w-5 shrink-0 text-violet-600')}<div><p class="text-sm font-semibold text-violet-900">ฉบับเผยแพร่มีการเปลี่ยนแปลง ${div.length} รายการหลังคัดลอกฉบับร่างนี้</p><p class="mt-1 text-xs text-violet-800/80">${div.map((r) => `${esc(TT.teacherName(r.teacherId))}: ${TT.REQUEST_TYPES[r.type]} ${TT.className(r.classId)} ${TT.slotLabel(r.slot)}`).join(' · ')}</p></div></div><button data-act="merge" type="button" class="shrink-0 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700">นำมารวม</button></div>` : ''}
+          ${div.length ? `<div class="mx-5 mb-5 flex flex-col gap-3 rounded-2xl border border-violet-200 bg-violet-50 p-4 lg:mx-6 lg:flex-row lg:items-center lg:justify-between"><div class="flex gap-3">${icon('info', 'h-5 w-5 shrink-0 text-violet-600')}<div><p class="text-sm font-semibold text-violet-900">ฉบับเผยแพร่มีการเปลี่ยนแปลง ${div.length} รายการหลังคัดลอกฉบับร่างนี้</p><p class="mt-1 text-xs text-violet-800/80">${div.map((r) => `${esc(TT.teacherName(r.teacherId))}: ${TT.REQUEST_TYPES[r.type]} ${TT.className(r.classId)} ${TT.slotLabel(r.slot)}`).join(', ')}</p></div></div><button data-act="merge" type="button" class="shrink-0 rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-700">นำมารวม</button></div>` : ''}
         </section>
         <section class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">${cards.map((c) => `<article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"><div class="flex items-start justify-between gap-3"><div class="min-w-0"><p class="text-sm font-semibold text-slate-500">${c.label}</p><p class="mt-2 text-3xl font-semibold tracking-tight text-slate-950">${c.value}</p><p class="mt-1 text-xs text-slate-400">${c.hint}</p></div><span class="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${c.color}">${icon(c.ic, 'h-5 w-5')}</span></div>${c.bar !== undefined ? `<div class="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full bg-blue-600" style="width:${c.bar}%"></div></div>` : ''}</article>`).join('')}</section>
         ${ready ? readinessCard(ready) : ''}
@@ -287,7 +287,7 @@
     const SOURCE_LABEL = { curriculum: ['หน้าจัดการหลักสูตร', 'bg-blue-50 text-blue-700'], external: ['ระบบงานบุคคล / อาคารสถานที่', 'bg-slate-100 text-slate-600'], timetable: ['ตารางสอนฉบับนี้', 'bg-emerald-50 text-emerald-700'] };
     function readinessList(r) {
       const style = { pass: ['bg-emerald-50 text-emerald-600', 'check'], fail: ['bg-rose-50 text-rose-600', 'x'], warn: ['bg-amber-50 text-amber-600', 'warn'], info: ['bg-blue-50 text-blue-600', 'info'] };
-      return `<div class="mb-4 flex flex-wrap items-center justify-between gap-3"><p class="text-sm text-slate-500">แก้ข้อมูลที่ต้นทางแล้วกด "ตรวจใหม่" · ข้อมูลของทีมอื่นแก้ในระบบนี้ไม่ได้ ให้คัดลอกรายการไปส่งต่อ</p><button data-act="recheck" type="button" class="${btn2}">${icon('swap')}ตรวจใหม่</button></div>
+      return `<div class="mb-4 flex flex-wrap items-center justify-between gap-3"><p class="text-sm text-slate-500">แก้ข้อมูลที่ต้นทางแล้วกด "ตรวจใหม่" ข้อมูลของทีมอื่นแก้ในระบบนี้ไม่ได้ ให้คัดลอกรายการไปส่งต่อ</p><button data-act="recheck" type="button" class="${btn2}">${icon('swap')}ตรวจใหม่</button></div>
         <div class="grid gap-3 lg:grid-cols-2">${r.items.map((i) => `<div class="rounded-2xl border border-slate-200 p-4">
           <div class="flex gap-3"><span class="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${style[i.status][0]}">${icon(style[i.status][1])}</span><div class="min-w-0 flex-1"><div class="flex flex-wrap items-center gap-2"><p class="text-sm font-semibold text-slate-800">${esc(i.title)}</p><span class="rounded-full px-2 py-0.5 text-[10px] font-semibold ${SOURCE_LABEL[i.source][1]}">${SOURCE_LABEL[i.source][0]}</span></div><p class="mt-1 text-xs leading-5 text-slate-500">${esc(i.detail)}</p></div></div>
           ${i.rows.length ? `<details class="mt-3"><summary class="cursor-pointer text-xs font-semibold text-blue-700">ดู ${i.rows.length} รายการ</summary><div class="mt-2 max-h-56 space-y-1.5 overflow-y-auto pr-1 tt-scroll">${i.rows.map((row) => `<div class="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2 text-xs"><span class="min-w-0 text-slate-700">${esc(row.text)}</span>${row.link ? `<a href="${row.link}" target="_blank" rel="noopener" data-fix-link="${esc(row.text)}" class="inline-flex shrink-0 items-center gap-1 rounded-lg bg-white px-2 py-1 font-semibold text-blue-700 shadow-sm hover:bg-blue-50">ไปแก้ไข ${icon('external', 'h-3 w-3')}</a>` : row.external ? '<span class="shrink-0 text-[10px] font-semibold text-slate-400">ต้องแก้ที่ระบบต้นทาง</span>' : ''}</div>`).join('')}</div>${i.source === 'external' ? `<button data-copy-rows="${i.id}" type="button" class="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900">${icon('copy', 'h-3.5 w-3.5')}คัดลอกรายการไปส่งต่อ</button>` : ''}</details>` : ''}
@@ -320,7 +320,7 @@
               <button id="teacherComboToggle" type="button" class="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-700" aria-label="เปิดรายการครู"><svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor"><path d="m7.41 8.59 4.59 4.58 4.59-4.58L18 10l-6 6-6-6 1.41-1.41Z"/></svg></button>
               <div id="teacherComboList" role="listbox" class="absolute left-0 right-0 top-full z-30 mt-1 hidden max-h-96 overflow-y-auto rounded-2xl border border-slate-200 bg-white py-1 shadow-xl tt-scroll"></div>
             </div>
-            <span id="teacherCount" class="text-xs text-slate-400">${list.length} คน · ครูที่ได้รับการมอบหมายสอนในภาคเรียนนี้</span>
+            <span id="teacherCount" class="text-xs text-slate-400">${list.length} คน ครูที่ได้รับการมอบหมายสอนในภาคเรียนนี้</span>
           </div>
           <div class="mt-3 flex gap-2 overflow-x-auto pb-1 tt-scroll">${list.map((x) => {
             const p = TT.teacherProgress(v, x.id); const errs = teacherErrorCount(v, x.id, iss); const active = x.id === tid;
@@ -342,8 +342,8 @@
         </div>
         <div class="grid min-[1760px]:grid-cols-[minmax(0,1fr)_300px]">
           <div class="min-w-0 p-4 lg:p-5">
-            <div class="overflow-x-auto tt-scroll">${TT.timeline({ id: 'teacherTimeline', days, range: TT.versionRange(v), bands: TT.teacherBands(v, tid), blocks: blocks.map((b) => ({ ...b, attrs: `data-entry="${b.cid}|${b.slot}"`, html: TT.entryCard({ code: b.entry.code, title: `${TT.className(b.cid)} · ${b.entry.code}`, line1: `${TT.roomShort(b.entry.room)} · ${TT.fmt(b.start)}`, line2: b.entry.teachers.length > 1 ? `ร่วมสอน: ${b.entry.teachers.filter((x) => x !== tid).map(TT.teacherShort).join(', ')}` : '', issues: iss.byCell.get(`${b.cid}|${b.slot}`) || [], locked: b.entry.locked, draggable: editable() && !b.entry.locked, dragAttrs: 'data-drag="entry"', extraClass: 'cursor-pointer' }) })), emptyClickAttr: editable() ? 'data-row-add="1"' : '' })}</div>
-            <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400"><span>แกนเวลาจริง: ม.ต้น และ ม.ปลาย มีเวลาคาบต่างกัน ระบบตรวจซ้อนจากเวลาที่ทับกัน</span>${editable() ? '<span>ลากจากรายการรอจัดมาวางบนช่องคาบของห้องนั้น · ลากคาบกลับไปที่รายการเพื่อนำออก · คลิกที่ว่างเพื่อเพิ่มคาบ</span>' : '<span>ฉบับนี้ดูได้อย่างเดียว</span>'}</p>
+            <div class="overflow-x-auto tt-scroll">${TT.timeline({ id: 'teacherTimeline', days, range: TT.versionRange(v), bands: TT.teacherBands(v, tid), blocks: blocks.map((b) => ({ ...b, attrs: `data-entry="${b.cid}|${b.slot}"`, html: TT.entryCard({ code: b.entry.code, title: `${TT.className(b.cid)} ${b.entry.code}`, line1: `${TT.roomShort(b.entry.room)} ${TT.fmt(b.start)}`, line2: b.entry.teachers.length > 1 ? `ร่วมสอน: ${b.entry.teachers.filter((x) => x !== tid).map(TT.teacherShort).join(', ')}` : '', issues: iss.byCell.get(`${b.cid}|${b.slot}`) || [], locked: b.entry.locked, draggable: editable() && !b.entry.locked, dragAttrs: 'data-drag="entry"', extraClass: 'cursor-pointer' }) })), emptyClickAttr: editable() ? 'data-row-add="1"' : '' })}</div>
+            <p class="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-400"><span>แกนเวลาจริง: ม.ต้น และ ม.ปลาย มีเวลาคาบต่างกัน ระบบตรวจซ้อนจากเวลาที่ทับกัน</span>${editable() ? '<span>ลากจากรายการรอจัดมาวางบนช่องคาบของห้องนั้น ลากคาบกลับไปที่รายการเพื่อนำออก คลิกที่ว่างเพื่อเพิ่มคาบ</span>' : '<span>ฉบับนี้ดูได้อย่างเดียว</span>'}</p>
           </div>
           <aside class="grid gap-5 border-t border-slate-100 p-4 lg:grid-cols-[minmax(0,1fr)_320px] lg:p-5 min-[1760px]:block min-[1760px]:border-l min-[1760px]:border-t-0">
             ${poolHtml(v, tid, prog)}
@@ -353,7 +353,7 @@
     }
     function poolHtml(v, tid, prog) {
       const done = prog.required > 0 && !prog.remaining.length;
-      return `<div><div class="flex items-center justify-between gap-3"><div><p class="font-semibold text-slate-900">รายการรอจัด</p><p class="text-xs text-slate-500">จากการมอบหมายสอน · จัดแล้ว ${prog.placed}/${prog.required} คาบ</p></div><span class="rounded-full ${done ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'} px-2.5 py-1 text-xs font-semibold">${done ? 'ครบแล้ว' : `${prog.required - prog.placed} คาบ`}</span></div>
+      return `<div><div class="flex items-center justify-between gap-3"><div><p class="font-semibold text-slate-900">รายการรอจัด</p><p class="text-xs text-slate-500">จากการมอบหมายสอน จัดแล้ว ${prog.placed}/${prog.required} คาบ</p></div><span class="rounded-full ${done ? 'bg-emerald-50 text-emerald-700' : 'bg-blue-50 text-blue-700'} px-2.5 py-1 text-xs font-semibold">${done ? 'ครบแล้ว' : `${prog.required - prog.placed} คาบ`}</span></div>
         <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${done ? 'bg-emerald-500' : 'bg-blue-600'}" style="width:${prog.pct}%"></div></div>
         <div id="poolDrop" class="pool-drop mt-4 grid gap-2 rounded-2xl border-2 border-dashed border-transparent transition sm:grid-cols-2 xl:grid-cols-3 min-[1760px]:grid-cols-1">
           ${!prog.required ? '<div class="rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">ครูคนนี้ยังไม่ได้รับมอบหมายสอนในภาคเรียนนี้</div>' : done ? '<div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-4 text-sm text-emerald-800"><p class="font-semibold">จัดครบทุกรายวิชาแล้ว</p><p class="mt-1 text-xs text-emerald-700/80">ลากคาบมาวางที่นี่เพื่อนำออก</p></div>' : prog.remaining.map((s) => {
@@ -361,7 +361,7 @@
             const rt = TT.subjectCond(v, s.code).roomType;
             return `<div ${editable() ? `draggable="true" data-drag="pool" data-cid="${s.classId}" data-code="${s.code}"` : ''} class="flex items-center gap-3 rounded-2xl border ${g.card} p-3 transition ${editable() ? 'cursor-grab hover:shadow-md' : ''}">
               <span class="text-slate-400">${icon('grip')}</span>
-              <div class="min-w-0 flex-1"><p class="text-xs font-bold ${g.text}">${TT.className(s.classId)} · ${s.code}</p><p class="truncate text-sm font-semibold text-slate-800">${esc(s.subject.name)}</p><p class="truncate text-xs text-slate-500">${TT.tsOfClass(v, s.classId).name}${rt ? ` · ${TT.ROOM_TYPES[rt]}` : ''}${s.teachers.length > 1 ? ' · ร่วมสอน' : ''}</p></div>
+              <div class="min-w-0 flex-1"><p class="text-xs font-bold ${g.text}">${TT.className(s.classId)} ${s.code}</p><p class="truncate text-sm font-semibold text-slate-800">${esc(s.subject.name)}</p><p class="truncate text-xs text-slate-500">${TT.tsOfClass(v, s.classId).name}${rt ? ` ${TT.ROOM_TYPES[rt]}` : ''}${s.teachers.length > 1 ? ' ร่วมสอน' : ''}</p></div>
               <span class="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs font-bold text-slate-700 shadow-sm">×${s.remain}</span></div>`;
           }).join('')}
         </div></div>`;
@@ -413,7 +413,7 @@
         z.className = `tt-zone absolute inset-y-1 z-20 rounded-xl tt-drop-${r.level}`;
         z.style.left = `${pct(iv.start)}%`; z.style.width = `${pct(iv.end) - pct(iv.start)}%`;
         z.dataset.zone = slot; z.dataset.level = r.level; z.title = r.reason;
-        z.innerHTML = `<span class="pointer-events-none absolute left-1 right-1 top-1 truncate text-center text-[10px] font-bold text-slate-700">${TT.className(cid)} คาบ ${slot.split('-')[1]}${r.swap ? ' · สลับ' : ''}</span>`;
+        z.innerHTML = `<span class="pointer-events-none absolute left-1 right-1 top-1 truncate text-center text-[10px] font-bold text-slate-700">${TT.className(cid)} คาบ ${slot.split('-')[1]}${r.swap ? ' สลับ' : ''}</span>`;
         row.appendChild(z);
       });
     }
@@ -445,7 +445,7 @@
         if (ev.target.closest('#poolDrop') && d.type === 'entry') {
           state.drag = null; clearZones();
           const e = v.entries[d.cid][d.slot];
-          commit('นำคาบออก', `${TT.teachersLabel(e.teachers)} · ${TT.className(d.cid)} ${e.code} · ${TT.slotLabel(d.slot)}`, (vv) => { delete vv.entries[d.cid][d.slot]; });
+          commit('นำคาบออก', `${TT.teachersLabel(e.teachers)} ${TT.className(d.cid)} ${e.code} ${TT.slotLabel(d.slot)}`, (vv) => { delete vv.entries[d.cid][d.slot]; });
           TT.toast('นำคาบออกแล้ว', `${TT.className(d.cid)} ${e.code} กลับไปอยู่ในรายการรอจัด`);
           return;
         }
@@ -455,8 +455,8 @@
         const r = evalZone(slot); const cand = dragCand(slot);
         state.drag = null; clearZones();
         if (r.level === 'blocked') { TT.toast('วางไม่ได้', r.reason, 'error'); return; }
-        if (d.type === 'pool') commit('เพิ่มคาบ', `${TT.teachersLabel(cand.teachers)} · ${TT.className(d.cid)} ${cand.code} → ${TT.slotLabel(slot)}`, (vv) => { vv.entries[d.cid][slot] = { ...cand, src: 'manual' }; });
-        else commit(v.entries[d.cid][slot] ? 'สลับคาบ' : 'ย้ายคาบ', `${TT.teachersLabel(cand.teachers)} · ${TT.className(d.cid)} ${cand.code} ${TT.slotLabel(d.slot)} → ${TT.slotLabel(slot)}`, (vv) => {
+        if (d.type === 'pool') commit('เพิ่มคาบ', `${TT.teachersLabel(cand.teachers)} ${TT.className(d.cid)} ${cand.code} → ${TT.slotLabel(slot)}`, (vv) => { vv.entries[d.cid][slot] = { ...cand, src: 'manual' }; });
+        else commit(v.entries[d.cid][slot] ? 'สลับคาบ' : 'ย้ายคาบ', `${TT.teachersLabel(cand.teachers)} ${TT.className(d.cid)} ${cand.code} ${TT.slotLabel(d.slot)} → ${TT.slotLabel(slot)}`, (vv) => {
           const a = vv.entries[d.cid][d.slot]; const b = vv.entries[d.cid][slot];
           vv.entries[d.cid][slot] = { ...a, src: 'manual' };
           if (b) vv.entries[d.cid][d.slot] = { ...b, src: 'manual' }; else delete vv.entries[d.cid][d.slot];
@@ -464,7 +464,7 @@
         const iss = TT.computeIssues(ver()).byCell.get(`${d.cid}|${slot}`) || [];
         if (TT.worstSev(iss) === 'error') TT.toast('วางแล้ว แต่เป็น Conflict', iss[0].msg, 'error');
         else if (iss.length) TT.toast('วางแล้ว มีคำเตือน', iss[0].msg, 'warn');
-        else TT.toast('บันทึกแล้ว', `${TT.className(d.cid)} · ${TT.slotLabel(slot)} ${TT.slotTimeLabel(v, d.cid, slot)}`);
+        else TT.toast('บันทึกแล้ว', `${TT.className(d.cid)} ${TT.slotLabel(slot)} ${TT.slotTimeLabel(v, d.cid, slot)}`);
       });
     }
 
@@ -514,9 +514,9 @@
       const e = v.entries[cid][st.slot];
       const srcLabel = { auto: 'จัดอัตโนมัติ', manual: 'จัดเอง', import: 'นำเข้าจาก Excel', copy: 'คัดลอก', request: 'จากคำร้องครู' }[e?.src] || '';
       $('drawerEyebrow').textContent = st.mode === 'add' ? 'เพิ่มคาบสอน' : st.mode === 'view' ? 'รายละเอียดคาบ' : 'แก้ไขคาบสอน';
-      $('drawerTitle').textContent = `${TT.className(cid)} · ${TT.slotLabel(st.mode === 'add' ? target : st.slot)}`;
-      $('drawerSubtitle').textContent = `${TT.slotTimeLabel(v, cid, st.mode === 'add' ? target : st.slot)} น. · ${TT.tsOfClass(v, cid).name} · ${v.name}`;
-      const card = `<div class="rounded-2xl border ${g.card} p-5"><div class="flex items-start justify-between gap-3"><div><p class="text-xs font-bold ${g.text}">${form.code} · ${esc(g.name)}</p><p class="mt-1 text-lg font-semibold text-slate-900">${esc(subj?.name || form.code)}</p></div>${srcLabel && st.mode !== 'add' ? `<span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">${srcLabel}</span>` : ''}</div>
+      $('drawerTitle').textContent = `${TT.className(cid)} ${TT.slotLabel(st.mode === 'add' ? target : st.slot)}`;
+      $('drawerSubtitle').textContent = `${TT.slotTimeLabel(v, cid, st.mode === 'add' ? target : st.slot)} น. ${TT.tsOfClass(v, cid).name} ${v.name}`;
+      const card = `<div class="rounded-2xl border ${g.card} p-5"><div class="flex items-start justify-between gap-3"><div><p class="text-xs font-bold ${g.text}">${form.code} ${esc(g.name)}</p><p class="mt-1 text-lg font-semibold text-slate-900">${esc(subj?.name || form.code)}</p></div>${srcLabel && st.mode !== 'add' ? `<span class="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-600 shadow-sm">${srcLabel}</span>` : ''}</div>
         <dl class="mt-4 grid grid-cols-2 gap-3 text-sm"><div><dt class="text-xs text-slate-500">ห้องเรียน (นักเรียน)</dt><dd class="font-semibold text-slate-800">${TT.className(cid)}</dd></div><div><dt class="text-xs text-slate-500">ครูผู้สอน</dt><dd class="font-semibold text-slate-800">${esc(form.teachers.map(TT.teacherName).join(', ') || 'ยังไม่กำหนด')}</dd></div><div><dt class="text-xs text-slate-500">สถานที่</dt><dd class="font-semibold text-slate-800">${esc(TT.room(form.room)?.name || '-')}</dd></div><div><dt class="text-xs text-slate-500">คาบต่อสัปดาห์</dt><dd class="font-semibold text-slate-800">${TT.countCode(v.entries[cid], form.code)}/${subj?.hours ?? '-'} คาบ</dd></div></dl></div>`;
       if (st.mode === 'view') {
         const iss = TT.computeIssues(v).byCell.get(`${cid}|${st.slot}`) || [];
@@ -531,24 +531,24 @@
       const ts = TT.tsOfClass(v, cid);
       const pts = TT.periodTimes(ts);
       const assigned = TT.loadOfClass(v.term, cid).find((l) => l.code === form.code)?.teachers || [];
-      const pairOptions = st.mode === 'add' ? TT.loadOfTeacher(v.term, state.teacherId).map((l) => `<option value="${l.classId}|${l.code}" ${l.classId === cid && l.code === form.code ? 'selected' : ''}>${TT.className(l.classId)} · ${l.code} ${esc(l.subject.name)} (${TT.countCode(v.entries[l.classId], l.code)}/${l.ppw})</option>`).join('') : '';
+      const pairOptions = st.mode === 'add' ? TT.loadOfTeacher(v.term, state.teacherId).map((l) => `<option value="${l.classId}|${l.code}" ${l.classId === cid && l.code === form.code ? 'selected' : ''}>${TT.className(l.classId)} ${l.code} ${esc(l.subject.name)} (${TT.countCode(v.entries[l.classId], l.code)}/${l.ppw})</option>`).join('') : '';
       const suggestions = st.mode === 'edit' ? TT.suggestMoves(v, cid, st.slot, 8) : TT.classSlots(v, cid).filter((k) => !v.entries[cid][k] && !TT.classActivityAt(v, cid, k)).map((k) => ({ slot: k, issues: TT.checkPlacement(v, cid, k, form) })).filter((x) => !x.issues.some((i) => i.sev === 'error')).slice(0, 8);
       $('drawerBody').innerHTML = `${card}
         <div class="space-y-4">
-          ${st.mode === 'add' ? `<label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ห้อง · รายวิชา (การมอบหมายสอนของ${esc(TT.teacherShort(state.teacherId))})</span><select data-f="pair" class="${sel}">${pairOptions}</select></label>` : ''}
+          ${st.mode === 'add' ? `<label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ห้อง รายวิชา (การมอบหมายสอนของ${esc(TT.teacherShort(state.teacherId))})</span><select data-f="pair" class="${sel}">${pairOptions}</select></label>` : ''}
           <label class="block"><span class="mb-2 flex items-center justify-between text-sm font-semibold text-slate-700">ครูผู้สอน ${form.teachers.join() !== assigned.join() ? '<span class="rounded-full bg-violet-50 px-2 py-0.5 text-[11px] text-violet-700">ไม่ตรงการมอบหมายสอน</span>' : ''}</span>
             <select data-f="teacher0" class="${sel}">${db().external.teachers.filter((t) => t.group === TT.subject(form.code)?.group || form.teachers.includes(t.id)).map((t) => `<option value="${t.id}" ${t.id === form.teachers[0] ? 'selected' : ''}>${esc(t.name)}</option>`).join('')}</select>
             ${form.teachers.length > 1 ? `<span class="mt-1 block text-xs text-slate-500">ครูร่วมสอน: ${esc(form.teachers.slice(1).map(TT.teacherName).join(', '))}</span>` : ''}</label>
           <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">สถานที่เรียน</span><select data-f="room" class="${sel}">${Object.entries(TT.ROOM_TYPES).map(([k, n]) => `<optgroup label="${n}">${db().external.rooms.filter((r) => r.type === k && (k !== 'regular' || r.id === TT.cls(cid).homeroom || r.id === form.room || r.id === 'LIB')).map((r) => `<option value="${r.id}" ${r.id === form.room ? 'selected' : ''}>${esc(r.name)}</option>`).join('')}</optgroup>`).join('')}</select></label>
           <div class="grid grid-cols-2 gap-3">
             <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">วัน</span><select data-f="d" class="${sel}">${ts.days.map((d) => `<option value="${d}" ${d === st.d ? 'selected' : ''}>${TT.DAYS[d].name}</option>`).join('')}</select></label>
-            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">คาบ (${esc(ts.name)})</span><select data-f="p" class="${sel}">${pts.map((p) => `<option value="${p.no}" ${p.no === st.p ? 'selected' : ''}>คาบ ${p.no} · ${TT.fmt(p.start)}–${TT.fmt(p.end)}</option>`).join('')}</select></label>
+            <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">คาบ (${esc(ts.name)})</span><select data-f="p" class="${sel}">${pts.map((p) => `<option value="${p.no}" ${p.no === st.p ? 'selected' : ''}>คาบ ${p.no} ${TT.fmt(p.start)}–${TT.fmt(p.end)}</option>`).join('')}</select></label>
           </div>
           ${st.mode === 'edit' && target !== st.slot && v.entries[cid][target] && !block ? `<p class="rounded-xl bg-blue-50 px-3 py-2 text-xs font-medium text-blue-800">ช่องปลายทางมี ${v.entries[cid][target].code} ของครูคนเดียวกัน ระบบจะสลับให้</p>` : ''}
           <label class="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 p-4"><span><span class="block text-sm font-semibold text-slate-800">ล็อกคาบนี้</span><span class="block text-xs text-slate-500">การจัดอัตโนมัติจะไม่ย้ายหรือลบคาบนี้</span></span><input data-f="locked" type="checkbox" ${form.locked ? 'checked' : ''} class="h-5 w-5 rounded text-blue-600"></label>
         </div>
         <div><p class="text-sm font-semibold text-slate-800">ผลตรวจสอบแบบ Real-time</p><div class="mt-2 space-y-2">${issueListHtml(iss)}</div></div>
-        <div><p class="text-sm font-semibold text-slate-800">ช่องเวลาที่แนะนำ (ไม่เกิด Conflict)</p><div class="mt-2 flex flex-wrap gap-2">${suggestions.length ? suggestions.map((x) => `<button data-suggest="${x.slot}" type="button" class="rounded-xl border ${x.issues.length ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'} px-3 py-1.5 text-xs font-semibold hover:brightness-95">${TT.DAYS[TT.parseSlot(x.slot)[0]].short} คาบ ${TT.parseSlot(x.slot)[1]} · ${TT.slotTimeLabel(v, cid, x.slot)}</button>`).join('') : '<span class="text-xs text-slate-500">ไม่มีช่องว่างที่ไม่เกิด Conflict</span>'}</div></div>`;
+        <div><p class="text-sm font-semibold text-slate-800">ช่องเวลาที่แนะนำ (ไม่เกิด Conflict)</p><div class="mt-2 flex flex-wrap gap-2">${suggestions.length ? suggestions.map((x) => `<button data-suggest="${x.slot}" type="button" class="rounded-xl border ${x.issues.length ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-emerald-200 bg-emerald-50 text-emerald-700'} px-3 py-1.5 text-xs font-semibold hover:brightness-95">${TT.DAYS[TT.parseSlot(x.slot)[0]].short} คาบ ${TT.parseSlot(x.slot)[1]} ${TT.slotTimeLabel(v, cid, x.slot)}</button>`).join('') : '<span class="text-xs text-slate-500">ไม่มีช่องว่างที่ไม่เกิด Conflict</span>'}</div></div>`;
       $('drawerFooter').innerHTML = `<div>${st.mode === 'edit' ? '<button id="drawerDelete" type="button" class="inline-flex items-center gap-2 rounded-xl border border-rose-200 px-4 py-2.5 text-sm font-semibold text-rose-600 hover:bg-rose-50">ลบคาบ</button>' : ''}</div><div class="flex gap-3"><button data-close-drawer type="button" class="${btnG}">ยกเลิก</button><button id="drawerSave" type="button" ${block ? 'disabled' : ''} class="${btnP}">${st.mode === 'add' ? 'เพิ่มคาบ' : 'บันทึก'}</button></div>`;
       $('drawerBody').querySelectorAll('[data-f]').forEach((el) => el.addEventListener('change', () => {
         const f = el.dataset.f;
@@ -576,17 +576,17 @@
         const entry = { code: s2.form.code, teachers: s2.form.teachers, room: s2.form.room, src: 'manual', ...(s2.form.locked ? { locked: true } : {}) };
         const moved = s2.mode === 'edit' && tgt !== s2.slot;
         closeDrawer();
-        commit(s2.mode === 'add' ? 'เพิ่มคาบ' : moved ? 'ย้ายคาบ' : 'แก้ไขคาบ', `${TT.teachersLabel(entry.teachers)} · ${TT.className(s2.cid)} ${entry.code} · ${moved ? `${TT.slotLabel(s2.slot)} → ` : ''}${TT.slotLabel(tgt)}`, (vv) => {
+        commit(s2.mode === 'add' ? 'เพิ่มคาบ' : moved ? 'ย้ายคาบ' : 'แก้ไขคาบ', `${TT.teachersLabel(entry.teachers)} ${TT.className(s2.cid)} ${entry.code} ${moved ? `${TT.slotLabel(s2.slot)} → ` : ''}${TT.slotLabel(tgt)}`, (vv) => {
           if (moved) { const other = vv.entries[s2.cid][tgt]; if (other) vv.entries[s2.cid][s2.slot] = { ...other, src: 'manual' }; else delete vv.entries[s2.cid][s2.slot]; }
           vv.entries[s2.cid][tgt] = entry;
         });
         const after = TT.computeIssues(ver()).byCell.get(`${s2.cid}|${tgt}`) || [];
-        if (TT.worstSev(after) === 'error') TT.toast('บันทึกแล้ว แต่เป็น Conflict', after[0].msg, 'error'); else TT.toast('บันทึกคาบสอนแล้ว', `${TT.className(s2.cid)} ${entry.code} · ${TT.slotLabel(tgt)}`);
+        if (TT.worstSev(after) === 'error') TT.toast('บันทึกแล้ว แต่เป็น Conflict', after[0].msg, 'error'); else TT.toast('บันทึกคาบสอนแล้ว', `${TT.className(s2.cid)} ${entry.code} ${TT.slotLabel(tgt)}`);
       };
       if ($('drawerDelete')) $('drawerDelete').onclick = () => {
         const ent = v.entries[cid][st.slot];
         closeDrawer();
-        commit('ลบคาบ', `${TT.teachersLabel(ent.teachers)} · ${TT.className(cid)} ${ent.code} · ${TT.slotLabel(st.slot)}`, (vv) => { delete vv.entries[cid][st.slot]; });
+        commit('ลบคาบ', `${TT.teachersLabel(ent.teachers)} ${TT.className(cid)} ${ent.code} ${TT.slotLabel(st.slot)}`, (vv) => { delete vv.entries[cid][st.slot]; });
         TT.toast('ลบคาบแล้ว', 'คาบกลับไปอยู่ในรายการรอจัด');
       };
     }
@@ -600,7 +600,7 @@
       const iss = TT.computeIssues(v);
       const prog = TT.classProgress(v, cid);
       $('tabBody').innerHTML = `
-        <div class="border-b border-slate-100 px-5 py-4 lg:px-6"><div class="flex flex-col gap-3 lg:flex-row lg:items-center"><select id="levelSelect" class="${selSm}">${[1, 2, 3, 4, 5, 6].map((l) => `<option value="${l}" ${l === state.level ? 'selected' : ''}>มัธยมศึกษาปีที่ ${l} (${TT.stageOfLevel(v, l)?.name || '-'})</option>`).join('')}</select><span class="inline-flex w-fit items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">${icon('info', 'h-3.5 w-3.5')}แสดงผลจากตารางสอนครู · ดูได้อย่างเดียว</span></div>
+        <div class="border-b border-slate-100 px-5 py-4 lg:px-6"><div class="flex flex-col gap-3 lg:flex-row lg:items-center"><select id="levelSelect" class="${selSm}">${[1, 2, 3, 4, 5, 6].map((l) => `<option value="${l}" ${l === state.level ? 'selected' : ''}>มัธยมศึกษาปีที่ ${l} (${TT.stageOfLevel(v, l)?.name || '-'})</option>`).join('')}</select><span class="inline-flex w-fit items-center gap-2 rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">${icon('info', 'h-3.5 w-3.5')}แสดงผลจากตารางสอนครู ดูได้อย่างเดียว</span></div>
           <div class="mt-3 flex gap-2 overflow-x-auto pb-1 tt-scroll">${classes.map((x) => { const p = TT.classProgress(v, x.id); const errs = new Set(iss.list.filter((i) => i.cid === x.id && i.sev === 'error').map((i) => i.slot)).size; const active = x.id === cid; return `<button data-class="${x.id}" type="button" class="min-w-[140px] shrink-0 rounded-2xl border px-4 py-3 text-left transition ${active ? 'border-blue-500 bg-blue-50 ring-1 ring-blue-500' : 'border-slate-200 bg-white hover:bg-slate-50'}"><span class="flex justify-between gap-2"><span class="font-semibold ${active ? 'text-blue-700' : 'text-slate-900'}">${x.name}</span><span class="text-xs font-semibold text-slate-500">${p.pct}%</span></span><span class="mt-2 block h-1.5 overflow-hidden rounded-full bg-slate-100"><span class="block h-full rounded-full ${errs ? 'bg-rose-500' : p.pct === 100 ? 'bg-emerald-500' : 'bg-blue-500'}" style="width:${p.pct}%"></span></span><span class="mt-1.5 block text-xs font-medium ${errs ? 'text-rose-600' : 'text-slate-500'}">${errs ? `${errs} Conflict` : p.placed === 0 ? 'ยังไม่มีคาบ' : p.pct === 100 ? 'ครบทุกวิชา' : `ขาด ${p.required - p.placed} คาบ`}</span></button>`; }).join('')}</div></div>
         <div class="flex flex-wrap items-center gap-x-5 gap-y-1 border-b border-slate-100 px-5 py-3 text-sm text-slate-500 lg:px-6"><span class="font-semibold text-slate-900">${c.name}</span><span>${esc(TT.planOfClass(cid)?.name || '')}</span><span>ครูประจำชั้น <span class="font-semibold text-slate-700">${c.advisor ? esc(TT.teacherName(c.advisor)) : '<span class="text-amber-600">ยังไม่มี (รอข้อมูลงานบุคคล)</span>'}</span></span><span>นักเรียน ${c.students} คน</span><span>จัดแล้ว ${prog.placed}/${prog.required} คาบ</span></div>
         <div class="grid min-[1760px]:grid-cols-[minmax(0,1fr)_300px]">
@@ -613,9 +613,9 @@
       const v = ver(); const r = TT.room(state.roomId);
       const blocks = TT.roomBlocks(v, r.id);
       const iss = TT.computeIssues(v);
-      const bands = TT.roomCond(v, r.id).unavailable.map((u) => ({ day: u.day, start: TT.toMin(u.start), end: TT.toMin(u.end), label: `ไม่พร้อมใช้ · ${u.note || ''}`, cls: 'tt-hatch bg-amber-50 text-amber-700' }));
-      $('tabBody').innerHTML = `<div class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 lg:flex-row lg:items-center lg:px-6">${roomPicker('roomSelect', r.id)}<span class="text-sm text-slate-500">${TT.ROOM_TYPES[r.type]} · ${esc(r.building)} · ใช้พร้อมกันได้ ${r.maxClasses} ห้อง · ใช้ ${blocks.length} คาบ/สัปดาห์</span><span class="inline-flex w-fit shrink-0 items-center gap-2 whitespace-nowrap rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">ดูได้อย่างเดียว · แกนเวลาจริง</span></div>
-        <div class="overflow-x-auto p-4 tt-scroll lg:p-5">${TT.timeline({ id: 'roomTimeline', days: TT.versionDays(v), range: TT.versionRange(v), bands, blocks: blocks.map((b) => ({ ...b, attrs: `data-view="${b.cid}|${b.slot}"`, html: TT.entryCard({ code: b.entry.code, title: `${TT.className(b.cid)} · ${b.entry.code}`, line1: TT.teachersLabel(b.entry.teachers), issues: iss.byCell.get(`${b.cid}|${b.slot}`) || [], extraClass: 'cursor-pointer' }) })) })}</div>`;
+      const bands = TT.roomCond(v, r.id).unavailable.map((u) => ({ day: u.day, start: TT.toMin(u.start), end: TT.toMin(u.end), label: `ไม่พร้อมใช้ ${u.note || ''}`, cls: 'tt-hatch bg-amber-50 text-amber-700' }));
+      $('tabBody').innerHTML = `<div class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 lg:flex-row lg:items-center lg:px-6">${roomPicker('roomSelect', r.id)}<span class="text-sm text-slate-500">${TT.ROOM_TYPES[r.type]} ${esc(r.building)} ใช้พร้อมกันได้ ${r.maxClasses} ห้อง ใช้ ${blocks.length} คาบ/สัปดาห์</span><span class="inline-flex w-fit shrink-0 items-center gap-2 whitespace-nowrap rounded-full bg-slate-100 px-3 py-1.5 text-xs font-semibold text-slate-600">ดูได้อย่างเดียว แกนเวลาจริง</span></div>
+        <div class="overflow-x-auto p-4 tt-scroll lg:p-5">${TT.timeline({ id: 'roomTimeline', days: TT.versionDays(v), range: TT.versionRange(v), bands, blocks: blocks.map((b) => ({ ...b, attrs: `data-view="${b.cid}|${b.slot}"`, html: TT.entryCard({ code: b.entry.code, title: `${TT.className(b.cid)} ${b.entry.code}`, line1: TT.teachersLabel(b.entry.teachers), issues: iss.byCell.get(`${b.cid}|${b.slot}`) || [], extraClass: 'cursor-pointer' }) })) })}</div>`;
     }
     function renderLevelTab() {
       const v = ver();
@@ -626,7 +626,7 @@
       const th = 'border-b border-slate-200 bg-slate-50 px-1 py-2 text-center text-[11px] font-semibold text-slate-500';
       const classes = TT.classesOfLevel(state.level);
       const teachersHere = [...new Set(classes.flatMap((c) => Object.values(v.entries[c.id]).flatMap((e) => e.teachers)))];
-      $('tabBody').innerHTML = `<div class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 lg:flex-row lg:items-center lg:px-6"><select id="levelSelect" class="${selSm}">${[1, 2, 3, 4, 5, 6].map((l) => `<option value="${l}" ${l === state.level ? 'selected' : ''}>มัธยมศึกษาปีที่ ${l}</option>`).join('')}</select><select id="highlightSelect" class="${selSm}"><option value="">— ไฮไลต์ครู —</option>${teachersHere.map((t) => `<option value="${t}" ${t === hl ? 'selected' : ''}>${esc(TT.teacherName(t))}</option>`).join('')}</select><span class="text-sm text-slate-500">${esc(ts.name)} · ทุกห้องพร้อมกัน · คลิกช่องเพื่อดูรายละเอียด</span></div>
+      $('tabBody').innerHTML = `<div class="flex flex-col gap-3 border-b border-slate-100 px-5 py-4 lg:flex-row lg:items-center lg:px-6"><select id="levelSelect" class="${selSm}">${[1, 2, 3, 4, 5, 6].map((l) => `<option value="${l}" ${l === state.level ? 'selected' : ''}>มัธยมศึกษาปีที่ ${l}</option>`).join('')}</select><select id="highlightSelect" class="${selSm}"><option value="">— ไฮไลต์ครู —</option>${teachersHere.map((t) => `<option value="${t}" ${t === hl ? 'selected' : ''}>${esc(TT.teacherName(t))}</option>`).join('')}</select><span class="text-sm text-slate-500">${esc(ts.name)} ทุกห้องพร้อมกัน คลิกช่องเพื่อดูรายละเอียด</span></div>
         <div class="overflow-x-auto p-4 tt-scroll lg:p-5"><table class="tt-table w-full min-w-[1900px] overflow-hidden rounded-2xl border border-slate-200"><thead><tr><th rowspan="2" class="${th} sticky left-0 z-10 w-24 px-3 text-left">ห้อง</th>${ts.days.map((d) => `<th colspan="${pts.length}" class="${th} border-l border-slate-200"><span class="inline-flex items-center gap-1.5"><span class="h-2 w-2 rounded-full ${TT.DAYS[d].dot}"></span>${TT.DAYS[d].name}</span></th>`).join('')}</tr><tr>${ts.days.map(() => pts.map((p) => `<th class="${th} ${p.no === 1 ? 'border-l border-slate-200' : ''}" title="${TT.fmt(p.start)}–${TT.fmt(p.end)}">${p.no}</th>`).join('')).join('')}</tr></thead>
         <tbody>${classes.map((c) => `<tr><th class="sticky left-0 z-10 border-b border-slate-100 bg-white px-3 py-2 text-left"><button data-class-go="${c.id}" type="button" class="text-sm font-semibold text-slate-900 hover:text-blue-700">${c.name}</button><span class="block text-[11px] text-slate-400">${TT.classProgress(v, c.id).pct}%</span></th>${ts.days.map((d) => pts.map((p) => {
           const slot = `${d}-${p.no}`; const e = v.entries[c.id][slot]; const act = TT.classActivityAt(v, c.id, slot);
@@ -654,15 +654,15 @@
       const hist = db().history.filter((h) => h.term === v.term);
       $('tabBody').innerHTML = `<div class="grid gap-6 p-5 lg:p-6 2xl:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <div class="space-y-6">
-          <div><h3 class="font-semibold text-slate-900">ภาระงานสอนและคาบว่างของครู</h3><p class="text-xs text-slate-500">คาบว่างนับจาก 40 ช่องต่อสัปดาห์ หักคาบสอนและกิจกรรมล็อกเวลา · คลิกเพื่อเปิดตารางสอนครู</p>
+          <div><h3 class="font-semibold text-slate-900">ภาระงานสอนและคาบว่างของครู</h3><p class="text-xs text-slate-500">คาบว่างนับจาก 40 ช่องต่อสัปดาห์ หักคาบสอนและกิจกรรมล็อกเวลา คลิกเพื่อเปิดตารางสอนครู</p>
             <div class="mt-3 max-h-[520px] overflow-auto rounded-2xl border border-slate-200 tt-scroll"><table class="w-full min-w-[640px] text-sm"><thead class="sticky top-0 bg-slate-50 text-xs font-semibold text-slate-500"><tr><th class="px-4 py-3 text-left">ครู</th><th class="px-3 py-3 text-left">คาบสอน / กำหนด</th><th class="px-3 py-3 text-center">มอบหมาย</th><th class="px-3 py-3 text-center">คาบว่าง</th><th class="px-3 py-3 text-left">สถานะ</th></tr></thead><tbody class="divide-y divide-slate-100">${rows.map((x) => { const pct = Math.min(100, Math.round(x.scheduled / x.max * 100)); const s = x.errs ? ['มี Conflict', 'bg-rose-50 text-rose-700', 'bg-rose-500'] : x.scheduled > x.max ? ['เกินภาระ', 'bg-violet-50 text-violet-700', 'bg-violet-500'] : x.scheduled < x.assigned ? ['ยังจัดไม่ครบ', 'bg-amber-50 text-amber-700', 'bg-amber-400'] : ['ปกติ', 'bg-emerald-50 text-emerald-700', 'bg-emerald-500']; return `<tr data-goto-teacher="${x.t.id}" class="cursor-pointer hover:bg-slate-50"><td class="px-4 py-2.5"><p class="font-semibold text-slate-900">${esc(x.t.name)}</p><p class="text-xs text-slate-400">${TT.GROUPS[x.t.group].name}</p></td><td class="px-3 py-2.5"><div class="flex items-center gap-2"><div class="h-2 w-24 overflow-hidden rounded-full bg-slate-100"><div class="h-full ${s[2]}" style="width:${pct}%"></div></div><span class="font-semibold text-slate-800">${x.scheduled}/${x.max}</span></div></td><td class="px-3 py-2.5 text-center text-slate-600">${x.assigned}</td><td class="px-3 py-2.5 text-center text-slate-600">${x.free}</td><td class="px-3 py-2.5"><span class="rounded-full px-2.5 py-1 text-xs font-semibold ${s[1]}">${s[0]}</span></td></tr>`; }).join('')}</tbody></table></div></div>
           <div><h3 class="font-semibold text-slate-900">รายงาน Conflict และคำเตือน</h3>
-            <div class="mt-3 space-y-4">${order.length ? order.map((t) => `<details ${byType[t][0].sev === 'error' ? 'open' : ''} class="rounded-2xl border ${byType[t][0].sev === 'error' ? 'border-rose-100' : 'border-amber-100'}"><summary class="cursor-pointer px-4 py-3 text-sm font-semibold ${byType[t][0].sev === 'error' ? 'text-rose-700' : 'text-amber-700'}">${byType[t][0].sev === 'error' ? 'Conflict' : 'คำเตือน'} · ${TT.ISSUE_LABEL[t] || t} (${byType[t].length})</summary><div class="space-y-2 px-4 pb-4">${byType[t].slice(0, 60).map((i) => `<div class="flex items-start justify-between gap-3 rounded-xl bg-slate-50 p-3"><div class="min-w-0"><p class="text-sm font-semibold text-slate-800">${TT.className(i.cid)} · ${TT.slotLabel(i.slot)} · ${i.code}</p><p class="text-xs text-slate-600">${esc(i.msg)}</p></div><button data-goto-entry="${i.cid}|${i.slot}" type="button" class="shrink-0 rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-50">ไปที่คาบ</button></div>`).join('')}</div></details>`).join('') : '<div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-center text-sm font-semibold text-emerald-800">ไม่พบ Conflict หรือคำเตือน</div>'}</div></div>
+            <div class="mt-3 space-y-4">${order.length ? order.map((t) => `<details ${byType[t][0].sev === 'error' ? 'open' : ''} class="rounded-2xl border ${byType[t][0].sev === 'error' ? 'border-rose-100' : 'border-amber-100'}"><summary class="cursor-pointer px-4 py-3 text-sm font-semibold ${byType[t][0].sev === 'error' ? 'text-rose-700' : 'text-amber-700'}">${byType[t][0].sev === 'error' ? 'Conflict' : 'คำเตือน'} ${TT.ISSUE_LABEL[t] || t} (${byType[t].length})</summary><div class="space-y-2 px-4 pb-4">${byType[t].slice(0, 60).map((i) => `<div class="flex items-start justify-between gap-3 rounded-xl bg-slate-50 p-3"><div class="min-w-0"><p class="text-sm font-semibold text-slate-800">${TT.className(i.cid)} ${TT.slotLabel(i.slot)} ${i.code}</p><p class="text-xs text-slate-600">${esc(i.msg)}</p></div><button data-goto-entry="${i.cid}|${i.slot}" type="button" class="shrink-0 rounded-lg bg-white px-2.5 py-1 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-50">ไปที่คาบ</button></div>`).join('')}</div></details>`).join('') : '<div class="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 text-center text-sm font-semibold text-emerald-800">ไม่พบ Conflict หรือคำเตือน</div>'}</div></div>
         </div>
         <div class="space-y-6">
-          <div><h3 class="font-semibold text-slate-900">การใช้ห้องเฉพาะทาง</h3><div class="mt-3 space-y-3">${db().external.rooms.filter((r) => r.type !== 'regular').map((r) => { const n = TT.roomBlocks(v, r.id).length; const cap = 40 * r.maxClasses; const pct = Math.round(n / cap * 100); return `<button data-goto-room="${r.id}" type="button" class="block w-full text-left"><div class="flex justify-between text-sm"><span class="font-semibold text-slate-700">${esc(r.name)}</span><span class="text-xs text-slate-500">${n} คาบ · ${pct}%</span></div><div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${pct > 85 ? 'bg-rose-500' : pct > 60 ? 'bg-amber-400' : 'bg-blue-600'}" style="width:${Math.min(pct, 100)}%"></div></div></button>`; }).join('')}</div></div>
+          <div><h3 class="font-semibold text-slate-900">การใช้ห้องเฉพาะทาง</h3><div class="mt-3 space-y-3">${db().external.rooms.filter((r) => r.type !== 'regular').map((r) => { const n = TT.roomBlocks(v, r.id).length; const cap = 40 * r.maxClasses; const pct = Math.round(n / cap * 100); return `<button data-goto-room="${r.id}" type="button" class="block w-full text-left"><div class="flex justify-between text-sm"><span class="font-semibold text-slate-700">${esc(r.name)}</span><span class="text-xs text-slate-500">${n} คาบ ${pct}%</span></div><div class="mt-1.5 h-2 overflow-hidden rounded-full bg-slate-100"><div class="h-full rounded-full ${pct > 85 ? 'bg-rose-500' : pct > 60 ? 'bg-amber-400' : 'bg-blue-600'}" style="width:${Math.min(pct, 100)}%"></div></div></button>`; }).join('')}</div></div>
           <div><div class="flex items-end justify-between"><h3 class="font-semibold text-slate-900">ประวัติการแก้ไข (${TT.termLabel(v.term)})</h3><span class="text-xs text-slate-400">${hist.length} รายการ</span></div>
-            <div class="mt-3 max-h-[560px] space-y-3 overflow-y-auto pr-1 tt-scroll">${hist.map((h) => `<div class="flex gap-3"><span class="mt-1.5 h-2 w-2 shrink-0 rounded-full ${h.versionId === v.id ? 'bg-blue-500' : 'bg-slate-300'}"></span><div class="min-w-0"><p class="text-sm"><span class="font-semibold text-slate-900">${esc(h.user)}</span> <span class="text-slate-600">${esc(h.action)}</span></p><p class="text-xs text-slate-500">${esc(h.detail)}</p><p class="mt-0.5 text-[11px] text-slate-400">${TT.formatDateTime(h.at)}${h.versionId && TT.version(h.versionId) ? ` · ${esc(TT.version(h.versionId).name)}` : ''}</p></div></div>`).join('') || '<p class="text-sm text-slate-400">ยังไม่มีประวัติ</p>'}</div></div>
+            <div class="mt-3 max-h-[560px] space-y-3 overflow-y-auto pr-1 tt-scroll">${hist.map((h) => `<div class="flex gap-3"><span class="mt-1.5 h-2 w-2 shrink-0 rounded-full ${h.versionId === v.id ? 'bg-blue-500' : 'bg-slate-300'}"></span><div class="min-w-0"><p class="text-sm"><span class="font-semibold text-slate-900">${esc(h.user)}</span> <span class="text-slate-600">${esc(h.action)}</span></p><p class="text-xs text-slate-500">${esc(h.detail)}</p><p class="mt-0.5 text-[11px] text-slate-400">${TT.formatDateTime(h.at)}${h.versionId && TT.version(h.versionId) ? ` ${esc(TT.version(h.versionId).name)}` : ''}</p></div></div>`).join('') || '<p class="text-sm text-slate-400">ยังไม่มีประวัติ</p>'}</div></div>
         </div></div>`;
     }
 
@@ -706,7 +706,7 @@
       if (!m.name) m.name = m.method === 'copy' && wizSource() ? `ร่าง ${m.term.split('-').reverse().join('/')} (คัดลอก)` : `ร่างแรก ${m.term.split('-').reverse().join('/')}`;
       $('modalBody').innerHTML = `<div class="space-y-6">
         <div class="grid gap-4 md:grid-cols-2">
-          <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ภาคเรียนของตารางสอน</span><select data-w="term" class="${sel}">${terms.map((t) => `<option value="${t}" ${t === m.term ? 'selected' : ''}>${TT.termLabel(t)}${db().terms[t] ? ` · ${TT.versionsOf(t).length} ฉบับ` : ' · ภาคเรียนใหม่'}</option>`).join('')}</select></label>
+          <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ภาคเรียนของตารางสอน</span><select data-w="term" class="${sel}">${terms.map((t) => `<option value="${t}" ${t === m.term ? 'selected' : ''}>${TT.termLabel(t)}${db().terms[t] ? ` ${TT.versionsOf(t).length} ฉบับ` : ' ภาคเรียนใหม่'}</option>`).join('')}</select></label>
           <label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ชื่อฉบับร่าง</span><input data-w="name" value="${esc(m.name)}" class="${sel}"></label>
         </div>
         ${TT.publishedOf(m.term) ? `<div class="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm text-blue-900">${TT.termLabel(m.term)} มีฉบับเผยแพร่ "${esc(TT.publishedOf(m.term).name)}" อยู่แล้ว ฉบับร่างใหม่จะไม่กระทบครูจนกว่าจะเผยแพร่ (เมื่อเผยแพร่ ฉบับเดิมจะกลายเป็นฉบับเก่า)</div>` : ''}
@@ -714,7 +714,7 @@
           <label class="flex cursor-pointer gap-3 rounded-2xl border p-4 ${m.method === 'copy' ? 'border-blue-500 bg-blue-50/60 ring-1 ring-blue-500' : 'border-slate-200'}"><input type="radio" name="wizMethod" value="copy" ${m.method === 'copy' ? 'checked' : ''} class="mt-1 h-4 w-4 text-blue-600"><span><span class="block font-semibold text-slate-900">คัดลอกจากตารางที่มี</span><span class="mt-1 block text-sm leading-6 text-slate-500">คัดลอกโครงสร้างเวลา กิจกรรม เงื่อนไข และคาบทั้งหมด คาบที่ไม่ตรงกับการมอบหมายสอนของภาคเรียนใหม่จะถูกตัดทิ้งและแจ้งรายการ</span></span></label>
           <label class="flex cursor-pointer gap-3 rounded-2xl border p-4 ${m.method === 'new' ? 'border-blue-500 bg-blue-50/60 ring-1 ring-blue-500' : 'border-slate-200'}"><input type="radio" name="wizMethod" value="new" ${m.method === 'new' ? 'checked' : ''} class="mt-1 h-4 w-4 text-blue-600"><span><span class="block font-semibold text-slate-900">สร้างใหม่ทั้งหมด</span><span class="mt-1 block text-sm leading-6 text-slate-500">เริ่มจากตารางว่าง ใช้โครงสร้างเวลาค่าเริ่มต้นแล้วปรับได้ในขั้นถัดไป</span></span></label>
         </div></div>
-        ${m.method === 'copy' ? `<label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ฉบับต้นทาง</span><select data-w="source" class="${sel}">${allTerms().filter((t) => TT.versionsOf(t).length).map((t) => `<optgroup label="${TT.termLabel(t)}">${versions.filter((v) => v.term === t).map((v) => `<option value="${v.id}" ${v.id === m.sourceId ? 'selected' : ''}>${esc(v.name)} · ${TT.VERSION_STATUS[v.status].label} · จัดแล้ว ${TT.versionProgress(v).pct}%</option>`).join('')}</optgroup>`).join('')}</select>${wizSource() && wizSource().term !== m.term ? '<span class="mt-2 block text-xs text-slate-500">ต่างภาคเรียน: ระบบจับคู่ด้วยชื่อห้องและรหัสวิชาของภาคเรียนปลายทาง</span>' : ''}</label>` : ''}
+        ${m.method === 'copy' ? `<label class="block"><span class="mb-2 block text-sm font-semibold text-slate-700">ฉบับต้นทาง</span><select data-w="source" class="${sel}">${allTerms().filter((t) => TT.versionsOf(t).length).map((t) => `<optgroup label="${TT.termLabel(t)}">${versions.filter((v) => v.term === t).map((v) => `<option value="${v.id}" ${v.id === m.sourceId ? 'selected' : ''}>${esc(v.name)} ${TT.VERSION_STATUS[v.status].label} จัดแล้ว ${TT.versionProgress(v).pct}%</option>`).join('')}</optgroup>`).join('')}</select>${wizSource() && wizSource().term !== m.term ? '<span class="mt-2 block text-xs text-slate-500">ต่างภาคเรียน: ระบบจับคู่ด้วยชื่อห้องและรหัสวิชาของภาคเรียนปลายทาง</span>' : ''}</label>` : ''}
       </div>`;
       const body = $('modalBody');
       body.querySelector('[data-w="term"]').onchange = (e) => { m.term = e.target.value; m.deadline = db().terms[m.term]?.unavailDeadline || ''; m.name = ''; renderWizard(); };
@@ -742,12 +742,12 @@
           <label class="block text-xs font-semibold text-slate-600">เข้าแถว/โฮมรูมก่อนคาบ 1 (นาที)<input data-k="homeroom" type="number" min="0" max="60" value="${ts.homeroom?.min || 0}" class="${selSm} mt-1 w-full"></label>
         </div>
         <div class="mt-3"><p class="text-xs font-semibold text-slate-600">ช่วงพัก</p><div class="mt-2 space-y-2">${ts.breaks.map((b, bi) => `<div class="flex flex-wrap items-center gap-2 text-xs text-slate-600">หลังคาบ<input data-break="${bi}" data-bk="after" type="number" min="1" max="${ts.periods - 1}" value="${b.after}" class="${selSm} w-16">ยาว<input data-break="${bi}" data-bk="min" type="number" min="5" max="90" value="${b.min}" class="${selSm} w-16">นาที<input data-break="${bi}" data-bk="name" value="${esc(b.name)}" class="${selSm} w-36"><button data-break-remove="${bi}" type="button" class="font-semibold text-rose-600">ลบ</button></div>`).join('')}<button data-break-add type="button" class="text-xs font-semibold text-blue-700">+ เพิ่มช่วงพัก</button></div></div>
-        <p class="mt-3 text-xs text-slate-500">เลิกเรียน ${TT.fmt(TT.dayEnd(ts))} (คำนวณอัตโนมัติ) · ${ts.days.length * ts.periods} ช่องต่อสัปดาห์</p>
+        <p class="mt-3 text-xs text-slate-500">เลิกเรียน ${TT.fmt(TT.dayEnd(ts))} (คำนวณอัตโนมัติ) ${ts.days.length * ts.periods} ช่องต่อสัปดาห์</p>
       </div>`).join('')}<button data-ts-add type="button" class="${btn2}">+ เพิ่มช่วงชั้น</button></div>`;
       const bind = (root) => {
         root.querySelectorAll('[data-ts]').forEach((card) => {
           const ts = list[Number(card.dataset.ts)];
-          card.querySelectorAll('[data-k]').forEach((el) => { el.onchange = () => { const k = el.dataset.k; if (k === 'homeroom') ts.homeroom = Number(el.value) ? { min: Number(el.value), name: 'เข้าแถว · โฮมรูม' } : null; else ts[k] = ['periodMin', 'periods'].includes(k) ? Number(el.value) : el.value; onChange(); }; });
+          card.querySelectorAll('[data-k]').forEach((el) => { el.onchange = () => { const k = el.dataset.k; if (k === 'homeroom') ts.homeroom = Number(el.value) ? { min: Number(el.value), name: 'เข้าแถว โฮมรูม' } : null; else ts[k] = ['periodMin', 'periods'].includes(k) ? Number(el.value) : el.value; onChange(); }; });
           card.querySelectorAll('[data-level]').forEach((el) => { el.onchange = () => { const l = Number(el.dataset.level); ts.levels = el.checked ? [...ts.levels, l].sort() : ts.levels.filter((x) => x !== l); onChange(); }; });
           card.querySelectorAll('[data-day]').forEach((el) => { el.onchange = () => { const d = Number(el.dataset.day); ts.days = el.checked ? [...ts.days, d].sort() : ts.days.filter((x) => x !== d); onChange(); }; });
           card.querySelectorAll('[data-break]').forEach((el) => { el.onchange = () => { const b = ts.breaks[Number(el.dataset.break)]; b[el.dataset.bk] = el.dataset.bk === 'name' ? el.value : Number(el.value); onChange(); }; });
@@ -755,7 +755,7 @@
           card.querySelector('[data-break-add]').onclick = () => { ts.breaks.push({ after: Math.min(2, ts.periods - 1), min: 10, name: 'พักเบรก' }); onChange(); };
         });
         root.querySelectorAll('[data-ts-remove]').forEach((el) => { el.onclick = () => { list.splice(Number(el.dataset.tsRemove), 1); onChange(); }; });
-        root.querySelector('[data-ts-add]').onclick = () => { list.push({ id: TT.newId('ts'), name: 'ช่วงชั้นใหม่', levels: [], days: [0, 1, 2, 3, 4], start: '08:30', periodMin: 50, periods: 8, breaks: [{ after: 4, min: 50, name: 'พักกลางวัน' }], homeroom: { min: 30, name: 'เข้าแถว · โฮมรูม' } }); onChange(); };
+        root.querySelector('[data-ts-add]').onclick = () => { list.push({ id: TT.newId('ts'), name: 'ช่วงชั้นใหม่', levels: [], days: [0, 1, 2, 3, 4], start: '08:30', periodMin: 50, periods: 8, breaks: [{ after: 4, min: 50, name: 'พักกลางวัน' }], homeroom: { min: 30, name: 'เข้าแถว โฮมรูม' } }); onChange(); };
       };
       return { html, bind };
     }
@@ -805,7 +805,7 @@
     function wizStep3() {
       const m = state.modal; wizEnsureSettings();
       const ed = activityEditor(m.activities, m.timeStructures, wizStep3);
-      $('modalBody').innerHTML = `<div class="space-y-4"><p class="text-sm text-slate-500">กิจกรรมที่ทุกห้อง ช่วงชั้น หรือระดับชั้นทำพร้อมกัน เช่น ชุมนุม ลูกเสือ แนะแนว ประชุมครู ระบบจะไม่จัดคาบอื่นทับ และนับครูผู้ดูแลว่าไม่ว่าง · เข้าแถว/โฮมรูมกำหนดในโครงสร้างเวลาแล้ว</p>${ed.html}</div>`;
+      $('modalBody').innerHTML = `<div class="space-y-4"><p class="text-sm text-slate-500">กิจกรรมที่ทุกห้อง ช่วงชั้น หรือระดับชั้นทำพร้อมกัน เช่น ชุมนุม ลูกเสือ แนะแนว ประชุมครู ระบบจะไม่จัดคาบอื่นทับ และนับครูผู้ดูแลว่าไม่ว่าง เข้าแถว/โฮมรูมกำหนดในโครงสร้างเวลาแล้ว</p>${ed.html}</div>`;
       ed.bind($('modalBody'));
     }
     function wizStep4() {
@@ -815,8 +815,8 @@
       const all = db().unavailability.filter((u) => u.term === m.term);
       $('modalBody').innerHTML = `<div class="space-y-5">
         <label class="block max-w-sm"><span class="mb-2 block text-sm font-semibold text-slate-700">วันปิดรับเวลาไม่ว่าง</span><input data-w="deadline" type="date" value="${m.deadline}" class="${sel}"></label>
-        <div class="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm leading-6 text-blue-900">ครูกรอกเวลาไม่ว่าง (เฉพาะภารกิจในโรงเรียน) ได้ที่หน้าโปรไฟล์จนถึงวันนี้ แล้ว admin อนุมัติที่หน้าคำขออนุมัติ หลังวันปิดรับครูต้องยื่นคำร้องขอเปลี่ยนการจัดแทน · ระบบจะแจ้งครูทุกคนที่มีการมอบหมายสอนเมื่อสร้างฉบับร่าง · เปิดภาคเรียน ${TT.formatDate(db().terms[m.term].start)} ตารางสอนต้องเสร็จก่อนวันนั้น</div>
-        <p class="text-sm text-slate-500">เวลาไม่ว่างของ${TT.termLabel(m.term)} ตอนนี้: อนุมัติ ${all.filter((u) => u.status === 'approved').length} · รออนุมัติ ${all.filter((u) => u.status === 'pending').length} · ไม่อนุมัติ ${all.filter((u) => u.status === 'rejected').length}</p>
+        <div class="rounded-2xl border border-blue-100 bg-blue-50/70 p-4 text-sm leading-6 text-blue-900">ครูกรอกเวลาไม่ว่าง (เฉพาะภารกิจในโรงเรียน) ได้ที่หน้าโปรไฟล์จนถึงวันนี้ แล้ว admin อนุมัติที่หน้าคำขออนุมัติ หลังวันปิดรับครูต้องยื่นคำร้องขอเปลี่ยนการจัดแทน ระบบจะแจ้งครูทุกคนที่มีการมอบหมายสอนเมื่อสร้างฉบับร่าง เปิดภาคเรียน ${TT.formatDate(db().terms[m.term].start)} ตารางสอนต้องเสร็จก่อนวันนั้น</div>
+        <p class="text-sm text-slate-500">เวลาไม่ว่างของ${TT.termLabel(m.term)} ตอนนี้: อนุมัติ ${all.filter((u) => u.status === 'approved').length} รออนุมัติ ${all.filter((u) => u.status === 'pending').length} ไม่อนุมัติ ${all.filter((u) => u.status === 'rejected').length}</p>
       </div>`;
       $('modalBody').querySelector('[data-w="deadline"]').onchange = (e) => { m.deadline = e.target.value; };
     }
@@ -835,7 +835,7 @@
       $('modalBody').innerHTML = `<div class="space-y-4">
         <div class="flex gap-3 rounded-2xl border ${r.fails ? 'border-amber-200 bg-amber-50' : 'border-emerald-100 bg-emerald-50'} p-4">${icon(r.fails ? 'warn' : 'check', `h-5 w-5 shrink-0 ${r.fails ? 'text-amber-600' : 'text-emerald-600'}`)}<p class="text-sm ${r.fails ? 'text-amber-900' : 'text-emerald-900'}">${r.fails ? `มี ${r.fails} รายการไม่ผ่าน สร้างฉบับร่างได้และจัดเองได้ แต่จะจัดอัตโนมัติไม่ได้จนกว่าจะแก้` : 'ข้อมูลพร้อม สร้างฉบับร่างแล้วจัดได้ทุกวิธี'}</p></div>
         ${readinessList(r)}
-        <div class="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600"><p class="font-semibold text-slate-800">สรุป</p><p class="mt-1">${TT.termLabel(m.term)} · "${esc(m.name)}" · ${m.method === 'copy' ? `คัดลอกจาก "${esc(wizSource()?.name)}"` : 'สร้างใหม่ทั้งหมด'} · ${m.timeStructures.length} ช่วงชั้น · กิจกรรมล็อกเวลา ${m.activities.length} รายการ · ปิดรับเวลาไม่ว่าง ${TT.formatDate(m.deadline)}</p></div>
+        <div class="rounded-2xl border border-slate-200 p-4 text-sm text-slate-600"><p class="font-semibold text-slate-800">สรุป</p><p class="mt-1">${TT.termLabel(m.term)} "${esc(m.name)}" ${m.method === 'copy' ? `คัดลอกจาก "${esc(wizSource()?.name)}"` : 'สร้างใหม่ทั้งหมด'} ${m.timeStructures.length} ช่วงชั้น กิจกรรมล็อกเวลา ${m.activities.length} รายการ ปิดรับเวลาไม่ว่าง ${TT.formatDate(m.deadline)}</p></div>
       </div>`;
     }
     function ensureTerm(term) {
@@ -870,7 +870,7 @@
       history.replaceState(null, '', `#version=${v.id}`);
       closeModal();
       TT.save();
-      if (dropped.length) showDropped(dropped); else TT.toast('สร้างฉบับร่างแล้ว', `"${v.name}" · ${TT.termLabel(v.term)}`);
+      if (dropped.length) showDropped(dropped); else TT.toast('สร้างฉบับร่างแล้ว', `"${v.name}" ${TT.termLabel(v.term)}`);
     }
     function removeOutside(v) {
       const removed = [];
@@ -894,7 +894,7 @@
     }
     function renderSettings() {
       const m = state.modal; const v = ver();
-      openModal({ eyebrow: v.name, title: 'โครงสร้างเวลาและกิจกรรมล็อกเวลา', subtitle: 'แก้ได้เฉพาะฉบับร่าง · คาบที่อยู่นอกโครงสร้างใหม่จะกลับไปอยู่ในรายการรอจัด', width: 'max-w-5xl', steps: `<div class="flex gap-2">${[['time', 'โครงสร้างเวลา'], ['act', 'กิจกรรมล็อกเวลา'], ['deadline', 'วันปิดรับเวลาไม่ว่าง']].map(([k, l]) => `<button data-set-tab="${k}" type="button" class="rounded-xl px-3 py-1.5 text-sm font-semibold ${m.tab === k ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}">${l}</button>`).join('')}</div>` });
+      openModal({ eyebrow: v.name, title: 'โครงสร้างเวลาและกิจกรรมล็อกเวลา', subtitle: 'แก้ได้เฉพาะฉบับร่าง คาบที่อยู่นอกโครงสร้างใหม่จะกลับไปอยู่ในรายการรอจัด', width: 'max-w-5xl', steps: `<div class="flex gap-2">${[['time', 'โครงสร้างเวลา'], ['act', 'กิจกรรมล็อกเวลา'], ['deadline', 'วันปิดรับเวลาไม่ว่าง']].map(([k, l]) => `<button data-set-tab="${k}" type="button" class="rounded-xl px-3 py-1.5 text-sm font-semibold ${m.tab === k ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}">${l}</button>`).join('')}</div>` });
       if (m.tab === 'time') { const ed = tsEditor(m.timeStructures, renderSettings); const err = tsValid(m.timeStructures); $('modalBody').innerHTML = `<div class="space-y-5">${tsPreview(m.timeStructures.filter((ts) => ts.levels.length))}${err ? `<p class="rounded-xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700">${esc(err)}</p>` : ''}${ed.html}</div>`; ed.bind($('modalBody')); }
       else if (m.tab === 'act') { const ed = activityEditor(m.activities, m.timeStructures, renderSettings); $('modalBody').innerHTML = ed.html; ed.bind($('modalBody')); }
       else { $('modalBody').innerHTML = `<label class="block max-w-sm"><span class="mb-2 block text-sm font-semibold text-slate-700">วันปิดรับเวลาไม่ว่าง (${TT.termLabel(v.term)})</span><input id="setDeadline" type="date" value="${m.deadline}" class="${sel}"></label>`; $('setDeadline').onchange = (e) => { m.deadline = e.target.value; }; }
@@ -906,10 +906,10 @@
         const preview = { ...v, entries: TT.clone(v.entries), timeStructures: m.timeStructures, activities: m.activities };
         const removed = removeOutside(preview);
         const snap = { ts: m.timeStructures, act: m.activities, deadline: m.deadline };
-        if (removed.length && !(await TT.confirm({ title: `${removed.length} คาบจะกลับไปอยู่ในรายการรอจัด`, message: `คาบเหล่านี้อยู่นอกโครงสร้างเวลาใหม่หรือทับกิจกรรมล็อกเวลา<br><span class="text-xs">${esc(removed.slice(0, 8).join(' · '))}${removed.length > 8 ? ' …' : ''}</span>`, okText: 'บันทึกและนำคาบออก', tone: 'primary' }))) return;
+        if (removed.length && !(await TT.confirm({ title: `${removed.length} คาบจะกลับไปอยู่ในรายการรอจัด`, message: `คาบเหล่านี้อยู่นอกโครงสร้างเวลาใหม่หรือทับกิจกรรมล็อกเวลา<br><span class="text-xs">${esc(removed.slice(0, 8).join(', '))}${removed.length > 8 ? ' …' : ''}</span>`, okText: 'บันทึกและนำคาบออก', tone: 'primary' }))) return;
         closeModal();
         db().terms[v.term].unavailDeadline = snap.deadline;
-        commit('ปรับโครงสร้างเวลา/กิจกรรม', `${snap.ts.map((ts) => `${ts.name} ${ts.periods} คาบ × ${ts.periodMin} นาที`).join(', ')}${removed.length ? ` · นำคาบออก ${removed.length}` : ''}`, (vv) => { vv.timeStructures = snap.ts; vv.activities = snap.act; vv.entries = preview.entries; });
+        commit('ปรับโครงสร้างเวลา/กิจกรรม', `${snap.ts.map((ts) => `${ts.name} ${ts.periods} คาบ × ${ts.periodMin} นาที`).join(', ')}${removed.length ? ` นำคาบออก ${removed.length}` : ''}`, (vv) => { vv.timeStructures = snap.ts; vv.activities = snap.act; vv.entries = preview.entries; });
         TT.toast('บันทึกโครงสร้างเวลาแล้ว', removed.length ? `${removed.length} คาบกลับไปอยู่ในรายการรอจัด` : '');
       };
     }
@@ -922,7 +922,7 @@
     function renderConditions() {
       const m = state.modal; const v = ver(); const c = m.draft;
       const proxy = { conditions: c };
-      openModal({ eyebrow: v.name, title: 'เงื่อนไขการจัด', subtitle: 'ใช้กับ "จัดอัตโนมัติตามเงื่อนไข" และแสดงเป็นคำเตือนเมื่อจัดเอง · เงื่อนไขมาตรฐานบังคับเสมอ', width: 'max-w-5xl', steps: `<div class="flex flex-wrap gap-2">${[['teacher', 'ครู'], ['subject', 'รายวิชา'], ['room', 'ห้องเรียน'], ['std', 'เงื่อนไขมาตรฐาน']].map(([k, l]) => `<button data-c-tab="${k}" type="button" class="rounded-xl px-3 py-1.5 text-sm font-semibold ${m.tab === k ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}">${l}</button>`).join('')}</div>` });
+      openModal({ eyebrow: v.name, title: 'เงื่อนไขการจัด', subtitle: 'ใช้กับ "จัดอัตโนมัติตามเงื่อนไข" และแสดงเป็นคำเตือนเมื่อจัดเอง เงื่อนไขมาตรฐานบังคับเสมอ', width: 'max-w-5xl', steps: `<div class="flex flex-wrap gap-2">${[['teacher', 'ครู'], ['subject', 'รายวิชา'], ['room', 'ห้องเรียน'], ['std', 'เงื่อนไขมาตรฐาน']].map(([k, l]) => `<button data-c-tab="${k}" type="button" class="rounded-xl px-3 py-1.5 text-sm font-semibold ${m.tab === k ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}">${l}</button>`).join('')}</div>` });
       const num = (attr, val, min, max) => `<input ${attr} type="number" min="${min}" max="${max}" value="${val}" class="${selSm} w-20 text-center">`;
       if (m.tab === 'teacher') {
         const tc = { ...TT.teacherCond(proxy, m.teacherId) };
@@ -931,7 +931,7 @@
           <div class="rounded-2xl border border-slate-200 p-4"><p class="text-sm font-semibold text-slate-800">ค่าเริ่มต้นของครูทุกคน (ข้อบังคับ)</p><div class="mt-3 flex flex-wrap gap-5 text-sm text-slate-600"><label class="flex items-center gap-2">คาบสูงสุดต่อวัน ${num('data-def="teacherMaxPerDay"', c.defaults.teacherMaxPerDay, 1, 8)}</label><label class="flex items-center gap-2">คาบติดกันสูงสุด ${num('data-def="teacherMaxConsecutive"', c.defaults.teacherMaxConsecutive, 1, 8)}</label><label class="flex items-center gap-2">คาบสูงสุดต่อสัปดาห์ ${num('data-def="teacherMaxPerWeek"', c.defaults.teacherMaxPerWeek, 1, 40)}</label></div></div>
           <div class="rounded-2xl border border-slate-200 p-4"><div class="flex flex-wrap items-center gap-3"><p class="text-sm font-semibold text-slate-800">กำหนดเฉพาะครู</p><select id="cTeacher" class="${selSm}">${db().external.teachers.map((t) => `<option value="${t.id}" ${t.id === m.teacherId ? 'selected' : ''}>${esc(t.name)}${c.teacher[t.id] ? ' ●' : ''}</option>`).join('')}</select></div>
             <div class="mt-3 flex flex-wrap gap-5 text-sm text-slate-600"><label class="flex items-center gap-2">คาบสูงสุดต่อวัน ${num('data-tc="maxPerDay"', tc.maxPerDay, 1, 8)}</label><label class="flex items-center gap-2">คาบติดกันสูงสุด ${num('data-tc="maxConsecutive"', tc.maxConsecutive, 1, 8)}</label><label class="flex items-center gap-2">คาบสูงสุดต่อสัปดาห์ ${num('data-tc="maxPerWeek"', tc.maxPerWeek, 1, 40)}</label>${c.teacher[m.teacherId] ? '<button id="cTeacherReset" type="button" class="text-xs font-semibold text-rose-600">ใช้ค่าเริ่มต้น</button>' : ''}</div>
-            <p class="mt-4 text-sm font-semibold text-slate-800">เวลาไม่ว่างของครู (${TT.termLabel(v.term)})</p><div class="mt-2 space-y-1.5">${un.length ? un.map((u) => `<p class="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-700">${TT.DAYS[u.day].name} ${u.start}–${u.end} · ${esc(u.reason)} · <span class="font-semibold ${{ approved: 'text-emerald-700', pending: 'text-amber-700', rejected: 'text-rose-700' }[u.status]}">${{ approved: 'อนุมัติแล้ว (ข้อบังคับ)', pending: 'รออนุมัติ (ยังไม่ใช้)', rejected: 'ไม่อนุมัติ' }[u.status]}</span></p>`).join('') : '<p class="text-xs text-slate-400">ไม่มี</p>'}<a href="timetable-approvals.html#unavailability" class="inline-block text-xs font-semibold text-blue-700">จัดการที่หน้าคำขออนุมัติ →</a></div></div></div>`;
+            <p class="mt-4 text-sm font-semibold text-slate-800">เวลาไม่ว่างของครู (${TT.termLabel(v.term)})</p><div class="mt-2 space-y-1.5">${un.length ? un.map((u) => `<p class="rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-700">${TT.DAYS[u.day].name} ${u.start}–${u.end} ${esc(u.reason)} <span class="font-semibold ${{ approved: 'text-emerald-700', pending: 'text-amber-700', rejected: 'text-rose-700' }[u.status]}">${{ approved: 'อนุมัติแล้ว (ข้อบังคับ)', pending: 'รออนุมัติ (ยังไม่ใช้)', rejected: 'ไม่อนุมัติ' }[u.status]}</span></p>`).join('') : '<p class="text-xs text-slate-400">ไม่มี</p>'}<a href="timetable-approvals.html#unavailability" class="inline-block text-xs font-semibold text-blue-700">จัดการที่หน้าคำขออนุมัติ →</a></div></div></div>`;
         $('modalBody').querySelectorAll('[data-def]').forEach((el) => { el.onchange = () => { c.defaults[el.dataset.def] = Number(el.value); }; });
         $('modalBody').querySelectorAll('[data-tc]').forEach((el) => { el.onchange = () => { c.teacher[m.teacherId] = { ...(c.teacher[m.teacherId] || {}), [el.dataset.tc]: Number(el.value) }; }; });
         $('cTeacher').onchange = (e) => { m.teacherId = e.target.value; renderConditions(); };
@@ -939,7 +939,7 @@
       } else if (m.tab === 'subject') {
         const codes = [...new Set(TT.classesOfLevel(m.level).flatMap((cl) => TT.loadOfClass(v.term, cl.id).map((l) => l.code)))];
         const ts = TT.stageOfLevel(v, m.level);
-        $('modalBody').innerHTML = `<div class="mb-3 flex flex-wrap items-center gap-3"><select id="cLevel" class="${selSm}">${[1, 2, 3, 4, 5, 6].map((l) => `<option value="${l}" ${l === m.level ? 'selected' : ''}>ม.${l}</option>`).join('')}</select><p class="text-xs text-slate-500">คาบต่อสัปดาห์มาจากหน้าจัดการรายวิชา · "ควรเรียน" และ "ความสำคัญ" เป็นข้อพึงประสงค์ ที่เหลือเป็นข้อบังคับ</p></div>
+        $('modalBody').innerHTML = `<div class="mb-3 flex flex-wrap items-center gap-3"><select id="cLevel" class="${selSm}">${[1, 2, 3, 4, 5, 6].map((l) => `<option value="${l}" ${l === m.level ? 'selected' : ''}>ม.${l}</option>`).join('')}</select><p class="text-xs text-slate-500">คาบต่อสัปดาห์มาจากหน้าจัดการรายวิชา "ควรเรียน" และ "ความสำคัญ" เป็นข้อพึงประสงค์ ที่เหลือเป็นข้อบังคับ</p></div>
           <div class="overflow-x-auto rounded-2xl border border-slate-200 tt-scroll"><table class="w-full min-w-[900px] text-sm"><thead class="bg-slate-50 text-xs font-semibold text-slate-500"><tr><th class="px-3 py-3 text-left">รายวิชา</th><th class="px-2 py-3 text-center">คาบ/สัปดาห์</th><th class="px-2 py-3 text-center">สูงสุด/วัน</th><th class="px-2 py-3 text-center">คาบคู่</th><th class="px-2 py-3 text-left">ห้องเฉพาะ</th><th class="px-2 py-3 text-left">ควรเรียน</th><th class="px-2 py-3 text-left">ความสำคัญ</th><th class="px-2 py-3 text-left">ห้ามคาบที่</th></tr></thead><tbody class="divide-y divide-slate-100">${codes.map((code) => { const s = TT.subject(code); const sc = TT.subjectCond(proxy, code); return `<tr data-sub="${code}"><td class="px-3 py-2"><p class="font-semibold text-slate-800">${code}</p><p class="text-xs text-slate-500">${esc(s.name)}</p></td><td class="px-2 py-2 text-center font-semibold text-slate-700">${s.hours}</td><td class="px-2 py-2 text-center"><select data-sk="maxPerDay" class="${selSm}">${[1, 2].map((n) => `<option ${sc.maxPerDay === n ? 'selected' : ''}>${n}</option>`).join('')}</select></td><td class="px-2 py-2 text-center"><input data-sk="double" type="checkbox" ${sc.double ? 'checked' : ''} class="h-4 w-4 rounded"></td><td class="px-2 py-2"><select data-sk="roomType" class="${selSm}"><option value="">ห้องประจำชั้น</option>${Object.entries(TT.ROOM_TYPES).filter(([k]) => k !== 'regular').map(([k, n]) => `<option value="${k}" ${sc.roomType === k ? 'selected' : ''}>${n}</option>`).join('')}</select></td><td class="px-2 py-2"><select data-sk="prefer" class="${selSm}"><option value="">ไม่ระบุ</option><option value="morning" ${sc.prefer === 'morning' ? 'selected' : ''}>ช่วงเช้า</option><option value="afternoon" ${sc.prefer === 'afternoon' ? 'selected' : ''}>ช่วงบ่าย</option></select></td><td class="px-2 py-2"><select data-sk="priority" class="${selSm}">${[[1, 'สูง'], [2, 'ปกติ'], [3, 'ต่ำ']].map(([n, l]) => `<option value="${n}" ${sc.priority === n ? 'selected' : ''}>${l}</option>`).join('')}</select></td><td class="px-2 py-2"><div class="flex gap-1">${TT.periodTimes(ts).map((p) => `<label class="flex flex-col items-center text-[10px] text-slate-500"><input data-forbid="${p.no}" type="checkbox" ${sc.forbidden.some((f) => f.endsWith(`-${p.no}`)) ? 'checked' : ''} class="h-3.5 w-3.5 rounded">${p.no}</label>`).join('')}</div></td></tr>`; }).join('')}</tbody></table></div>`;
         $('cLevel').onchange = (e) => { m.level = Number(e.target.value); renderConditions(); };
         $('modalBody').querySelectorAll('[data-sub]').forEach((row) => {
@@ -951,7 +951,7 @@
         c.room[m.roomId] = c.room[m.roomId] || { unavailable: [] };
         const rc = c.room[m.roomId];
         const r = TT.room(m.roomId);
-        $('modalBody').innerHTML = `<div class="space-y-4"><div class="flex flex-wrap items-center gap-3">${roomPicker('cRoom', m.roomId, (rid) => c.room[rid]?.unavailable?.length)}<span class="text-xs text-slate-500">${TT.ROOM_TYPES[r.type]} · ความจุ ${r.cap} คน · ใช้พร้อมกันได้ ${r.maxClasses} ห้อง (ข้อมูลอาคารสถานที่)</span></div>
+        $('modalBody').innerHTML = `<div class="space-y-4"><div class="flex flex-wrap items-center gap-3">${roomPicker('cRoom', m.roomId, (rid) => c.room[rid]?.unavailable?.length)}<span class="text-xs text-slate-500">${TT.ROOM_TYPES[r.type]} ความจุ ${r.cap} คน ใช้พร้อมกันได้ ${r.maxClasses} ห้อง (ข้อมูลอาคารสถานที่)</span></div>
           <p class="text-sm font-semibold text-slate-800">ช่วงเวลาที่ห้องไม่พร้อมใช้งาน</p>${rc.unavailable.map((u, i) => `<div class="flex flex-wrap items-center gap-2 text-sm" data-ru="${i}"><select data-rk="day" class="${selSm}">${[0, 1, 2, 3, 4].map((d) => `<option value="${d}" ${u.day === d ? 'selected' : ''}>${TT.DAYS[d].name}</option>`).join('')}</select><input data-rk="start" type="time" value="${u.start}" class="${selSm}">–<input data-rk="end" type="time" value="${u.end}" class="${selSm}"><input data-rk="note" value="${esc(u.note || '')}" placeholder="เหตุผล" class="${selSm} w-56"><button data-ru-remove="${i}" type="button" class="text-xs font-semibold text-rose-600">ลบ</button></div>`).join('')}<button id="ruAdd" type="button" class="${btn2}">+ เพิ่มช่วงเวลา</button></div>`;
         $('cRoom').onchange = (e) => { m.roomId = e.target.value; renderConditions(); };
         $('modalBody').querySelectorAll('[data-ru]').forEach((row) => row.querySelectorAll('[data-rk]').forEach((el) => { el.onchange = () => { const u = rc.unavailable[Number(row.dataset.ru)]; u[el.dataset.rk] = el.dataset.rk === 'day' ? Number(el.value) : el.value; }; }));
@@ -975,7 +975,7 @@
       const ready = TT.readiness(v);
       const open = TT.unavailabilityOpen(v.term);
       $('modalBody').innerHTML = `<div class="space-y-6">
-        ${!ready.canAuto ? `<div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900"><p class="font-semibold">การตรวจความพร้อมไม่ผ่าน ${ready.fails} รายการ — จัดอัตโนมัติไม่ได้</p><ul class="mt-2 list-disc space-y-1 pl-5">${ready.items.filter((i) => i.status === 'fail').map((i) => `<li>${esc(i.title)}: ${esc(i.detail)}</li>`).join('')}</ul><p class="mt-2 text-xs">แก้ข้อมูลที่ต้นทางแล้วกด "ตรวจใหม่" ในการ์ดการตรวจความพร้อม · ระหว่างนี้จัดเองได้</p></div>` : ''}
+        ${!ready.canAuto ? `<div class="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-900"><p class="font-semibold">การตรวจความพร้อมไม่ผ่าน ${ready.fails} รายการ — จัดอัตโนมัติไม่ได้</p><ul class="mt-2 list-disc space-y-1 pl-5">${ready.items.filter((i) => i.status === 'fail').map((i) => `<li>${esc(i.title)}: ${esc(i.detail)}</li>`).join('')}</ul><p class="mt-2 text-xs">แก้ข้อมูลที่ต้นทางแล้วกด "ตรวจใหม่" ในการ์ดการตรวจความพร้อม ระหว่างนี้จัดเองได้</p></div>` : ''}
         ${open ? `<div class="flex gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">${icon('warn', 'h-5 w-5 shrink-0')}<span>ยังไม่ถึงวันปิดรับเวลาไม่ว่าง (${TT.formatDate(db().terms[v.term].unavailDeadline)}) ครูอาจกรอกเวลาไม่ว่างเพิ่มอีก ซึ่งจะกลายเป็น Conflict ภายหลัง</span></div>` : ''}
         <div><p class="font-semibold text-slate-900">1. วิธีจัด</p><div class="mt-3 grid gap-3 md:grid-cols-2">
           <label class="flex cursor-pointer gap-3 rounded-2xl border p-4 ${m.mode === 'smart' ? 'border-blue-500 bg-blue-50/60 ring-1 ring-blue-500' : 'border-slate-200'}"><input type="radio" name="autoMode" value="smart" ${m.mode === 'smart' ? 'checked' : ''} class="mt-1 h-4 w-4"><span><span class="block font-semibold text-slate-900">จัดอัตโนมัติตามเงื่อนไข</span><span class="mt-1 block text-sm leading-6 text-slate-500">เงื่อนไขมาตรฐาน + เวลาไม่ว่างของครู + เงื่อนไขที่ admin กำหนด (คาบต่อวัน คาบติดกัน คาบคู่ ห้องเฉพาะ เวลาที่ห้าม) และพยายามทำตามข้อพึงประสงค์</span><button data-act="conditions" type="button" class="mt-2 text-xs font-semibold text-blue-700 underline">ดู / แก้เงื่อนไข</button></span></label>
@@ -1006,7 +1006,7 @@
         <div class="flex gap-3 rounded-2xl border ${unplacedN || after.errorCells ? 'border-amber-200 bg-amber-50' : 'border-emerald-100 bg-emerald-50'} p-4">${icon(unplacedN || after.errorCells ? 'warn' : 'check', 'h-6 w-6 shrink-0')}<div><p class="font-semibold text-slate-900">${m.mode === 'smart' ? 'จัดอัตโนมัติตามเงื่อนไข' : 'จัดอัตโนมัติมาตรฐาน'} เสร็จแล้ว (ยังไม่บันทึก)</p><p class="text-sm text-slate-600">กด "ใช้ผลลัพธ์นี้" เพื่อบันทึกลงฉบับร่าง หรือ "สุ่มใหม่" เพื่อลองอีกแบบ</p></div></div>
         <div class="grid gap-3 sm:grid-cols-4">${box('จัดเพิ่มรอบนี้', res.placed, 'คาบ', 'text-blue-600')}${box('จัดไม่ได้', unplacedN, 'คาบ (อยู่ในรายการรอจัด)', unplacedN ? 'text-amber-600' : 'text-emerald-600')}${box('Conflict หลังจัด', after.errorCells, 'ทั้งฉบับ', after.errorCells ? 'text-rose-600' : 'text-emerald-600')}${box('คำเตือนหลังจัด', after.warnCells, 'ทั้งฉบับ', 'text-slate-900')}</div>
         <div class="max-h-[280px] overflow-auto rounded-2xl border border-slate-200 tt-scroll"><table class="w-full text-sm"><thead class="sticky top-0 bg-slate-50 text-xs font-semibold text-slate-500"><tr><th class="px-4 py-2.5 text-left">ครู</th><th class="px-4 py-2.5 text-left">ก่อน</th><th class="px-4 py-2.5 text-left">หลัง</th><th class="px-4 py-2.5 text-left"></th></tr></thead><tbody class="divide-y divide-slate-100">${rows.map((x) => `<tr><td class="px-4 py-2 font-semibold text-slate-800">${esc(TT.teacherName(x.tid))}</td><td class="px-4 py-2 text-slate-500">${x.before.placed}/${x.before.required}</td><td class="px-4 py-2 font-semibold">${x.after.placed}/${x.after.required}</td><td class="px-4 py-2"><div class="h-2 w-32 overflow-hidden rounded-full bg-slate-100"><div class="h-full ${x.after.pct === 100 ? 'bg-emerald-500' : 'bg-blue-600'}" style="width:${x.after.pct}%"></div></div></td></tr>`).join('')}</tbody></table></div>
-        ${res.unplaced.length ? `<div><p class="text-sm font-semibold text-slate-800">จัดไม่ได้และสาเหตุ</p><div class="mt-2 max-h-[220px] space-y-1.5 overflow-y-auto pr-1 tt-scroll">${res.unplaced.map((u) => `<div class="flex items-start justify-between gap-3 rounded-xl bg-amber-50/70 px-3 py-2 text-sm"><span><span class="font-semibold text-slate-800">${TT.className(u.classId)} · ${u.code} ${esc(TT.subject(u.code)?.name)}</span><span class="block text-xs text-amber-800">${esc(u.reason)}</span></span><span class="shrink-0 text-xs font-bold text-slate-600">${u.count} คาบ</span></div>`).join('')}</div></div>` : ''}
+        ${res.unplaced.length ? `<div><p class="text-sm font-semibold text-slate-800">จัดไม่ได้และสาเหตุ</p><div class="mt-2 max-h-[220px] space-y-1.5 overflow-y-auto pr-1 tt-scroll">${res.unplaced.map((u) => `<div class="flex items-start justify-between gap-3 rounded-xl bg-amber-50/70 px-3 py-2 text-sm"><span><span class="font-semibold text-slate-800">${TT.className(u.classId)} ${u.code} ${esc(TT.subject(u.code)?.name)}</span><span class="block text-xs text-amber-800">${esc(u.reason)}</span></span><span class="shrink-0 text-xs font-bold text-slate-600">${u.count} คาบ</span></div>`).join('')}</div></div>` : ''}
       </div>`;
       $('modalFooter').innerHTML = `<button id="autoBack" type="button" class="${btnG}">ปรับตัวเลือก</button><button id="autoReroll" type="button" class="${btn2}">สุ่มใหม่</button><button id="autoApply" type="button" class="${btnP}">ใช้ผลลัพธ์นี้</button>`;
       $('autoBack').onclick = () => { m.result = null; renderAuto(); };
@@ -1015,7 +1015,7 @@
         const label = m.scope === 'teacher' ? TT.teacherName(state.teacherId) : m.scope === 'group' ? `กลุ่มสาระ${TT.GROUPS[TT.teacher(state.teacherId).group].name}` : 'ครูทุกคน';
         const entries = res.entries; const mode = m.mode;
         closeModal();
-        commit('จัดตารางอัตโนมัติ', `${mode === 'smart' ? 'ตามเงื่อนไข' : 'มาตรฐาน'} · ${label} · จัดเพิ่ม ${res.placed} คาบ${unplacedN ? ` · จัดไม่ได้ ${unplacedN}` : ''}`, (vv) => { vv.entries = entries; });
+        commit('จัดตารางอัตโนมัติ', `${mode === 'smart' ? 'ตามเงื่อนไข' : 'มาตรฐาน'} ${label} จัดเพิ่ม ${res.placed} คาบ${unplacedN ? ` จัดไม่ได้ ${unplacedN}` : ''}`, (vv) => { vv.entries = entries; });
         TT.toast('บันทึกผลการจัดอัตโนมัติแล้ว', `จัดเพิ่ม ${res.placed} คาบ`);
       };
     }
@@ -1027,11 +1027,11 @@
     }
     function renderImport() {
       const m = state.modal; const v = ver();
-      openModal({ eyebrow: v.name, title: 'นำเข้า Excel', subtitle: m.teacherOnly ? `จากตารางสอนของ${TT.teacherName(m.teacherOnly)} · ไฟล์มีหลายครูได้ เลือกครูที่จะนำเข้า` : 'ไฟล์มีคาบของครูหลายคนได้ เลือกครูที่จะนำเข้า', width: 'max-w-5xl' });
+      openModal({ eyebrow: v.name, title: 'นำเข้า Excel', subtitle: m.teacherOnly ? `จากตารางสอนของ${TT.teacherName(m.teacherOnly)} ไฟล์มีหลายครูได้ เลือกครูที่จะนำเข้า` : 'ไฟล์มีคาบของครูหลายคนได้ เลือกครูที่จะนำเข้า', width: 'max-w-5xl' });
       if (!m.rows) {
         $('modalBody').innerHTML = `<div class="space-y-5">
           <label id="dropZone" class="drop-zone flex cursor-pointer flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/70 px-6 py-10 text-center transition hover:border-blue-300"><span class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-blue-600 shadow-sm">${icon('upload', 'h-7 w-7')}</span><span class="mt-4 font-semibold text-slate-900">ลากไฟล์มาวาง หรือคลิกเพื่อเลือกไฟล์</span><span class="mt-1 text-sm text-slate-500">รองรับ .xlsx และ .csv ตามไฟล์ต้นแบบ</span><input id="importFile" type="file" accept=".xlsx,.xls,.csv" class="hidden"></label>
-          <div class="grid gap-4 md:grid-cols-2"><div class="rounded-2xl border border-slate-200 p-4 text-sm leading-6 text-slate-600"><p class="font-semibold text-slate-800">กติกาการนำเข้า (เหมือนการจัดเอง)</p><ol class="mt-2 list-decimal space-y-1 pl-5"><li>คอลัมน์: ${TT.IMPORT_HEADERS.join(', ')}</li><li>ไม่ระบุรหัสครู ระบบใช้ครูจากการมอบหมายสอน · ไม่ระบุห้อง ใช้ห้องตามประเภทวิชา</li><li>ขัดเงื่อนไข → นำเข้าได้แต่เป็น Conflict · ห้องมีคาบอยู่แล้วหรือทับกิจกรรมล็อกเวลา → ข้าม</li></ol></div>
+          <div class="grid gap-4 md:grid-cols-2"><div class="rounded-2xl border border-slate-200 p-4 text-sm leading-6 text-slate-600"><p class="font-semibold text-slate-800">กติกาการนำเข้า (เหมือนการจัดเอง)</p><ol class="mt-2 list-decimal space-y-1 pl-5"><li>คอลัมน์: ${TT.IMPORT_HEADERS.join(', ')}</li><li>ไม่ระบุรหัสครู ระบบใช้ครูจากการมอบหมายสอน ไม่ระบุห้อง ใช้ห้องตามประเภทวิชา</li><li>ขัดเงื่อนไข → นำเข้าได้แต่เป็น Conflict ห้องมีคาบอยู่แล้วหรือทับกิจกรรมล็อกเวลา → ข้าม</li></ol></div>
           <div class="flex flex-col justify-between gap-3 rounded-2xl border border-blue-100 bg-blue-50/70 p-4"><p class="text-sm text-blue-900">ดาวน์โหลดไฟล์ต้นแบบ หรือทดลองด้วยข้อมูลตัวอย่างที่มีทั้งแถวถูกต้อง แถวที่เป็น Conflict และแถวที่ผิด</p><div class="flex flex-wrap gap-2"><button id="dlTemplate" type="button" class="${btn2}">${icon('download')}ไฟล์ต้นแบบ .xlsx</button><button id="sampleImport" type="button" class="${btnP} !py-2">ลองด้วยข้อมูลตัวอย่าง</button></div></div></div></div>`;
         $('modalFooter').innerHTML = `<button data-close-modal type="button" class="${btnG}">ปิด</button>`;
         const dz = $('dropZone');
@@ -1050,13 +1050,13 @@
       const groups = {};
       res.rows.forEach((r) => { const k = r.teacherKey || '(อ่านไม่ได้)'; (groups[k] = groups[k] || []).push(r); });
       const stat = (list, s) => list.filter((r) => r.status === s).length;
-      const statusBadge = { ok: ['ถูกต้อง', 'text-emerald-700'], warn: ['นำเข้า · คำเตือน', 'text-amber-700'], conflict: ['นำเข้า · Conflict', 'text-rose-700'], error: ['ข้าม', 'text-slate-500'], skip: ['ไม่ได้เลือกครู', 'text-slate-400'] };
+      const statusBadge = { ok: ['ถูกต้อง', 'text-emerald-700'], warn: ['นำเข้า คำเตือน', 'text-amber-700'], conflict: ['นำเข้า Conflict', 'text-rose-700'], error: ['ข้าม', 'text-slate-500'], skip: ['ไม่ได้เลือกครู', 'text-slate-400'] };
       const importable = res.rows.filter((r) => ['ok', 'warn', 'conflict'].includes(r.status)).length;
       $('modalBody').innerHTML = `<div class="space-y-4">
-        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p class="font-semibold text-slate-900">${esc(m.fileName)}</p><p class="text-sm text-slate-500">${m.rows.length} แถว · ${keys.length} กลุ่มครู</p></div><div class="flex gap-2 text-xs font-semibold"><span class="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">ถูกต้อง ${stat(res.rows, 'ok') + stat(res.rows, 'warn')}</span><span class="rounded-full bg-rose-50 px-3 py-1 text-rose-700">Conflict ${stat(res.rows, 'conflict')}</span><span class="rounded-full bg-slate-100 px-3 py-1 text-slate-600">ข้าม ${stat(res.rows, 'error')}</span></div></div>
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"><div><p class="font-semibold text-slate-900">${esc(m.fileName)}</p><p class="text-sm text-slate-500">${m.rows.length} แถว ${keys.length} กลุ่มครู</p></div><div class="flex gap-2 text-xs font-semibold"><span class="rounded-full bg-emerald-50 px-3 py-1 text-emerald-700">ถูกต้อง ${stat(res.rows, 'ok') + stat(res.rows, 'warn')}</span><span class="rounded-full bg-rose-50 px-3 py-1 text-rose-700">Conflict ${stat(res.rows, 'conflict')}</span><span class="rounded-full bg-slate-100 px-3 py-1 text-slate-600">ข้าม ${stat(res.rows, 'error')}</span></div></div>
         <div class="grid gap-2 sm:grid-cols-2"><label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-3"><input type="radio" name="impMode" value="replace" ${m.mode === 'replace' ? 'checked' : ''} class="mt-1 h-4 w-4"><span><span class="block text-sm font-semibold text-slate-800">แทนที่</span><span class="block text-xs text-slate-500">ล้างคาบเดิมของครูที่เลือก (ยกเว้นคาบที่ล็อก) แล้วนำเข้า</span></span></label><label class="flex cursor-pointer items-start gap-3 rounded-2xl border border-slate-200 p-3"><input type="radio" name="impMode" value="merge" ${m.mode === 'merge' ? 'checked' : ''} class="mt-1 h-4 w-4"><span><span class="block text-sm font-semibold text-slate-800">เติมเฉพาะช่องว่าง</span><span class="block text-xs text-slate-500">แถวที่ห้องมีคาบอยู่แล้วจะถูกข้าม</span></span></label></div>
-        <div class="space-y-3">${Object.entries(groups).map(([k, list]) => { const ids = k.includes('(') ? [] : k.split('+'); const checked = ids.length && ids.some((t) => m.selected.has(t)); return `<details ${checked ? 'open' : ''} class="rounded-2xl border border-slate-200"><summary class="flex cursor-pointer flex-wrap items-center gap-3 px-4 py-3">${ids.length ? `<input data-imp-teacher="${k}" type="checkbox" ${checked ? 'checked' : ''} class="h-4 w-4 rounded">` : ''}<span class="font-semibold text-slate-800">${ids.length ? esc(TT.teachersLabel(ids)) : 'แถวที่อ่านครู/ห้อง/วิชาไม่ได้'}</span><span class="text-xs text-slate-500">${list.length} แถว · ถูกต้อง ${stat(list, 'ok') + stat(list, 'warn')} · Conflict ${stat(list, 'conflict')} · ข้าม ${stat(list, 'error')}</span></summary>
-          <div class="overflow-x-auto border-t border-slate-100 tt-scroll"><table class="w-full min-w-[760px] text-sm"><thead class="bg-slate-50 text-xs text-slate-500"><tr><th class="px-3 py-2 text-left">#</th>${TT.IMPORT_HEADERS.map((h) => `<th class="px-3 py-2 text-left">${h}</th>`).join('')}<th class="px-3 py-2 text-left">ผลตรวจ</th></tr></thead><tbody class="divide-y divide-slate-100">${list.map((r) => `<tr class="${r.status === 'conflict' ? 'bg-rose-50/40' : r.status === 'error' ? 'bg-slate-50' : ''}"><td class="px-3 py-1.5 text-slate-400">${r.n}</td>${TT.IMPORT_HEADERS.map((_, i) => `<td class="px-3 py-1.5 text-slate-700">${esc(r.raw[i] ?? '')}</td>`).join('')}<td class="px-3 py-1.5"><span class="text-xs font-semibold ${statusBadge[r.status][1]}">${statusBadge[r.status][0]}</span>${r.msgs.length ? `<p class="text-[11px] text-slate-500">${esc(r.msgs.join(' · '))}</p>` : ''}</td></tr>`).join('')}</tbody></table></div></details>`; }).join('')}</div></div>`;
+        <div class="space-y-3">${Object.entries(groups).map(([k, list]) => { const ids = k.includes('(') ? [] : k.split('+'); const checked = ids.length && ids.some((t) => m.selected.has(t)); return `<details ${checked ? 'open' : ''} class="rounded-2xl border border-slate-200"><summary class="flex cursor-pointer flex-wrap items-center gap-3 px-4 py-3">${ids.length ? `<input data-imp-teacher="${k}" type="checkbox" ${checked ? 'checked' : ''} class="h-4 w-4 rounded">` : ''}<span class="font-semibold text-slate-800">${ids.length ? esc(TT.teachersLabel(ids)) : 'แถวที่อ่านครู/ห้อง/วิชาไม่ได้'}</span><span class="text-xs text-slate-500">${list.length} แถว ถูกต้อง ${stat(list, 'ok') + stat(list, 'warn')} Conflict ${stat(list, 'conflict')} ข้าม ${stat(list, 'error')}</span></summary>
+          <div class="overflow-x-auto border-t border-slate-100 tt-scroll"><table class="w-full min-w-[760px] text-sm"><thead class="bg-slate-50 text-xs text-slate-500"><tr><th class="px-3 py-2 text-left">#</th>${TT.IMPORT_HEADERS.map((h) => `<th class="px-3 py-2 text-left">${h}</th>`).join('')}<th class="px-3 py-2 text-left">ผลตรวจ</th></tr></thead><tbody class="divide-y divide-slate-100">${list.map((r) => `<tr class="${r.status === 'conflict' ? 'bg-rose-50/40' : r.status === 'error' ? 'bg-slate-50' : ''}"><td class="px-3 py-1.5 text-slate-400">${r.n}</td>${TT.IMPORT_HEADERS.map((_, i) => `<td class="px-3 py-1.5 text-slate-700">${esc(r.raw[i] ?? '')}</td>`).join('')}<td class="px-3 py-1.5"><span class="text-xs font-semibold ${statusBadge[r.status][1]}">${statusBadge[r.status][0]}</span>${r.msgs.length ? `<p class="text-[11px] text-slate-500">${esc(r.msgs.join(', '))}</p>` : ''}</td></tr>`).join('')}</tbody></table></div></details>`; }).join('')}</div></div>`;
       $('modalBody').querySelectorAll('input[name="impMode"]').forEach((el) => { el.onchange = () => { m.mode = el.value; renderImport(); }; });
       $('modalBody').querySelectorAll('[data-imp-teacher]').forEach((el) => { el.onclick = (e) => e.stopPropagation(); el.onchange = () => { el.dataset.impTeacher.split('+').forEach((t) => (el.checked ? m.selected.add(t) : m.selected.delete(t))); renderImport(); }; });
       $('modalFooter').innerHTML = `<button id="impBack" type="button" class="${btnG}">เลือกไฟล์ใหม่</button><button id="impConfirm" type="button" ${importable ? '' : 'disabled'} class="${btnP}">นำเข้า ${importable} คาบ</button>`;
@@ -1064,8 +1064,8 @@
       $('impConfirm').onclick = () => {
         const entries = res.work.entries; const name = m.fileName; const n = importable; const who = TT.teachersLabel([...m.selected]);
         closeModal();
-        commit('นำเข้า Excel', `${name} · ${n} คาบ · ${who}`, (vv) => { vv.entries = entries; });
-        TT.toast('นำเข้าแล้ว', `${n} คาบ · แถวที่เป็น Conflict ให้ตรวจในรายงาน`);
+        commit('นำเข้า Excel', `${name} ${n} คาบ ${who}`, (vv) => { vv.entries = entries; });
+        TT.toast('นำเข้าแล้ว', `${n} คาบ แถวที่เป็น Conflict ให้ตรวจในรายงาน`);
       };
     }
     function readImportFile(file) {
@@ -1128,7 +1128,7 @@
       const m = state.modal;
       const draw = () => {
         openModal({ eyebrow: v.name, title: 'ส่งออกตารางสอน', subtitle: v.status === 'draft' ? 'ฉบับร่างจะมีลายน้ำ "ฉบับร่าง"' : TT.VERSION_STATUS[v.status].label, width: 'max-w-2xl' });
-        const opts = [['teacher', `ตารางสอน ${TT.teacherName(state.teacherId)}`], ['teachers', 'ตารางสอนครูทุกคน (หน้าละคน)'], ['class', `ตารางเรียน ${TT.className(state.classId)}`], ['level', `ตารางเรียนทุกห้อง ม.${state.level}`], ['room', `ตารางการใช้ห้อง ${TT.roomShort(state.roomId)}`], ['raw', 'ข้อมูลดิบทั้งฉบับ (นำเข้ากลับได้ · Excel เท่านั้น)']];
+        const opts = [['teacher', `ตารางสอน ${TT.teacherName(state.teacherId)}`], ['teachers', 'ตารางสอนครูทุกคน (หน้าละคน)'], ['class', `ตารางเรียน ${TT.className(state.classId)}`], ['level', `ตารางเรียนทุกห้อง ม.${state.level}`], ['room', `ตารางการใช้ห้อง ${TT.roomShort(state.roomId)}`], ['raw', 'ข้อมูลดิบทั้งฉบับ (นำเข้ากลับได้ Excel เท่านั้น)']];
         $('modalBody').innerHTML = `<div class="space-y-5"><div class="grid grid-cols-2 gap-3">${[['xlsx', 'Excel', 'แยกชีต'], ['pdf', 'PDF', 'A4 แนวนอน พร้อมพิมพ์']].map(([k, l, h]) => `<label class="flex cursor-pointer items-center gap-3 rounded-2xl border p-4 ${m.fmt === k ? 'border-blue-500 bg-blue-50/60' : 'border-slate-200'}"><input type="radio" name="expFmt" value="${k}" ${m.fmt === k ? 'checked' : ''} class="h-4 w-4"><span><span class="block font-semibold text-slate-900">${l}</span><span class="block text-xs text-slate-500">${h}</span></span></label>`).join('')}</div>
           <div class="space-y-2">${opts.map(([k, l]) => `<label class="flex cursor-pointer items-center gap-3 rounded-2xl border border-slate-200 p-3 hover:bg-slate-50 ${k === 'raw' && m.fmt === 'pdf' ? 'opacity-40' : ''}"><input type="radio" name="expScope" value="${k}" ${m.scope === k ? 'checked' : ''} ${k === 'raw' && m.fmt === 'pdf' ? 'disabled' : ''} class="h-4 w-4"><span class="text-sm font-semibold text-slate-800">${esc(l)}</span></label>`).join('')}</div></div>`;
         $('modalBody').querySelectorAll('input[name="expFmt"]').forEach((el) => { el.onchange = () => { m.fmt = el.value; if (m.fmt === 'pdf' && m.scope === 'raw') m.scope = 'teacher'; draw(); }; });
@@ -1167,7 +1167,7 @@
       if (!ok) return;
       TT.publish(v);
       TT.save();
-      TT.toast('เผยแพร่แล้ว', `${v.name} · แจ้งครูแล้ว`);
+      TT.toast('เผยแพร่แล้ว', `${v.name} แจ้งครูแล้ว`);
     }
     async function deleteVersion(id) {
       const v = TT.version(id);
@@ -1189,16 +1189,16 @@
       const list = Object.entries(v.entries).flatMap(([cid, slots]) => Object.entries(slots).filter(([, e]) => !e.locked).map(([slot]) => [cid, slot]));
       const locked = Object.values(v.entries).reduce((a, slots) => a + Object.values(slots).filter((e) => e.locked).length, 0);
       if (!list.length) { TT.toast('ไม่มีคาบให้ล้าง', 'เหลือเฉพาะคาบที่ล็อก', 'info'); return; }
-      if (!(await TT.confirm({ title: `ล้างตารางทั้งฉบับ "${v.name}"?`, message: `นำ ${list.length} คาบของครูทุกคนกลับไปที่รายการรอจัด${locked ? ` · คาบที่ล็อก ${locked} คาบจะยังอยู่` : ''} · ย้อนกลับได้ด้วยปุ่ม "ย้อนกลับ"`, okText: 'ล้างทั้งฉบับ', requireText: 'ล้างทั้งหมด' }))) return;
-      commit('ล้างตารางทั้งฉบับ', `${v.name} · ${list.length} คาบ`, (vv) => { list.forEach(([cid, slot]) => delete vv.entries[cid][slot]); });
+      if (!(await TT.confirm({ title: `ล้างตารางทั้งฉบับ "${v.name}"?`, message: `นำ ${list.length} คาบของครูทุกคนกลับไปที่รายการรอจัด${locked ? ` คาบที่ล็อก ${locked} คาบจะยังอยู่` : ''} ย้อนกลับได้ด้วยปุ่ม "ย้อนกลับ"`, okText: 'ล้างทั้งฉบับ', requireText: 'ล้างทั้งหมด' }))) return;
+      commit('ล้างตารางทั้งฉบับ', `${v.name} ${list.length} คาบ`, (vv) => { list.forEach(([cid, slot]) => delete vv.entries[cid][slot]); });
       TT.toast('ล้างตารางทั้งฉบับแล้ว', `${list.length} คาบกลับไปอยู่ในรายการรอจัด`);
     }
     async function clearTeacher() {
       const v = ver(); const tid = state.teacherId;
       const list = TT.teacherBlocks(v, tid).filter((b) => !b.entry.locked);
       if (!list.length) { TT.toast('ไม่มีคาบให้ล้าง', 'เหลือเฉพาะคาบที่ล็อก', 'info'); return; }
-      if (!(await TT.confirm({ title: `ล้างตารางสอน ${TT.teacherName(tid)}?`, message: `นำ ${list.length} คาบ (ไม่รวมคาบที่ล็อก) กลับไปที่รายการรอจัด · ย้อนกลับได้`, okText: 'ล้างตาราง' }))) return;
-      commit('ล้างตารางครู', `${TT.teacherName(tid)} · ${list.length} คาบ`, (vv) => { list.forEach((b) => delete vv.entries[b.cid][b.slot]); });
+      if (!(await TT.confirm({ title: `ล้างตารางสอน ${TT.teacherName(tid)}?`, message: `นำ ${list.length} คาบ (ไม่รวมคาบที่ล็อก) กลับไปที่รายการรอจัด ย้อนกลับได้`, okText: 'ล้างตาราง' }))) return;
+      commit('ล้างตารางครู', `${TT.teacherName(tid)} ${list.length} คาบ`, (vv) => { list.forEach((b) => delete vv.entries[b.cid][b.slot]); });
     }
     // Mock of "แก้ที่หน้าหลักสูตรแล้วกลับมาตรวจใหม่": rows whose "ไปแก้ไข" link was opened get a qualified teacher assigned.
     function simulateFixes() {
@@ -1206,7 +1206,7 @@
       let fixed = 0;
       (db().assignments[term] || []).forEach((a) => {
         if (a.teachers.length) return;
-        const hit = [...state.simulatedFixes].some((k) => k.startsWith(`${TT.className(a.classId)} · ${a.code}`));
+        const hit = [...state.simulatedFixes].some((k) => k.startsWith(`${TT.className(a.classId)} ${a.code}`));
         if (!hit) return;
         const q = db().external.teachers.filter((t) => t.canTeach.includes(a.code)).sort((x, y) => TT.loadOfTeacher(term, x.id).length - TT.loadOfTeacher(term, y.id).length)[0];
         if (q) { a.teachers = [q.id]; fixed++; }
@@ -1243,7 +1243,7 @@
         if ((el = q('[data-goto-room]'))) { state.roomId = el.dataset.gotoRoom; state.tab = 'room'; render(); return; }
         if ((el = q('[data-goto-entry]'))) { const [cid, slot] = el.dataset.gotoEntry.split('|'); const e2 = ver().entries[cid][slot]; state.tab = 'teacher'; state.teacherId = e2?.teachers[0] || state.teacherId; state.group = ''; state.search = ''; render(); openEntry(cid, slot); return; }
         if ((el = q('[data-view]'))) { const [cid, slot] = el.dataset.view.split('|'); openEntry(cid, slot, true); return; }
-        if ((el = q('[data-copy-rows]'))) { const r = TT.readiness(state.modal?.kind === 'wizard' ? wizTempVersion() : ver()).items.find((i) => i.id === el.dataset.copyRows); navigator.clipboard?.writeText(r.rows.map((x) => x.text).join('\n')).catch(() => {}); TT.toast('คัดลอกรายการแล้ว', `${r.rows.length} รายการ · ส่งต่อให้ทีมที่รับผิดชอบ`, 'info'); return; }
+        if ((el = q('[data-copy-rows]'))) { const r = TT.readiness(state.modal?.kind === 'wizard' ? wizTempVersion() : ver()).items.find((i) => i.id === el.dataset.copyRows); navigator.clipboard?.writeText(r.rows.map((x) => x.text).join('\n')).catch(() => {}); TT.toast('คัดลอกรายการแล้ว', `${r.rows.length} รายการ ส่งต่อให้ทีมที่รับผิดชอบ`, 'info'); return; }
         if ((el = q('#teacherTimeline [data-entry]'))) { const [cid, slot] = el.dataset.entry.split('|'); openEntry(cid, slot); return; }
         if ((el = q('[data-row-add]')) && editable() && !q('.tt-zone')) {
           const [lo, hi] = TT.versionRange(ver()); const rect = el.getBoundingClientRect();
@@ -1266,7 +1266,7 @@
           else if (a === 'clear-all') { $('clearMenu')?.classList.add('hidden'); clearAll(); }
           else if (a === 'toggle-readiness') { state.readinessOpen = !state.readinessOpen; render(); }
           else if (a === 'recheck') { const n = simulateFixes(); if (state.modal?.kind === 'wizard') wizStep5(); else render(); TT.toast('ตรวจใหม่แล้ว', n ? `การมอบหมายสอนที่แก้แล้วจากหน้าจัดการหลักสูตร ${n} รายการ` : 'ข้อมูลเป็นปัจจุบัน', 'info'); }
-          else if (a === 'merge') { const v = ver(); state.undo[v.id] = state.undo[v.id] || []; state.undo[v.id].push({ snap: JSON.stringify(v.entries), action: 'นำการเปลี่ยนแปลงมารวม' }); const r = TT.mergeDivergence(v); TT.save(); TT.toast('นำการเปลี่ยนแปลงมารวมแล้ว', `รวม ${r.merged.length} รายการ${r.skipped.length ? ` · ข้าม ${r.skipped.length} (ช่องในฉบับร่างไม่ตรงกัน)` : ''}`); }
+          else if (a === 'merge') { const v = ver(); state.undo[v.id] = state.undo[v.id] || []; state.undo[v.id].push({ snap: JSON.stringify(v.entries), action: 'นำการเปลี่ยนแปลงมารวม' }); const r = TT.mergeDivergence(v); TT.save(); TT.toast('นำการเปลี่ยนแปลงมารวมแล้ว', `รวม ${r.merged.length} รายการ${r.skipped.length ? ` ข้าม ${r.skipped.length} (ช่องในฉบับร่างไม่ตรงกัน)` : ''}`); }
         }
       });
       document.addEventListener('change', (e) => {
@@ -1301,7 +1301,7 @@
         // filter chips without a full re-render so the input keeps focus
         const ids = new Set(list.map((t) => t.id));
         document.querySelectorAll('#tabBody [data-teacher]').forEach((chip) => chip.classList.toggle('hidden', !ids.has(chip.dataset.teacher)));
-        if ($('teacherCount')) $('teacherCount').textContent = `${list.length} คน${state.search ? ` · ค้นหา "${state.search}"` : ' · ครูที่ได้รับการมอบหมายสอนในภาคเรียนนี้'}`;
+        if ($('teacherCount')) $('teacherCount').textContent = `${list.length} คน${state.search ? ` ค้นหา "${state.search}"` : ' ครูที่ได้รับการมอบหมายสอนในภาคเรียนนี้'}`;
         box.querySelector('.bg-blue-50')?.scrollIntoView({ block: 'nearest' });
       }
       function pickTeacher(id) {

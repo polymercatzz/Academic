@@ -125,8 +125,8 @@ const STATUS = {
   pass: { label: 'ผ่าน', chip: 'chip-ok' },
   'remedial-pass': { label: 'ผ่าน (สอบซ่อม)', chip: 'chip-ok' },
   fail: { label: 'มีสิทธิ์สอบซ่อม', chip: 'chip-bad' },
-  r: { label: 'ร · รอการตัดสิน', chip: 'chip-warn' },
-  ms: { label: 'มส · เวลาเรียนไม่ถึง', chip: 'chip-ms' },
+  r: { label: 'ร รอการตัดสิน', chip: 'chip-warn' },
+  ms: { label: 'มส เวลาเรียนไม่ถึง', chip: 'chip-ms' },
   incomplete: { label: 'ยังกรอกไม่ครบ', chip: '' },
   invalid: { label: 'ข้อมูลไม่ถูกต้อง', chip: 'chip-bad' },
   nostruct: { label: 'ยังไม่มีโครงสร้าง', chip: '' },
@@ -280,7 +280,7 @@ function sectionState(sec) {
   if (sec.state === 'approved') return { key: 'approved', label: 'อนุมัติแล้ว', chip: 'chip-ok', icon: 'lock' };
   if (sec.state === 'pending') return { key: 'pending', label: 'รอฝ่ายวิชาการตรวจ', chip: 'chip-primary', icon: 'clock' };
   if (!sec.structure.length) return { key: 'nostructure', label: 'ยังไม่ตั้งโครงสร้างคะแนน', chip: 'chip-warn', icon: 'info' };
-  if (isReturned(sec)) return { key: 'returned', label: 'ถูกตีกลับ · รอแก้ไข', chip: 'chip-bad', icon: 'alert' };
+  if (isReturned(sec)) return { key: 'returned', label: 'ถูกตีกลับ รอแก้ไข', chip: 'chip-bad', icon: 'alert' };
   const p = sectionProgress(sec);
   if (p.overall >= 0.999) return { key: 'ready', label: 'พร้อมส่งผลการเรียน', chip: 'chip-primary', icon: 'send' };
   return { key: 'draft', label: 'กำลังบันทึกคะแนน', chip: '', icon: 'clock' };
@@ -338,7 +338,7 @@ function saveDraft() {
   sec.updatedAt = now;
   ui.draft = {};
   persist();
-  toast(`บันทึก ${keys.length} รายการเรียบร้อย · คำนวณผลการเรียนใหม่แล้ว`, 'ok');
+  toast(`บันทึก ${keys.length} รายการเรียบร้อย คำนวณผลการเรียนใหม่แล้ว`, 'ok');
   updateFollowBadge();
   return true;
 }
@@ -556,7 +556,7 @@ function renderHome() {
     </div>
 
     <div class="stat-row">
-      <div class="card stat"><div class="stat-label">รายวิชา/ห้องที่สอน</div><div class="stat-value">${secs.length} <small>ห้อง · ${students} คน</small></div></div>
+      <div class="card stat"><div class="stat-label">รายวิชา/ห้องที่สอน</div><div class="stat-value">${secs.length} <small>ห้อง ${students} คน</small></div></div>
       <div class="card stat"><div class="stat-label">ส่งผลการเรียนแล้ว</div><div class="stat-value">${submitted}<small> / ${secs.length}</small></div>${returnedN ? `<div style="font-size:12.5px;color:var(--bad);font-weight:600">${returnedN} ห้องถูกตีกลับ รอแก้ไข</div>` : ''}</div>
       <div class="card stat"><div class="stat-label">นักเรียนที่ต้องติดตาม</div><div class="stat-value" style="color:${follow ? 'var(--bad)' : 'inherit'}">${follow} <small>คน</small></div></div>
       <div class="card stat"><div class="stat-label">ใกล้ครบกำหนดส่ง</div><div class="stat-value">${nearest == null ? '—' : nearest < 0 ? `<span style="color:var(--bad);white-space:nowrap">เลย ${-nearest} <small>วัน</small></span>` : `${nearest} <small>วัน</small>`}</div></div>
@@ -583,7 +583,7 @@ function secCard(sec) {
     <a class="card sec-card" href="#/s/${sec.id}/${tab}">
       <div class="sec-top">
         <div style="min-width:0">
-          <div class="sec-code">${sec.code} · ${sec.type}</div>
+          <div class="sec-code">${sec.code} ${sec.type}</div>
           <div class="sec-name">${esc(sec.name)}</div>
         </div>
         <div class="sec-room">${sec.room}</div>
@@ -634,11 +634,11 @@ function renderSection(sec, tab) {
       <div class="ws-title">
         <div class="sec-room">${sec.room}</div>
         <div style="min-width:0">
-          <div class="sec-code">${sec.code} · รายวิชา${sec.type}</div>
+          <div class="sec-code">${sec.code} รายวิชา${sec.type}</div>
           <h1>${esc(sec.name)}</h1>
           <div class="ws-sub">
             <span>${termOf(sec.term).label}</span>
-            <span>${sec.credit} หน่วยกิต · ${sec.hours} ชม.</span>
+            <span>${sec.credit} หน่วยกิต ${sec.hours} ชม.</span>
             ${aca ? `<span>${icon('users')} ${esc(teacherName(sec))}</span>` : ''}
             <span>${sec.students.length} คน</span>
             <span>${deadlineText(sec)}</span>
@@ -675,13 +675,13 @@ function renderSection(sec, tab) {
 function lockedCallout(sec) {
   if (isAcademic()) {
     const msg = sec.state === 'draft'
-      ? '<b>มุมมองฝ่ายวิชาการ · ดูได้อย่างเดียว</b> — ห้องนี้ยังไม่ส่งผลการเรียน ข้อมูลที่เห็นคือข้อมูลที่ครูบันทึกแล้ว และอาจเปลี่ยนแปลงได้'
+      ? '<b>มุมมองฝ่ายวิชาการ ดูได้อย่างเดียว</b> — ห้องนี้ยังไม่ส่งผลการเรียน ข้อมูลที่เห็นคือข้อมูลที่ครูบันทึกแล้ว และอาจเปลี่ยนแปลงได้'
       : sec.state === 'pending'
-        ? `<b>มุมมองฝ่ายวิชาการ · ดูได้อย่างเดียว</b> — ${ui.pinMode ? 'โหมดปักหมุดเปิดอยู่: คลิกช่องคะแนนหรือชื่อนักเรียนเพื่อเพิ่มข้อสังเกต' : 'เปิด “โหมดปักหมุด” ที่แถบด้านล่างเพื่อชี้จุดที่ต้องแก้ก่อนตีกลับ'}`
+        ? `<b>มุมมองฝ่ายวิชาการ ดูได้อย่างเดียว</b> — ${ui.pinMode ? 'โหมดปักหมุดเปิดอยู่: คลิกช่องคะแนนหรือชื่อนักเรียนเพื่อเพิ่มข้อสังเกต' : 'เปิด “โหมดปักหมุด” ที่แถบด้านล่างเพื่อชี้จุดที่ต้องแก้ก่อนตีกลับ'}`
         : '<b>อนุมัติแล้ว</b> — ข้อมูลถูกล็อก';
     return `<div class="callout ${sec.state === 'draft' ? 'warn' : ''}" style="margin-bottom:12px">${icon(sec.state === 'draft' ? 'info' : 'lock')}<div>${msg}</div></div>`;
   }
-  const what = sec.state === 'approved' ? `ฝ่ายวิชาการอนุมัติแล้วเมื่อ ${thDate(lastReview(sec)?.decidedAt, true)}` : `ส่งผลการเรียนแล้วเมื่อ ${thDate(sec.submittedAt, true)} · รอฝ่ายวิชาการตรวจ`;
+  const what = sec.state === 'approved' ? `ฝ่ายวิชาการอนุมัติแล้วเมื่อ ${thDate(lastReview(sec)?.decidedAt, true)}` : `ส่งผลการเรียนแล้วเมื่อ ${thDate(sec.submittedAt, true)} รอฝ่ายวิชาการตรวจ`;
   return `<div class="callout ok" style="margin-bottom:12px">${icon('lock')}<div><b>${what}</b> — ข้อมูลถูกล็อก ดูได้อย่างเดียว หากต้องการแก้ไขให้ยื่น “คำขอปลดล็อก” ในแท็บผลการเรียน</div></div>`;
 }
 
@@ -701,11 +701,11 @@ function returnedBanner(sec) {
     <div class="row" style="align-items:flex-start;gap:12px">
       <span class="cl-icon cl-bad" style="width:32px;height:32px">${icon('alert')}</span>
       <div style="flex:1;min-width:0">
-        <div class="row wrap" style="gap:8px"><b style="font-size:15.5px">ฝ่ายวิชาการตีกลับให้แก้ไข</b><span class="faint" style="font-size:13px">โดย ${esc(userById(r.reviewerId)?.name)} · ${relTime(r.decidedAt)} · รอบที่ ${sec.reviews.length}</span><span class="spacer"></span><button class="btn btn-sm btn-ghost" data-banner="collapse">ย่อ</button></div>
+        <div class="row wrap" style="gap:8px"><b style="font-size:15.5px">ฝ่ายวิชาการตีกลับให้แก้ไข</b><span class="faint" style="font-size:13px">โดย ${esc(userById(r.reviewerId)?.name)} ${relTime(r.decidedAt)} รอบที่ ${sec.reviews.length}</span><span class="spacer"></span><button class="btn btn-sm btn-ghost" data-banner="collapse">ย่อ</button></div>
         <div style="margin-top:4px">${esc(r.reason)}</div>
         ${notes.length ? `<div class="note-list">${notes.map((n) => {
           const st = sec.students.find((x) => x.id === n.sid);
-          const where = n.field ? `${fullName(st)} · ${esc(fieldLabel(sec, fieldKind(sec, n.field), n.field))}` : `${fullName(st)} · ทั้งแถว`;
+          const where = n.field ? `${fullName(st)} ${esc(fieldLabel(sec, fieldKind(sec, n.field), n.field))}` : `${fullName(st)} ทั้งแถว`;
           return `<div class="note-item ${n.resolved ? 'resolved' : ''}">
             <span class="pin-dot"></span>
             <div style="flex:1;min-width:0"><div class="faint" style="font-size:12.5px">${where}</div><div>${esc(n.text)}</div></div>
@@ -713,7 +713,7 @@ function returnedBanner(sec) {
             <button class="btn btn-sm ${n.resolved ? '' : 'btn-ok'}" data-resolve="${n.id}">${n.resolved ? 'ยกเลิก' : `${icon('check')}แก้แล้ว`}</button>
           </div>`;
         }).join('')}</div>` : ''}
-        <div class="faint" style="font-size:13px;margin-top:8px">${notes.length ? `แก้แล้ว ${notes.length - open}/${notes.length} หมุด · ` : ''}แก้ไขเสร็จแล้วให้ไปที่แท็บ “ผลการเรียน & ส่งผล” เพื่อส่งใหม่</div>
+        <div class="faint" style="font-size:13px;margin-top:8px">${notes.length ? `แก้แล้ว ${notes.length - open}/${notes.length} หมุด ` : ''}แก้ไขเสร็จแล้วให้ไปที่แท็บ “ผลการเรียน & ส่งผล” เพื่อส่งใหม่</div>
       </div>
     </div>
   </div>`;
@@ -897,7 +897,7 @@ function updateStructSummary(sec) {
     ${GROUP_KEYS.map((g) => gw[g] ? `<div class="wb-${g}" style="width:${(gw[g] / scale) * 100}%">${GROUPS[g].label} ${gw[g]}%</div>` : '').join('')}
     ${total > 100 ? '' : ''}
   </div>
-  <div class="row" style="font-size:13px;justify-content:space-between"><span class="faint">0%</span><span style="font-weight:700;color:${total === 100 ? 'var(--ok)' : total > 100 ? 'var(--bad)' : 'var(--warn)'}">รวม ${total}%${total < 100 ? ` · ขาดอีก ${100 - total}%` : total > 100 ? ` · เกิน ${total - 100}%` : ' ✓'}</span><span class="faint">100%</span></div>`;
+  <div class="row" style="font-size:13px;justify-content:space-between"><span class="faint">0%</span><span style="font-weight:700;color:${total === 100 ? 'var(--ok)' : total > 100 ? 'var(--bad)' : 'var(--warn)'}">รวม ${total}%${total < 100 ? ` ขาดอีก ${100 - total}%` : total > 100 ? ` เกิน ${total - 100}%` : ' ✓'}</span><span class="faint">100%</span></div>`;
 
   const issues = structIssues(items);
   const dirty = structDirty();
@@ -933,7 +933,7 @@ function saveStructure(silent) {
   sec.history.unshift({ t: Date.now(), who: TEACHER.name, student: '—', field: 'โครงสร้างคะแนน', from: '', to: `บันทึกโครงสร้างคะแนน (${clean.length} องค์ประกอบ รวม 100%)`, kind: 'event' });
   ui.structDraft = { sid: sec.id, items: JSON.parse(JSON.stringify(clean)) };
   persist();
-  toast(first ? 'บันทึกโครงสร้างคะแนนแล้ว · พร้อมกรอกคะแนน' : 'บันทึกโครงสร้างแล้ว · คำนวณคะแนนรวมใหม่ทั้งหมด', 'ok');
+  toast(first ? 'บันทึกโครงสร้างคะแนนแล้ว พร้อมกรอกคะแนน' : 'บันทึกโครงสร้างแล้ว คำนวณคะแนนรวมใหม่ทั้งหมด', 'ok');
   if (!silent) renderSection(sec, 'structure');
   return true;
 }
@@ -959,7 +959,7 @@ function openIndicatorPicker(sec, comp) {
 /* ---------- Tab 2-4: ตารางกรอกข้อมูล (grid) ---------- */
 function gridConfig(sec, kind) {
   if (kind === 'score') {
-    const cols = sec.structure.map((c) => ({ field: c.id, label: c.name, meta: `เต็ม ${c.max} · ${c.weight}%`, group: c.group, max: c.max, title: c.indicators.join(', ') }));
+    const cols = sec.structure.map((c) => ({ field: c.id, label: c.name, meta: `เต็ม ${c.max} ${c.weight}%`, group: c.group, max: c.max, title: c.indicators.join(', ') }));
     const groups = GROUP_KEYS.map((g) => ({ label: `${GROUPS[g].label} ${structureTotal(sec.structure.filter((c) => c.group === g))}%`, cls: `grp-${g}`, span: cols.filter((c) => c.group === g).length })).filter((g) => g.span);
     return {
       cols, groups,
@@ -979,7 +979,7 @@ function gridConfig(sec, kind) {
       placeholder: '',
       legend: `<span><span class="sw" style="background:#fffbea;border-color:#e0a100"></span>แก้ไขแล้ว ยังไม่บันทึก</span>
         <span><span class="sw" style="background:#fdecec;border-color:#f4c7c7"></span>ข้อมูลไม่ถูกต้อง</span>
-        <span><b style="color:var(--warn)">ร</b> รอส่งงาน · <b style="color:var(--warn)">ข</b> ขาดสอบ (พิมพ์ r / x ได้)</span>`,
+        <span><b style="color:var(--warn)">ร</b> รอส่งงาน <b style="color:var(--warn)">ข</b> ขาดสอบ (พิมพ์ r / x ได้)</span>`,
     };
   }
   const items = kind === 'attr' ? ATTRIBUTES : RTW;
@@ -993,10 +993,10 @@ function gridConfig(sec, kind) {
       if (r.bad) return [['calc', '—'], ['status-cell', `<span class="chip chip-bad" style="font-size:11.5px">ข้อมูลไม่ถูกต้อง</span>`]];
       if (!r.done) return [['calc', '—'], ['status-cell', `<span class="chip" style="font-size:11.5px">ประเมินแล้ว ${r.filled}/${r.total}</span>`]];
       const chip = r.level === 3 ? 'chip-ok' : r.level === 0 ? 'chip-bad' : r.level === 1 ? 'chip-warn' : 'chip-primary';
-      return [['calc total', r.avg.toFixed(2)], ['status-cell', `<span class="chip ${chip}" style="font-size:11.5px">${r.level} · ${r.label}</span>`]];
+      return [['calc total', r.avg.toFixed(2)], ['status-cell', `<span class="chip ${chip}" style="font-size:11.5px">${r.level} ${r.label}</span>`]];
     },
     placeholder: '–',
-    legend: `<span>ระดับ <b>3</b> ดีเยี่ยม · <b>2</b> ดี · <b>1</b> ผ่าน · <b>0</b> ไม่ผ่าน</span>
+    legend: `<span>ระดับ <b>3</b> ดีเยี่ยม <b>2</b> ดี <b>1</b> ผ่าน <b>0</b> ไม่ผ่าน</span>
       <span><span class="sw" style="background:#fffbea;border-color:#e0a100"></span>แก้ไขแล้ว ยังไม่บันทึก</span>
       <span>สรุปผลจากค่าเฉลี่ยทุกข้อ (ปัดเศษ)</span>`,
   };
@@ -1126,7 +1126,7 @@ function updateActionbar(sec, kind) {
     <span class="faint">|</span>
     <div class="ab-status">${keys.length
       ? `<span class="dot" style="color:#e0a100"></span><span>แก้ไข <strong>${keys.length}</strong> ช่อง ยังไม่บันทึก${other ? ` <span class="faint">(${other} ช่องอยู่ในแท็บอื่น)</span>` : ''}</span>`
-      : `<span style="color:var(--ok)">${icon('check')}</span><span>บันทึกแล้วทั้งหมด${sec.updatedAt ? ` · ${relTime(sec.updatedAt)}` : ''}</span>`}
+      : `<span style="color:var(--ok)">${icon('check')}</span><span>บันทึกแล้วทั้งหมด${sec.updatedAt ? ` ${relTime(sec.updatedAt)}` : ''}</span>`}
       ${invalid ? `<button class="btn btn-sm btn-danger" id="gotoInvalid">${icon('alert')}ข้อมูลไม่ถูกต้อง ${invalid} ช่อง</button>` : ''}
     </div>
     <span class="spacer"></span>
@@ -1234,7 +1234,7 @@ function bindGrid(sec, kind, body, cfg) {
       if (el) { applyValue(el, normalizeInput(v.trim())); n++; }
     }));
     updateActionbar(sec, kind);
-    toast(`วางข้อมูลจาก Excel ${n} ช่อง · ตรวจสอบแล้วกดบันทึก`, 'ok');
+    toast(`วางข้อมูลจาก Excel ${n} ช่อง ตรวจสอบแล้วกดบันทึก`, 'ok');
   });
   grid.addEventListener('click', (e) => {
     const m = e.target.closest('[data-colmenu]');
@@ -1276,7 +1276,7 @@ function openColumnMenu(anchor, sec, kind, col, cfg, rerender) {
     });
     closePopover();
     rerender();
-    toast(n ? `อัปเดต ${n} ช่องในคอลัมน์ “${col.label}” · ยังไม่บันทึก` : 'ไม่มีช่องที่ต้องเปลี่ยน', n ? 'ok' : 'info');
+    toast(n ? `อัปเดต ${n} ช่องในคอลัมน์ “${col.label}” ยังไม่บันทึก` : 'ไม่มีช่องที่ต้องเปลี่ยน', n ? 'ok' : 'info');
   };
   const isScore = kind === 'score';
   openPopover(anchor, `
@@ -1395,7 +1395,7 @@ function openImport(sec, rerender) {
           const matched = colMap.filter(Boolean).length;
           close();
           rerender();
-          toast(`นำเข้า ${cells} ช่อง จาก ${matched} คอลัมน์${unknown.length ? ` · ข้าม ${unknown.length} แถว (ไม่พบรหัส)` : ''}${invalid ? ` · ${invalid} ช่องข้อมูลไม่ถูกต้อง` : ''}`, invalid ? 'bad' : 'ok');
+          toast(`นำเข้า ${cells} ช่อง จาก ${matched} คอลัมน์${unknown.length ? ` ข้าม ${unknown.length} แถว (ไม่พบรหัส)` : ''}${invalid ? ` ${invalid} ช่องข้อมูลไม่ถูกต้อง` : ''}`, invalid ? 'bad' : 'ok');
         };
         reader.readAsText(file, 'utf-8');
       };
@@ -1431,12 +1431,12 @@ function renderResults(sec, body) {
   body.innerHTML = `
     ${dirtyN ? `<div class="callout warn" style="margin-bottom:12px">${icon('alert')}<div>ผลด้านล่างรวมการแก้ไข <b>${dirtyN} ช่อง</b> ที่ยังไม่บันทึก <a href="#/s/${sec.id}/scores">กลับไปบันทึก</a></div></div>` : ''}
     ${isAcademic() ? lockedCallout(sec) : isLocked(sec) ? teacherLockCallout(sec) : ''}
-    <div class="print-only" style="margin-bottom:12px"><h2>รายงานผลการเรียน ${sec.code} ${esc(sec.name)} ชั้น ${sec.room}</h2><div>${termOf(sec.term).label} · ครูผู้สอน ${esc(teacherName(sec))}</div></div>
+    <div class="print-only" style="margin-bottom:12px"><h2>รายงานผลการเรียน ${sec.code} ${esc(sec.name)} ชั้น ${sec.room}</h2><div>${termOf(sec.term).label} ครูผู้สอน ${esc(teacherName(sec))}</div></div>
     <div class="results-top">
       <div class="card stat"><div class="stat-label">คะแนนเฉลี่ย</div><div class="stat-value num">${st.mean != null ? fmt1(st.mean) : '—'}</div><div class="faint" style="font-size:12.5px">SD ${st.sd != null ? fmt2(st.sd) : '—'}</div></div>
       <div class="card stat"><div class="stat-label">สูงสุด / ต่ำสุด</div><div class="stat-value num">${st.max != null ? `${fmt1(st.max)}<small> / ${fmt1(st.min)}</small>` : '—'}</div></div>
       <div class="card stat"><div class="stat-label">ผ่านเกณฑ์</div><div class="stat-value num" style="color:var(--ok)">${st.pass}<small> / ${n} คน</small></div><div class="faint" style="font-size:12.5px">${Math.round((st.pass / n) * 100)}%</div></div>
-      <div class="card stat"><div class="stat-label">ต้องติดตาม (0 / ร / มส)</div><div class="stat-value num" style="color:${st.fail + st.r + st.ms ? 'var(--bad)' : 'inherit'}">${st.fail + st.r + st.ms}<small> คน</small></div><div class="faint" style="font-size:12.5px">ซ่อม ${st.fail} · ร ${st.r} · มส ${st.ms}</div></div>
+      <div class="card stat"><div class="stat-label">ต้องติดตาม (0 / ร / มส)</div><div class="stat-value num" style="color:${st.fail + st.r + st.ms ? 'var(--bad)' : 'inherit'}">${st.fail + st.r + st.ms}<small> คน</small></div><div class="faint" style="font-size:12.5px">ซ่อม ${st.fail} ร ${st.r} มส ${st.ms}</div></div>
       <div class="card dist"><div class="stat-label">การกระจายของระดับผลการเรียน</div>
         <div class="dist-bars">${cats.map((g) => `<div class="dist-bar ${g === '0' ? 'g0' : g === 'ร' || g === 'มส' ? 'gs' : ''}"><span class="n">${dist[g] || ''}</span><div class="b" style="height:${(dist[g] / maxD) * 64}px"></div><span class="l">${g}</span></div>`).join('')}</div>
       </div>
@@ -1497,13 +1497,13 @@ function teacherLockCallout(sec) {
   const u = sec.unlockRequest;
   const head = sec.state === 'approved'
     ? `<b>ฝ่ายวิชาการอนุมัติแล้ว</b> เมื่อ ${thDate(lastReview(sec)?.decidedAt, true)} โดย ${esc(userById(lastReview(sec)?.reviewerId)?.name || '—')}`
-    : `<b>ส่งผลการเรียนแล้ว · รอฝ่ายวิชาการตรวจ</b> ส่งเมื่อ ${thDate(sec.submittedAt, true)}`;
+    : `<b>ส่งผลการเรียนแล้ว รอฝ่ายวิชาการตรวจ</b> ส่งเมื่อ ${thDate(sec.submittedAt, true)}`;
   let action;
-  if (u && u.status === 'pending') action = `<span class="chip chip-warn">${icon('clock')}ยื่นคำขอปลดล็อกแล้ว · รอพิจารณา</span>`;
+  if (u && u.status === 'pending') action = `<span class="chip chip-warn">${icon('clock')}ยื่นคำขอปลดล็อกแล้ว รอพิจารณา</span>`;
   else action = `<button class="btn btn-sm" id="unlockBtn">${icon('lock')}ขอปลดล็อกเพื่อแก้ไข</button>`;
   const rejected = u && u.status === 'rejected'
     ? `<div style="margin-top:6px;color:var(--bad);font-size:13.5px">คำขอปลดล็อกครั้งล่าสุดถูกปฏิเสธ: ${esc(u.rejectReason)}</div>` : '';
-  return `<div class="callout ${sec.state === 'approved' ? 'ok' : ''}" style="margin-bottom:12px">${icon('lock')}<div style="flex:1">${head} · ข้อมูลถูกล็อก${rejected}</div>${action}</div>`;
+  return `<div class="callout ${sec.state === 'approved' ? 'ok' : ''}" style="margin-bottom:12px">${icon('lock')}<div style="flex:1">${head} ข้อมูลถูกล็อก${rejected}</div>${action}</div>`;
 }
 function openUnlockRequest(sec) {
   openModal({
@@ -1519,7 +1519,7 @@ function openUnlockRequest(sec) {
         sec.unlockRequest = { at: Date.now(), reason, status: 'pending', decidedBy: null, decidedAt: null, rejectReason: '' };
         logEvent(sec, `ยื่นคำขอปลดล็อก: ${reason}`);
         persist(); renderSection(sec, 'results');
-        toast('ยื่นคำขอปลดล็อกแล้ว · รอฝ่ายวิชาการพิจารณา', 'ok');
+        toast('ยื่นคำขอปลดล็อกแล้ว รอฝ่ายวิชาการพิจารณา', 'ok');
       } },
     ],
     onMount: (m) => $('#unlockReason', m).focus(),
@@ -1565,7 +1565,7 @@ function openSubmit(sec) {
   openModal({
     title: 'ตรวจสอบก่อนส่งผลการเรียน',
     body: `
-      <p class="muted" style="margin:0 0 8px">${sec.code} ${esc(sec.name)} · ${sec.room} · ${n} คน</p>
+      <p class="muted" style="margin:0 0 8px">${sec.code} ${esc(sec.name)} ${sec.room} ${n} คน</p>
       <div class="checklist">${checks.map((c) => `<div class="cl-item"><span class="cl-icon ${c.ok ? 'cl-ok' : 'cl-bad'}">${icon(c.ok ? 'check' : 'x')}</span><span style="flex:1">${c.label}</span>${c.ok ? '' : `<a href="#/s/${sec.id}/${c.tab}" data-close-go>ไปแก้ไข</a>`}</div>`).join('')}
       ${warns.map((w) => `<div class="cl-item"><span class="cl-icon cl-warn">${icon('alert')}</span><span>${w}</span></div>`).join('')}</div>
       ${blocked ? `<div class="callout bad" style="margin-top:12px">${icon('alert')}<div>ยังส่งผลการเรียนไม่ได้ กรุณาแก้ไขรายการที่มีเครื่องหมาย ✕ ก่อน</div></div>`
@@ -1580,7 +1580,7 @@ function openSubmit(sec) {
         logEvent(sec, `ส่งผลการเรียนให้ฝ่ายวิชาการตรวจ (รอบที่ ${sec.reviews.length})`);
         persist(); updateFollowBadge();
         renderSection(sec, 'results');
-        toast('ส่งผลการเรียนแล้ว · รอฝ่ายวิชาการตรวจ', 'ok');
+        toast('ส่งผลการเรียนแล้ว รอฝ่ายวิชาการตรวจ', 'ok');
       } },
     ],
     onMount: (m, close) => $$('[data-close-go]', m).forEach((a) => a.addEventListener('click', close)),
@@ -1604,7 +1604,7 @@ function renderHistory(sec, body) {
           <div class="tl-time" title="${thDate(h.t, true)}">${relTime(h.t)}<div class="faint" style="font-size:12px">${thDate(h.t, true)}</div></div>
           <div>${h.kind === 'event'
             ? `<b>${esc(h.to)}</b><div class="faint" style="font-size:13px">โดย ${esc(h.who)}</div>`
-            : `<div><b>${esc(h.student)}</b> <span class="muted">· ${esc(h.field)}</span></div>
+            : `<div><b>${esc(h.student)}</b> <span class="muted">${esc(h.field)}</span></div>
                <div class="tl-diff">${h.from !== '' ? `<span class="tl-from">${esc(h.from)}</span>${icon('chev')}` : '<span class="faint">(ว่าง)</span>' + icon('chev')}<span class="tl-to">${h.to === '' ? '(ลบ)' : esc(h.to)}</span><span class="faint" style="font-size:13px;margin-left:8px">โดย ${esc(h.who)}</span></div>
                ${h.reason ? `<div class="muted" style="font-size:13px">เหตุผล: ${esc(h.reason)}</div>` : ''}`}
           </div>
@@ -1658,7 +1658,7 @@ function renderFollowup() {
       <thead><tr><th>นักเรียน</th><th>รายวิชา</th><th class="c">ห้อง</th><th>สถานะ</th><th>รายละเอียด</th><th></th></tr></thead>
       <tbody>${rows.map(({ sec, s, r, detail }) => `
         <tr>
-          <td><b>${esc(fullName(s))}</b><div class="faint" style="font-size:12.5px">รหัส ${s.id} · เลขที่ ${s.no}</div></td>
+          <td><b>${esc(fullName(s))}</b><div class="faint" style="font-size:12.5px">รหัส ${s.id} เลขที่ ${s.no}</div></td>
           <td>${sec.code} ${esc(sec.name)}</td>
           <td class="c">${sec.room}</td>
           <td>${statusChip(r.code)}</td>
@@ -1712,7 +1712,7 @@ function renderCriteria() {
 function boot() {
   $('#schoolName').textContent = TEACHER.school;
   $('#userName').textContent = TEACHER.name;
-  $('#userRole').textContent = `${TEACHER.position} · ${TEACHER.dept}`;
+  $('#userRole').textContent = `${TEACHER.position} ${TEACHER.dept}`;
   $('#avatar').textContent = TEACHER.name.replace('ครู', '').trim().charAt(0);
   if (TEACHER.roles.length > 1) {
     $('#roleSwitch').classList.remove('hidden');
